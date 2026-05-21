@@ -1,0 +1,307 @@
+'use server'
+
+import { createAdminClient } from '@/lib/supabase/server-admin'
+import { getUser } from '@/lib/supabase/get-user'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+
+export type ActionState = { error: string } | null
+
+async function verifyAdmin() {
+  const user = await getUser()
+  if (!user) return null
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return null
+  return { user, admin }
+}
+
+export async function createClass(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  type SlotInput = { subjectId: string | null; day: number | null; time: string; tutorId: string }
+
+  const name = (formData.get('name') as string)?.trim()
+  const level = (formData.get('level') as string)?.trim() || null
+  const classType = (formData.get('class_type') as string) || null
+  const studentIds = formData.getAll('student_ids') as string[]
+  const slotsJson = (formData.get('slots_json') as string) || '[]'
+  const startDate = (formData.get('start_date') as string) || null
+  const endDate = (formData.get('end_date') as string) || null
+  const durationMinutes = Number(formData.get('duration_minutes') ?? 90)
+
+  let slots: SlotInput[] = []
+  try { slots = JSON.parse(slotsJson) } catch { return { error: 'Data slot tidak valid' } }
+
+  if (!name) return { error: 'Nama kelas wajib diisi' }
+  if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
+  if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
+  if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
+  if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+
+  const primaryTutorId = slots[0].tutorId
+  const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]
+  const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
+
+  const { data, error } = await ctx.admin
+    .from('classes')
+    .insert({
+      name,
+      tutor_id: primaryTutorId,
+      level,
+      class_type: classType,
+      base_price_per_session: 0,
+      is_active: true,
+      schedule_days: scheduleDays,
+      schedule_time: slots[0].time || null,
+      start_date: startDate,
+      end_date: endDate,
+      duration_minutes: durationMinutes,
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  if (allSubjectIds.length > 0) {
+    await ctx.admin.from('class_subjects').insert(
+      allSubjectIds.map(sid => ({ class_id: data.id, subject_id: sid }))
+    )
+  }
+
+  await ctx.admin.from('class_slots').insert(
+    slots.map((s, i) => ({
+      class_id: data.id,
+      slot_index: i,
+      day_of_week: s.day,
+      start_time: s.time || null,
+      tutor_id: s.tutorId,
+      subject_ids: s.subjectId ? [s.subjectId] : [],
+    }))
+  )
+
+  // Auto-generate sessions for the date range
+  const generatedSessions = generateSessionsFromSlots(slots, startDate, endDate, data.id, durationMinutes)
+  if (generatedSessions.length > 0) {
+    const { error: sessionError } = await ctx.admin.from('sessions').insert(generatedSessions)
+    if (sessionError) return { error: `Kelas berhasil dibuat tapi jadwal gagal di-generate: ${sessionError.message}` }
+  }
+
+  if (studentIds.length > 0) {
+    await ctx.admin.from('class_students').insert(
+      studentIds.map(sid => ({
+        class_id: data.id,
+        student_id: sid,
+        enrolled_at: new Date().toISOString(),
+        is_active: true,
+      }))
+    )
+  }
+
+  redirect(`/admin/classes/${data.id}`)
+}
+
+export async function updateClass(classId: string, prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  type SlotInput = { subjectId: string | null; day: number | null; time: string; tutorId: string }
+
+  const name = (formData.get('name') as string)?.trim()
+  const level = (formData.get('level') as string)?.trim() || null
+  const classType = (formData.get('class_type') as string) || null
+  const isActive = formData.get('is_active') === 'on'
+  const slotsJson = (formData.get('slots_json') as string) || '[]'
+  const startDate = (formData.get('start_date') as string) || null
+  const endDate = (formData.get('end_date') as string) || null
+  const durationMinutes = Number(formData.get('duration_minutes') ?? 90)
+
+  let slots: SlotInput[] = []
+  try { slots = JSON.parse(slotsJson) } catch { return { error: 'Data slot tidak valid' } }
+
+  if (!name) return { error: 'Nama kelas wajib diisi' }
+  if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
+  if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
+  if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
+  if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+
+  const primaryTutorId = slots[0].tutorId
+  const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]
+  const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
+
+  const { error } = await ctx.admin
+    .from('classes')
+    .update({
+      name,
+      tutor_id: primaryTutorId,
+      level,
+      class_type: classType,
+      is_active: isActive,
+      schedule_days: scheduleDays,
+      schedule_time: slots[0].time || null,
+      start_date: startDate,
+      end_date: endDate,
+      duration_minutes: durationMinutes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', classId)
+
+  if (error) return { error: error.message }
+
+  await ctx.admin.from('class_subjects').delete().eq('class_id', classId)
+  if (allSubjectIds.length > 0) {
+    await ctx.admin.from('class_subjects').insert(
+      allSubjectIds.map(sid => ({ class_id: classId, subject_id: sid }))
+    )
+  }
+
+  await ctx.admin.from('class_slots').delete().eq('class_id', classId)
+  await ctx.admin.from('class_slots').insert(
+    slots.map((s, i) => ({
+      class_id: classId,
+      slot_index: i,
+      day_of_week: s.day,
+      start_time: s.time || null,
+      tutor_id: s.tutorId,
+      subject_ids: s.subjectId ? [s.subjectId] : [],
+    }))
+  )
+
+  // Delete future scheduled sessions (past/completed sessions are preserved)
+  const now = new Date().toISOString()
+  await ctx.admin
+    .from('sessions')
+    .delete()
+    .eq('class_id', classId)
+    .eq('status', 'scheduled')
+    .gt('scheduled_at', now)
+
+  // Re-generate sessions from tomorrow (or start_date, whichever is later) to end_date
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  const [sy, sm, sd] = startDate!.split('-').map(Number)
+  const startLocal = new Date(sy, sm - 1, sd)
+  const generateFrom = startLocal > tomorrow ? startDate! : tomorrow.toISOString().slice(0, 10)
+
+  if (generateFrom <= endDate!) {
+    const newSessions = generateSessionsFromSlots(slots, generateFrom, endDate!, classId, durationMinutes)
+    if (newSessions.length > 0) {
+      await ctx.admin.from('sessions').insert(newSessions)
+    }
+  }
+
+  revalidatePath(`/admin/classes/${classId}`)
+  redirect(`/admin/classes/${classId}`)
+}
+
+export async function deleteClass(classId: string): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  // Get all session IDs for this class so we can delete payments first
+  const { data: sessionRows } = await ctx.admin
+    .from('sessions')
+    .select('id')
+    .eq('class_id', classId)
+
+  if (sessionRows && sessionRows.length > 0) {
+    const sessionIds = sessionRows.map(s => s.id)
+    // Delete session_payments (may not cascade automatically)
+    await ctx.admin.from('session_payments').delete().in('session_id', sessionIds)
+  }
+
+  const { error } = await ctx.admin.from('classes').delete().eq('id', classId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/classes')
+  redirect('/admin/classes')
+}
+
+export async function enrollStudent(classId: string, studentId: string): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin.from('class_students').upsert(
+    { class_id: classId, student_id: studentId, is_active: true, enrolled_at: new Date().toISOString() },
+    { onConflict: 'class_id,student_id' }
+  )
+
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/classes/${classId}`)
+  return null
+}
+
+function generateSessionsFromSlots(
+  slots: { subjectId: string | null; day: number | null; time: string; tutorId: string }[],
+  startDate: string,
+  endDate: string,
+  classId: string,
+  durationMinutes: number,
+) {
+  const sessions: {
+    class_id: string
+    tutor_id: string
+    subject_id: string | null
+    scheduled_at: string
+    duration_minutes: number
+    status: 'scheduled'
+    location: null
+    topic: null
+  }[] = []
+
+  // Parse date components directly to avoid UTC vs local timezone mismatch
+  const [sy, sm, sd] = startDate.split('-').map(Number)
+  const [ey, em, ed] = endDate.split('-').map(Number)
+
+  // Use local midnight so getDay() returns correct weekday
+  const end = new Date(ey, em - 1, ed)
+  const current = new Date(sy, sm - 1, sd)
+
+  while (current <= end) {
+    const dow = current.getDay() // 0=Sun..6=Sat
+    for (const slot of slots) {
+      if (slot.day === null || slot.day !== dow) continue
+      const [hStr, mStr] = (slot.time || '00:00').split(':')
+      const h = Number(hStr)
+      const m = Number(mStr ?? 0)
+      const scheduled = new Date(
+        current.getFullYear(),
+        current.getMonth(),
+        current.getDate(),
+        h, m, 0, 0,
+      )
+      sessions.push({
+        class_id: classId,
+        tutor_id: slot.tutorId,
+        subject_id: slot.subjectId,
+        scheduled_at: scheduled.toISOString(),
+        duration_minutes: durationMinutes,
+        status: 'scheduled',
+        location: null,
+        topic: null,
+      })
+    }
+    current.setDate(current.getDate() + 1)
+  }
+
+  return sessions
+}
+
+export async function unenrollStudent(classId: string, studentId: string): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('class_students')
+    .update({ is_active: false })
+    .eq('class_id', classId)
+    .eq('student_id', studentId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/classes/${classId}`)
+  return null
+}
