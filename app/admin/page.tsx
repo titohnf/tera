@@ -92,10 +92,9 @@ export default async function AdminDashboard() {
 
 function StatCard({ label, value, sub, color }: {
   label: string; value: string; sub: string
-  color: 'blue' | 'blue' | 'green' | 'yellow' | 'red'
+  color: 'blue' | 'green' | 'yellow' | 'red'
 }) {
   const dots: Record<string, string> = {
-    blue: 'bg-blue-500',
     blue: 'bg-blue-500',
     green: 'bg-emerald-500',
     yellow: 'bg-amber-400',
