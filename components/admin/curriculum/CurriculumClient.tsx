@@ -28,8 +28,8 @@ interface Props {
   createCPsAction: (prevState: ActionState, formData: FormData) => Promise<ActionState>
   renameThemeAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null }, newName: string) => Promise<ActionState>
   deleteThemeAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null }) => Promise<ActionState>
-  renameTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string; topic: string }, newName: string) => Promise<ActionState>
-  deleteTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string; topic: string }) => Promise<ActionState>
+  renameTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string }, newName: string) => Promise<ActionState>
+  deleteTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string }) => Promise<ActionState>
   updateAction: (id: string, prevState: ActionState, formData: FormData) => Promise<ActionState>
   deleteAction: (id: string) => Promise<ActionState>
 }

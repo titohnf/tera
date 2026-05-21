@@ -492,7 +492,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
           {editingTheme && (
             <RenameForm
               label="Tema"
-              defaultValue={editingTheme.theme}
+              defaultValue={editingTheme.theme ?? ''}
               onSave={async (val) => {
                 const result = await renameThemeAction(editingTheme, val)
                 if (!result) setEditingTheme(null)

@@ -102,7 +102,6 @@ function StatCard({ label, value, sub, color }: {
   }
   const valueColors: Record<string, string> = {
     blue: 'text-blue-600',
-    blue: 'text-blue-600',
     green: 'text-emerald-600',
     yellow: 'text-amber-600',
     red: 'text-red-600',

@@ -177,11 +177,12 @@ export async function renameTopic(ctx_: TopicContext, newTopic: string): Promise
   if (!ctx) return { error: 'Tidak diizinkan' }
   if (!newTopic.trim()) return { error: 'Nama topik tidak boleh kosong' }
   const { curriculum, subject_id, grade_level, semester, theme, topic } = ctx_
-  const { error } = await ctx.admin.from('curriculum_topics')
+  let query = ctx.admin.from('curriculum_topics')
     .update({ topic: newTopic.trim() })
     .eq('curriculum', curriculum).eq('subject_id', subject_id)
     .eq('grade_level', grade_level).eq('semester', semester)
-    .eq('theme', theme).eq('topic', topic)
+    .eq('topic', topic)
+  const { error } = theme === null ? await query.is('theme', null) : await query.eq('theme', theme)
   if (error) return { error: error.message }
   revalidatePath('/admin/curriculum')
   return null
@@ -191,11 +192,12 @@ export async function deleteTopic(ctx_: TopicContext): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
   const { curriculum, subject_id, grade_level, semester, theme, topic } = ctx_
-  const { error } = await ctx.admin.from('curriculum_topics')
+  let query = ctx.admin.from('curriculum_topics')
     .delete()
     .eq('curriculum', curriculum).eq('subject_id', subject_id)
     .eq('grade_level', grade_level).eq('semester', semester)
-    .eq('theme', theme).eq('topic', topic)
+    .eq('topic', topic)
+  const { error } = theme === null ? await query.is('theme', null) : await query.eq('theme', theme)
   if (error) return { error: error.message }
   revalidatePath('/admin/curriculum')
   return null
