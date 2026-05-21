@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = 'https://fkieereilqfiqtjmpher.supabase.co'
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZraWVlcmVpbHFmaXF0am1waGVyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzgwNTcwOSwiZXhwIjoyMDkzMzgxNzA5fQ.u1aUyrOgeJu7O4MFHAAy0EMJYg87jIHxBuLbW8dIBZw'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const EMAIL = 'admin@terabimbel.com'
 const PASSWORD = 'admin123456'
