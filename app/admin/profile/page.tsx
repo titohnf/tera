@@ -10,7 +10,7 @@ export default async function ProfilePage() {
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
-    .select('full_name, phone, email')
+    .select('full_name, phone, email, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -24,6 +24,7 @@ export default async function ProfilePage() {
         fullName={profile?.full_name ?? ''}
         phone={profile?.phone ?? ''}
         email={profile?.email ?? user.email ?? ''}
+        avatarUrl={profile?.avatar_url ?? null}
       />
     </div>
   )

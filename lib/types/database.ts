@@ -68,6 +68,7 @@ export interface SessionRow {
   location: string | null
   status: SessionStatus
   topic: string | null
+  selected_cp_ids: string[]
   created_at: string
   updated_at: string
 }

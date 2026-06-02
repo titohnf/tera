@@ -50,7 +50,7 @@ export default function MaterialList({
 
   if (materials.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-gray-500 bg-white rounded-xl shadow ring-1 ring-gray-900/5">
+      <div className="text-center py-8 text-sm text-gray-500 border border-slate-200 rounded-xl">
         Belum ada materi untuk sesi ini.
       </div>
     )
@@ -82,7 +82,7 @@ export default function MaterialList({
         const isLink = !!m.link_url
 
         return (
-          <div key={m.id} className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-4 py-3 flex items-center gap-3">
+          <div key={m.id} className="border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
             <span className="text-2xl">{isLink ? '🔗' : fileIcon(m.mime_type)}</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{m.title}</p>

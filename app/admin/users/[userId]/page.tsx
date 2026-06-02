@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import EditUserForm from '@/components/admin/users/EditUserForm'
 import PasswordResetButton from '@/components/admin/users/PasswordResetButton'
+import UserAvatarUpload from '@/components/admin/users/UserAvatarUpload'
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-700',
@@ -62,11 +62,14 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
 
   const { data: user } = await admin
     .from('profiles')
-    .select('id, full_name, email, phone, role, level, grade, parent_name, created_at')
+    .select('id, full_name, email, phone, role, level, grade, parent_name, created_at, avatar_url')
     .eq('id', userId)
     .single()
 
   if (!user) notFound()
+
+  // Students have a dedicated page
+  if (user.role === 'student') redirect(`/admin/siswa/${userId}`)
 
   // Fetch related data based on role
   let taughtClasses: ClassRow[] = []
@@ -162,12 +165,13 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
         <div className="col-span-2 space-y-6">
           {/* Profile header */}
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
-            <div className="flex items-center gap-4 mb-5">
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <span className="text-xl font-bold text-blue-600">
-                  {user.full_name.charAt(0).toUpperCase()}
-                </span>
-              </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-1 flex items-center gap-4">
+              <UserAvatarUpload
+                userId={userId}
+                currentUrl={user.avatar_url ?? null}
+                name={user.full_name}
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-semibold text-gray-900">{user.full_name}</h1>
@@ -178,26 +182,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
                 <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
                 {user.phone && <p className="text-sm text-gray-500">{user.phone}</p>}
               </div>
+              </div>
+              <Link
+                href={`/admin/users/${userId}/edit`}
+                className="shrink-0 px-3 py-1.5 text-xs font-medium text-gray-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Edit
+              </Link>
             </div>
             <p className="text-xs text-gray-400">
               Bergabung {new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
-          </div>
-
-          {/* Edit form */}
-          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">Edit Data Pengguna</h2>
-            <EditUserForm
-              userId={userId}
-              defaultValues={{
-                full_name: user.full_name,
-                phone: user.phone,
-                role: user.role,
-                level: (user as any).level ?? null,
-                grade: (user as any).grade ?? null,
-                parent_name: (user as any).parent_name ?? null,
-              }}
-            />
           </div>
 
           {/* Classes for tutor */}

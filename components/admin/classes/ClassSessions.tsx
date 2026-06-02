@@ -25,6 +25,14 @@ type SessionRow = {
 
 type TutorOption = { id: string; full_name: string }
 type SubjectOption = { id: string; name: string }
+type CurriculumTopic = {
+  id: string
+  subject_id: string
+  grade_level: string
+  semester: number
+  theme: string | null
+  topic: string | null
+}
 
 const STATUS_COLOR: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-700',
@@ -50,6 +58,8 @@ export default function ClassSessions({
   subjects,
   defaultTutorId,
   defaultSubjectId,
+  curriculumTopics,
+  studentGrade,
 }: {
   classId: string
   sessions: SessionRow[]
@@ -58,6 +68,8 @@ export default function ClassSessions({
   subjects: SubjectOption[]
   defaultTutorId?: string
   defaultSubjectId?: string
+  curriculumTopics?: CurriculumTopic[]
+  studentGrade?: number | null
 }) {
   const [showForm, setShowForm] = useState(false)
   const gradedSet = new Set(gradedSessionIds)
@@ -97,6 +109,8 @@ export default function ClassSessions({
               tutor_id: defaultTutorId,
               subject_id: defaultSubjectId,
             }}
+            curriculumTopics={curriculumTopics}
+            classGrade={studentGrade}
           />
         </div>
       )}

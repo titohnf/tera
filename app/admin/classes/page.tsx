@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
+import MetricCard from '@/components/dashboard/MetricCard'
 
 type ClassRow = {
   id: string
@@ -10,10 +11,20 @@ type ClassRow = {
   class_subjects: { subjects: { name: string } | null }[]
 }
 
-export default async function ClassesPage() {
+const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
+
+export default async function ClassesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ level?: string; status?: string }>
+}) {
+  const { level: levelFilter = '', status: statusFilter = '' } = await searchParams
   const admin = createAdminClient()
 
-  const [{ data: classes }, { data: enrollments }] = await Promise.all([
+  const now = new Date()
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  const [{ data: classes }, { data: enrollments }, { data: monthSessions }] = await Promise.all([
     admin
       .from('classes')
       .select('id, name, level, is_active, profiles!tutor_id(full_name), class_subjects(subjects(name))')
@@ -22,16 +33,51 @@ export default async function ClassesPage() {
       .from('class_students')
       .select('class_id')
       .eq('is_active', true),
+    admin
+      .from('sessions')
+      .select('id, duration_minutes')
+      .eq('status', 'completed')
+      .gte('scheduled_at', firstOfMonth),
   ])
+
+  const allClasses = classes ?? []
 
   const countByClass: Record<string, number> = {}
   for (const e of enrollments ?? []) {
     countByClass[e.class_id] = (countByClass[e.class_id] ?? 0) + 1
   }
 
+  const activeClassCount = allClasses.filter(c => c.is_active).length
+  const inactiveClassCount = allClasses.filter(c => !c.is_active).length
+  const totalStudentsInClass = Object.values(countByClass).reduce((s, n) => s + n, 0)
+
+  const sessionCount = monthSessions?.length ?? 0
+  const totalHours = Math.round(
+    (monthSessions ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0) / 60
+  )
+
+  // Filter
+  let filtered = allClasses
+  if (levelFilter) filtered = filtered.filter(c => c.level === levelFilter)
+  if (statusFilter === 'aktif') filtered = filtered.filter(c => c.is_active)
+  else if (statusFilter === 'non-aktif') filtered = filtered.filter(c => !c.is_active)
+
+  // Levels yang ada di data
+  const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
+
+  function filterUrl(newLevel: string, newStatus: string) {
+    const p = new URLSearchParams()
+    if (newLevel) p.set('level', newLevel)
+    if (newStatus) p.set('status', newStatus)
+    const qs = p.toString()
+    return qs ? `/admin/classes?${qs}` : '/admin/classes'
+  }
+
+  const hasFilter = !!(levelFilter || statusFilter)
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Manajemen Kelas</h1>
         <div className="flex items-center gap-2">
           <Link
@@ -55,17 +101,80 @@ export default async function ClassesPage() {
         </div>
       </div>
 
-      {!classes || classes.length === 0 ? (
-        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center text-sm text-gray-500">
-          Belum ada kelas. Mulai dengan menambahkan kelas baru.
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <MetricCard label="Kelas Aktif" value={activeClassCount} />
+        <MetricCard label="Kelas Non-aktif" value={inactiveClassCount} />
+        <MetricCard label="Total Siswa Aktif" value={totalStudentsInClass} />
+        <MetricCard label="Sesi Bulan Ini" value={sessionCount} />
+        <MetricCard label="Total Jam Mengajar" value={totalHours} />
+      </div>
+
+      {/* Filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Jenjang */}
+        <div className="flex flex-wrap gap-1.5">
+          <a
+            href={filterUrl('', statusFilter)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              !levelFilter ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Semua Jenjang
+          </a>
+          {availableLevels.map(l => (
+            <a
+              key={l}
+              href={filterUrl(l, statusFilter)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                levelFilter === l ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {l}
+            </a>
+          ))}
+        </div>
+
+        <div className="h-4 w-px bg-gray-200" />
+
+        {/* Status */}
+        <div className="flex gap-1.5">
+          {[
+            { label: 'Semua', value: '' },
+            { label: 'Aktif', value: 'aktif' },
+            { label: 'Non-aktif', value: 'non-aktif' },
+          ].map(opt => (
+            <a
+              key={opt.value}
+              href={filterUrl(levelFilter, opt.value)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                statusFilter === opt.value ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {opt.label}
+            </a>
+          ))}
+        </div>
+
+        {hasFilter && (
+          <a href="/admin/classes" className="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+            Reset
+          </a>
+        )}
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-sm text-gray-500">
+          Tidak ada kelas yang sesuai filter.
         </div>
       ) : (
         <div className="space-y-2">
-          {classes.map(cls => (
+          {filtered.map(cls => (
             <Link
               key={cls.id}
               href={`/admin/classes/${cls.id}`}
-              className="flex items-center justify-between bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-5 py-4 hover:bg-blue-50/50 transition-colors"
+              className="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-5 py-4 hover:bg-blue-50/50 transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div>
@@ -77,9 +186,7 @@ export default async function ClassesPage() {
                       </span>
                     )}
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      cls.is_active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500'
+                      cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
                       {cls.is_active ? 'Aktif' : 'Nonaktif'}
                     </span>
@@ -107,4 +214,3 @@ export default async function ClassesPage() {
     </div>
   )
 }
-

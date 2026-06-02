@@ -5,6 +5,7 @@ import AttendanceAndNotes from '@/components/tutor/AttendanceAndNotes'
 import MaterialList from '@/components/materials/MaterialList'
 import AssessmentList from '@/components/assessment/AssessmentList'
 import SessionTopicEditor from '@/components/admin/sessions/SessionTopicEditor'
+import BankSoalTab from '@/components/admin/sessions/BankSoalTab'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 // ── Action types ──────────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ type SaveNoteAction = (sessionId: string, data: unknown) => Promise<{ error?: st
 type CreateAssessmentAction = (sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type SubmitGradesAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type DeleteMaterialAction = (materialId: string, filePath: string | null, sessionId: string) => Promise<{ error?: string }>
+type DeleteAssessmentAction = (assessmentId: string, sessionId: string) => Promise<{ error?: string; success?: boolean }>
 type SignedUrlAction = (filePath: string) => Promise<{ error?: string; url?: string }>
 
 // ── Data types ────────────────────────────────────────────────────────────────
@@ -62,7 +64,7 @@ interface GradeResult {
 const TABS = [
   { key: 'materials', label: 'Topik & Materi' },
   { key: 'attendance', label: 'Presensi & Catatan' },
-  { key: 'assessment', label: 'Asesmen' },
+  { key: 'assessment', label: 'Asesmen & Bank Soal' },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -77,12 +79,19 @@ interface CurriculumTopic {
   learning_outcomes: string | null
 }
 
+// CurriculumTopic is compatible with BankSoalTab's CpRow (same shape)
+
 export default function SessionTabs({
   sessionId,
   sessionStatus,
   topic,
   curriculumTopicId,
   curriculumTopics,
+  hasSubject,
+  selectedCpIds,
+  cpUrls,
+  subjectName,
+  grade,
   students,
   templates,
   materials,
@@ -94,6 +103,7 @@ export default function SessionTabs({
   saveNoteAction,
   createAssessmentAction,
   submitGradesAction,
+  deleteAssessmentAction,
   deleteMaterialAction,
   signedUrlAction,
 }: {
@@ -102,6 +112,11 @@ export default function SessionTabs({
   topic: string | null
   curriculumTopicId: string | null
   curriculumTopics: CurriculumTopic[]
+  hasSubject?: boolean
+  selectedCpIds?: string[]
+  cpUrls?: Record<string, string>
+  subjectName?: string | null
+  grade?: number | null
   students: Student[]
   templates: Template[]
   materials: MaterialItem[]
@@ -113,6 +128,7 @@ export default function SessionTabs({
   saveNoteAction: SaveNoteAction
   createAssessmentAction: CreateAssessmentAction
   submitGradesAction: SubmitGradesAction
+  deleteAssessmentAction?: DeleteAssessmentAction
   deleteMaterialAction: DeleteMaterialAction
   signedUrlAction: SignedUrlAction
 }) {
@@ -152,43 +168,58 @@ export default function SessionTabs({
       {/* Topik & Materi */}
       {activeTab === 'materials' && (
         <div>
-          <div className="mb-5">
-            <p className="text-xs font-semibold text-gray-500 mb-2">Topik Pembelajaran</p>
-            <SessionTopicEditor
-              sessionId={sessionId}
-              initialTopicId={curriculumTopicId}
-              initialTopic={topic}
-              curriculumTopics={curriculumTopics}
-            />
-          </div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Topik Pembelajaran</p>
+          <SessionTopicEditor
+            sessionId={sessionId}
+            initialTopicId={curriculumTopicId}
+            initialTopic={topic}
+            initialCpIds={selectedCpIds}
+            curriculumTopics={curriculumTopics}
+            hasSubject={hasSubject}
+          />
 
-          <div className="border-t pt-5">
-            {materialUploader}
-            <div className="mt-5">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">
-                Materi Terupload ({materials.length})
-              </h2>
-              <MaterialList
-                materials={materials}
-                sessionId={sessionId}
-                deleteAction={deleteMaterialAction}
-                signedUrlAction={signedUrlAction}
-              />
-            </div>
-          </div>
+          <div className="border-t border-slate-200 my-5" />
+
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Upload Materi</p>
+          {materialUploader}
+
+          <div className="border-t border-slate-200 my-5" />
+
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            Materi ({materials.length})
+          </p>
+          <MaterialList
+            materials={materials}
+            sessionId={sessionId}
+            deleteAction={deleteMaterialAction}
+            signedUrlAction={signedUrlAction}
+          />
         </div>
       )}
 
-      {/* Asesmen */}
+      {/* Asesmen & Bank Soal */}
       {activeTab === 'assessment' && (
-        <AssessmentList
-          sessionId={sessionId}
-          assessments={assessments}
-          students={assessmentStudents}
-          results={results}
-          createAction={createAssessmentAction}
-          submitGradesAction={submitGradesAction}
-        />
+        <div className="space-y-6">
+          <AssessmentList
+            sessionId={sessionId}
+            assessments={assessments}
+            students={assessmentStudents}
+            results={results}
+            createAction={createAssessmentAction}
+            submitGradesAction={submitGradesAction}
+            deleteAction={deleteAssessmentAction}
+            subjectName={subjectName}
+            grade={grade}
+            topic={topic}
+          />
+          <div className="border-t border-slate-200" />
+          <BankSoalTab
+            sessionId={sessionId}
+            selectedCpIds={selectedCpIds ?? []}
+            cpRows={curriculumTopics}
+            initialCpUrls={cpUrls ?? {}}
+          />
+        </div>
       )}
     </div>
   )

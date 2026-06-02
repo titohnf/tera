@@ -82,7 +82,7 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
   }
 
   return (
-    <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+    <div className="border border-slate-200 rounded-xl p-4">
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
         <button
           onClick={() => { setTab('file'); setError(''); setSuccess('') }}
@@ -107,7 +107,7 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
               value={fileTitle}
               onChange={e => setFileTitle(e.target.value)}
               placeholder="Contoh: Slide Pertemuan 1"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -146,7 +146,7 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
               value={linkTitle}
               onChange={e => setLinkTitle(e.target.value)}
               placeholder="Contoh: Soal Latihan Google Forms"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -156,7 +156,7 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
               value={linkUrl}
               onChange={e => setLinkUrl(e.target.value)}
               placeholder="https://docs.google.com/..."
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}

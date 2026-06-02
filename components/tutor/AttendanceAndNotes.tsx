@@ -11,6 +11,7 @@ type SaveNoteAction = (sessionId: string, data: unknown) => Promise<{ error?: st
 interface Student {
   id: string
   full_name: string
+  avatar_url?: string | null
   currentStatus: AttendanceStatus
   attendanceNotes: string
   existingNote: { body: string; template_id: string | null } | null
@@ -26,11 +27,11 @@ interface Template {
 // Per student: { [category]: { templateId, body } }
 type StudentNoteState = Record<string, { templateId: string; body: string } | null>
 
-const STATUS_OPTIONS: { value: AttendanceStatus; label: string; color: string }[] = [
-  { value: 'present',  label: 'Hadir',      color: 'bg-green-100 text-green-700 border-green-200 data-[active=true]:bg-green-600 data-[active=true]:text-white data-[active=true]:border-green-600' },
-  { value: 'late',     label: 'Terlambat',  color: 'bg-yellow-100 text-yellow-700 border-yellow-200 data-[active=true]:bg-yellow-500 data-[active=true]:text-white data-[active=true]:border-yellow-500' },
-  { value: 'absent',   label: 'Absen',      color: 'bg-red-100 text-red-600 border-red-200 data-[active=true]:bg-red-500 data-[active=true]:text-white data-[active=true]:border-red-500' },
-  { value: 'excused',  label: 'Izin',       color: 'bg-gray-100 text-gray-600 border-gray-200 data-[active=true]:bg-gray-500 data-[active=true]:text-white data-[active=true]:border-gray-500' },
+const STATUS_OPTIONS: { value: AttendanceStatus; label: string; active: string }[] = [
+  { value: 'present',  label: 'Hadir',     active: 'data-[active=true]:bg-green-500 data-[active=true]:text-white data-[active=true]:border-green-500' },
+  { value: 'late',     label: 'Terlambat', active: 'data-[active=true]:bg-yellow-400 data-[active=true]:text-white data-[active=true]:border-yellow-400' },
+  { value: 'absent',   label: 'Absen',     active: 'data-[active=true]:bg-red-500 data-[active=true]:text-white data-[active=true]:border-red-500' },
+  { value: 'excused',  label: 'Izin',      active: 'data-[active=true]:bg-slate-500 data-[active=true]:text-white data-[active=true]:border-slate-500' },
 ]
 
 function buildNoteBody(categories: Record<string, Template[]>, studentNoteState: StudentNoteState): string {
@@ -83,9 +84,9 @@ export default function AttendanceAndNotes({
 
   function setStatus(studentId: string, status: AttendanceStatus) {
     setRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status } }))
-    if ((status === 'present' || status === 'late') && !savedNotes.has(studentId)) {
+    if (status === 'present' || status === 'late') {
       setExpandedNote(studentId)
-    } else if (status === 'absent' || status === 'excused') {
+    } else {
       setExpandedNote(prev => prev === studentId ? null : prev)
     }
   }
@@ -172,13 +173,13 @@ export default function AttendanceAndNotes({
         </div>
       )}
 
-      <div className="flex items-center justify-end mb-4">
-        <span className="text-sm text-gray-500">
-          <strong className="text-gray-900">{presentCount}</strong> / {students.length} hadir
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Daftar Siswa</p>
+        <span className="text-xs text-gray-500">
+          <strong className="text-gray-700">{presentCount}</strong> / {students.length} hadir
         </span>
       </div>
 
-      {/* Student cards */}
       <div className="space-y-2 mb-5">
         {students.map((student, idx) => {
           const rec = records[student.id]
@@ -189,45 +190,38 @@ export default function AttendanceAndNotes({
           const selectedCount = Object.values(studentState).filter(v => v !== null).length
 
           return (
-            <div key={student.id} className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
+            <div key={student.id} className="border border-slate-200 rounded-xl overflow-hidden">
               {/* Attendance row */}
               <div className="px-4 py-3 flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-6 text-center shrink-0">{idx + 1}</span>
+                <span className="text-xs text-gray-400 w-5 text-center shrink-0">{idx + 1}</span>
+                <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {student.avatar_url ? (
+                    <img src={student.avatar_url} alt={student.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-400">
+                      {student.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm font-medium text-gray-900 flex-1">{student.full_name}</p>
-                <div className="flex gap-1.5 flex-wrap justify-end">
+                <div className="flex gap-1.5">
                   {STATUS_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       data-active={rec?.status === opt.value}
                       onClick={() => setStatus(student.id, opt.value)}
                       disabled={isDisabled}
-                      className={`text-xs px-2.5 py-1.5 border rounded-lg font-medium transition-colors disabled:opacity-40 ${opt.color}`}
+                      className={`text-xs px-2.5 py-1.5 border rounded-lg font-medium transition-colors disabled:opacity-40 bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 ${opt.active}`}
                     >
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                {/* Toggle catatan */}
                 <button
                   onClick={() => setExpandedNote(isExpanded ? null : student.id)}
-                  className={`ml-2 shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-                    isExpanded
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : hasSavedNote
-                      ? 'bg-green-50 text-green-700 border-green-200'
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                  }`}
+                  className="shrink-0 p-1 text-gray-300 hover:text-gray-500 transition-colors"
                 >
-                  {hasSavedNote && !isExpanded && (
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {selectedCount > 0 && !hasSavedNote && !isExpanded
-                    ? `Catatan (${selectedCount})`
-                    : 'Catatan'
-                  }
-                  <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -235,7 +229,7 @@ export default function AttendanceAndNotes({
 
               {/* Notes section */}
               {isExpanded && (
-                <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 space-y-4">
+                <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-4 space-y-4">
                   {categories.length > 0 ? (
                     categories.map(category => {
                       const tmplList = templatesByCategory[category]

@@ -203,17 +203,39 @@ export async function deleteTopic(ctx_: TopicContext): Promise<ActionState> {
   return null
 }
 
-export async function updateSessionTopic(
+export async function saveSessionCpUrls(
   sessionId: string,
-  curriculumTopicId: string | null,
-  topicText: string,
+  cpUrls: Record<string, string>,
 ): Promise<{ error?: string }> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
   const { error } = await ctx.admin
     .from('sessions')
-    .update({ curriculum_topic_id: curriculumTopicId, topic: topicText })
+    .update({ cp_urls: cpUrls })
+    .eq('id', sessionId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  return {}
+}
+
+export async function updateSessionTopic(
+  sessionId: string,
+  curriculumTopicId: string | null,
+  topicText: string,
+  selectedCpIds: string[] = [],
+): Promise<{ error?: string }> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('sessions')
+    .update({
+      curriculum_topic_id: curriculumTopicId,
+      topic: topicText,
+      selected_cp_ids: selectedCpIds,
+    })
     .eq('id', sessionId)
 
   if (error) return { error: error.message }

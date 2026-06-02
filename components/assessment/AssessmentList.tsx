@@ -5,6 +5,7 @@ import { createAssessment, submitGrades } from '@/lib/actions/assessments'
 
 type CreateAction = (sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type SubmitGradesAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
+type DeleteAction = (assessmentId: string, sessionId: string) => Promise<{ error?: string; success?: boolean }>
 
 interface AssessmentItem {
   id: string
@@ -28,6 +29,20 @@ interface GradeResult {
   feedback: string | null
 }
 
+function buildAutoTitle(
+  subjectName: string | null | undefined,
+  grade: number | null | undefined,
+  topic: string | null | undefined,
+  sequence: number,
+): string {
+  const parts = [
+    subjectName,
+    grade != null ? `Kelas ${grade}` : null,
+    topic,
+  ].filter(Boolean)
+  return `Asesmen ${sequence}${parts.length > 0 ? ' ' + parts.join(' ') : ''}`
+}
+
 export default function AssessmentList({
   sessionId,
   assessments: initialAssessments,
@@ -35,6 +50,10 @@ export default function AssessmentList({
   results,
   createAction = createAssessment,
   submitGradesAction = submitGrades,
+  deleteAction,
+  subjectName,
+  grade,
+  topic,
 }: {
   sessionId: string
   assessments: AssessmentItem[]
@@ -42,10 +61,14 @@ export default function AssessmentList({
   results: GradeResult[]
   createAction?: CreateAction
   submitGradesAction?: SubmitGradesAction
+  deleteAction?: DeleteAction
+  subjectName?: string | null
+  grade?: number | null
+  topic?: string | null
 }) {
-  const [showCreate, setShowCreate] = useState(false)
-  const [activeAssessment, setActiveAssessment] = useState<string | null>(null)
-  const [newTitle, setNewTitle] = useState('')
+  const [showCreate, setShowCreate] = useState(() => initialAssessments.length === 0)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(initialAssessments.map(a => a.id)))
+  const [newTitle, setNewTitle] = useState(() => buildAutoTitle(subjectName, grade, topic, initialAssessments.length + 1))
   const [newDescription, setNewDescription] = useState('')
   const [newMaxScore, setNewMaxScore] = useState(100)
   const [newLinkUrl, setNewLinkUrl] = useState('')
@@ -94,6 +117,15 @@ export default function AssessmentList({
     })
   }
 
+  function toggleExpanded(id: string) {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   function handleSubmitGrades(assessmentId: string, maxScore: number) {
     const rows = students.map(s => {
       const g = getGrade(assessmentId, s.id)
@@ -109,9 +141,17 @@ export default function AssessmentList({
       if (result.error) {
         setError(result.error)
       } else {
-        setActiveAssessment(null)
         setError('')
       }
+    })
+  }
+
+  function handleDelete(assessmentId: string) {
+    if (!deleteAction) return
+    if (!confirm('Hapus asesmen ini? Semua nilai terkait juga akan dihapus.')) return
+    startTransition(async () => {
+      const result = await deleteAction(assessmentId, sessionId)
+      if (result.error) setError(result.error)
     })
   }
 
@@ -119,109 +159,64 @@ export default function AssessmentList({
     results.filter(r => r.assessment_id === assessmentId && r.score !== null).length
 
   return (
-    <div>
-      <button
-        onClick={() => setShowCreate(true)}
-        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium mb-4"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-        Buat Asesmen Baru
-      </button>
-
-      {showCreate && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Asesmen Baru</h3>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Judul asesmen *"
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <textarea
-              placeholder="Deskripsi (opsional)"
-              value={newDescription}
-              onChange={e => setNewDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-            <input
-              type="url"
-              placeholder="Link soal / Google Forms (opsional)"
-              value={newLinkUrl}
-              onChange={e => setNewLinkUrl(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="flex items-center gap-3">
-              <label className="text-xs text-gray-600">Skor Maksimal:</label>
-              <input
-                type="number"
-                min={1}
-                max={1000}
-                value={newMaxScore}
-                onChange={e => setNewMaxScore(Number(e.target.value))}
-                className="w-24 px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-            <div className="flex gap-2">
-              <button
-                onClick={handleCreateAssessment}
-                disabled={isPending || !newTitle.trim()}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
-              >
-                {isPending ? 'Menyimpan...' : 'Simpan'}
-              </button>
-              <button
-                onClick={() => { setShowCreate(false); setError('') }}
-                className="px-4 py-2 bg-white border text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {initialAssessments.length === 0 && !showCreate ? (
-        <div className="text-center py-10 text-sm text-gray-500 bg-white rounded-xl shadow ring-1 ring-gray-900/5">
-          Belum ada asesmen. Klik tombol di atas untuk membuat asesmen baru.
-        </div>
-      ) : (
-        <div className="space-y-3">
+    <div className="space-y-3">
+      {initialAssessments.length > 0 && (
+        <>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Daftar Asesmen</p>
+          <div className="space-y-2">
           {initialAssessments.map(assessment => (
-            <div key={assessment.id} className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
+            <div key={assessment.id} className="border border-slate-200 rounded-xl overflow-hidden">
               <div
                 className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-blue-50/50"
-                onClick={() => setActiveAssessment(
-                  activeAssessment === assessment.id ? null : assessment.id
-                )}
+                onClick={() => toggleExpanded(assessment.id)}
               >
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900">{assessment.title}</p>
                   {assessment.description && (
                     <p className="text-xs text-gray-500 mt-0.5">{assessment.description}</p>
                   )}
-                  {assessment.link_url && (
-                    <a
-                      href={assessment.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="text-xs text-blue-600 hover:underline mt-0.5 inline-flex items-center gap-1"
-                    >
-                      🔗 Buka link soal
-                    </a>
-                  )}
+                  <div className="flex items-center gap-3 mt-1">
+                    {(() => {
+                      const graded = gradedCountByAssessment(assessment.id)
+                      const ungraded = students.length - graded
+                      return (
+                        <span className={`text-xs font-medium ${ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
+                          {ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
+                        </span>
+                      )
+                    })()}
+                    {assessment.link_url && (
+                      <a
+                        href={assessment.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Buka link soal
+                      </a>
+                    )}
+                    {deleteAction && (
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(assessment.id) }}
+                        disabled={isPending}
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors inline-flex items-center gap-1"
+                        title="Hapus asesmen"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Hapus
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span>{gradedCountByAssessment(assessment.id)} / {students.length} dinilai</span>
-                  <span>Maks: {assessment.max_score}</span>
+                <div className="shrink-0 ml-3">
                   <svg
-                    className={`w-4 h-4 transition-transform ${activeAssessment === assessment.id ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-gray-400 transition-transform ${expandedIds.has(assessment.id) ? 'rotate-180' : ''}`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -229,23 +224,23 @@ export default function AssessmentList({
                 </div>
               </div>
 
-              {activeAssessment === assessment.id && (
-                <div className="border-t px-5 py-4">
+              {expandedIds.has(assessment.id) && (
+                <div className="border-t border-slate-200 px-5 py-4">
                   <table className="w-full text-sm mb-4">
                     <thead>
-                      <tr className="text-xs text-gray-500 border-b">
-                        <th className="text-left py-2">Siswa</th>
-                        <th className="text-center py-2 w-28">Nilai (maks {assessment.max_score})</th>
-                        <th className="text-left py-2 pl-3">Komentar</th>
+                      <tr className="text-xs text-gray-400 border-b border-slate-200">
+                        <th className="text-left py-2 pb-3">Siswa</th>
+                        <th className="text-center py-2 pb-3 w-28">Nilai (maks {assessment.max_score})</th>
+                        <th className="text-left py-2 pb-3 pl-3">Komentar</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-300">
+                    <tbody className="[&>tr:first-child>td]:pt-3">
                       {students.map(student => {
                         const g = getGrade(assessment.id, student.id)
                         return (
                           <tr key={student.id}>
-                            <td className="py-2.5 font-medium text-gray-900">{student.full_name}</td>
-                            <td className="py-2.5 text-center">
+                            <td className="py-1.5 font-medium text-gray-900">{student.full_name}</td>
+                            <td className="py-1.5 text-center">
                               <input
                                 type="number"
                                 min={0}
@@ -256,7 +251,7 @@ export default function AssessmentList({
                                 className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                             </td>
-                            <td className="py-2.5 pl-3">
+                            <td className="py-1.5 pl-3">
                               <input
                                 type="text"
                                 value={g.feedback}
@@ -266,6 +261,7 @@ export default function AssessmentList({
                               />
                             </td>
                           </tr>
+
                         )
                       })}
                     </tbody>
@@ -282,7 +278,78 @@ export default function AssessmentList({
               )}
             </div>
           ))}
+          </div>
+        </>
+      )}
+
+      {showCreate ? (
+        <div className="border border-slate-200 rounded-xl p-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Asesmen Baru</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Judul Asesmen <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                placeholder="Judul asesmen"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Deskripsi <span className="text-gray-400">(opsional)</span></label>
+              <textarea
+                placeholder="Deskripsi soal / instruksi"
+                value={newDescription}
+                onChange={e => setNewDescription(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(opsional)</span></label>
+              <input
+                type="url"
+                placeholder="https://forms.google.com/..."
+                value={newLinkUrl}
+                onChange={e => setNewLinkUrl(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-gray-600 shrink-0">Skor Maksimal:</label>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={newMaxScore}
+                onChange={e => setNewMaxScore(Number(e.target.value))}
+                className="w-24 px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+            <button
+              onClick={handleCreateAssessment}
+              disabled={isPending || !newTitle.trim()}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+            >
+              {isPending ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
         </div>
+      ) : (
+        <button
+          onClick={() => {
+            setNewTitle(buildAutoTitle(subjectName, grade, topic, initialAssessments.length + 1))
+            setShowCreate(true)
+          }}
+          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Tambah Asesmen
+        </button>
       )}
     </div>
   )

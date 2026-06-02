@@ -27,6 +27,8 @@ export async function createSession(prevState: ActionState, formData: FormData):
   const time = formData.get('time') as string
   const duration = Number(formData.get('duration_minutes') ?? 90)
   const location = (formData.get('location') as string)?.trim() || null
+  const topic = (formData.get('topic') as string)?.trim() || null
+  const curriculumTopicId = (formData.get('curriculum_topic_id') as string) || null
   const recurrencePattern = (formData.get('recurrence_pattern') as string) || 'none'
   const recurrenceCount = Math.min(Math.max(Number(formData.get('recurrence_count') ?? 1), 1), 52)
   const redirectTo = (formData.get('redirect_to') as string) || null
@@ -49,6 +51,8 @@ export async function createSession(prevState: ActionState, formData: FormData):
       class_id: classId,
       tutor_id: tutorId,
       subject_id: subjectId || null,
+      curriculum_topic_id: curriculumTopicId || null,
+      topic: topic || null,
       scheduled_at: d.toISOString(),
       duration_minutes: duration,
       location,

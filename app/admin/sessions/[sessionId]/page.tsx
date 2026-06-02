@@ -5,7 +5,7 @@ import { updateSession } from '@/lib/actions/admin/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { savePerformanceNoteAdmin } from '@/lib/actions/admin/notes'
-import { createAssessmentAdmin, submitGradesAdmin } from '@/lib/actions/admin/assessments'
+import { createAssessmentAdmin, submitGradesAdmin, deleteAssessmentAdmin } from '@/lib/actions/admin/assessments'
 import { deleteMaterialAdmin, getSignedUrlAdmin } from '@/lib/actions/admin/materials'
 import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
 import SessionHeader from '@/components/admin/sessions/SessionHeader'
@@ -32,6 +32,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           id: string; scheduled_at: string; duration_minutes: number
           location: string | null; status: string; topic: string | null
           curriculum_topic_id: string | null
+          selected_cp_ids: string[]
+          cp_urls: Record<string, string>
           class_id: string; tutor_id: string; subject_id: string | null
           classes: { id: string; name: string; level: string | null } | null
           profiles: { full_name: string; email: string } | null
@@ -62,10 +64,10 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   ] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, profiles(id, full_name)')
+      .select('student_id, profiles(id, full_name, grade, avatar_url)')
       .eq('class_id', session.class_id)
       .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: { id: string; full_name: string } | null }[] | null
+        data: { student_id: string; profiles: { id: string; full_name: string; grade: number | null; avatar_url: string | null } | null }[] | null
       }>,
     admin
       .from('attendances')
@@ -95,7 +97,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           .from('curriculum_topics')
           .select('id, grade_level, semester, theme, topic, learning_outcomes')
           .eq('subject_id', session.subject_id)
-          .order('grade_level').order('semester').order('sort_order') as unknown as Promise<{
+          .order('sort_order') as unknown as Promise<{
             data: {
               id: string; grade_level: string; semester: number
               theme: string | null; topic: string; learning_outcomes: string | null
@@ -115,6 +117,21 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   if (freshSession) session.status = freshSession.status
 
   const date = new Date(session.scheduled_at)
+
+  // Derive grade from enrolled students (mode of their grades)
+  const enrolledGrades = (classStudents ?? [])
+    .map(cs => cs.profiles?.grade)
+    .filter((g): g is number => g != null)
+  const sessionGrade = enrolledGrades.length > 0
+    ? enrolledGrades.sort((a, b) =>
+        enrolledGrades.filter(v => v === b).length - enrolledGrades.filter(v => v === a).length
+      )[0]
+    : null
+
+  // Filter by grade only — semester grouping is shown in the dropdown itself
+  const filteredCurriculumTopics = (curriculumTopics ?? []).filter(t =>
+    sessionGrade == null || t.grade_level === `Kelas ${sessionGrade}`
+  )
   const dateStr = date.toISOString().split('T')[0]
   const timeStr = date.toTimeString().slice(0, 5)
   const updateWithId = updateSession.bind(null, sessionId)
@@ -136,6 +153,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
     return {
       id: sid,
       full_name: profile?.full_name ?? 'Siswa',
+      avatar_url: profile?.avatar_url ?? null,
       currentStatus: (attendanceMap[cs.student_id]?.status ?? 'absent') as AttendanceStatus,
       attendanceNotes: attendanceMap[cs.student_id]?.notes ?? '',
       existingNote: noteMap[sid] ?? null,
@@ -205,12 +223,18 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             assessmentStudents={students.map(s => ({ id: s.id, full_name: s.full_name }))}
             results={results ?? []}
             curriculumTopicId={session.curriculum_topic_id ?? null}
-            curriculumTopics={curriculumTopics ?? []}
+            curriculumTopics={filteredCurriculumTopics}
+            hasSubject={!!session.subject_id}
+            selectedCpIds={session.selected_cp_ids ?? []}
+            cpUrls={session.cp_urls ?? {}}
+            subjectName={session.subjects?.name ?? null}
+            grade={sessionGrade}
             materialUploader={<MaterialUploaderAdmin sessionId={sessionId} />}
             submitAttendanceAction={submitAttendanceAdmin}
             saveNoteAction={savePerformanceNoteAdmin}
             createAssessmentAction={createAssessmentAdmin}
             submitGradesAction={submitGradesAdmin}
+            deleteAssessmentAction={deleteAssessmentAdmin}
             deleteMaterialAction={deleteMaterialAdmin}
             signedUrlAction={getSignedUrlAdmin}
           />

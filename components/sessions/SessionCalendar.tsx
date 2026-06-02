@@ -14,6 +14,7 @@ interface SessionCalendarProps {
   sessions: SessionEvent[]
   year: number
   month: number // 0-indexed
+  navBase?: string // base URL for prev/next navigation, defaults to /admin/sessions
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -30,7 +31,7 @@ const MONTHS = [
   'Juli','Agustus','September','Oktober','November','Desember',
 ]
 
-export default function SessionCalendar({ sessions, year, month }: SessionCalendarProps) {
+export default function SessionCalendar({ sessions, year, month, navBase = '/admin/sessions' }: SessionCalendarProps) {
   const today = new Date()
 
   // Build day grid
@@ -63,7 +64,7 @@ export default function SessionCalendar({ sessions, year, month }: SessionCalend
       {/* Calendar header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <Link
-          href={`/admin/sessions?year=${prevMonth.y}&month=${prevMonth.m}`}
+          href={`${navBase}?year=${prevMonth.y}&month=${prevMonth.m}`}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +75,7 @@ export default function SessionCalendar({ sessions, year, month }: SessionCalend
           {MONTHS[month]} {year}
         </h2>
         <Link
-          href={`/admin/sessions?year=${nextMonth.y}&month=${nextMonth.m}`}
+          href={`${navBase}?year=${nextMonth.y}&month=${nextMonth.m}`}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

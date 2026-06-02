@@ -38,10 +38,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }>,
     admin
       .from('class_students')
-      .select('student_id, profiles!student_id(id, full_name, email)')
+      .select('student_id, profiles!student_id(id, full_name, email, grade)')
       .eq('class_id', classId)
       .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: Profile | null }[] | null
+        data: { student_id: string; profiles: (Profile & { grade: number | null }) | null }[] | null
       }>,
     admin
       .from('sessions')
@@ -94,22 +94,43 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
 
   // Check which sessions have graded assessments
   const sessionIds = (sessions ?? []).map(s => s.id)
-  const { data: gradedData } = sessionIds.length > 0
-    ? await admin
-        .from('assessments')
-        .select('session_id, assessment_results(count)')
-        .in('session_id', sessionIds) as unknown as {
-          data: { session_id: string; assessment_results: CountRow }[] | null
-        }
-    : { data: null }
+  const subjectIds = (cls.class_subjects ?? []).map(cs => cs.subject_id).filter(Boolean)
+
+  const [{ data: gradedData }, { data: curriculumTopics }] = await Promise.all([
+    sessionIds.length > 0
+      ? admin
+          .from('assessments')
+          .select('session_id, assessment_results(count)')
+          .in('session_id', sessionIds) as unknown as {
+            data: { session_id: string; assessment_results: CountRow }[] | null
+          }
+      : Promise.resolve({ data: null }),
+    subjectIds.length > 0
+      ? admin
+          .from('curriculum_topics')
+          .select('id, subject_id, grade_level, semester, theme, topic')
+          .in('subject_id', subjectIds)
+          .order('grade_level').order('semester').order('sort_order') as unknown as {
+            data: { id: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string | null }[] | null
+          }
+      : Promise.resolve({ data: null }),
+  ])
 
   const gradedSessionIds = (gradedData ?? [])
     .filter(a => (a.assessment_results[0]?.count ?? 0) > 0)
     .map(a => a.session_id)
 
-  const enrolledStudents: Profile[] = (enrolled ?? [])
-    .map(e => e.profiles)
-    .filter((p): p is Profile => p !== null)
+  // Derive most common grade from enrolled students
+  type ProfileWithGrade = Profile & { grade: number | null }
+  const enrolledWithGrade = (enrolled ?? []).map(e => e.profiles).filter((p): p is ProfileWithGrade => p !== null)
+  const grades = enrolledWithGrade.map(p => p.grade).filter((g): g is number => g != null)
+  const studentGrade = grades.length > 0
+    ? (grades.sort((a, b) =>
+        grades.filter(v => v === b).length - grades.filter(v => v === a).length
+      )[0] ?? null)
+    : null
+
+  const enrolledStudents: Profile[] = enrolledWithGrade
 
   return (
     <div>
@@ -204,6 +225,8 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
           subjects={subjects ?? []}
           defaultTutorId={classSlots?.[0]?.tutor_id ?? cls.tutor_id}
           defaultSubjectId={classSlots?.[0]?.subject_ids?.[0] ?? cls.class_subjects?.[0]?.subject_id ?? undefined}
+          curriculumTopics={curriculumTopics ?? []}
+          studentGrade={studentGrade}
         />
       </div>
     </div>

@@ -85,3 +85,19 @@ export async function submitGradesAdmin(assessmentId: string, sessionId: string,
   revalidatePath(`/tutor/sessions/${sessionId}`)
   return { success: true }
 }
+
+export async function deleteAssessmentAdmin(assessmentId: string, sessionId: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('assessments')
+    .delete()
+    .eq('id', assessmentId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  revalidatePath(`/tutor/sessions/${sessionId}`)
+  return { success: true }
+}

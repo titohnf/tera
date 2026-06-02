@@ -6,7 +6,7 @@ import Link from 'next/link'
 export default async function NewSessionPage() {
   const admin = createAdminClient()
 
-  const [{ data: classes }, { data: tutors }, { data: subjects }] = await Promise.all([
+  const [{ data: classes }, { data: tutors }, { data: subjects }, { data: curriculumTopics }] = await Promise.all([
     admin
       .from('classes')
       .select('id, name, level, profiles!tutor_id(full_name)')
@@ -21,6 +21,12 @@ export default async function NewSessionPage() {
       .from('subjects')
       .select('id, name')
       .order('name') as unknown as { data: { id: string; name: string }[] | null },
+    admin
+      .from('curriculum_topics')
+      .select('id, subject_id, grade_level, semester, theme, topic')
+      .order('grade_level').order('semester').order('sort_order') as unknown as {
+        data: { id: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string | null }[] | null
+      },
   ])
 
   return (
@@ -37,6 +43,7 @@ export default async function NewSessionPage() {
           classes={classes ?? []}
           tutors={tutors ?? []}
           subjects={subjects ?? []}
+          curriculumTopics={curriculumTopics ?? []}
         />
       </div>
     </div>

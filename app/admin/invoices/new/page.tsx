@@ -30,7 +30,12 @@ type BillingRateRow = {
   amount: number
 }
 
-export default async function NewInvoicePage() {
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ student_id?: string }>
+}) {
+  const { student_id: initialStudentId } = await searchParams
   const admin = createAdminClient()
 
   const [studentsRes, classesRes, classStudentsRes, billingRatesRes] = await Promise.all([
@@ -67,7 +72,7 @@ export default async function NewInvoicePage() {
         </a>
         <h1 className="text-xl font-semibold text-gray-900">Buat Invoice</h1>
       </div>
-      <InvoiceForm students={students} classes={classes} classStudents={classStudents} billingRates={billingRates} />
+      <InvoiceForm students={students} classes={classes} classStudents={classStudents} billingRates={billingRates} initialStudentId={initialStudentId} />
     </div>
   )
 }

@@ -2,11 +2,14 @@
 
 import { useActionState } from 'react'
 import { updateTutorProfile, changeTutorPassword } from '@/lib/actions/tutor/profile'
+import AvatarUpload from '@/components/AvatarUpload'
+import { uploadAvatar } from '@/lib/actions/avatar'
 
-export default function TutorProfileForm({ fullName, phone, email }: {
+export default function TutorProfileForm({ fullName, phone, email, avatarUrl }: {
   fullName: string
   phone: string
   email: string
+  avatarUrl: string | null
 }) {
   const [profileState, profileAction, profilePending] = useActionState(updateTutorProfile, null)
   const [pwState, pwAction, pwPending] = useActionState(changeTutorPassword, null)
@@ -16,6 +19,9 @@ export default function TutorProfileForm({ fullName, phone, email }: {
       {/* Profile info */}
       <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Informasi Akun</h2>
+        <div className="mb-5 pb-5 border-b border-slate-100">
+          <AvatarUpload currentUrl={avatarUrl} name={fullName || 'Pengguna'} uploadAction={uploadAvatar} />
+        </div>
         <form action={profileAction} className="space-y-3">
           {profileState && 'error' in profileState && (
             <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{profileState.error}</div>

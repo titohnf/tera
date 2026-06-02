@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const admin = createAdminClient()
 
   const [{ data: profile }, { data: subjects }, { data: tutorSubjects }, { data: availability }] = await Promise.all([
-    admin.from('profiles').select('full_name, email, phone').eq('id', user.id).single(),
+    admin.from('profiles').select('full_name, email, phone, avatar_url').eq('id', user.id).single(),
     admin.from('subjects').select('id, name, level').order('name'),
     admin.from('tutor_subjects').select('subject_id, level').eq('tutor_id', user.id),
     admin.from('tutor_availability').select('day_of_week, start_time, end_time').eq('tutor_id', user.id),
@@ -32,6 +32,7 @@ export default async function ProfilePage() {
           fullName={profile?.full_name ?? ''}
           phone={profile?.phone ?? ''}
           email={profile?.email ?? user.email ?? ''}
+          avatarUrl={profile?.avatar_url ?? null}
         />
 
         <TutorSubjectPicker

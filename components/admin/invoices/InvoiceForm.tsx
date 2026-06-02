@@ -45,6 +45,7 @@ interface InvoiceFormProps {
   classes: ClassItem[]
   classStudents: ClassStudent[]
   billingRates: BillingRate[]
+  initialStudentId?: string
 }
 
 const formatRupiah = (amount: number) =>
@@ -66,14 +67,15 @@ function monthsBetween(startStr: string, endStr: string): number {
   return Math.max(1, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1)
 }
 
-export default function InvoiceForm({ students, classes, classStudents, billingRates }: InvoiceFormProps) {
+export default function InvoiceForm({ students, classes, classStudents, billingRates, initialStudentId }: InvoiceFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
+  const initialStudent = initialStudentId ? students.find(s => s.id === initialStudentId) : undefined
   const [selectedClassId, setSelectedClassId] = useState('')
-  const [selectedStudentId, setSelectedStudentId] = useState('')
-  const [studentName, setStudentName] = useState('')
-  const [parentName, setParentName] = useState('')
+  const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId ?? '')
+  const [studentName, setStudentName] = useState(initialStudent?.full_name ?? '')
+  const [parentName, setParentName] = useState(initialStudent?.parent_name ?? '')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [issuedAt, setIssuedAt] = useState(today)
   const [dueDate, setDueDate] = useState(addDays(today, 7))
