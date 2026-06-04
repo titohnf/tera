@@ -93,10 +93,10 @@ export default async function SessionAttendanceDetail({
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500">Siswa</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Catatan</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500">Dicatat</th>
+                <th className="text-left px-5 py-3 text-sm font-semibold text-gray-500">Siswa</th>
+                <th className="text-center px-4 py-3 text-sm font-semibold text-gray-500">Status</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-500">Catatan</th>
+                <th className="text-right px-5 py-3 text-sm font-semibold text-gray-500">Dicatat</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -108,12 +108,12 @@ export default async function SessionAttendanceDetail({
                       {a.profiles?.full_name ?? '—'}
                     </td>
                     <td className="text-center px-4 py-3">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${st.color}`}>
+                      <span className={`text-sm font-semibold px-2.5 py-1 rounded-full ${st.color}`}>
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{a.notes ?? '—'}</td>
-                    <td className="text-right px-5 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-sm">{a.notes ?? '—'}</td>
+                    <td className="text-right px-5 py-3 text-sm text-gray-400">
                       {new Date(a.marked_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                     </td>
                   </tr>

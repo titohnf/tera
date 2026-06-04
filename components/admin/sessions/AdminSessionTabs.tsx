@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { saveSessionCpUrls } from '@/lib/actions/admin/curriculum'
 import SessionTopicEditor from './SessionTopicEditor'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import MaterialList from '@/components/materials/MaterialList'
@@ -53,9 +54,23 @@ const TABS = [
 
 type TabKey = typeof TABS[number]['key']
 
+interface CurriculumTopic {
+  id: string
+  grade_level: string
+  semester: number
+  theme: string | null
+  topic: string
+  learning_outcomes: string | null
+}
+
 export default function AdminSessionTabs({
   sessionId,
   initialTopic,
+  curriculumTopicId,
+  curriculumTopics,
+  selectedCpIds,
+  cpUrls,
+  hasSubject,
   materials,
   students,
   sessionStatus,
@@ -65,6 +80,11 @@ export default function AdminSessionTabs({
 }: {
   sessionId: string
   initialTopic: string | null
+  curriculumTopicId: string | null
+  curriculumTopics: CurriculumTopic[]
+  selectedCpIds: string[]
+  cpUrls: Record<string, string>
+  hasSubject: boolean
   materials: MaterialItem[]
   students: Student[]
   sessionStatus: string
@@ -73,6 +93,22 @@ export default function AdminSessionTabs({
   results: GradeResult[]
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>('topic-materials')
+  const [localCpUrls, setLocalCpUrls] = useState<Record<string, string>>(cpUrls)
+  const [savedCpUrls, setSavedCpUrls] = useState<Record<string, string>>(cpUrls)
+  const [isSavingUrls, startSavingUrls] = useTransition()
+
+  const selectedCpRows = curriculumTopics.filter(t => selectedCpIds.includes(t.id) && t.learning_outcomes)
+  const cpUrlsDirty = selectedCpRows.some(cp => (localCpUrls[cp.id] ?? '') !== (savedCpUrls[cp.id] ?? ''))
+
+  function saveCpUrls() {
+    const urlsToSave = Object.fromEntries(
+      selectedCpRows.map(cp => [cp.id, (localCpUrls[cp.id] ?? '').trim()]).filter(([, v]) => v)
+    )
+    startSavingUrls(async () => {
+      await saveSessionCpUrls(sessionId, urlsToSave)
+      setSavedCpUrls(prev => ({ ...prev, ...urlsToSave }))
+    })
+  }
 
   return (
     <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
@@ -99,7 +135,14 @@ export default function AdminSessionTabs({
           <div className="space-y-6">
             <div>
               <h2 className="text-sm font-semibold text-gray-700 mb-3">Topik Pembelajaran</h2>
-              <SessionTopicEditor sessionId={sessionId} initialTopicId={null} initialTopic={initialTopic} curriculumTopics={[]} />
+              <SessionTopicEditor
+                sessionId={sessionId}
+                initialTopicId={curriculumTopicId}
+                initialTopic={initialTopic}
+                initialCpIds={selectedCpIds}
+                curriculumTopics={curriculumTopics}
+                hasSubject={hasSubject}
+              />
             </div>
             <div className="border-t pt-6">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">
@@ -141,16 +184,51 @@ export default function AdminSessionTabs({
           </div>
         )}
 
-        {/* Asesmen */}
+        {/* Asesmen & Bank Soal */}
         {activeTab === 'assessment' && (
-          <AssessmentList
-            sessionId={sessionId}
-            assessments={assessments}
-            students={assessmentStudents}
-            results={results}
-            createAction={createAssessmentAdmin}
-            submitGradesAction={submitGradesAdmin}
-          />
+          <div className="space-y-8">
+            <AssessmentList
+              sessionId={sessionId}
+              assessments={assessments}
+              students={assessmentStudents}
+              results={results}
+              createAction={createAssessmentAdmin}
+              submitGradesAction={submitGradesAdmin}
+            />
+
+            {selectedCpRows.length > 0 && (
+              <div className="border-t pt-6">
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">Bank Soal per CP</h2>
+                <div className="space-y-3">
+                  {selectedCpRows.map(cp => (
+                    <div key={cp.id} className="space-y-1">
+                      <p className="text-xs font-medium text-gray-500 truncate">{cp.learning_outcomes}</p>
+                      <input
+                        type="url"
+                        value={localCpUrls[cp.id] ?? ''}
+                        onChange={e => setLocalCpUrls(prev => ({ ...prev, [cp.id]: e.target.value }))}
+                        placeholder="URL Bank Soal"
+                        className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={saveCpUrls}
+                    disabled={!cpUrlsDirty || isSavingUrls}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {isSavingUrls ? 'Menyimpan...' : 'Simpan Bank Soal'}
+                  </button>
+                  {!cpUrlsDirty && Object.values(savedCpUrls).some(v => v) && (
+                    <span className="text-xs text-green-600">Tersimpan</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

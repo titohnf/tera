@@ -15,7 +15,9 @@ type StudentProfile = {
   role: string | null
   level: string | null
   grade: string | null
+  nickname: string | null
   created_at: string
+  is_active: boolean
 }
 
 type ClassStudentRow = {
@@ -119,10 +121,11 @@ export default async function SiswaPage({
     { data: sessionsRaw },
     classDetailsResult,
     recentSessionsResult,
+    firstSessionsResult,
   ] = await Promise.all([
     admin
       .from('profiles')
-      .select('id, full_name, email, phone, role, level, grade, created_at')
+      .select('id, full_name, email, phone, role, level, grade, nickname, created_at, is_active')
       .eq('role', 'student')
       .order('created_at', { ascending: false })
       .limit(300),
@@ -156,7 +159,14 @@ export default async function SiswaPage({
       .select('class_id, scheduled_at')
       .eq('status', 'completed')
       .order('scheduled_at', { ascending: false })
-      .limit(600) as unknown as Promise<{ data: RecentSessionRow[] | null }>,
+      .limit(5000) as unknown as Promise<{ data: RecentSessionRow[] | null }>,
+
+    admin
+      .from('sessions')
+      .select('class_id, scheduled_at')
+      .eq('status', 'completed')
+      .order('scheduled_at', { ascending: true })
+      .limit(5000) as unknown as Promise<{ data: RecentSessionRow[] | null }>,
 
   ])
 
@@ -181,6 +191,7 @@ export default async function SiswaPage({
   const sessions: SessionRow[] = (sessionsRaw ?? []) as SessionRow[]
   const classDetailsRaw: ClassDetailRow[] = classDetailsResult.data ?? []
   const recentSessionsRaw: RecentSessionRow[] = recentSessionsResult.data ?? []
+  const firstSessionsRaw: RecentSessionRow[] = firstSessionsResult.data ?? []
 
   // ── Build lookup structures ─────────────────────────────────────────────────
 
@@ -223,6 +234,11 @@ export default async function SiswaPage({
     if (!classLastSessionMap.has(s.class_id)) classLastSessionMap.set(s.class_id, s.scheduled_at)
   }
 
+  const classFirstSessionMap = new Map<string, string>()
+  for (const s of firstSessionsRaw) {
+    if (!classFirstSessionMap.has(s.class_id)) classFirstSessionMap.set(s.class_id, s.scheduled_at)
+  }
+
   // ── Compute metrics ─────────────────────────────────────────────────────────
 
   const totalStudents = students.length
@@ -253,18 +269,18 @@ export default async function SiswaPage({
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  function getStudentStatus(id: string): 'aktif' | 'butuh-perhatian' | 'non-aktif' | 'tanpa-kelas' {
-    if (!anyEnrollmentSet.has(id)) return 'tanpa-kelas'
-    if (!activeEnrollmentSet.has(id)) return 'non-aktif'
-    // Aktif tapi layanan bermasalah → butuh perhatian
-    const result = criticalResultMap.get(id)
-    if (result?.isCritical) {
-      const codes = new Set(result.criticalConditions.map(c => c.code))
-      if (codes.has('KC-04') || codes.has('KL-02') || codes.has('KL-03')) {
-        return 'butuh-perhatian'
-      }
-    }
-    return 'aktif'
+  function getStudentLastSession(id: string): string | null {
+    const classIds = allEnrollmentsByStudent.get(id) ?? []
+    const dates = classIds.map(cid => classLastSessionMap.get(cid)).filter((d): d is string => !!d)
+    if (dates.length === 0) return null
+    return dates.reduce((a, b) => (a > b ? a : b))
+  }
+
+  function getStudentStatus(id: string): 'aktif' | 'non-aktif' | 'menunggu' {
+    const student = students.find(s => s.id === id)
+    if (!student?.is_active) return 'non-aktif'
+    if (activeEnrollmentSet.has(id)) return 'aktif'
+    return 'menunggu'
   }
 
   function getStudentClassInfo(id: string): { name: string; level: string | null; tutorName: string | null } | null {
@@ -273,24 +289,29 @@ export default async function SiswaPage({
     return classDetailMap.get(classIds[0]) ?? null
   }
 
-  function getStudentLastSession(id: string): string | null {
-    const classIds = allEnrollmentsByStudent.get(id) ?? []
-    const dates = classIds.map(cid => classLastSessionMap.get(cid)).filter((d): d is string => !!d)
-    if (dates.length === 0) return null
-    return dates.reduce((a, b) => (a > b ? a : b))
-  }
-
   function formatShortDate(iso: string): string {
     return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  }
+
+  function getStudentMonthsJoined(id: string): string | null {
+    const classIds = allEnrollmentsByStudent.get(id) ?? []
+    const dates = classIds.map(cid => classFirstSessionMap.get(cid)).filter((d): d is string => !!d)
+    if (dates.length === 0) return null
+    const first = dates.reduce((a, b) => (a < b ? a : b))
+    const months = Math.floor((now.getTime() - new Date(first).getTime()) / (30.44 * 86400000))
+    if (months < 1) return '< 1 bln'
+    if (months < 12) return `${months} bln`
+    const y = Math.floor(months / 12)
+    const m = months % 12
+    return m === 0 ? `${y} thn` : `${y} thn ${m} bln`
   }
 
   // ── Status counts ────────────────────────────────────────────────────────────
 
   const statusCounts = {
-    aktif: students.filter(s => getStudentStatus(s.id) === 'aktif').length,
-    'butuh-perhatian': students.filter(s => getStudentStatus(s.id) === 'butuh-perhatian').length,
+    aktif:     students.filter(s => getStudentStatus(s.id) === 'aktif').length,
+    menunggu:  students.filter(s => getStudentStatus(s.id) === 'menunggu').length,
     'non-aktif': students.filter(s => getStudentStatus(s.id) === 'non-aktif').length,
-    'tanpa-kelas': students.filter(s => getStudentStatus(s.id) === 'tanpa-kelas').length,
   }
 
   // ── Filter ──────────────────────────────────────────────────────────────────
@@ -342,11 +363,23 @@ export default async function SiswaPage({
       const cmp = (getStudentClassInfo(a.id)?.name ?? '').localeCompare(getStudentClassInfo(b.id)?.name ?? '', 'id')
       return sortDir === 'desc' ? -cmp : cmp
     })
-  } else if (sortCol === 'sesi') {
+  } else if (sortCol === 'jenjang') {
     nonCritical.sort((a, b) => {
-      const sa = getStudentLastSession(a.id) ?? ''
-      const sb = getStudentLastSession(b.id) ?? ''
-      return sortDir === 'desc' ? sb.localeCompare(sa) : sa.localeCompare(sb)
+      const ja = [a.grade, a.level].filter(Boolean).join(' ')
+      const jb = [b.grade, b.level].filter(Boolean).join(' ')
+      const cmp = ja.localeCompare(jb, 'id')
+      return sortDir === 'desc' ? -cmp : cmp
+    })
+  } else if (sortCol === 'bergabung') {
+    nonCritical.sort((a, b) => {
+      const getFirst = (id: string) => {
+        const classIds = allEnrollmentsByStudent.get(id) ?? []
+        const dates = classIds.map(cid => classFirstSessionMap.get(cid)).filter((d): d is string => !!d)
+        return dates.length > 0 ? dates.reduce((x, y) => (x < y ? x : y)) : ''
+      }
+      const fa = getFirst(a.id)
+      const fb = getFirst(b.id)
+      return sortDir === 'desc' ? fb.localeCompare(fa) : fa.localeCompare(fb)
     })
   } else if (sortCol === 'status') {
     nonCritical.sort((a, b) => {
@@ -356,10 +389,10 @@ export default async function SiswaPage({
   }
   // default (no sort): terbaru dari DB
 
-  const tanpaKelasSorted = nonCritical.filter(s => getStudentStatus(s.id) === 'tanpa-kelas')
-  const restSorted = nonCritical.filter(s => getStudentStatus(s.id) !== 'tanpa-kelas')
+  const menungguSorted = nonCritical.filter(s => getStudentStatus(s.id) === 'menunggu')
+  const restSorted = nonCritical.filter(s => getStudentStatus(s.id) !== 'menunggu')
 
-  filtered = [...criticalSorted, ...tanpaKelasSorted, ...restSorted]
+  filtered = [...criticalSorted, ...restSorted, ...menungguSorted]
 
   const totalFiltered = filtered.length
   const totalPages = Math.ceil(totalFiltered / PAGE_SIZE)
@@ -439,7 +472,7 @@ export default async function SiswaPage({
             Export CSV
           </a>
           <Link
-            href="/admin/users/new"
+            href="/admin/users/new?from=siswa"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -451,47 +484,26 @@ export default async function SiswaPage({
       </div>
 
       {/* Status cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {([
-          { key: 'aktif', label: 'Aktif', color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500' },
-          { key: 'butuh-perhatian', label: 'Butuh Perhatian', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500' },
-          { key: 'non-aktif', label: 'Non-aktif', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200', dot: 'bg-gray-400' },
-          { key: 'tanpa-kelas', label: 'Belum di Kelas', color: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200', dot: 'bg-yellow-400' },
-        ] as const).map(({ key, label, color, bg, border, dot }) => {
-          const count = statusCounts[key]
-          const filterUrl = buildStatusUrl(key)
-          return (
-            <a
-              key={key}
-              href={filterUrl}
-              className={`flex flex-col gap-2 p-4 rounded-xl border ${bg} ${border} hover:opacity-80 transition-opacity cursor-pointer`}
-            >
-              <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-                <p className={`text-xs font-semibold uppercase tracking-wide ${color}`}>{label}</p>
-              </div>
-              <p className={`text-3xl font-bold leading-none ${color}`}>{count}</p>
-              <p className="text-xs text-gray-400">dari {totalStudents} siswa</p>
-            </a>
-          )
-        })}
-      </div>
-
-      {/* Retensi Siswa & Churn Rate */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Retensi</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2 p-4 rounded-xl border bg-blue-50 border-blue-200">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Retensi Siswa</p>
-            <p className="text-3xl font-bold leading-none text-blue-700">{retentionRate}%</p>
-            <p className="text-xs text-gray-400">{activeCount} dari {totalEverEnrolled} pernah aktif</p>
-          </div>
-          <div className="flex flex-col gap-2 p-4 rounded-xl border bg-gray-50 border-gray-200">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Churn Rate</p>
-            <p className="text-3xl font-bold leading-none text-gray-600">{churnRate}%</p>
-            <p className="text-xs text-gray-400">{totalEverEnrolled - activeCount} siswa non-aktif</p>
-          </div>
-        </div>
+          { key: 'aktif',      label: 'Aktif',      dot: 'bg-green-500', tooltip: 'Terdaftar di kelas aktif dan memiliki sesi' },
+          { key: 'menunggu',   label: 'Menunggu',   dot: 'bg-yellow-400', tooltip: 'Belum ada kelas atau sesi aktif' },
+          { key: 'non-aktif',  label: 'Non-aktif',  dot: 'bg-gray-400',  tooltip: 'Dinonaktifkan oleh admin' },
+        ] as const).map(({ key, label, dot, tooltip }) => (
+          <a
+            key={key}
+            href={buildStatusUrl(key)}
+            title={tooltip}
+            className="bg-white border border-slate-200 rounded-xl p-3 hover:border-slate-300 transition-colors"
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-snug">{label}</p>
+            </div>
+            <p className="text-2xl font-semibold leading-none text-gray-900">{statusCounts[key]}</p>
+            <p className="text-xs text-gray-500 mt-1">dari {totalStudents} siswa</p>
+          </a>
+        ))}
       </div>
 
       {/* Search + Filters */}
@@ -527,14 +539,19 @@ export default async function SiswaPage({
                       Nama<SortIcon col="nama" />
                     </a>
                   </th>
-                  <th className="px-4 py-3 text-left hidden md:table-cell">
-                    <a href={sortUrl('kelas')} className="inline-flex items-center hover:text-gray-700">
-                      Kelas<SortIcon col="kelas" />
+                  <th className="px-4 py-3 text-left hidden lg:table-cell">
+                    <a href={sortUrl('jenjang')} className="inline-flex items-center hover:text-gray-700">
+                      Jenjang<SortIcon col="jenjang" />
                     </a>
                   </th>
-                  <th className="px-4 py-3 text-left hidden sm:table-cell">
-                    <a href={sortUrl('sesi')} className="inline-flex items-center hover:text-gray-700">
-                      Sesi<SortIcon col="sesi" />
+                  <th className="px-4 py-3 text-left hidden md:table-cell">
+                    <a href={sortUrl('kelas')} className="inline-flex items-center hover:text-gray-700">
+                      Kelompok<SortIcon col="kelas" />
+                    </a>
+                  </th>
+                  <th className="px-4 py-3 text-left hidden lg:table-cell">
+                    <a href={sortUrl('bergabung')} className="inline-flex items-center hover:text-gray-700">
+                      Bergabung<SortIcon col="bergabung" />
                     </a>
                   </th>
                   <th className="px-4 py-3 text-left">
@@ -551,6 +568,7 @@ export default async function SiswaPage({
                   const studentStatus = getStudentStatus(s.id)
                   const classInfo = getStudentClassInfo(s.id)
                   const lastSession = getStudentLastSession(s.id)
+                  const monthsJoined = getStudentMonthsJoined(s.id)
 
                   const isActive = activeEnrollmentSet.has(s.id)
                   const hasSessionThisMonth = studentsWithSessionSet.has(s.id)
@@ -558,23 +576,23 @@ export default async function SiswaPage({
                   const nextDate = studentNextSessionMap.get(s.id) ?? null
 
                   const STATUS_BADGE = {
-                    aktif: 'bg-green-100 text-green-700',
-                    'butuh-perhatian': 'bg-red-100 text-red-700',
+                    aktif:       'bg-green-100 text-green-700',
+                    menunggu:    'bg-yellow-100 text-yellow-700',
                     'non-aktif': 'bg-gray-100 text-gray-500',
-                    'tanpa-kelas': 'bg-yellow-100 text-yellow-700',
                   }
                   const STATUS_LABEL = {
-                    aktif: 'Aktif',
-                    'butuh-perhatian': 'Butuh Perhatian',
+                    aktif:       'Aktif',
+                    menunggu:    'Menunggu',
                     'non-aktif': 'Non-aktif',
-                    'tanpa-kelas': 'Belum di Kelas',
                   }
 
                   return (
                     <tr
                       key={s.id}
-                      className={`hover:bg-slate-50 transition-colors cursor-pointer border-l-[3px] ${
-                        isCritical ? 'border-l-[#DC2626]' : studentStatus === 'tanpa-kelas' ? 'border-l-yellow-400' : 'border-l-transparent'
+                      className={`transition-colors cursor-pointer border-l-[3px] ${
+                        isCritical
+                          ? 'bg-red-50/40 hover:bg-red-50 border-l-[#DC2626]'
+                          : 'hover:bg-slate-50 border-l-transparent'
                       }`}
                     >
                       {/* Nama */}
@@ -585,35 +603,37 @@ export default async function SiswaPage({
                               {getInitials(s.full_name)}
                             </span>
                           </div>
-                          <p className="font-medium text-gray-900 truncate">
-                            {s.full_name ?? '(tanpa nama)'}
-                          </p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">
+                              {s.full_name ?? '(tanpa nama)'}
+                            </p>
+                            {s.nickname && (
+                              <p className="text-xs text-gray-400 truncate">{s.nickname}</p>
+                            )}
+                          </div>
                         </Link>
                       </td>
 
-                      {/* Kelas */}
+                      {/* Jenjang */}
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <Link href={studentHref(s.id, s.full_name)} className="block text-sm text-gray-700">
+                          {[s.grade, s.level].filter(Boolean).join(' ') || '—'}
+                        </Link>
+                      </td>
+
+                      {/* Kelompok */}
                       <td className="px-4 py-3 hidden md:table-cell">
                         <Link href={studentHref(s.id, s.full_name)} className="block">
                           <span className="text-gray-700 truncate block max-w-[180px]">
                             {classInfo?.name ?? '—'}
                           </span>
-                          {(s.grade || s.level || classInfo?.level) && (
-                            <span className="text-xs text-gray-400">
-                              {[s.grade, s.level ?? classInfo?.level].filter(Boolean).join(' ')}
-                            </span>
-                          )}
                         </Link>
                       </td>
 
-                      {/* Sesi */}
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <Link href={studentHref(s.id, s.full_name)} className="block">
-                          <span className="text-xs text-gray-600">
-                            Terakhir: {lastSession ? formatShortDate(lastSession) : '—'}
-                          </span>
-                          <span className="block text-xs text-gray-400 mt-0.5">
-                            Berikutnya: {nextDate && nextDate > now ? formatShortDate(nextDate.toISOString()) : 'Belum ada'}
-                          </span>
+                      {/* Bergabung */}
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <Link href={studentHref(s.id, s.full_name)} className="block text-sm text-gray-600">
+                          {monthsJoined ?? '—'}
                         </Link>
                       </td>
 
@@ -644,7 +664,7 @@ export default async function SiswaPage({
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-gray-500">
               {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, totalFiltered)} dari {totalFiltered} siswa
             </p>
             <div className="flex items-center gap-1">

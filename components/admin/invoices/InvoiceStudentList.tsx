@@ -173,8 +173,8 @@ export default function InvoiceStudentList({ groups }: { groups: StudentGroup[] 
                         <div className="flex items-center gap-3 shrink-0">
                           {hasInvoice && enrollment.latest_invoice_total !== null && (
                             <div className="text-right hidden sm:block">
-                              <p className="text-[11px] text-gray-400">Tagihan</p>
-                              <p className="text-xs font-semibold text-gray-700">
+                              <p className="text-sm text-gray-400">Tagihan</p>
+                              <p className="text-sm font-semibold text-gray-700">
                                 {formatRupiah(enrollment.latest_invoice_total)}
                               </p>
                             </div>

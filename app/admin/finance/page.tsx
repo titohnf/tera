@@ -146,11 +146,11 @@ export default async function FinancePage({
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500">Tutor</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Sesi</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Total</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-green-600">Lunas</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-orange-500">Pending</th>
+                <th className="text-left px-5 py-3 text-sm font-semibold text-gray-500">Tutor</th>
+                <th className="text-center px-4 py-3 text-sm font-semibold text-gray-500">Sesi</th>
+                <th className="text-right px-4 py-3 text-sm font-semibold text-gray-500">Total</th>
+                <th className="text-right px-4 py-3 text-sm font-semibold text-green-600">Lunas</th>
+                <th className="text-right px-5 py-3 text-sm font-semibold text-orange-500">Pending</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -170,11 +170,11 @@ export default async function FinancePage({
             </tbody>
             <tfoot className="border-t bg-gray-50">
               <tr>
-                <td className="px-5 py-3 text-xs font-semibold text-gray-600">Total</td>
-                <td className="text-center px-4 py-3 text-xs font-semibold text-gray-600">{allPayments.length}</td>
-                <td className="text-right px-4 py-3 text-xs font-semibold text-gray-800">{formatRupiah(totalExpense)}</td>
-                <td className="text-right px-4 py-3 text-xs font-semibold text-green-600">{formatRupiah(totalPaid)}</td>
-                <td className="text-right px-5 py-3 text-xs font-semibold text-orange-500">{formatRupiah(totalPending)}</td>
+                <td className="px-5 py-3 text-sm font-semibold text-gray-600">Total</td>
+                <td className="text-center px-4 py-3 text-sm font-semibold text-gray-600">{allPayments.length}</td>
+                <td className="text-right px-4 py-3 text-sm font-semibold text-gray-800">{formatRupiah(totalExpense)}</td>
+                <td className="text-right px-4 py-3 text-sm font-semibold text-green-600">{formatRupiah(totalPaid)}</td>
+                <td className="text-right px-5 py-3 text-sm font-semibold text-orange-500">{formatRupiah(totalPending)}</td>
               </tr>
             </tfoot>
           </table>

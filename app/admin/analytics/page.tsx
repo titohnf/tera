@@ -24,9 +24,9 @@ function MetricCard({
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4">
-      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className="text-sm text-gray-400 mb-1">{label}</p>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-sm text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -34,9 +34,9 @@ function MetricCard({
 function UnavailableCard({ label, reason }: { label: string; reason: string }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 opacity-60">
-      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className="text-sm text-gray-400 mb-1">{label}</p>
       <p className="text-2xl font-bold text-gray-200">—</p>
-      <p className="text-xs text-gray-400 mt-0.5">{reason}</p>
+      <p className="text-sm text-gray-400 mt-0.5">{reason}</p>
     </div>
   )
 }
@@ -267,7 +267,7 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 mt-2">
+      <p className="text-sm text-gray-400 mt-2">
         Data operasional & akademik dihitung secara real-time. Metrik keuangan berdasarkan invoice yang sudah dibayar di bulan ini.
         Kartu abu-abu menunjukkan metrik yang membutuhkan fitur atau data tambahan untuk diaktifkan.
       </p>

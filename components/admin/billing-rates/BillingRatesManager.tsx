@@ -1,13 +1,25 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import { saveBillingRates, type BillingRate } from '@/lib/actions/admin/billing-rates'
 
 const JENJANG = ['Calistung', 'SD', 'SMP', 'SMA'] as const
 const JENIS = ['Reguler', 'Fokus'] as const
 const TYPES = [
-  { key: 'group' as const, label: 'Kelas Grup', unit: 'Per Bulan', subtitle: 'Lebih dari 1 siswa' },
-  { key: 'private' as const, label: 'Kelas Privat', unit: 'Per Pertemuan', subtitle: '1 siswa' },
+  {
+    key: 'group' as const,
+    label: 'Kelas Grup',
+    unit: 'Per Bulan',
+    subtitle: 'Lebih dari 1 siswa',
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+  },
+  {
+    key: 'private' as const,
+    label: 'Kelas Privat',
+    unit: 'Per Pertemuan',
+    subtitle: '1 siswa',
+    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+  },
 ]
 
 type RateMap = Record<string, number>
@@ -38,127 +50,96 @@ function formatRp(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 }
 
-export default function BillingRatesManager({ periodId, initialRates }: { periodId: string; initialRates: BillingRate[] }) {
+export interface BillingRatesManagerHandle {
+  save: () => Promise<{ error?: string }>
+  cancel: () => void
+}
+
+const BillingRatesManager = forwardRef<
+  BillingRatesManagerHandle,
+  { periodId: string; initialRates: BillingRate[]; editing: boolean }
+>(({ periodId, initialRates, editing }, ref) => {
   const [rateMap, setRateMap] = useState<RateMap>(() => buildRateMap(initialRates))
-  const [editing, setEditing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
-  const [isPending, startTransition] = useTransition()
+
+  useImperativeHandle(ref, () => ({
+    async save() {
+      const res = await saveBillingRates(buildPayload(rateMap), periodId)
+      return res?.error ? { error: res.error } : {}
+    },
+    cancel() {
+      setRateMap(buildRateMap(initialRates))
+    },
+  }), [rateMap, periodId, initialRates])
 
   function updateRate(key: string, value: number) {
     setRateMap(prev => ({ ...prev, [key]: value }))
-    setSaved(false)
-  }
-
-  function handleSave() {
-    setError(null)
-    setSaved(false)
-    startTransition(async () => {
-      const res = await saveBillingRates(buildPayload(rateMap), periodId)
-      if (res?.error) setError(res.error)
-      else { setSaved(true); setEditing(false) }
-    })
-  }
-
-  function handleCancel() {
-    setRateMap(buildRateMap(initialRates))
-    setEditing(false)
-    setError(null)
-    setSaved(false)
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-5">
-        {editing ? (
-          <>
-            <button
-              onClick={handleSave}
-              disabled={isPending}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
-            >
-              {isPending ? 'Menyimpan...' : 'Simpan'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 border text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Batal
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 border text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit Tarif
-          </button>
-        )}
-        {saved && <span className="text-sm text-green-600 font-medium">Tersimpan</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-5">
-        {TYPES.map(({ key: ct, label, unit, subtitle }) => (
-          <div key={ct} className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
-            <div className="px-4 py-3 bg-blue-50 border-b">
-              <p className="text-sm font-semibold text-blue-800">{label}</p>
-              <p className="text-xs text-blue-500">{subtitle}</p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {TYPES.map(({ key: ct, label, unit, subtitle, icon }) => (
+        <div key={ct} className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={icon} />
+              </svg>
             </div>
-
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 w-24">Jenjang</th>
-                  <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500">Jenis</th>
-                  <th className="text-right px-3 py-2.5 text-xs font-medium text-gray-500 w-36">{unit}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-300">
-                {JENJANG.map(jenjang =>
-                  JENIS.filter(jenis => !(jenjang === 'Calistung' && jenis === 'Fokus')).map(jenis => {
-                    const k = `${ct}|${jenjang}|${jenis}`
-                    const rate = rateMap[k] ?? 0
-                    return (
-                      <tr key={k} className="hover:bg-blue-50/40">
-                        <td className="px-4 py-2.5 text-gray-800 font-medium text-xs">{jenjang}</td>
-                        <td className="px-3 py-2.5">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            jenis === 'Fokus'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {jenis === 'Fokus' ? 'Fokus [TKA/US/UTBK/OSN]' : 'Reguler'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-1.5 w-36">
-                          {editing ? (
-                            <input
-                              type="number"
-                              value={rate}
-                              min={0}
-                              step={1000}
-                              onChange={e => updateRate(k, Number(e.target.value))}
-                              className="w-full px-2.5 py-1.5 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            />
-                          ) : (
-                            <p className={`text-right font-medium text-sm pr-1 ${rate === 0 ? 'text-gray-300' : 'text-gray-800'}`}>
-                              {rate === 0 ? '—' : formatRp(rate)}
-                            </p>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">{label}</p>
+              <p className="text-sm text-gray-400">{subtitle}</p>
+            </div>
           </div>
-        ))}
-      </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-2.5 w-24">Jenjang</th>
+                <th className="text-left px-3 py-2.5">Jenis</th>
+                <th className="text-right px-3 py-2.5 w-36">{unit}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {JENJANG.map(jenjang =>
+                JENIS.filter(jenis => !(jenjang === 'Calistung' && jenis === 'Fokus')).map(jenis => {
+                  const k = `${ct}|${jenjang}|${jenis}`
+                  const rate = rateMap[k] ?? 0
+                  return (
+                    <tr key={k} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-2.5 text-gray-800 font-medium">{jenjang}</td>
+                      <td className="px-3 py-2.5">
+                        <span className={`text-sm px-2 py-0.5 rounded-full font-medium ${
+                          jenis === 'Fokus' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {jenis}
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5 w-36">
+                        {editing ? (
+                          <input
+                            type="number"
+                            value={rate}
+                            min={0}
+                            step={1000}
+                            onChange={e => updateRate(k, Number(e.target.value))}
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+                        ) : (
+                          <p className={`text-right font-medium text-sm pr-1 ${rate === 0 ? 'text-gray-300' : 'text-gray-800'}`}>
+                            {rate === 0 ? '—' : formatRp(rate)}
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      ))}
     </div>
   )
-}
+})
+
+BillingRatesManager.displayName = 'BillingRatesManager'
+export default BillingRatesManager

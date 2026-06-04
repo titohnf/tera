@@ -36,6 +36,7 @@ type DefaultValues = {
   level?: string | null
   class_type?: string | null
   is_active?: boolean
+  status?: string
   slots?: SlotDefault[]
   start_date?: string | null
   end_date?: string | null
@@ -402,6 +403,7 @@ export default function ClassForm({
   }, [suggestedLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (!showStudentPicker) return  // jangan reset nama saat mode edit
     if (effectiveCount === 1) {
       setClassType('private')
       nameManuallyEdited.current = false
@@ -409,7 +411,7 @@ export default function ClassForm({
       setClassType('group')
       nameManuallyEdited.current = false
     }
-  }, [effectiveCount])
+  }, [effectiveCount, showStudentPicker])
 
   // Auto-fill nama unik from selected students (first 3 chars, capitalized)
   useEffect(() => {
@@ -681,14 +683,18 @@ export default function ClassForm({
         )}
       </div>
 
-      {/* ── Active toggle ── */}
+      {/* ── Status ── */}
       {showActiveToggle && (
-        <div className="flex items-center gap-3">
-          <input name="is_active" type="checkbox" id="is_active"
-            defaultChecked={defaultValues?.is_active ?? true}
-            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="is_active" className="text-sm font-medium text-gray-700">Kelas aktif</label>
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">Status Kelas</label>
+          <select
+            name="status"
+            defaultValue={defaultValues?.status ?? 'aktif'}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="aktif">Aktif</option>
+            <option value="selesai">Selesai</option>
+          </select>
         </div>
       )}
 

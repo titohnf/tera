@@ -316,3 +316,178 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
   revalidatePath('/admin/invoices')
   return { id: inserted.id, kuitansiItemIndex: newDeductionIndex ?? null }
 }
+
+// ─── Batch draft generation ────────────────────────────────────────────────────
+
+export async function generateDraftInvoices(
+  month: string
+): Promise<{ generated: number; skipped: number; error?: string }> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { generated: 0, skipped: 0, error: 'Tidak diizinkan' }
+
+  const issuedAt = `${month}-01`
+  const dueDate = addDays(issuedAt, 7)
+  const [year, mon] = month.split('-').map(Number)
+  const nextMonthStr = mon === 12
+    ? `${year + 1}-01-01`
+    : `${year}-${String(mon + 1).padStart(2, '0')}-01`
+
+  // All active enrollments
+  const { data: enrollments } = await ctx.admin
+    .from('class_students')
+    .select(`
+      student_id,
+      class_id,
+      profiles!student_id(full_name, parent_name),
+      classes!class_id(name, level, class_type, start_date, end_date)
+    `)
+    .eq('is_active', true) as unknown as {
+      data: {
+        student_id: string
+        class_id: string
+        profiles: { full_name: string; parent_name: string | null } | null
+        classes: { name: string; level: string | null; class_type: string | null; start_date: string | null; end_date: string | null } | null
+      }[] | null
+    }
+
+  if (!enrollments || enrollments.length === 0) return { generated: 0, skipped: 0 }
+
+  // Invoices already existing this month (skip these)
+  const { data: existing } = await ctx.admin
+    .from('invoices')
+    .select('student_id, class_id')
+    .gte('issued_at', issuedAt)
+    .lt('issued_at', nextMonthStr)
+
+  const existingSet = new Set((existing ?? []).map(i => `${i.student_id}:${i.class_id}`))
+
+  // Private class IDs that need session counts
+  const privateClassIds = [...new Set(
+    enrollments
+      .filter(e => e.classes?.class_type === 'private' && !existingSet.has(`${e.student_id}:${e.class_id}`))
+      .map(e => e.class_id)
+  )]
+
+  // Count scheduled sessions per class for this month (for private billing)
+  const sessionCountByClass = new Map<string, number>()
+  if (privateClassIds.length > 0) {
+    const { data: sessions } = await ctx.admin
+      .from('sessions')
+      .select('class_id')
+      .in('class_id', privateClassIds)
+      .gte('scheduled_at', issuedAt)
+      .lt('scheduled_at', nextMonthStr)
+      .neq('status', 'cancelled')
+
+    for (const s of sessions ?? []) {
+      sessionCountByClass.set(s.class_id, (sessionCountByClass.get(s.class_id) ?? 0) + 1)
+    }
+  }
+
+  // Most recent previous invoice per student+class (for group carry-forward)
+  const { data: prevInvoices } = await ctx.admin
+    .from('invoices')
+    .select('student_id, class_id, total_due, student_name, parent_name, line_items')
+    .lt('issued_at', issuedAt)
+    .order('issued_at', { ascending: false }) as unknown as {
+      data: { student_id: string; class_id: string; total_due: number; student_name: string; parent_name: string; line_items: unknown[] }[] | null
+    }
+
+  const prevMap = new Map<string, { total_due: number; student_name: string; parent_name: string; line_items: unknown[] }>()
+  for (const inv of prevInvoices ?? []) {
+    const key = `${inv.student_id}:${inv.class_id}`
+    if (!prevMap.has(key)) prevMap.set(key, inv)
+  }
+
+  // Active billing rates
+  const { data: rates } = await ctx.admin
+    .from('billing_rates')
+    .select('amount, class_type, jenjang, jenis, billing_rate_periods!inner(is_active)')
+    .eq('billing_rate_periods.is_active', true) as unknown as {
+      data: { amount: number; class_type: string; jenjang: string; jenis: string }[] | null
+    }
+
+  const rateMap = new Map<string, number>()
+  for (const r of rates ?? []) {
+    rateMap.set(`${r.class_type}|${r.jenjang}|${r.jenis}`, r.amount)
+  }
+
+  function getRate(classType: string | null, jenjang: string | null): number {
+    if (!classType || !jenjang) return 0
+    return rateMap.get(`${classType}|${jenjang}|Reguler`) ?? rateMap.get(`${classType}|${jenjang}|Fokus`) ?? 0
+  }
+
+  const toInsert: object[] = []
+  let skipped = 0
+
+  for (const e of enrollments) {
+    const key = `${e.student_id}:${e.class_id}`
+
+    // Skip if already invoiced this month
+    if (existingSet.has(key)) { skipped++; continue }
+
+    const cls = e.classes
+    const isPrivate = cls?.class_type === 'private'
+    const studentName = e.profiles?.full_name ?? ''
+    const parentName = e.profiles?.parent_name ?? ''
+    const prev = prevMap.get(key)
+
+    let lineItems: object[]
+    let totalDue: number
+
+    if (isPrivate) {
+      // Private: fresh invoice every month based on planned sessions
+      const sessionCount = sessionCountByClass.get(e.class_id) ?? 0
+      if (sessionCount === 0) { skipped++; continue } // no sessions planned, skip
+
+      const ratePerSession = getRate(cls?.class_type ?? null, cls?.level ?? null)
+      const description = `Privat${cls?.level ? ` ${cls.level}` : ''} — ${sessionCount} pertemuan`
+      lineItems = [{ description, months: sessionCount, amount: ratePerSession, is_deduction: false }]
+      totalDue = sessionCount * ratePerSession
+
+    } else {
+      // Group: first invoice for full period, then carry forward unpaid balance
+      if (prev) {
+        if (prev.total_due <= 0) { skipped++; continue } // fully paid, skip
+        lineItems = prev.line_items as object[]
+        totalDue = prev.total_due
+      } else {
+        // First invoice: total for full enrollment period
+        const amount = getRate(cls?.class_type ?? null, cls?.level ?? null)
+        const months = cls?.start_date && cls?.end_date
+          ? monthsBetween(cls.start_date, cls.end_date)
+          : 1
+        const description = `Grup${cls?.level ? ` ${cls.level}` : ''} — ${months} bulan`
+        lineItems = [{ description, months, amount, is_deduction: false }]
+        totalDue = months * amount
+      }
+    }
+
+    const invoiceNumber = await generateInvoiceNumber(ctx.admin)
+
+    toInsert.push({
+      invoice_number: invoiceNumber,
+      class_id: e.class_id,
+      student_id: e.student_id,
+      student_name: studentName,
+      parent_name: parentName,
+      line_items: lineItems,
+      total_due: totalDue,
+      payment_method: 'Transfer Bank',
+      bank_account: 'BSI - 7296753275 a.n. Suci Purnama Sari',
+      due_date: dueDate,
+      issued_at: issuedAt,
+      status: 'draft',
+      created_by: ctx.user.id,
+      updated_at: new Date().toISOString(),
+    })
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await ctx.admin.from('invoices').insert(toInsert)
+    if (error) return { generated: 0, skipped: enrollments.length, error: error.message }
+  }
+
+  revalidatePath('/admin/invoices')
+  return { generated: toInsert.length, skipped }
+}

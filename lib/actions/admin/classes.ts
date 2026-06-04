@@ -112,7 +112,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
   const classType = (formData.get('class_type') as string) || null
-  const isActive = formData.get('is_active') === 'on'
+  const status = (formData.get('status') as string) || 'aktif'
+  const isActive = status === 'aktif'
   const slotsJson = (formData.get('slots_json') as string) || '[]'
   const startDate = (formData.get('start_date') as string) || null
   const endDate = (formData.get('end_date') as string) || null
@@ -140,6 +141,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       level,
       class_type: classType,
       is_active: isActive,
+      status,
       schedule_days: scheduleDays,
       schedule_time: slots[0].time || null,
       start_date: startDate,
@@ -289,6 +291,29 @@ function generateSessionsFromSlots(
   }
 
   return sessions
+}
+
+export async function completeClass(classId: string): Promise<void> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return
+
+  // Tolak bila masih ada sesi belum selesai
+  const { count } = await ctx.admin
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('class_id', classId)
+    .in('status', ['scheduled', 'ongoing'])
+
+  if ((count ?? 0) > 0) return
+
+  await ctx.admin
+    .from('classes')
+    .update({ status: 'selesai', is_active: false })
+    .eq('id', classId)
+
+  revalidatePath(`/admin/classes/${classId}`)
+  revalidatePath('/admin/classes')
+  redirect(`/admin/classes/${classId}`)
 }
 
 export async function unenrollStudent(classId: string, studentId: string): Promise<ActionState> {

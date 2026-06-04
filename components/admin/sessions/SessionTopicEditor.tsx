@@ -99,12 +99,7 @@ export default function SessionTopicEditor({
     if (!isDirty) return
     const group = topicGroups.find(g => g.key === selectedGroupKey)
     startTransition(async () => {
-      await updateSessionTopic(
-        sessionId,
-        group?.representativeId ?? null,
-        group?.topicName ?? '',
-        [...selectedCpIds],
-      )
+      await updateSessionTopic(sessionId, group?.representativeId ?? null, group?.topicName ?? '', [...selectedCpIds])
       setSavedGroupKey(selectedGroupKey)
       setSavedCpIds(new Set(selectedCpIds))
     })

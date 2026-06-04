@@ -255,7 +255,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                         <tr className="bg-white border-b border-slate-200">
                           <td
                             onClick={() => onToggleTheme(themeKey)}
-                            className="px-4 py-2.5 text-xs text-gray-400 tabular-nums text-center w-14 border-r border-slate-200 cursor-pointer"
+                            className="px-4 py-2.5 text-sm text-gray-400 tabular-nums text-center w-14 border-r border-slate-200 cursor-pointer"
                           >
                             {themeNum}.
                           </td>
@@ -281,7 +281,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                                     nextNum: existingTopicCount + 1,
                                   })
                                 }}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors whitespace-nowrap"
+                                className="flex items-center gap-1 px-2 py-1 text-sm text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors whitespace-nowrap"
                               >
                                 <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -331,7 +331,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                                 <tr key={`spacer-${topic}`}><td colSpan={2} className="py-1.5" /></tr>
                               )}
                               <tr key={`topic-${topic}`} className="group/topic border-t border-slate-200 bg-slate-50/60">
-                                <td className="px-4 py-2.5 text-xs text-gray-400 text-center tabular-nums w-14 border-r border-slate-200 border-b border-b-slate-200">
+                                <td className="px-4 py-2.5 text-sm text-gray-400 text-center tabular-nums w-14 border-r border-slate-200 border-b border-b-slate-200">
                                   {themeNum}.{topicIdx + 1}
                                 </td>
                                 <td className="px-4 py-2.5 text-sm font-medium text-gray-800 border-b border-slate-200 relative" colSpan={2}>
@@ -360,7 +360,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                               </tr>
                               {rows.filter(item => item.learning_outcomes !== null).map((item, idx) => (
                                 <tr key={item.id} className={`group hover:bg-slate-50/60 transition-colors border-b border-slate-100`}>
-                                  <td className="px-4 py-2.5 text-xs text-gray-400 text-center align-top tabular-nums w-14 border-r border-slate-100">
+                                  <td className="px-4 py-2.5 text-sm text-gray-400 text-center align-top tabular-nums w-14 border-r border-slate-100">
                                     {themeNum}.{topicIdx + 1}.{idx + 1}
                                   </td>
                                   <td className="px-4 py-2.5 text-sm text-gray-700 leading-relaxed align-top relative" colSpan={2}>
@@ -406,7 +406,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                                         nextNum: cpCount + 1,
                                       })
                                     }}
-                                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors py-0.5"
+                                    className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-blue-600 transition-colors py-0.5"
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

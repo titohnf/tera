@@ -181,7 +181,7 @@ export default function InsightBanner({ metrics }: { metrics: InsightMetrics }) 
             >
               <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
               {tab.label}
-              <span className={`text-[10px] font-bold ${isActive ? 'text-gray-300' : 'text-gray-400'}`}>
+              <span className={`text-xs font-bold ${isActive ? 'text-gray-300' : 'text-gray-400'}`}>
                 {count}
               </span>
             </button>

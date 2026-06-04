@@ -111,7 +111,7 @@ export default function GenerateInvoiceList({ rows }: { rows: EnrollmentRow[] })
                       {formatRupiah(row.latest_invoice_total)}
                     </p>
                     {row.latest_invoice_date && (
-                      <p className="text-[11px] text-gray-400">{formatDate(row.latest_invoice_date)}</p>
+                      <p className="text-sm text-gray-400">{formatDate(row.latest_invoice_date)}</p>
                     )}
                   </div>
                 )}

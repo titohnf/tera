@@ -38,7 +38,7 @@ export default function UnenrollButton({ classId, studentId, className }: Props)
             : 'border-slate-200 text-gray-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50'
         }`}
       >
-        {isPending ? 'Memproses...' : confirm ? 'Yakin nonaktifkan?' : 'Nonaktifkan'}
+        {isPending ? 'Memproses...' : confirm ? 'Yakin keluar?' : 'Keluar'}
       </button>
       {confirm && !isPending && (
         <button

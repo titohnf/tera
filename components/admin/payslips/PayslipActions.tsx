@@ -22,13 +22,13 @@ export default function PayslipActions({ payslip }: { payslip: PayslipRow }) {
     })
   }
 
-  if (payslip.status === 'paid') {
+  if (payslip.status === 'sent') {
     return (
       <div className="text-sm text-green-700 flex items-center gap-2">
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
-        Gaji sudah dibayarkan
+        Slip sudah dikirim ke tutor
         {payslip.payment_reference && (
           <span className="text-gray-500 text-xs ml-1">· Ref: {payslip.payment_reference}</span>
         )}
@@ -47,34 +47,6 @@ export default function PayslipActions({ payslip }: { payslip: PayslipRow }) {
       )}
 
       {payslip.status === 'draft' && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => run(() => sendPayslip(payslip.id))}
-            disabled={isPending}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Kirim ke Tutor
-          </button>
-          <button
-            onClick={() => {
-              if (!confirm('Hapus slip gaji draft ini?')) return
-              run(async () => {
-                await deletePayslip(payslip.id)
-                router.push('/admin/payslips')
-              })
-            }}
-            disabled={isPending}
-            className="text-sm text-red-600 hover:underline"
-          >
-            Hapus draft
-          </button>
-        </div>
-      )}
-
-      {payslip.status === 'sent' && (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <input
@@ -95,7 +67,35 @@ export default function PayslipActions({ payslip }: { payslip: PayslipRow }) {
               Tandai Dibayar
             </button>
           </div>
-          <p className="text-xs text-gray-400">Slip sudah terkirim dan dapat dilihat oleh tutor.</p>
+          <button
+            onClick={() => {
+              if (!confirm('Hapus slip gaji draft ini?')) return
+              run(async () => {
+                await deletePayslip(payslip.id)
+                router.push('/admin/payslips')
+              })
+            }}
+            disabled={isPending}
+            className="text-sm text-red-600 hover:underline"
+          >
+            Hapus draft
+          </button>
+        </div>
+      )}
+
+      {payslip.status === 'paid' && (
+        <div className="space-y-2">
+          <button
+            onClick={() => run(() => sendPayslip(payslip.id))}
+            disabled={isPending}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            Kirim Slip ke Tutor
+          </button>
+          <p className="text-xs text-gray-400">Gaji sudah dibayarkan. Kirim slip sebagai bukti ke tutor.</p>
         </div>
       )}
     </div>

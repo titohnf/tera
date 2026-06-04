@@ -25,17 +25,20 @@ export async function createUser(prevState: ActionState, formData: FormData): Pr
   const password = (formData.get('password') as string)
   const phone = (formData.get('phone') as string)?.trim() || null
   const role = formData.get('role') as string
+  const nickname = (formData.get('nickname') as string)?.trim() || null
+  const birthDate = (formData.get('birth_date') as string) || null
   const level = (formData.get('level') as string) || null
   const gradeRaw = (formData.get('grade') as string) || null
   const grade = gradeRaw ? Number(gradeRaw) : null
   const parentName = (formData.get('parent_name') as string)?.trim() || null
+  const parentPhone = (formData.get('parent_phone') as string)?.trim() || null
+  const avatarFile = formData.get('avatar') as File | null
 
   if (!fullName) return { error: 'Nama lengkap wajib diisi' }
   if (!email) return { error: 'Email wajib diisi' }
   if (!password || password.length < 6) return { error: 'Password minimal 6 karakter' }
   if (!['admin', 'tutor', 'student', 'parent'].includes(role)) return { error: 'Role tidak valid' }
 
-  // Creates auth user — trigger auto-creates profile via handle_new_user
   const { data: authData, error: authError } = await ctx.admin.auth.admin.createUser({
     email,
     password,
@@ -45,18 +48,36 @@ export async function createUser(prevState: ActionState, formData: FormData): Pr
 
   if (authError) return { error: authError.message }
 
-  // Update profile with phone, level, grade, parent_name (trigger doesn't include these)
+  const userId = authData.user.id
   const extra: Record<string, string | number | null> = { updated_at: new Date().toISOString() }
   if (phone) extra.phone = phone
+  if (nickname) extra.nickname = nickname
+  if (birthDate) extra.birth_date = birthDate
   if (role === 'student') {
     extra.level = level
     extra.grade = grade
     extra.parent_name = parentName
+    if (parentPhone) extra.parent_phone = parentPhone
   }
-  await ctx.admin.from('profiles').update(extra).eq('id', authData.user.id)
+
+  // Upload avatar if provided
+  if (avatarFile && avatarFile.size > 0) {
+    const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
+    if (ALLOWED.includes(avatarFile.type)) {
+      const ext = avatarFile.type === 'image/webp' ? 'webp' : avatarFile.type === 'image/png' ? 'png' : 'jpg'
+      const path = `${userId}/avatar.${ext}`
+      const { error: uploadErr } = await ctx.admin.storage.from('avatars').upload(path, avatarFile, { upsert: true, contentType: avatarFile.type })
+      if (!uploadErr) {
+        const { data: { publicUrl } } = ctx.admin.storage.from('avatars').getPublicUrl(path)
+        extra.avatar_url = `${publicUrl}?t=${Date.now()}`
+      }
+    }
+  }
+
+  await ctx.admin.from('profiles').update(extra).eq('id', userId)
 
   revalidatePath('/admin/users')
-  redirect(`/admin/users/${authData.user.id}`)
+  redirect(`/admin/users/${userId}`)
 }
 
 export async function updateUser(userId: string, prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -66,30 +87,51 @@ export async function updateUser(userId: string, prevState: ActionState, formDat
   const fullName = (formData.get('full_name') as string)?.trim()
   const phone = (formData.get('phone') as string)?.trim() || null
   const role = formData.get('role') as string
+  const nickname = (formData.get('nickname') as string)?.trim() || null
+  const birthDate = (formData.get('birth_date') as string) || null
   const level = (formData.get('level') as string) || null
   const gradeRaw = (formData.get('grade') as string) || null
   const grade = gradeRaw ? Number(gradeRaw) : null
   const parentName = (formData.get('parent_name') as string)?.trim() || null
+  const parentPhone = (formData.get('parent_phone') as string)?.trim() || null
+  const avatarFile = formData.get('avatar') as File | null
 
   if (!fullName) return { error: 'Nama lengkap wajib diisi' }
   if (!['admin', 'tutor', 'student', 'parent'].includes(role)) return { error: 'Role tidak valid' }
 
+  const updates: Record<string, string | number | null> = {
+    full_name: fullName, phone, role, nickname, birth_date: birthDate || null,
+    level: role === 'student' ? level : null,
+    grade: role === 'student' ? grade : null,
+    parent_name: role === 'student' ? parentName : null,
+    parent_phone: role === 'student' ? (parentPhone || null) : null,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (avatarFile && avatarFile.size > 0) {
+    const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
+    if (ALLOWED.includes(avatarFile.type)) {
+      const ext = avatarFile.type === 'image/webp' ? 'webp' : avatarFile.type === 'image/png' ? 'png' : 'jpg'
+      const path = `${userId}/avatar.${ext}`
+      const { error: uploadErr } = await ctx.admin.storage.from('avatars').upload(path, avatarFile, { upsert: true, contentType: avatarFile.type })
+      if (!uploadErr) {
+        const { data: { publicUrl } } = ctx.admin.storage.from('avatars').getPublicUrl(path)
+        updates.avatar_url = `${publicUrl}?t=${Date.now()}`
+      }
+    }
+  }
+
   const { error } = await ctx.admin
     .from('profiles')
-    .update({
-      full_name: fullName, phone, role,
-      level: role === 'student' ? level : null,
-      grade: role === 'student' ? grade : null,
-      parent_name: role === 'student' ? parentName : null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updates)
     .eq('id', userId)
 
   if (error) return { error: error.message }
 
   revalidatePath(`/admin/users/${userId}`)
   revalidatePath('/admin/users')
-  return null
+  revalidatePath('/admin/siswa')
+  redirect(`/admin/users/${userId}`)
 }
 
 export async function sendPasswordResetEmail(userId: string): Promise<ActionState> {
@@ -105,5 +147,49 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionStat
   })
 
   if (error) return { error: error.message }
+  return null
+}
+
+export async function setStudentIsActive(userId: string, isActive: boolean): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('profiles')
+    .update({ is_active: isActive })
+    .eq('id', userId)
+    .eq('role', 'student')
+
+  if (error) return { error: error.message }
+
+  if (!isActive) {
+    const { error: enrollErr } = await ctx.admin
+      .from('class_students')
+      .update({ is_active: false })
+      .eq('student_id', userId)
+      .eq('is_active', true)
+
+    if (enrollErr) return { error: enrollErr.message }
+  }
+
+  revalidatePath(`/admin/siswa/${userId}`)
+  revalidatePath('/admin/siswa')
+  return null
+}
+
+export async function setTutorIsActive(userId: string, isActive: boolean): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('profiles')
+    .update({ is_active: isActive })
+    .eq('id', userId)
+    .eq('role', 'tutor')
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/admin/users/${userId}`)
+  revalidatePath('/admin/tutor')
   return null
 }

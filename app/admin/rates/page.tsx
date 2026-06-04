@@ -16,16 +16,9 @@ export default async function SessionRatesPage() {
   ])
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Tarif Gaji Tutor</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Standar gaji tutor per sesi — dikelola per periode</p>
-      </div>
-
-      <RatesPageClient
-        periods={(periods ?? []) as RatePeriod[]}
-        allRates={(rates ?? []) as (SessionRate & { period_id: string })[]}
-      />
-    </div>
+    <RatesPageClient
+      periods={(periods ?? []) as RatePeriod[]}
+      allRates={(rates ?? []) as (SessionRate & { period_id: string })[]}
+    />
   )
 }

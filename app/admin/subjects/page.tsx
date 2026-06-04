@@ -21,13 +21,5 @@ export default async function SubjectsPage() {
     classCount: countBySubject[s.id] ?? 0,
   }))
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Mata Pelajaran</h1>
-        <p className="text-sm text-gray-500 mt-1">Kelola daftar mata pelajaran yang tersedia untuk kelas.</p>
-      </div>
-      <SubjectManager subjects={subjectsWithCount} />
-    </div>
-  )
+  return <SubjectManager subjects={subjectsWithCount} />
 }

@@ -68,7 +68,7 @@ export default async function PricingPage() {
                       <span className="text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded">Nonaktif</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm text-gray-500 mt-0.5">
                     {cls.subjects?.name ?? 'Umum'} &bull; {cls.profiles?.full_name ?? '-'}
                   </p>
                 </div>
@@ -76,20 +76,20 @@ export default async function PricingPage() {
                 <div className="flex items-center gap-8 shrink-0 ml-4">
                   {/* Student price */}
                   <div className="text-right">
-                    <p className="text-xs text-gray-400 mb-0.5">Harga siswa</p>
+                    <p className="text-sm text-gray-400 mb-0.5">Harga siswa</p>
                     <p className="text-sm font-semibold text-gray-800">
                       {formatRp(cls.base_price_per_session)}
                     </p>
-                    <p className="text-xs text-gray-400">/ sesi</p>
+                    <p className="text-sm text-gray-400">/ sesi</p>
                   </div>
 
                   {/* Tutor salary */}
                   <div className="text-right">
-                    <p className="text-xs text-gray-400 mb-0.5">Gaji tutor</p>
+                    <p className="text-sm text-gray-400 mb-0.5">Gaji tutor</p>
                     {hasScheme ? (
                       <>
                         <p className="text-sm font-semibold text-gray-800">{formatRp(scheme.base_amount)}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm text-gray-400">
                           {scheme.bonus_type === 'student_count'
                             ? `+ ${formatRp(scheme.bonus_amount)} bonus`
                             : 'tanpa bonus'}
@@ -98,7 +98,7 @@ export default async function PricingPage() {
                     ) : (
                       <>
                         <p className="text-sm font-medium text-amber-600">Belum diatur</p>
-                        <p className="text-xs text-gray-400">–</p>
+                        <p className="text-sm text-gray-400">–</p>
                       </>
                     )}
                   </div>
@@ -117,15 +117,15 @@ export default async function PricingPage() {
       {classes && classes.length > 0 && (
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4">
-            <p className="text-xs text-gray-500">Total Kelas</p>
+            <p className="text-sm text-gray-500">Total Kelas</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{classes.length}</p>
           </div>
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4">
-            <p className="text-xs text-gray-500">Sudah Ada Skema Gaji</p>
+            <p className="text-sm text-gray-500">Sudah Ada Skema Gaji</p>
             <p className="text-2xl font-bold text-green-600 mt-1">{schemes?.length ?? 0}</p>
           </div>
           <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-            <p className="text-xs text-amber-600">Belum Ada Skema Gaji</p>
+            <p className="text-sm text-amber-600">Belum Ada Skema Gaji</p>
             <p className="text-2xl font-bold text-amber-600 mt-1">
               {classes.length - (schemes?.length ?? 0)}
             </p>

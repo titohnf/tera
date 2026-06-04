@@ -56,7 +56,7 @@ export default function CurriculumNav({ subjects, openThemeKey, onThemeClick }: 
                     scrollTo(subjectId)
                     setExpanded(name)
                   }}
-                  className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors leading-snug flex items-center justify-between gap-1 ${
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors leading-snug flex items-center justify-between gap-1 ${
                     isSubjectActive
                       ? 'bg-blue-50 text-blue-600 font-medium'
                       : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
@@ -82,7 +82,7 @@ export default function CurriculumNav({ subjects, openThemeKey, onThemeClick }: 
                               onThemeClick(name, theme)
                               scrollTo(toThemeAnchorId(theme))
                             }}
-                            className={`w-full text-left px-2 py-1 text-[11px] rounded-md transition-colors leading-snug ${
+                            className={`w-full text-left px-2 py-1 text-sm rounded-md transition-colors leading-snug ${
                               isThemeActive
                                 ? 'text-blue-600 font-medium bg-blue-50'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'

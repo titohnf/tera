@@ -3,12 +3,13 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ClassSessions from '@/components/admin/classes/ClassSessions'
 import DeleteClassButton from '@/components/admin/classes/DeleteClassButton'
+import CompleteClassButton from '@/components/admin/classes/CompleteClassButton'
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu', 0: 'Minggu',
 }
 
-type Profile = { id: string; full_name: string; email: string }
+type Profile = { id: string; full_name: string; email: string; avatar_url?: string | null }
 type CountRow = [{ count: number }]
 
 export default async function ClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
@@ -22,10 +23,11 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
     { data: tutors },
     { data: subjects },
     { data: classSlots },
+    { count: pendingSessionCount },
   ] = await Promise.all([
     admin
       .from('classes')
-      .select('id, name, level, class_type, is_active, created_at, tutor_id, profiles!tutor_id(full_name, email), class_subjects(subject_id, subjects(name))')
+      .select('id, name, level, class_type, is_active, status, start_date, end_date, created_at, tutor_id, profiles!tutor_id(full_name, email), class_subjects(subject_id, subjects(name))')
       .eq('id', classId)
       .single() as unknown as Promise<{
         data: {
@@ -38,10 +40,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }>,
     admin
       .from('class_students')
-      .select('student_id, profiles!student_id(id, full_name, email, grade)')
+      .select('student_id, profiles!student_id(id, full_name, email, grade, avatar_url)')
       .eq('class_id', classId)
       .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: (Profile & { grade: number | null }) | null }[] | null
+        data: { student_id: string; profiles: (Profile & { grade: number | null; avatar_url: string | null }) | null }[] | null
       }>,
     admin
       .from('sessions')
@@ -88,6 +90,11 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
           profiles: { full_name: string } | null
         }[] | null
       }>,
+    admin
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('class_id', classId)
+      .in('status', ['scheduled', 'ongoing']),
   ])
 
   if (!cls) notFound()
@@ -121,8 +128,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
     .map(a => a.session_id)
 
   // Derive most common grade from enrolled students
-  type ProfileWithGrade = Profile & { grade: number | null }
-  const enrolledWithGrade = (enrolled ?? []).map(e => e.profiles).filter((p): p is ProfileWithGrade => p !== null)
+  type ProfileWithGrade = Profile & { grade: number | null; avatar_url?: string | null }
+  const enrolledWithGrade = (enrolled ?? [])
+    .map(e => e.profiles)
+    .filter((p): p is NonNullable<typeof p> => p !== null) as ProfileWithGrade[]
   const grades = enrolledWithGrade.map(p => p.grade).filter((g): g is number => g != null)
   const studentGrade = grades.length > 0
     ? (grades.sort((a, b) =>
@@ -130,93 +139,141 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       )[0] ?? null)
     : null
 
-  const enrolledStudents: Profile[] = enrolledWithGrade
+  const enrolledStudents: ProfileWithGrade[] = enrolledWithGrade
+
+  const classStatus = (cls as any).status ?? (cls.is_active ? 'aktif' : 'selesai')
+  const startDate = (cls as any).start_date as string | null
+  const endDate = (cls as any).end_date as string | null
+
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  // Subject map for slots
+  const subjectMap = new Map((subjects ?? []).map(s => [s.id, s.name]))
+
+  function getInitials(name: string) {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?'
+    return ((parts[0][0] ?? '') + (parts[parts.length - 1][0] ?? '')).toUpperCase()
+  }
 
   return (
-    <div>
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+    <div className="space-y-5">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-gray-500">
         <Link href="/admin/classes" className="hover:text-blue-600">Kelas</Link>
         <span>/</span>
         <span className="text-gray-900 font-medium">{cls.name}</span>
       </div>
 
-      {/* Class header */}
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-semibold text-gray-900">{cls.name}</h1>
-              {cls.level && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{cls.level}</span>
-              )}
-              <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {cls.is_active ? 'Aktif' : 'Nonaktif'}
-              </span>
-            </div>
-            <div className="text-sm text-gray-500 space-y-0.5">
-              <p>Mata pelajaran: <span className="text-gray-700">
-                {cls.class_subjects?.length > 0
-                  ? cls.class_subjects.map(cs => cs.subjects?.name).filter(Boolean).join(', ')
-                  : 'Umum'}
-              </span></p>
-              {cls.class_type && (
-                <p>Tipe: <span className="text-gray-700 capitalize">{cls.class_type === 'group' ? 'Grup' : 'Privat'}</span></p>
-              )}
-            </div>
-
-            {(classSlots ?? []).length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jadwal Mingguan</p>
-                {(classSlots ?? []).map(slot => (
-                  <div key={slot.slot_index} className="flex items-center gap-2 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">
-                      {slot.slot_index + 1}
-                    </span>
-                    <span className="text-gray-700 font-medium">
-                      {slot.day_of_week !== null ? DAY_NAMES[slot.day_of_week] : '—'}
-                      {slot.start_time ? ` ${slot.start_time.slice(0, 5)}` : ''}
-                    </span>
-                    <span className="text-gray-400">·</span>
-                    <span className="text-gray-600">{slot.profiles?.full_name ?? 'Tutor tidak diset'}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Header card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        {/* Top row: name + actions */}
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-xl font-semibold text-gray-900">{cls.name}</h1>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              classStatus === 'selesai' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'
+            }`}>
+              {classStatus === 'selesai' ? 'Selesai' : 'Aktif'}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <CompleteClassButton
+              classId={classId}
+              pendingSessions={pendingSessionCount ?? 0}
+              alreadyDone={classStatus === 'selesai'}
+            />
             <Link
               href={`/admin/classes/${classId}/edit`}
-              className="flex items-center gap-2 px-4 py-2 border text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-sm font-medium rounded-lg text-gray-700 hover:bg-slate-50 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Edit Kelas
+              Edit
             </Link>
             <DeleteClassButton classId={classId} className={cls.name} />
           </div>
         </div>
 
-        {enrolledStudents.length > 0 && (
-          <div className="border-t pt-4 mt-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-              Siswa Terdaftar ({enrolledStudents.length})
+        {/* Info grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-t border-slate-100">
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tipe</p>
+            <p className="text-sm text-gray-800">
+              {cls.class_type === 'group' ? 'Reguler' : cls.class_type === 'private' ? 'Privat' : '—'}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {enrolledStudents.map(s => (
-                <span key={s.id} className="text-sm bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
-                  {s.full_name}
-                </span>
-              ))}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Jenjang</p>
+            <p className="text-sm text-gray-800">{cls.level ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tanggal Mulai</p>
+            <p className="text-sm text-gray-800">{startDate ? fmtDate(startDate) : '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tanggal Selesai</p>
+            <p className="text-sm text-gray-800">{endDate ? fmtDate(endDate) : '—'}</p>
+          </div>
+        </div>
+
+        {/* Jadwal compact */}
+        {(classSlots ?? []).length > 0 && (
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Jadwal Mingguan</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-1">
+              {(classSlots ?? []).map(slot => {
+                const slotSubject = (slot.subject_ids ?? []).map(id => subjectMap.get(id)).filter(Boolean).join(', ') || '—'
+                return (
+                  <p key={slot.slot_index} className="text-sm text-gray-700">
+                    <span className="font-medium">{slot.day_of_week !== null ? DAY_NAMES[slot.day_of_week] : '—'}</span>
+                    {slot.start_time && <span className="text-gray-400"> {slot.start_time.slice(0, 5)}</span>}
+                    <span className="text-gray-400"> · </span>
+                    {slotSubject}
+                    {slot.profiles?.full_name && <span className="text-gray-400"> – {slot.profiles.full_name}</span>}
+                  </p>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Siswa */}
+        {enrolledStudents.length > 0 && (
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Siswa Terdaftar <span className="text-gray-600 font-normal normal-case">({enrolledStudents.length})</span>
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {enrolledStudents.map(s => {
+                const avatarUrl = (s as any).avatar_url as string | null
+                return (
+                  <Link
+                    key={s.id}
+                    href={`/admin/siswa/${s.id}`}
+                    className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                  >
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={s.full_name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-semibold text-blue-700">{getInitials(s.full_name)}</span>
+                      </div>
+                    )}
+                    <span className="text-sm text-gray-700">{s.full_name}</span>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         )}
       </div>
 
       {/* Sessions */}
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 mt-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <ClassSessions
           classId={classId}
           sessions={sessions ?? []}

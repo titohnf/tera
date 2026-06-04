@@ -2,6 +2,13 @@ import type { Period } from './dateRange'
 
 export type InsightSeverity = 'critical' | 'danger' | 'warning' | 'info' | 'ok'
 
+export interface TutorWorkloadEntry {
+  id: string
+  name: string
+  studentCount: number
+  isActive: boolean // profiles.is_active
+}
+
 export interface InsightMetrics {
   period: Period
 
@@ -47,6 +54,9 @@ export interface InsightMetrics {
 
   // Siswa Kritis
   criticalStudentCount: number
+
+  // Beban kerja per tutor (opsional — hanya ada jika di-fetch)
+  tutorWorkloads?: TutorWorkloadEntry[]
 }
 
 export interface Insight {
@@ -135,6 +145,57 @@ export function getActiveInsights(m: InsightMetrics): Insight[] {
         message: 'Tidak ada sesi terlaksana bulan ini padahal sudah melewati pertengahan bulan',
         action: { label: 'Buat Jadwal Sesi', href: '/admin/sessions/new' },
       })
+    }
+  }
+
+  // ─── BEBAN KERJA TUTOR ───────────────────────────────────────────────────────
+
+  if (!noTutor && m.tutorWorkloads && m.tutorWorkloads.length > 0) {
+    const activeTutors = m.tutorWorkloads.filter(t => t.isActive)
+    const teachingTutors = activeTutors.filter(t => t.studentCount > 0)
+    const totalStudents = teachingTutors.reduce((s, t) => s + t.studentCount, 0)
+
+    // TI-01: satu tutor menanggung semua siswa
+    if (teachingTutors.length === 1 && totalStudents > 0) {
+      insights.push({
+        id: 'TI-01',
+        severity: 'warning',
+        message: `${teachingTutors[0].name} menanggung semua ${totalStudents} siswa sendirian — pertimbangkan rekrut atau aktifkan tutor lain`,
+        action: { label: 'Tambah Tutor', href: '/admin/users/new' },
+      })
+    }
+
+    // TI-02: tutor dengan siswa > 15
+    for (const t of activeTutors.filter(t => t.studentCount > 15)) {
+      insights.push({
+        id: `TI-02-${t.id}`,
+        severity: 'danger',
+        message: `${t.name} mengajar ${t.studentCount} siswa — di atas batas ideal 15`,
+        action: { label: 'Lihat Detail', href: `/admin/users/${t.id}` },
+      })
+    }
+
+    // TI-03: tutor idle (is_active=true tapi 0 siswa)
+    for (const t of activeTutors.filter(t => t.studentCount === 0)) {
+      insights.push({
+        id: `TI-03-${t.id}`,
+        severity: 'info',
+        message: `${t.name} aktif tapi belum mengajar kelas manapun`,
+        action: { label: 'Kelola Kelas', href: '/admin/classes' },
+      })
+    }
+
+    // TI-04: beban tidak merata (2+ tutor, selisih > 10 siswa)
+    if (activeTutors.length >= 2) {
+      const counts = activeTutors.map(t => t.studentCount)
+      const diff = Math.max(...counts) - Math.min(...counts)
+      if (diff > 10) {
+        insights.push({
+          id: 'TI-04',
+          severity: 'warning',
+          message: `Beban mengajar tidak merata — selisih ${diff} siswa antar tutor`,
+        })
+      }
     }
   }
 

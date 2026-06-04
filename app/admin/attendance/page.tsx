@@ -129,15 +129,15 @@ export default async function AttendancePage({
                       <p className="text-sm font-semibold text-gray-900">{cls?.name ?? cid}</p>
                       {cls?.level && <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{cls.level}</span>}
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{cls?.profiles?.full_name} · {summary.sessions} sesi selesai</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{cls?.profiles?.full_name} · {summary.sessions} sesi selesai</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Total hadir</p>
+                      <p className="text-sm text-gray-400">Total hadir</p>
                       <p className="text-sm font-semibold text-gray-800">{summary.totalPresent} / {summary.totalStudents}</p>
                     </div>
                     <div className="text-right w-16">
-                      <p className="text-xs text-gray-400">Rata-rata</p>
+                      <p className="text-sm text-gray-400">Rata-rata</p>
                       <p className={`text-lg font-bold ${rate >= 75 ? 'text-green-600' : rate >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>
                         {rate}%
                       </p>
@@ -160,11 +160,11 @@ export default async function AttendancePage({
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 mb-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-gray-900">{selectedClass.name}</p>
-                <p className="text-xs text-gray-500">{selectedClass.profiles?.full_name}</p>
+                <p className="text-sm text-gray-500">{selectedClass.profiles?.full_name}</p>
               </div>
               {classSummary[class_id] && (
                 <div className="text-right">
-                  <p className="text-xs text-gray-400">{classSummary[class_id].sessions} sesi · rata-rata kehadiran</p>
+                  <p className="text-sm text-gray-400">{classSummary[class_id].sessions} sesi · rata-rata kehadiran</p>
                   <p className={`text-2xl font-bold ${
                     classSummary[class_id].totalStudents > 0
                       ? Math.round((classSummary[class_id].totalPresent / classSummary[class_id].totalStudents) * 100) >= 75
@@ -211,12 +211,12 @@ export default async function AttendancePage({
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 border-b border-gray-100">
                       <tr>
-                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500">Tanggal & Topik</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-green-600">Hadir</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-yellow-600">Terlambat</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-red-500">Absen</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400">Izin</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Rate</th>
+                        <th className="text-left px-5 py-3 text-sm font-semibold text-gray-500">Tanggal & Topik</th>
+                        <th className="text-center px-4 py-3 text-sm font-semibold text-green-600">Hadir</th>
+                        <th className="text-center px-4 py-3 text-sm font-semibold text-yellow-600">Terlambat</th>
+                        <th className="text-center px-4 py-3 text-sm font-semibold text-red-500">Absen</th>
+                        <th className="text-center px-4 py-3 text-sm font-semibold text-gray-400">Izin</th>
+                        <th className="text-center px-4 py-3 text-sm font-semibold text-gray-500">Rate</th>
                         <th className="px-3 py-3" />
                       </tr>
                     </thead>
@@ -232,7 +232,7 @@ export default async function AttendancePage({
                               <p className="font-medium text-gray-800">
                                 {date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
                               </p>
-                              <p className="text-xs text-gray-400">{session.topic ?? '—'}</p>
+                              <p className="text-sm text-gray-400">{session.topic ?? '—'}</p>
                             </td>
                             <td className="text-center px-4 py-3 font-semibold text-green-600">{att.present}</td>
                             <td className="text-center px-4 py-3 font-semibold text-yellow-600">{att.late}</td>
@@ -248,7 +248,7 @@ export default async function AttendancePage({
                             <td className="px-3 py-3 text-right">
                               <Link
                                 href={`/admin/attendance/${session.id}`}
-                                className="text-xs text-blue-600 hover:underline"
+                                className="text-sm text-blue-600 hover:underline"
                               >
                                 Detail
                               </Link>

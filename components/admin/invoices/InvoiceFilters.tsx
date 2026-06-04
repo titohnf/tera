@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 interface Props {
   q: string
   statusFilter: string
+  month?: string
 }
 
 const FILTER_OPTIONS = [
@@ -15,17 +16,20 @@ const FILTER_OPTIONS = [
   { label: 'Lunas',         value: 'paid' },
 ]
 
-export default function InvoiceFilters({ q, statusFilter }: Props) {
+export default function InvoiceFilters({ q, statusFilter, month = '' }: Props) {
   const router = useRouter()
 
   function buildUrl(newStatus: string, newQ?: string) {
     const params = new URLSearchParams()
     const search = newQ !== undefined ? newQ : q
+    if (month) params.set('month', month)
     if (search) params.set('q', search)
     if (newStatus) params.set('status', newStatus)
     const qs = params.toString()
     return qs ? `/admin/invoices?${qs}` : '/admin/invoices'
   }
+
+  const resetUrl = month ? `/admin/invoices?month=${month}` : '/admin/invoices'
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -45,7 +49,7 @@ export default function InvoiceFilters({ q, statusFilter }: Props) {
               router.push(buildUrl(statusFilter, v))
             }, 300)
           }}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -54,7 +58,7 @@ export default function InvoiceFilters({ q, statusFilter }: Props) {
         value={statusFilter}
         onChange={(e) => router.push(buildUrl(e.target.value))}
         className={`text-sm border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-          statusFilter ? 'border-blue-500 text-blue-700' : 'border-gray-200 text-gray-700'
+          statusFilter ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-gray-700'
         }`}
       >
         {FILTER_OPTIONS.map(opt => (
@@ -64,8 +68,8 @@ export default function InvoiceFilters({ q, statusFilter }: Props) {
 
       {(q || statusFilter) && (
         <a
-          href="/admin/invoices"
-          className="px-3 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
+          href={resetUrl}
+          className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-slate-100 rounded-lg transition-colors whitespace-nowrap"
         >
           Reset
         </a>

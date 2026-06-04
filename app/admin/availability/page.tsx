@@ -396,7 +396,7 @@ function TutorScheduleTable({ tutors }: { tutors: TutorScheduleRow[] }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="text-left px-5 py-2.5 font-medium text-gray-500 w-48">Tutor</th>

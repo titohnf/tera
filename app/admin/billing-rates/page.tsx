@@ -18,18 +18,9 @@ export default async function BillingRatesPage() {
   ])
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Tarif Bimbel</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Grup: harga per bulan · Privat: harga per pertemuan
-        </p>
-      </div>
-
-      <BillingRatesPageClient
-        periods={periods ?? []}
-        allRates={allRates ?? []}
-      />
-    </div>
+    <BillingRatesPageClient
+      periods={periods ?? []}
+      allRates={allRates ?? []}
+    />
   )
 }

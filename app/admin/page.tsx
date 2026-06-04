@@ -95,6 +95,9 @@ export default async function AdminDashboard({
     { data: allPaidInvoicesForChart },
     { data: calendarSessionsRaw },
     { data: allPayslipsForChart },
+    { data: tutorProfilesRaw },
+    { data: activeClassesForWorkload },
+    { data: classEnrollmentsForWorkload },
   ] = await Promise.all([
     admin.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'tutor'),
     admin.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', firstOfThisMonth),
@@ -132,6 +135,9 @@ export default async function AdminDashboard({
       .order('scheduled_at', { ascending: true })
       .limit(200) as unknown as Promise<{ data: { id: string; scheduled_at: string; status: string; classes: { name: string } | null; profiles: { full_name: string } | null }[] | null }>,
     admin.from('payslips').select('grand_total, pay_date').in('status', ['sent', 'paid']).gte('pay_date', chartWideFrom).limit(500),
+    admin.from('profiles').select('id, full_name, is_active').eq('role', 'tutor') as unknown as Promise<{ data: { id: string; full_name: string; is_active: boolean }[] | null }>,
+    admin.from('classes').select('id, tutor_id').eq('is_active', true) as unknown as Promise<{ data: { id: string; tutor_id: string }[] | null }>,
+    admin.from('class_students').select('class_id, student_id').eq('is_active', true) as unknown as Promise<{ data: { class_id: string; student_id: string }[] | null }>,
   ])
 
   // ── Attendances (sequential) ───────────────────────────────────────────────
@@ -198,6 +204,25 @@ export default async function AdminDashboard({
   const cycleCompleted = (endedClassCount ?? 0) > 0
   const studentTutorRatio = (activeEnrollments ?? 0) > 0 && (tutorCount ?? 0) > 0
     ? (activeEnrollments ?? 0) / (tutorCount ?? 1) : 0
+
+  // ── Tutor workload (untuk TI insights) ───────────────────────────────────────
+  const classToTutorMap = new Map<string, string>()
+  for (const c of activeClassesForWorkload ?? []) {
+    if (c.id && c.tutor_id) classToTutorMap.set(c.id, c.tutor_id)
+  }
+  const tutorStudentSetsForInsight = new Map<string, Set<string>>()
+  for (const cs of classEnrollmentsForWorkload ?? []) {
+    const tutorId = classToTutorMap.get(cs.class_id)
+    if (!tutorId) continue
+    if (!tutorStudentSetsForInsight.has(tutorId)) tutorStudentSetsForInsight.set(tutorId, new Set())
+    tutorStudentSetsForInsight.get(tutorId)!.add(cs.student_id)
+  }
+  const tutorWorkloads = (tutorProfilesRaw ?? []).map(t => ({
+    id: t.id,
+    name: t.full_name,
+    studentCount: tutorStudentSetsForInsight.get(t.id)?.size ?? 0,
+    isActive: t.is_active,
+  }))
 
   const criticalInputs = await fetchCriticalEvaluationData()
   const { summary: criticalSummary } = evaluateBatchCritical(criticalInputs)
@@ -433,6 +458,7 @@ export default async function AdminDashboard({
     inactiveStudentsWithBalance,
     bimbelAgeMonths,
     criticalStudentCount: criticalSummary.totalCritical,
+    tutorWorkloads,
   }
 
   const calendarSessions = (calendarSessionsRaw ?? []).map(s => ({
@@ -470,7 +496,7 @@ export default async function AdminDashboard({
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Kalender Sesi</h2>
-          <Link href="/admin/sessions" className="text-xs text-blue-600 hover:underline">Kelola sesi</Link>
+          <Link href="/admin/sessions" className="text-sm text-blue-600 hover:underline">Kelola sesi</Link>
         </div>
         <div className="p-5 pt-3">
           <SessionCalendar

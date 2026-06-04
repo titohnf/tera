@@ -1,15 +1,18 @@
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 
 interface MetricCardProps {
   label: string
   value: string | number
   sub?: ReactNode
   tooltip?: string
+  valueColor?: string
+  href?: string
 }
 
-export default function MetricCard({ label, value, sub, tooltip }: MetricCardProps) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-3">
+export default function MetricCard({ label, value, sub, tooltip, valueColor, href }: MetricCardProps) {
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-1 mb-1.5">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-snug">
           {label}
@@ -27,10 +30,24 @@ export default function MetricCard({ label, value, sub, tooltip }: MetricCardPro
           </div>
         )}
       </div>
-      <p className="text-2xl font-semibold leading-none text-gray-900">
+      <p className={`text-2xl font-semibold leading-none ${valueColor ?? 'text-gray-900'}`}>
         {value}
       </p>
       {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className="block bg-white border border-slate-200 rounded-xl p-3 hover:border-slate-300 transition-colors">
+        {body}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-3">
+      {body}
     </div>
   )
 }

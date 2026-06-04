@@ -71,9 +71,9 @@ export default async function PaymentsPage({
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-          <p className="text-xs text-amber-600 font-medium">Tagihan Pending</p>
+          <p className="text-sm text-amber-600 font-medium">Tagihan Pending</p>
           <p className="text-2xl font-bold text-amber-700 mt-1">{formatRp(totalPending)}</p>
-          <p className="text-xs text-amber-500 mt-0.5">{pendingCount} sesi belum dibayar</p>
+          <p className="text-sm text-amber-500 mt-0.5">{pendingCount} sesi belum dibayar</p>
         </div>
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 col-span-2 flex items-center gap-4">
           <div className="text-sm text-gray-500">
@@ -123,20 +123,20 @@ export default async function PaymentsPage({
                       {STATUS_LABEL[p.status] ?? p.status}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm text-gray-500 mt-0.5">
                     {p.sessions?.classes?.name ?? '-'}
                     {sessionDate ? ` · ${sessionDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
                     {p.sessions?.topic ? ` · ${p.sessions.topic}` : ''}
                   </p>
                   {p.payment_reference && (
-                    <p className="text-xs text-gray-400 mt-0.5">Ref: {p.payment_reference}</p>
+                    <p className="text-sm text-gray-400 mt-0.5">Ref: {p.payment_reference}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-sm font-semibold text-gray-800">{formatRp(p.total_amount)}</p>
                     {p.bonus_amount > 0 && (
-                      <p className="text-xs text-green-600">+{formatRp(p.bonus_amount)} bonus</p>
+                      <p className="text-sm text-green-600">+{formatRp(p.bonus_amount)} bonus</p>
                     )}
                   </div>
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

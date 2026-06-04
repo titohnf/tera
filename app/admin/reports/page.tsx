@@ -186,10 +186,10 @@ export default async function ReportsPage({
                   <table className="w-full text-sm">
                     <thead className="border-b">
                       <tr>
-                        <th className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Siswa</th>
-                        <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Nilai</th>
-                        <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Persentase</th>
-                        <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Status</th>
+                        <th className="text-left px-5 py-2.5 text-sm font-semibold text-gray-500">Siswa</th>
+                        <th className="text-center px-4 py-2.5 text-sm font-semibold text-gray-500">Nilai</th>
+                        <th className="text-center px-4 py-2.5 text-sm font-semibold text-gray-500">Persentase</th>
+                        <th className="text-center px-4 py-2.5 text-sm font-semibold text-gray-500">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -214,11 +214,11 @@ export default async function ReportsPage({
                               </td>
                               <td className="text-center px-4 py-3">
                                 {pct === null ? (
-                                  <span className="text-xs text-gray-400">Belum dinilai</span>
+                                  <span className="text-sm text-gray-400">Belum dinilai</span>
                                 ) : pct >= 75 ? (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Tuntas</span>
+                                  <span className="text-sm bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Tuntas</span>
                                 ) : (
-                                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Belum Tuntas</span>
+                                  <span className="text-sm bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Belum Tuntas</span>
                                 )}
                               </td>
                             </tr>

@@ -29,6 +29,16 @@ interface GradeResult {
   feedback: string | null
 }
 
+const COMPREHENSION_LEVELS = [
+  { value: '',   label: '— Pilih level —',                 bg: 'bg-white',      text: 'text-gray-400' },
+  { value: 'L0', label: 'L0: Tidak Paham Sama Sekali',     bg: 'bg-red-200',    text: 'text-red-900' },
+  { value: 'L1', label: 'L1: Paham Permukaan/Hafalan',     bg: 'bg-orange-200', text: 'text-orange-900' },
+  { value: 'L2', label: 'L2: Paham Konsep Dasar',          bg: 'bg-yellow-200', text: 'text-yellow-900' },
+  { value: 'L3', label: 'L3: Paham Pengaplikasian Konsep', bg: 'bg-green-200',  text: 'text-green-900' },
+  { value: 'L4', label: 'L4: Sangat Paham',                bg: 'bg-blue-200',   text: 'text-blue-900' },
+  { value: 'L5', label: 'L5: Mahir',                       bg: 'bg-purple-200', text: 'text-purple-900' },
+]
+
 function buildAutoTitle(
   subjectName: string | null | undefined,
   grade: number | null | undefined,
@@ -231,7 +241,7 @@ export default function AssessmentList({
                       <tr className="text-xs text-gray-400 border-b border-slate-200">
                         <th className="text-left py-2 pb-3">Siswa</th>
                         <th className="text-center py-2 pb-3 w-28">Nilai (maks {assessment.max_score})</th>
-                        <th className="text-left py-2 pb-3 pl-3">Komentar</th>
+                        <th className="text-left py-2 pb-3 pl-3">Tingkat Pemahaman</th>
                       </tr>
                     </thead>
                     <tbody className="[&>tr:first-child>td]:pt-3">
@@ -252,13 +262,20 @@ export default function AssessmentList({
                               />
                             </td>
                             <td className="py-1.5 pl-3">
-                              <input
-                                type="text"
-                                value={g.feedback}
-                                onChange={e => setGrade(assessment.id, student.id, 'feedback', e.target.value)}
-                                placeholder="Komentar (opsional)"
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              />
+                              {(() => {
+                                const level = COMPREHENSION_LEVELS.find(l => l.value === g.feedback)
+                                return (
+                                  <select
+                                    value={g.feedback}
+                                    onChange={e => setGrade(assessment.id, student.id, 'feedback', e.target.value)}
+                                    className={`w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${level ? `${level.bg} ${level.text}` : 'bg-white text-gray-500'}`}
+                                  >
+                                    {COMPREHENSION_LEVELS.map(l => (
+                                      <option key={l.value} value={l.value}>{l.label}</option>
+                                    ))}
+                                  </select>
+                                )
+                              })()}
                             </td>
                           </tr>
 

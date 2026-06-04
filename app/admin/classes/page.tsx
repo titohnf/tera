@@ -1,12 +1,17 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
+import ClassFilters from '@/components/admin/classes/ClassFilters'
 
 type ClassRow = {
   id: string
   name: string
   level: string | null
   is_active: boolean
+  class_type: string | null
+  status: string
+  start_date: string | null
+  end_date: string | null
   profiles: { full_name: string } | null
   class_subjects: { subjects: { name: string } | null }[]
 }
@@ -16,18 +21,17 @@ const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 export default async function ClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string }>
 }) {
-  const { level: levelFilter = '', status: statusFilter = '' } = await searchParams
+  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '' } = await searchParams
   const admin = createAdminClient()
 
   const now = new Date()
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  const [{ data: classes }, { data: enrollments }, { data: monthSessions }] = await Promise.all([
+  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: nextSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }] = await Promise.all([
     admin
       .from('classes')
-      .select('id, name, level, is_active, profiles!tutor_id(full_name), class_subjects(subjects(name))')
+      .select('id, name, level, is_active, class_type, status, start_date, end_date, profiles!tutor_id(full_name), class_subjects(subjects(name))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: ClassRow[] | null }>,
     admin
       .from('class_students')
@@ -35,9 +39,28 @@ export default async function ClassesPage({
       .eq('is_active', true),
     admin
       .from('sessions')
-      .select('id, duration_minutes')
+      .select('class_id, scheduled_at')
       .eq('status', 'completed')
-      .gte('scheduled_at', firstOfMonth),
+      .order('scheduled_at', { ascending: false })
+      .limit(500),
+    admin
+      .from('sessions')
+      .select('class_id, scheduled_at')
+      .eq('status', 'scheduled')
+      .gte('scheduled_at', now.toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(500),
+    admin
+      .from('class_slots')
+      .select('class_id, day_of_week, subject_ids')
+      .order('slot_index', { ascending: true }) as unknown as Promise<{ data: { class_id: string; day_of_week: number | null; subject_ids: string[] }[] | null }>,
+    admin
+      .from('subjects')
+      .select('id, name'),
+    admin
+      .from('sessions')
+      .select('class_id')
+      .eq('status', 'completed'),
   ])
 
   const allClasses = classes ?? []
@@ -47,36 +70,102 @@ export default async function ClassesPage({
     countByClass[e.class_id] = (countByClass[e.class_id] ?? 0) + 1
   }
 
-  const activeClassCount = allClasses.filter(c => c.is_active).length
-  const inactiveClassCount = allClasses.filter(c => !c.is_active).length
-  const totalStudentsInClass = Object.values(countByClass).reduce((s, n) => s + n, 0)
+  // Build sesi lookup: last completed + next scheduled per class
+  const lastSessionMap = new Map<string, string>()
+  for (const s of lastSessionsRaw ?? []) {
+    if (!lastSessionMap.has(s.class_id)) lastSessionMap.set(s.class_id, s.scheduled_at)
+  }
+  const nextSessionMap = new Map<string, string>()
+  for (const s of nextSessionsRaw ?? []) {
+    if (!nextSessionMap.has(s.class_id)) nextSessionMap.set(s.class_id, s.scheduled_at)
+  }
 
-  const sessionCount = monthSessions?.length ?? 0
-  const totalHours = Math.round(
-    (monthSessions ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0) / 60
-  )
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  }
+
+  const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+
+  const subjectNameMap = new Map<string, string>()
+  for (const s of subjectsRaw ?? []) subjectNameMap.set(s.id, s.name)
+
+  // jadwalMap: class_id → "Sen: Matematika\nRab: B. Inggris"
+  const jadwalMap = new Map<string, { day: string; subject: string }[]>()
+  for (const slot of slotsRaw ?? []) {
+    if (slot.day_of_week == null) continue
+    const dayLabel = DAYS[slot.day_of_week] ?? ''
+    const subjectNames = (slot.subject_ids ?? [])
+      .map(id => subjectNameMap.get(id))
+      .filter(Boolean) as string[]
+    const subjectLabel = subjectNames.length > 0 ? subjectNames.join(', ') : '—'
+    const existing = jadwalMap.get(slot.class_id) ?? []
+    existing.push({ day: dayLabel, subject: subjectLabel })
+    jadwalMap.set(slot.class_id, existing)
+  }
+
+  // Completed session count per class
+  const completedCountMap = new Map<string, number>()
+  for (const s of completedSessionsRaw ?? []) {
+    completedCountMap.set(s.class_id, (completedCountMap.get(s.class_id) ?? 0) + 1)
+  }
+
+  // Slots per class (count of scheduled days per week)
+  const slotsPerWeekMap = new Map<string, number>()
+  for (const slot of slotsRaw ?? []) {
+    if (slot.day_of_week != null) {
+      slotsPerWeekMap.set(slot.class_id, (slotsPerWeekMap.get(slot.class_id) ?? 0) + 1)
+    }
+  }
+
+  // Progress: completed / target × 100
+  // target = slotsPerWeek × totalWeeks(start_date → end_date)
+  function getProgress(cls: ClassRow): { completed: number; target: number | null; pct: number | null } {
+    const completed = completedCountMap.get(cls.id) ?? 0
+    const slotsPerWeek = slotsPerWeekMap.get(cls.id) ?? 0
+    if (!cls.end_date || slotsPerWeek === 0) return { completed, target: null, pct: null }
+    const start = new Date(cls.start_date ?? cls.end_date)
+    const end = new Date(cls.end_date)
+    const totalWeeks = Math.max(1, Math.round((end.getTime() - start.getTime()) / (7 * 86400000)))
+    const target = slotsPerWeek * totalWeeks
+    const pct = Math.min(100, Math.round((completed / target) * 100))
+    return { completed, target, pct }
+  }
+
+  const activeClassCount = allClasses.filter(c => c.is_active).length
+  const regularCount = allClasses.filter(c => c.class_type === 'group').length
+  const privateCount = allClasses.filter(c => c.class_type === 'private').length
 
   // Filter
   let filtered = allClasses
+  if (q) {
+    const lq = q.toLowerCase()
+    filtered = filtered.filter(c =>
+      c.name.toLowerCase().includes(lq) || c.profiles?.full_name?.toLowerCase().includes(lq)
+    )
+  }
   if (levelFilter) filtered = filtered.filter(c => c.level === levelFilter)
-  if (statusFilter === 'aktif') filtered = filtered.filter(c => c.is_active)
-  else if (statusFilter === 'non-aktif') filtered = filtered.filter(c => !c.is_active)
+  if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter)
+  if (typeFilter === 'group') filtered = filtered.filter(c => c.class_type === 'group')
+  else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
 
-  // Levels yang ada di data
   const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
 
-  function filterUrl(newLevel: string, newStatus: string) {
+  function filterUrl(overrides: Record<string, string>) {
     const p = new URLSearchParams()
-    if (newLevel) p.set('level', newLevel)
-    if (newStatus) p.set('status', newStatus)
+    const merged = { q, level: levelFilter, status: statusFilter, type: typeFilter, ...overrides }
+    Object.entries(merged).forEach(([k, v]) => { if (v) p.set(k, v) })
     const qs = p.toString()
     return qs ? `/admin/classes?${qs}` : '/admin/classes'
   }
 
-  const hasFilter = !!(levelFilter || statusFilter)
+  const hasFilter = !!(q || levelFilter || statusFilter || typeFilter)
+  const tableTitle = hasFilter
+    ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
+    : `${allClasses.length} Kelas`
 
   return (
     <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Manajemen Kelas</h1>
         <div className="flex items-center gap-2">
@@ -102,115 +191,144 @@ export default async function ClassesPage({
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <MetricCard label="Kelas Aktif" value={activeClassCount} />
-        <MetricCard label="Kelas Non-aktif" value={inactiveClassCount} />
-        <MetricCard label="Total Siswa Aktif" value={totalStudentsInClass} />
-        <MetricCard label="Sesi Bulan Ini" value={sessionCount} />
-        <MetricCard label="Total Jam Mengajar" value={totalHours} />
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard label="Grup" value={regularCount} />
+        <MetricCard label="Privat" value={privateCount} />
       </div>
 
       {/* Filter */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Jenjang */}
-        <div className="flex flex-wrap gap-1.5">
-          <a
-            href={filterUrl('', statusFilter)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              !levelFilter ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            Semua Jenjang
-          </a>
-          {availableLevels.map(l => (
-            <a
-              key={l}
-              href={filterUrl(l, statusFilter)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                levelFilter === l ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {l}
-            </a>
-          ))}
+      <ClassFilters
+        q={q}
+        level={levelFilter}
+        type={typeFilter}
+        status={statusFilter}
+        availableLevels={availableLevels}
+      />
+
+      {/* Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <div className="px-5 pt-5 pb-3">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">{tableTitle}</h2>
         </div>
 
-        <div className="h-4 w-px bg-gray-200" />
+        {filtered.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-10 px-5">
+            Tidak ada kelas yang sesuai filter.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <th className="pl-5 pr-4 py-3 text-left">Nama Kelas</th>
+                  <th className="px-4 py-3 text-center">Siswa</th>
+                  <th className="px-4 py-3 text-left hidden md:table-cell">Jadwal</th>
+                  <th className="px-4 py-3 text-left hidden sm:table-cell">Sesi</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map(cls => {
+                  const siswaCount = countByClass[cls.id] ?? 0
+                  const progress = getProgress(cls)
 
-        {/* Status */}
-        <div className="flex gap-1.5">
-          {[
-            { label: 'Semua', value: '' },
-            { label: 'Aktif', value: 'aktif' },
-            { label: 'Non-aktif', value: 'non-aktif' },
-          ].map(opt => (
-            <a
-              key={opt.value}
-              href={filterUrl(levelFilter, opt.value)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                statusFilter === opt.value ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {opt.label}
-            </a>
-          ))}
-        </div>
+                  return (
+                    <tr
+                      key={cls.id}
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      {/* Nama */}
+                      <td className="pl-5 pr-4 py-3">
+                        <Link href={`/admin/classes/${cls.id}`} className="block">
+                          <p className="font-medium text-gray-900">{cls.name}</p>
+                          {cls.level && (
+                            <span className="text-sm text-gray-400">{cls.level}</span>
+                          )}
+                        </Link>
+                      </td>
 
-        {hasFilter && (
-          <a href="/admin/classes" className="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
-            Reset
-          </a>
+                      {/* Siswa */}
+                      <td className="px-4 py-3 text-center">
+                        <Link href={`/admin/classes/${cls.id}`} className="block font-semibold text-gray-800">
+                          {siswaCount}
+                        </Link>
+                      </td>
+
+                      {/* Jadwal */}
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <Link href={`/admin/classes/${cls.id}`} className="block">
+                          {(jadwalMap.get(cls.id) ?? []).length === 0 ? (
+                            <span className="text-sm text-gray-400">—</span>
+                          ) : (
+                            (jadwalMap.get(cls.id) ?? []).slice(0, 3).map((j, i) => (
+                              <span key={i} className="block text-sm text-gray-600 leading-snug">
+                                <span className="font-medium text-gray-700">{j.day}:</span> {j.subject}
+                              </span>
+                            ))
+                          )}
+                        </Link>
+                      </td>
+
+                      {/* Sesi */}
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        <Link href={`/admin/classes/${cls.id}`} className="block space-y-1.5">
+                          {progress.target !== null && progress.pct !== null ? (
+                            <div className="w-36">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm text-gray-600">{progress.completed}/{progress.target} sesi</span>
+                                <span className={`text-sm font-semibold ${
+                                  progress.pct >= 80 ? 'text-green-600' :
+                                  progress.pct >= 40 ? 'text-yellow-600' : 'text-red-500'
+                                }`}>{progress.pct}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    progress.pct >= 80 ? 'bg-green-500' :
+                                    progress.pct >= 40 ? 'bg-yellow-400' : 'bg-red-400'
+                                  }`}
+                                  style={{ width: `${progress.pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-600">{progress.completed} sesi selesai</span>
+                          )}
+                          <span className="block text-sm text-gray-400">
+                            Berikutnya: {nextSessionMap.has(cls.id) ? fmtDate(nextSessionMap.get(cls.id)!) : 'Belum ada'}
+                          </span>
+                        </Link>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <Link href={`/admin/classes/${cls.id}`} className="block">
+                          <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${
+                            cls.status === 'selesai'
+                              ? 'bg-gray-100 text-gray-500'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {cls.status === 'selesai' ? 'Selesai' : 'Aktif'}
+                          </span>
+                        </Link>
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        <Link href={`/admin/classes/${cls.id}`} className="inline-block">
+                          <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-
-      {/* List */}
-      {filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-sm text-gray-500">
-          Tidak ada kelas yang sesuai filter.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map(cls => (
-            <Link
-              key={cls.id}
-              href={`/admin/classes/${cls.id}`}
-              className="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-5 py-4 hover:bg-blue-50/50 transition-colors"
-            >
-              <div className="flex items-start gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{cls.name}</p>
-                    {cls.level && (
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                        {cls.level}
-                      </span>
-                    )}
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {cls.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {cls.class_subjects?.length > 0
-                      ? cls.class_subjects.map(cs => cs.subjects?.name).filter(Boolean).join(', ')
-                      : 'Mata pelajaran umum'} &bull; Tutor: {cls.profiles?.full_name ?? '-'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 text-right">
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">{countByClass[cls.id] ?? 0}</p>
-                  <p className="text-xs text-gray-500">siswa</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
