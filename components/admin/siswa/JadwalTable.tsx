@@ -235,29 +235,6 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
                             const soalAsesmenList = (detail.assessments ?? []).filter(a => a.link_url)
                             const chipCls = "inline-flex items-center gap-1 text-xs text-blue-600 border border-blue-200 bg-white px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors"
 
-                            if ((detail.assessments?.length ?? 0) > 0)
-                              items.push({
-                                label: 'Nilai',
-                                node: (
-                                  <div className="space-y-1.5">
-                                    {detail.assessments.map((a, i) => (
-                                      <div key={a.id} className="flex items-center gap-2 flex-wrap">
-                                        {detail.assessments.length > 1 && (
-                                          <span className="text-sm text-gray-500 font-medium">Asesmen {i + 1}:</span>
-                                        )}
-                                        {a.score !== null
-                                          ? <span className="text-sm"><span className={`font-semibold ${a.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>{a.score}</span><span className="text-gray-500">/{a.max_score}</span></span>
-                                          : <span className="text-sm text-gray-400">Belum dinilai</span>}
-                                        {a.level && COMPREHENSION_LEVELS[a.level] && (
-                                          <span className={`text-xs px-2 py-0.5 rounded-full ${COMPREHENSION_LEVELS[a.level].bg} ${COMPREHENSION_LEVELS[a.level].text}`}>
-                                            {COMPREHENSION_LEVELS[a.level].label}
-                                          </span>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ),
-                              })
                             if ((detail.materials?.length ?? 0) > 0)
                               items.push({
                                 label: 'Materi',
@@ -292,6 +269,29 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
                                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                                         {bankSoalCps.length > 1 ? `CP ${i + 1}` : 'Bank Soal'}
                                       </Link>
+                                    ))}
+                                  </div>
+                                ),
+                              })
+                            if ((detail.assessments?.length ?? 0) > 0)
+                              items.push({
+                                label: 'Nilai',
+                                node: (
+                                  <div className="space-y-1.5">
+                                    {detail.assessments.map((a, i) => (
+                                      <div key={a.id} className="flex items-center gap-2 flex-wrap">
+                                        {detail.assessments.length > 1 && (
+                                          <span className="text-sm text-gray-500 font-medium">Asesmen {i + 1}:</span>
+                                        )}
+                                        {a.score !== null
+                                          ? <span className="text-sm"><span className={`font-semibold ${a.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>{a.score}</span><span className="text-gray-500">/{a.max_score}</span></span>
+                                          : <span className="text-sm text-gray-400">Belum dinilai</span>}
+                                        {a.level && COMPREHENSION_LEVELS[a.level] && (
+                                          <span className={`text-xs px-2 py-0.5 rounded-full ${COMPREHENSION_LEVELS[a.level].bg} ${COMPREHENSION_LEVELS[a.level].text}`}>
+                                            {COMPREHENSION_LEVELS[a.level].label}
+                                          </span>
+                                        )}
+                                      </div>
                                     ))}
                                   </div>
                                 ),
