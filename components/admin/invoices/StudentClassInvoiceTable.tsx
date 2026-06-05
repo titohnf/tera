@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 
@@ -71,6 +71,7 @@ function classStatus(kekurangan: number, latestPaid: number, classPrice: number)
 function ClassCard({ group }: { group: ClassGroup }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  useEffect(() => { setIsOpen(true) }, [])
   const [isPending, startTransition] = useTransition()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [editingPayment, setEditingPayment] = useState<string | null>(null)
@@ -138,7 +139,7 @@ function ClassCard({ group }: { group: ClassGroup }) {
   }
 
   return (
-    <div className="first:rounded-t-2xl last:rounded-b-2xl overflow-visible">
+    <div>
       {/* Class header */}
       <div className="hover:bg-slate-50 transition-colors">
         <button
@@ -184,6 +185,9 @@ function ClassCard({ group }: { group: ClassGroup }) {
           {/* Invoice list */}
           <div className="px-5 py-4">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Invoice</p>
+            {group.invoices.length === 0 ? (
+              <p className="text-sm text-gray-400">Belum ada invoice untuk kelas ini.</p>
+            ) : (
             <div className="space-y-2.5">
               {group.invoices.map(inv => (
                 <div key={inv.id} className="flex items-center gap-2">
@@ -241,6 +245,7 @@ function ClassCard({ group }: { group: ClassGroup }) {
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Payment history */}
@@ -364,12 +369,12 @@ export default function StudentClassInvoiceTable({ groups }: Props) {
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl">
-      <div className="divide-y divide-slate-100">
-        {groups.map(group => (
-          <ClassCard key={group.classId ?? '__no_class__'} group={group} />
-        ))}
-      </div>
+    <div className="space-y-3">
+      {groups.map(group => (
+        <div key={group.classId ?? '__no_class__'} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+          <ClassCard group={group} />
+        </div>
+      ))}
     </div>
   )
 }

@@ -40,7 +40,7 @@ export default async function StudentInvoiceDetailPage({
   const admin = createAdminClient()
   const today = new Date().toISOString().slice(0, 10)
 
-  const [profileRes, invoicesRes] = await Promise.all([
+  const [profileRes, invoicesRes, enrollmentsRes] = await Promise.all([
     admin.from('profiles').select('id, full_name').eq('id', studentId).single(),
     admin
       .from('invoices')
@@ -48,6 +48,11 @@ export default async function StudentInvoiceDetailPage({
       .eq('student_id', studentId)
       .order('issued_at', { ascending: false })
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
+    admin
+      .from('class_students')
+      .select('class_id, classes!class_id(name)')
+      .eq('student_id', studentId)
+      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; classes: { name: string } | null }[] | null }>,
   ])
 
   if (!profileRes.data) notFound()
@@ -92,9 +97,18 @@ export default async function StudentInvoiceDetailPage({
 
   const groups = Array.from(classMap.values())
 
-  // Compute generatable classes (not lunas)
+  // Add enrolled classes with no invoices as groups so they show in the table
+  const enrollments = enrollmentsRes.data ?? []
+  for (const enr of enrollments) {
+    if (!classMap.has(enr.class_id)) {
+      groups.push({ classId: enr.class_id, className: enr.classes?.name ?? 'Tanpa Nama', invoices: [] })
+    }
+  }
+
+  // Compute generatable classes (not lunas, or no invoices yet)
   const generatableClasses: GeneratableClass[] = groups
     .filter(group => {
+      if (group.invoices.length === 0) return true
       const classPrice = group.invoices[group.invoices.length - 1]?.total_due ?? 0
       const latestInvoice = group.invoices[0]
       const latestPaid = latestInvoice?.status === 'paid'
@@ -142,8 +156,8 @@ export default async function StudentInvoiceDetailPage({
             </svg>
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{profile.full_name}</h1>
-            <p className="text-sm text-gray-400">Riwayat Invoice</p>
+            <h1 className="text-xl font-semibold text-gray-900">Riwayat Tagihan dan Pembayaran Siswa</h1>
+            <p className="text-sm text-gray-500">{profile.full_name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
