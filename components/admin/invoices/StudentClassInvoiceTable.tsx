@@ -30,6 +30,9 @@ export type ClassGroup = {
 
 interface Props {
   groups: ClassGroup[]
+  studentName?: string
+  parentName?: string
+  parentPhone?: string
 }
 
 const INV_STATUS_LABEL: Record<string, string> = {
@@ -68,7 +71,24 @@ function classStatus(kekurangan: number, latestPaid: number, classPrice: number)
   return 'menunggu'
 }
 
-function ClassCard({ group }: { group: ClassGroup }) {
+function formatWaPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('62')) return digits
+  if (digits.startsWith('0')) return '62' + digits.slice(1)
+  return '62' + digits
+}
+
+function ClassCard({
+  group,
+  studentName,
+  parentName,
+  parentPhone,
+}: {
+  group: ClassGroup
+  studentName?: string
+  parentName?: string
+  parentPhone?: string
+}) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   useEffect(() => { setIsOpen(true) }, [])
@@ -99,9 +119,34 @@ function ClassCard({ group }: { group: ClassGroup }) {
   const status = classStatus(kekurangan, totalActuallyPaid, classPrice)
 
   function handleKirim(invoiceId: string) {
+    const inv = group.invoices.find(i => i.id === invoiceId)
     startTransition(async () => {
       await updateInvoiceStatus(invoiceId, 'sent')
       router.refresh()
+      if (parentPhone && inv) {
+        const totalFmt = formatRupiah(inv.total_due)
+        const dueDateFmt = inv.due_date
+          ? new Date(inv.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : null
+        const invoiceUrl = `${window.location.origin}/admin/invoices/${invoiceId}/cetak`
+        const sapaan = parentName ? `Bapak/Ibu ${parentName}` : 'Bapak/Ibu'
+        const lines = [
+          `Assalamu'alaikum ${sapaan},`,
+          '',
+          `Berikut kami sampaikan tagihan les *${studentName ?? ''}* untuk kelas *${group.className}*:`,
+          '',
+          `🔖 No. Invoice: *${inv.invoice_number}*`,
+          `💰 Total Tagihan: *${totalFmt}*`,
+          dueDateFmt ? `📅 Jatuh Tempo: *${dueDateFmt}*` : null,
+          '',
+          `Detail invoice: ${invoiceUrl}`,
+          '',
+          'Terima kasih 🙏',
+          'Tera Learning Center',
+        ].filter(l => l !== null).join('\n')
+        const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
+        window.open(waUrl, '_blank')
+      }
     })
   }
 
@@ -359,7 +404,7 @@ function ClassCard({ group }: { group: ClassGroup }) {
   )
 }
 
-export default function StudentClassInvoiceTable({ groups }: Props) {
+export default function StudentClassInvoiceTable({ groups, studentName, parentName, parentPhone }: Props) {
   if (groups.length === 0) {
     return <p className="text-sm text-gray-400 text-center py-10">Belum ada invoice untuk siswa ini.</p>
   }
@@ -368,7 +413,7 @@ export default function StudentClassInvoiceTable({ groups }: Props) {
     <div className="space-y-3">
       {groups.map(group => (
         <div key={group.classId ?? '__no_class__'} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-          <ClassCard group={group} />
+          <ClassCard group={group} studentName={studentName} parentName={parentName} parentPhone={parentPhone} />
         </div>
       ))}
     </div>
