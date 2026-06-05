@@ -36,6 +36,7 @@ const LineItemSchema = z.object({
   months: z.number().min(0),
   amount: z.number().min(0),
   is_deduction: z.boolean(),
+  unit: z.enum(['bulan', 'pertemuan']).optional(),
 })
 
 const InvoiceSchema = z.object({
@@ -147,7 +148,7 @@ export async function updateInvoice(id: string, data: unknown) {
   return { success: true }
 }
 
-export async function updateInvoiceStatus(id: string, status: 'draft' | 'sent' | 'paid') {
+export async function updateInvoiceStatus(id: string, status: 'draft' | 'sent' | 'partially_paid' | 'paid') {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
@@ -160,6 +161,84 @@ export async function updateInvoiceStatus(id: string, status: 'draft' | 'sent' |
 
   revalidatePath('/admin/invoices')
   revalidatePath(`/admin/invoices/${id}`)
+  return { success: true }
+}
+
+export async function updatePayment(paymentId: string, amount: number, paidAt: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { data: payment } = await ctx.admin
+    .from('invoice_payments')
+    .select('invoice_id')
+    .eq('id', paymentId)
+    .single() as { data: { invoice_id: string } | null }
+
+  if (!payment) return { error: 'Pembayaran tidak ditemukan' }
+
+  const invoiceId = payment.invoice_id
+
+  const { error } = await ctx.admin
+    .from('invoice_payments')
+    .update({ amount, paid_at: paidAt, updated_at: new Date().toISOString() })
+    .eq('id', paymentId)
+
+  if (error) return { error: error.message }
+
+  const [{ data: invoice }, { data: allPayments }] = await Promise.all([
+    ctx.admin.from('invoices').select('total_due').eq('id', invoiceId).single() as unknown as Promise<{ data: { total_due: number } | null }>,
+    ctx.admin.from('invoice_payments').select('amount').eq('invoice_id', invoiceId) as unknown as Promise<{ data: { amount: number }[] | null }>,
+  ])
+
+  const totalPaid = (allPayments ?? []).reduce((s, p) => s + p.amount, 0)
+  const newStatus = totalPaid <= 0 ? 'sent' : totalPaid >= (invoice?.total_due ?? 0) ? 'paid' : 'partially_paid'
+
+  await ctx.admin
+    .from('invoices')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', invoiceId)
+
+  await syncNextInvoice(invoiceId, ctx.admin)
+
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${invoiceId}`)
+  return { success: true }
+}
+
+export async function deletePayment(paymentId: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { data: payment } = await ctx.admin
+    .from('invoice_payments')
+    .select('invoice_id, amount')
+    .eq('id', paymentId)
+    .single() as { data: { invoice_id: string; amount: number } | null }
+
+  if (!payment) return { error: 'Pembayaran tidak ditemukan' }
+
+  const invoiceId = payment.invoice_id
+
+  const { error } = await ctx.admin.from('invoice_payments').delete().eq('id', paymentId)
+  if (error) return { error: error.message }
+
+  const [{ data: invoice }, { data: remaining }] = await Promise.all([
+    ctx.admin.from('invoices').select('total_due').eq('id', invoiceId).single() as unknown as Promise<{ data: { total_due: number } | null }>,
+    ctx.admin.from('invoice_payments').select('amount').eq('invoice_id', invoiceId) as unknown as Promise<{ data: { amount: number }[] | null }>,
+  ])
+
+  const totalPaid = (remaining ?? []).reduce((s, p) => s + p.amount, 0)
+  const newStatus = totalPaid <= 0 ? 'sent' : totalPaid >= (invoice?.total_due ?? 0) ? 'paid' : 'partially_paid'
+
+  await ctx.admin
+    .from('invoices')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', invoiceId)
+
+  await syncNextInvoice(invoiceId, ctx.admin)
+
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${invoiceId}`)
   return { success: true }
 }
 
@@ -235,6 +314,119 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
   return { id: inserted.id }
 }
 
+// ─── Sync next invoice after payment change ────────────────────────────────────
+
+async function syncNextInvoice(
+  invoiceId: string,
+  admin: ReturnType<typeof createAdminClient>
+) {
+  // Load current invoice
+  const { data: curr } = await admin
+    .from('invoices')
+    .select('student_id, class_id, issued_at, total_due, line_items')
+    .eq('id', invoiceId)
+    .single() as { data: { student_id: string; class_id: string; issued_at: string; total_due: number; line_items: Array<{ is_deduction?: boolean; months: number; amount: number; description: string }> } | null }
+
+  if (!curr?.student_id || !curr?.class_id) return
+
+  // Find the immediately next invoice for same student+class
+  const { data: next } = await admin
+    .from('invoices')
+    .select('id, status')
+    .eq('student_id', curr.student_id)
+    .eq('class_id', curr.class_id)
+    .gt('issued_at', curr.issued_at)
+    .order('issued_at', { ascending: true })
+    .limit(1)
+    .single() as { data: { id: string; status: string } | null }
+
+  if (!next) return
+
+  // All payments for the current invoice
+  const { data: payments } = await admin
+    .from('invoice_payments')
+    .select('amount, paid_at')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: true }) as { data: { amount: number; paid_at: string }[] | null }
+
+  const allPayments = payments ?? []
+  const totalPaid = allPayments.reduce((s, p) => s + p.amount, 0)
+
+  // Rebuild next invoice line_items: current charge items + deduction rows
+  const chargeItems = curr.line_items.filter(i => !i.is_deduction)
+  const deductionItems = allPayments.map((p, idx) => ({
+    description: `Pembayaran Tahap ${idx + 1} (${new Date(p.paid_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`,
+    months: 0,
+    amount: p.amount,
+    is_deduction: true,
+  }))
+
+  const newLineItems = [...chargeItems, ...deductionItems]
+  const newTotalDue = curr.total_due - totalPaid
+
+  const newStatus = newTotalDue <= 0
+    ? 'paid'
+    : next.status === 'paid'
+      ? 'partially_paid'
+      : next.status
+
+  await admin
+    .from('invoices')
+    .update({
+      line_items: newLineItems,
+      total_due: Math.max(0, newTotalDue),
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', next.id)
+}
+
+export async function recordPayment(invoiceId: string, paymentAmount: number, paidAt?: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { data: invoice } = await ctx.admin
+    .from('invoices')
+    .select('total_due')
+    .eq('id', invoiceId)
+    .single() as { data: { total_due: number } | null }
+
+  if (!invoice) return { error: 'Invoice tidak ditemukan' }
+  if (paymentAmount <= 0) return { error: 'Jumlah pembayaran harus lebih dari 0' }
+
+  const { data: existing } = await ctx.admin
+    .from('invoice_payments')
+    .select('amount')
+    .eq('invoice_id', invoiceId)
+
+  const alreadyPaid = (existing ?? []).reduce((s: number, p: { amount: number }) => s + p.amount, 0)
+  const remaining = invoice.total_due - alreadyPaid
+
+  if (paymentAmount > remaining) return { error: 'Jumlah pembayaran melebihi sisa tagihan' }
+
+  const { data: payment, error: insertError } = await ctx.admin
+    .from('invoice_payments')
+    .insert({ invoice_id: invoiceId, amount: paymentAmount, created_by: ctx.user.id, ...(paidAt ? { paid_at: paidAt } : {}) })
+    .select('id')
+    .single()
+
+  if (insertError) return { error: insertError.message }
+
+  const newPaid = alreadyPaid + paymentAmount
+  const newStatus = newPaid >= invoice.total_due ? 'paid' : 'partially_paid'
+
+  await ctx.admin
+    .from('invoices')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', invoiceId)
+
+  await syncNextInvoice(invoiceId, ctx.admin)
+
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${invoiceId}`)
+  return { invoiceId, paymentId: payment.id }
+}
+
 export async function generateNextInvoice(studentId: string, classId: string, paymentAmount: number) {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
@@ -255,29 +447,47 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
     description: string; months: number; amount: number; is_deduction: boolean
   }>
 
-  // Keep original charge rows, accumulate all previous payment deductions
+  // Charge items from previous invoice (non-deduction rows)
   const chargeItems = prevLineItems.filter(item => !item.is_deduction)
-  const prevDeductions = prevLineItems.filter(item => item.is_deduction)
-  const tahapNumber = prevDeductions.length + 1
 
-  const paymentDate = new Date().toLocaleDateString('id-ID', {
-    day: 'numeric', month: 'long', year: 'numeric',
+  // Fetch actual payments from invoice_payments for the previous invoice
+  const { data: payments } = await ctx.admin
+    .from('invoice_payments')
+    .select('id, amount, paid_at')
+    .eq('invoice_id', prevInvoice.id)
+    .order('paid_at', { ascending: true })
+    .order('created_at', { ascending: true }) as any
+
+  const allPayments: Array<{ id: string; amount: number; paid_at: string }> = payments ?? []
+
+  // Build deduction line items from actual payment records
+  const deductionItems = allPayments.map((p, idx) => {
+    const date = new Date(p.paid_at).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    })
+    return {
+      description: `Pembayaran Tahap ${idx + 1} (${date})`,
+      months: 0,
+      amount: p.amount,
+      is_deduction: true,
+    }
   })
 
-  const newDeductionIndex = paymentAmount > 0 ? chargeItems.length + prevDeductions.length : null
+  // Optionally append a new payment passed by caller
+  if (paymentAmount > 0) {
+    const paymentDate = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    })
+    deductionItems.push({
+      description: `Pembayaran Tahap ${allPayments.length + 1} (${paymentDate})`,
+      months: 0,
+      amount: paymentAmount,
+      is_deduction: true,
+    })
+  }
 
-  const lineItems = paymentAmount > 0
-    ? [
-        ...chargeItems,
-        ...prevDeductions,
-        {
-          description: `Pembayaran Tahap ${tahapNumber} (${paymentDate})`,
-          months: 0,
-          amount: paymentAmount,
-          is_deduction: true,
-        },
-      ]
-    : [...chargeItems, ...prevDeductions]
+  const newDeductionIndex = paymentAmount > 0 ? chargeItems.length + deductionItems.length - 1 : null
+  const lineItems = [...chargeItems, ...deductionItems]
 
   // Total = sum of charges - sum of all deductions (months=0 items use amount directly)
   const lineSubtotal = (item: { months: number; amount: number }) =>
@@ -387,16 +597,33 @@ export async function generateDraftInvoices(
   // Most recent previous invoice per student+class (for group carry-forward)
   const { data: prevInvoices } = await ctx.admin
     .from('invoices')
-    .select('student_id, class_id, total_due, student_name, parent_name, line_items')
+    .select('id, student_id, class_id, total_due, student_name, parent_name, line_items')
     .lt('issued_at', issuedAt)
     .order('issued_at', { ascending: false }) as unknown as {
-      data: { student_id: string; class_id: string; total_due: number; student_name: string; parent_name: string; line_items: unknown[] }[] | null
+      data: { id: string; student_id: string; class_id: string; total_due: number; student_name: string; parent_name: string; line_items: unknown[] }[] | null
     }
 
-  const prevMap = new Map<string, { total_due: number; student_name: string; parent_name: string; line_items: unknown[] }>()
+  const prevMap = new Map<string, { id: string; total_due: number; student_name: string; parent_name: string; line_items: unknown[] }>()
   for (const inv of prevInvoices ?? []) {
     const key = `${inv.student_id}:${inv.class_id}`
     if (!prevMap.has(key)) prevMap.set(key, inv)
+  }
+
+  // Payments for all previous invoices
+  const prevInvoiceIds = [...prevMap.values()].map(i => i.id)
+  const paymentsByInvoice = new Map<string, { amount: number; paid_at: string }[]>()
+  if (prevInvoiceIds.length > 0) {
+    const { data: prevPayments } = await ctx.admin
+      .from('invoice_payments')
+      .select('invoice_id, amount, paid_at')
+      .in('invoice_id', prevInvoiceIds)
+      .order('created_at', { ascending: true }) as unknown as {
+        data: { invoice_id: string; amount: number; paid_at: string }[] | null
+      }
+    for (const p of prevPayments ?? []) {
+      if (!paymentsByInvoice.has(p.invoice_id)) paymentsByInvoice.set(p.invoice_id, [])
+      paymentsByInvoice.get(p.invoice_id)!.push(p)
+    }
   }
 
   // Active billing rates
@@ -448,9 +675,20 @@ export async function generateDraftInvoices(
     } else {
       // Group: first invoice for full period, then carry forward unpaid balance
       if (prev) {
-        if (prev.total_due <= 0) { skipped++; continue } // fully paid, skip
-        lineItems = prev.line_items as object[]
-        totalDue = prev.total_due
+        const payments = paymentsByInvoice.get(prev.id) ?? []
+        const totalPaid = payments.reduce((s, p) => s + p.amount, 0)
+        const remaining = prev.total_due - totalPaid
+        if (remaining <= 0) { skipped++; continue } // fully paid, skip
+
+        const chargeItems = (prev.line_items as Array<{ is_deduction?: boolean }>).filter(i => !i.is_deduction)
+        const deductionItems = payments.map((p, idx) => ({
+          description: `Pembayaran Tahap ${idx + 1} (${new Date(p.paid_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`,
+          months: 0,
+          amount: p.amount,
+          is_deduction: true,
+        }))
+        lineItems = [...chargeItems, ...deductionItems]
+        totalDue = remaining
       } else {
         // First invoice: total for full enrollment period
         const amount = getRate(cls?.class_type ?? null, cls?.level ?? null)

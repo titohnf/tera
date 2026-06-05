@@ -1,12 +1,14 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/invoices/PrintButton'
+import AutoPrint from '@/components/admin/invoices/AutoPrint'
 
 type LineItem = {
   description: string
   months: number
   amount: number
   is_deduction: boolean
+  unit?: 'bulan' | 'pertemuan'
 }
 
 type InvoiceRow = {
@@ -31,10 +33,15 @@ const formatDate = (dateStr: string) =>
 
 export default async function PrintInvoicePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ invoiceId: string }>
+  searchParams: Promise<{ preview?: string; print?: string }>
 }) {
   const { invoiceId } = await params
+  const { preview, print } = await searchParams
+  const isPreview = preview === '1'
+  const autoPrint = print === '1'
   const admin = createAdminClient()
 
   const { data: invoice } = await admin
@@ -53,11 +60,15 @@ export default async function PrintInvoicePage({
           body { margin: 0; }
         }
         @page { margin: 1cm; }
+        body { background: white; }
       `}</style>
 
-      <div className="no-print flex justify-end p-4 border-b bg-gray-50">
-        <PrintButton />
-      </div>
+      {autoPrint && <AutoPrint />}
+      {!isPreview && !autoPrint && (
+        <div className="no-print flex justify-end p-4 border-b bg-gray-50">
+          <PrintButton />
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto p-12">
         <div className="flex items-start justify-between mb-4">
@@ -97,11 +108,11 @@ export default async function PrintInvoicePage({
               <th className="text-left px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 bg-gray-50">
                 Rincian Pembayaran
               </th>
-              <th className="text-center px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 w-16 bg-gray-50">
-                Bulan
+              <th className="text-center px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 w-24 bg-gray-50">
+                Qty
               </th>
               <th className="text-right px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 w-32 bg-gray-50">
-                Biaya/Bulan
+                Biaya/Satuan
               </th>
               <th className="text-right px-3 py-2 text-xs font-bold text-gray-900 w-36 bg-gray-50">
                 Total Harga
@@ -120,7 +131,9 @@ export default async function PrintInvoicePage({
                   ) : (
                     <>
                       <td className="px-3 py-2 text-gray-800 border-r border-gray-800">{item.description}</td>
-                      <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-800">{item.months}</td>
+                      <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-800 whitespace-nowrap">
+                        {item.months} {item.unit === 'pertemuan' ? 'pertm' : 'bln'}
+                      </td>
                       <td className="px-3 py-2 text-right text-gray-800 border-r border-gray-800">{formatRupiah(item.amount)}</td>
                     </>
                   )}

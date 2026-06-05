@@ -40,5 +40,7 @@ export async function uploadAvatarAdmin(userId: string, formData: FormData): Pro
   if (dbError) return { error: dbError.message }
 
   revalidatePath(`/admin/users/${userId}`)
+  revalidatePath(`/admin/siswa`)
+  revalidatePath(`/admin/siswa/${userId}`)
   return { url: avatarUrl }
 }

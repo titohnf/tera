@@ -3,6 +3,7 @@ import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import InvoiceFilters from '@/components/admin/invoices/InvoiceFilters'
 import GenerateDraftButton from '@/components/admin/GenerateDraftButton'
+import StudentInvoiceTable, { type StudentGroup } from '@/components/admin/invoices/StudentInvoiceAccordion'
 import { generateDraftInvoices } from '@/lib/actions/admin/invoices'
 
 type InvoiceRow = {
@@ -18,22 +19,27 @@ type InvoiceRow = {
   classes: { name: string } | null
 }
 
+type PaymentRow = {
+  id: string
+  invoice_id: string
+  amount: number
+  paid_at: string
+}
+
 const STATUS_LABEL: Record<string, string> = {
-  overdue:   'Overdue',
-  draft:     'Draft',
-  sent:      'Terkirim',
-  unpaid:    'Belum Dibayar',
-  paid:      'Lunas',
-  cancelled: 'Dibatalkan',
+  overdue:          'Overdue',
+  draft:            'Draft',
+  sent:             'Terkirim',
+  partially_paid:   'Sebagian Terbayar',
+  paid:             'Lunas',
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  overdue:   'bg-red-100 text-red-700',
-  draft:     'bg-gray-100 text-gray-500',
-  sent:      'bg-blue-100 text-blue-700',
-  unpaid:    'bg-yellow-100 text-yellow-700',
-  paid:      'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-400',
+  overdue:          'bg-red-100 text-red-700',
+  draft:            'bg-gray-100 text-gray-500',
+  sent:             'bg-blue-100 text-blue-700',
+  partially_paid:   'bg-yellow-100 text-yellow-700',
+  paid:             'bg-green-100 text-green-700',
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
@@ -72,7 +78,7 @@ export default async function InvoicesPage({
     return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
   })()
 
-  const [{ data: rawInvoices }, { count: activeStudentCount }] = await Promise.all([
+  const [{ data: rawInvoices }, { count: activeStudentCount }, { data: rawPayments }] = await Promise.all([
     admin
       .from('invoices')
       .select('id, student_id, class_id, invoice_number, total_due, issued_at, due_date, status, profiles!student_id(full_name), classes!class_id(name)')
@@ -83,9 +89,21 @@ export default async function InvoicesPage({
       .from('class_students')
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true),
+    admin
+      .from('invoice_payments')
+      .select('id, invoice_id, amount, paid_at')
+      .order('paid_at', { ascending: true }) as unknown as Promise<{ data: PaymentRow[] | null }>,
   ])
 
   const allInvoices = rawInvoices ?? []
+  const allPayments = rawPayments ?? []
+
+  // Build a map: invoiceId → payments
+  const paymentsByInvoice = new Map<string, PaymentRow[]>()
+  for (const p of allPayments) {
+    if (!paymentsByInvoice.has(p.invoice_id)) paymentsByInvoice.set(p.invoice_id, [])
+    paymentsByInvoice.get(p.invoice_id)!.push(p)
+  }
 
   function effectiveStatus(inv: InvoiceRow): string {
     if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.due_date && inv.due_date < today) {
@@ -110,9 +128,9 @@ export default async function InvoicesPage({
   const overdueList       = statsBase.filter(i => effectiveStatus(i) === 'overdue')
   const overdueAmount     = overdueList.reduce((s, i) => s + (i.total_due ?? 0), 0)
   const overdueStudentCount = new Set(overdueList.map(i => i.student_id)).size
-  const pendingList       = statsBase.filter(i => i.status === 'sent' || i.status === 'unpaid')
+  const pendingList       = statsBase.filter(i => i.status === 'sent' || i.status === 'partially_paid')
   const pendingAmount     = pendingList.reduce((s, i) => s + (i.total_due ?? 0), 0)
-  const draftCount        = statsBase.filter(i => i.status === 'draft').length
+  const partialCount      = statsBase.filter(i => i.status === 'partially_paid').length
   const revenuePerSiswa   = (activeStudentCount ?? 0) > 0 ? Math.round(revenuePaid / (activeStudentCount ?? 1)) : 0
 
   // Apply all filters
@@ -127,6 +145,28 @@ export default async function InvoicesPage({
   if (statusFilter) {
     filtered = filtered.filter(i => effectiveStatus(i) === statusFilter)
   }
+
+  // Build student groups for the "Semua" tab
+  const studentGroups: StudentGroup[] = (() => {
+    if (month) return []
+    const map = new Map<string, StudentGroup>()
+    for (const inv of filtered) {
+      const sid = inv.student_id
+      const name = inv.profiles?.full_name ?? '(tanpa nama)'
+      if (!map.has(sid)) map.set(sid, { studentId: sid, studentName: name, invoices: [] })
+      map.get(sid)!.invoices.push({
+        id: inv.id,
+        invoice_number: inv.invoice_number,
+        class_name: inv.classes?.name ?? null,
+        total_due: inv.total_due,
+        issued_at: inv.issued_at,
+        due_date: inv.due_date,
+        eff_status: effectiveStatus(inv),
+        payments: paymentsByInvoice.get(inv.id) ?? [],
+      })
+    }
+    return Array.from(map.values()).sort((a, b) => a.studentName.localeCompare(b.studentName, 'id'))
+  })()
 
   const baseParams = new URLSearchParams()
   if (month) baseParams.set('month', month)
@@ -160,9 +200,9 @@ export default async function InvoicesPage({
           sub={pendingList.length > 0 ? `${pendingList.length} invoice` : undefined}
         />
         <MetricCard
-          label="Draft"
-          value={draftCount}
-          sub={draftCount > 0 ? `${draftCount} belum dikirim` : undefined}
+          label="Sebagian Terbayar"
+          value={partialCount}
+          sub={partialCount > 0 ? `${partialCount} invoice` : undefined}
         />
         <MetricCard label="Total Invoice" value={statsBase.length} />
         <MetricCard
@@ -214,11 +254,15 @@ export default async function InvoicesPage({
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-            {(q || statusFilter)
-              ? `Menampilkan ${filtered.length} dari ${statsBase.length} invoice`
-              : `${statsBase.length} Invoice`}
+            {!month
+              ? (q || statusFilter)
+                ? `${studentGroups.length} Siswa · ${filtered.length} invoice`
+                : `${studentGroups.length} Siswa`
+              : (q || statusFilter)
+                ? `Menampilkan ${filtered.length} dari ${statsBase.length} invoice`
+                : `${statsBase.length} Invoice`}
           </h2>
-          {activeMonth === currentMonth && (
+          {month && (
             <GenerateDraftButton
               month={activeMonth}
               monthLabel={activeMonthLabel}
@@ -227,7 +271,10 @@ export default async function InvoicesPage({
           )}
         </div>
 
-        {filtered.length === 0 ? (
+        {!month ? (
+          /* Tab Semua: tabel per siswa */
+          <StudentInvoiceTable groups={studentGroups} />
+        ) : filtered.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10 px-5">Tidak ada invoice yang sesuai filter.</p>
         ) : (
           <div className="overflow-x-auto">

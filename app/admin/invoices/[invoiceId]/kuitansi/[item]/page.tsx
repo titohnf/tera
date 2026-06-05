@@ -2,20 +2,19 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/invoices/PrintButton'
 
-type LineItem = {
-  description: string
-  months: number
-  amount: number
-  is_deduction: boolean
-}
-
 type InvoiceRow = {
   id: string
   invoice_number: string
   student_name: string
   parent_name: string
-  line_items: LineItem[]
+  line_items: { description: string; is_deduction: boolean }[]
   issued_at: string
+}
+
+type PaymentRow = {
+  id: string
+  amount: number
+  paid_at: string
 }
 
 function terbilang(n: number): string {
@@ -47,37 +46,40 @@ export default async function KuitansiPage({
 }: {
   params: Promise<{ invoiceId: string; item: string }>
 }) {
-  const { invoiceId, item } = await params
-  const itemIndex = Number(item)
-
+  const { invoiceId, item: paymentId } = await params
   const admin = createAdminClient()
-  const { data: invoice } = await admin
-    .from('invoices')
-    .select('id, invoice_number, student_name, parent_name, line_items, issued_at')
-    .eq('id', invoiceId)
-    .single() as unknown as { data: InvoiceRow | null }
 
-  if (!invoice) notFound()
+  const [invoiceRes, paymentRes, allPaymentsRes] = await Promise.all([
+    admin
+      .from('invoices')
+      .select('id, invoice_number, student_name, parent_name, line_items, issued_at')
+      .eq('id', invoiceId)
+      .single() as unknown as Promise<{ data: InvoiceRow | null }>,
+    admin
+      .from('invoice_payments')
+      .select('id, amount, paid_at')
+      .eq('id', paymentId)
+      .single() as unknown as Promise<{ data: PaymentRow | null }>,
+    admin
+      .from('invoice_payments')
+      .select('id')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true }) as unknown as Promise<{ data: { id: string }[] | null }>,
+  ])
 
-  const lineItems = invoice.line_items ?? []
-  const deductionItem = lineItems[itemIndex]
+  if (!invoiceRes.data || !paymentRes.data) notFound()
 
-  if (!deductionItem || !deductionItem.is_deduction || deductionItem.months !== 0) notFound()
+  const invoice = invoiceRes.data
+  const payment = paymentRes.data
+  const allPayments = allPaymentsRes.data ?? []
 
-  // Extract tahap number from description e.g. "Pembayaran Tahap 1 (1 Mei 2026)"
-  const tahapMatch = deductionItem.description.match(/Tahap\s+(\d+)/i)
-  const tahapNumber = tahapMatch ? tahapMatch[1] : String(itemIndex)
+  const tahapNumber = (allPayments.findIndex(p => p.id === paymentId) + 1) || 1
+  const chargeItems = invoice.line_items.filter(i => !i.is_deduction)
+  const chargeDescription = chargeItems[0]?.description ?? ''
 
-  // Charge line items for description
-  const chargeItems = lineItems.filter(it => !it.is_deduction)
-  const chargeDescription = chargeItems.map(it => it.description).join(', ')
-
-  // Kuitansi number: replace INVOICE with KUITANSI in invoice number
   const kuitansiNumber = invoice.invoice_number
     .replace(/INVOICE/gi, 'KUITANSI')
-    .replace(/(\d+)\s*\/\s*(\d+)\s*\//, `${tahapNumber.padStart(2, '0')} / $2 /`)
-
-  const paymentAmount = deductionItem.amount
+    .replace(/(\d+)\s*\/\s*(\d+)\s*\//, `${String(tahapNumber).padStart(2, '0')} / $2 /`)
 
   return (
     <>
@@ -112,13 +114,11 @@ export default async function KuitansiPage({
 
         <hr className="border-gray-800 border-t-2 mb-6" />
 
-        {/* Title */}
         <div className="text-center mb-8">
           <p className="text-lg font-bold text-gray-900 tracking-widest">KUITANSI</p>
           <p className="text-sm text-gray-600 mt-1 font-mono">{kuitansiNumber}</p>
         </div>
 
-        {/* Info fields */}
         <table className="w-full text-sm mb-8">
           <tbody>
             <tr>
@@ -139,7 +139,6 @@ export default async function KuitansiPage({
           </tbody>
         </table>
 
-        {/* Payment table */}
         <table className="w-full border-collapse text-sm mb-2">
           <thead>
             <tr className="border border-gray-800">
@@ -159,21 +158,19 @@ export default async function KuitansiPage({
               <td className="px-3 py-2 text-gray-800 border-r border-gray-800">{chargeDescription}</td>
               <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-800">{tahapNumber}</td>
               <td className="px-3 py-2 text-right text-gray-800 font-medium">
-                Rp{new Intl.NumberFormat('id-ID').format(paymentAmount)}
+                Rp{new Intl.NumberFormat('id-ID').format(payment.amount)}
               </td>
             </tr>
           </tbody>
         </table>
 
-        {/* Terbilang */}
         <div className="border border-t-0 border-gray-800 px-3 py-2 text-right text-sm mb-10">
           <span className="text-gray-600">Terbilang: </span>
           <span className="font-bold italic text-gray-900">
-            {capitalize(terbilang(paymentAmount))} Rupiah
+            {capitalize(terbilang(payment.amount))} Rupiah
           </span>
         </div>
 
-        {/* Signatures */}
         <div className="grid grid-cols-2 gap-8">
           <div className="text-sm text-center">
             <p className="text-gray-600 mb-1">Mengetahui,</p>
@@ -182,7 +179,7 @@ export default async function KuitansiPage({
             <p className="text-gray-900">{invoice.parent_name}</p>
           </div>
           <div className="text-sm text-center">
-            <p className="text-gray-600 mb-1">Depok, {formatDate(invoice.issued_at)}</p>
+            <p className="text-gray-600 mb-1">Depok, {formatDate(payment.paid_at)}</p>
             <p className="font-semibold text-gray-900">Pimpinan Tera Learning Center</p>
             <div className="h-16"></div>
             <p className="text-gray-900">Suci Purnama Sari, M.Si.</p>

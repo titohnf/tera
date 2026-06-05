@@ -41,6 +41,8 @@ type DefaultValues = {
   start_date?: string | null
   end_date?: string | null
   duration_minutes?: number | null
+  semester?: number | null
+  academic_year?: string | null
 }
 
 interface ClassFormProps {
@@ -60,12 +62,13 @@ function parseTimeToMinutes(t: string): number {
   return h * 60 + (m ?? 0)
 }
 
-function buildClassName(classType: string, jenjang: string, jenis: string, fokusTypes: string[], namaUnik: string) {
+function buildClassName(classType: string, jenjang: string, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null) {
   const tipeLabel = classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : ''
   const jenisLabel = jenis === 'reguler' ? 'Reguler'
     : jenis === 'fokus' ? (fokusTypes.length > 0 ? `Fokus ${fokusTypes.join('/')}` : 'Fokus')
     : ''
-  return [tipeLabel, jenjang, jenisLabel, namaUnik].filter(Boolean).join(' ')
+  const smLabel = semester ? `SM ${semester}` : ''
+  return [tipeLabel, jenjang, jenisLabel, smLabel, namaUnik].filter(Boolean).join(' ')
 }
 
 function emptySlot(): SlotState {
@@ -310,6 +313,13 @@ export default function ClassForm({
 }: ClassFormProps) {
   const [state, formAction, pending] = useActionState(action, null)
 
+  // Dates, semester & duration
+  const today = new Date().toISOString().split('T')[0]
+  const currentYear = new Date().getFullYear()
+  const academicYearEdited = useRef(!!defaultValues?.academic_year)
+  const endDateEdited = useRef(!!defaultValues?.end_date)
+  const [semester, setSemester] = useState<number | null>(defaultValues?.semester ?? null)
+
   // Name builder
   const [classType, setClassType] = useState(defaultValues?.class_type ?? '')
   const [jenjang, setJenjang] = useState(defaultValues?.level ?? '')
@@ -322,17 +332,27 @@ export default function ClassForm({
   useEffect(() => {
     if (nameManuallyEdited.current) return
     if (!classType && !jenjang && !jenis) return
-    setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik))
-  }, [classType, jenjang, jenis, fokusTypes, namaUnik])
+    setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester))
+  }, [classType, jenjang, jenis, fokusTypes, namaUnik, semester])
 
   function toggleFokus(type: string) {
     setFokusTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
   }
 
-  // Dates & duration
-  const [startDate, setStartDate] = useState(defaultValues?.start_date ?? '')
+  const [academicYear, setAcademicYear] = useState(defaultValues?.academic_year ?? '')
+  const [startDate, setStartDate] = useState(defaultValues?.start_date ?? today)
   const [endDate, setEndDate] = useState(defaultValues?.end_date ?? '')
   const [durationMinutes, setDurationMinutes] = useState(defaultValues?.duration_minutes ?? 90)
+
+  useEffect(() => {
+    if (semester === 1) {
+      if (!academicYearEdited.current) setAcademicYear(`${currentYear}/${currentYear + 1}`)
+      if (!endDateEdited.current) setEndDate(`${currentYear}-12-31`)
+    } else if (semester === 2) {
+      if (!academicYearEdited.current) setAcademicYear(`${currentYear - 1}/${currentYear}`)
+      if (!endDateEdited.current) setEndDate(`${currentYear}-06-30`)
+    }
+  }, [semester]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Slots
   const defaultSlots: SlotState[] = (defaultValues?.slots ?? []).map(s => ({
@@ -447,6 +467,80 @@ export default function ClassForm({
           {state.error}
         </div>
       )}
+
+      {/* ── Tanggal & Durasi ── */}
+      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5 space-y-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Periode & Durasi Kelas</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Semester</label>
+            <div className="flex gap-2">
+              {[1, 2].map(s => (
+                <button key={s} type="button" onClick={() => setSemester(semester === s ? null : s)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    semester === s
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50'
+                  }`}
+                >
+                  Semester {s}
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="semester" value={semester ?? ''} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tahun Ajaran</label>
+            <input
+              type="text"
+              name="academic_year"
+              value={academicYear}
+              onChange={e => { setAcademicYear(e.target.value); academicYearEdited.current = true }}
+              placeholder="2024/2025"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tanggal Kelas Pertama <span className="text-red-500">*</span>
+            </label>
+            <DatePicker name="start_date" required value={startDate} onChange={v => {
+              setStartDate(v)
+              if (endDate && v > endDate) setEndDate('')
+            }} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tanggal Kelas Terakhir <span className="text-red-500">*</span>
+            </label>
+            <DatePicker name="end_date" required value={endDate} onChange={v => { setEndDate(v); endDateEdited.current = true }} min={startDate || undefined} />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Durasi per Sesi (menit)</label>
+          <div className="flex gap-2">
+            {[60, 90, 120, 150].map(d => (
+              <button key={d} type="button" onClick={() => setDurationMinutes(d)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  durationMinutes === d
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50'
+                }`}
+              >{d}</button>
+            ))}
+          </div>
+          <input type="hidden" name="duration_minutes" value={durationMinutes} />
+        </div>
+        {startDate && endDate && slots.length > 0 && (
+          <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+            Jadwal akan otomatis di-generate dari <strong>{startDate}</strong> sampai <strong>{endDate}</strong>.
+          </div>
+        )}
+      </div>
 
       {/* ── Student picker ── */}
       {showStudentPicker && students && (
@@ -601,7 +695,7 @@ export default function ClassForm({
           />
           {nameManuallyEdited.current && (
             <button type="button"
-              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik)) }}
+              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester)) }}
               className="text-xs text-gray-400 hover:text-blue-600 mt-1 transition-colors"
             >↺ Reset ke nama otomatis</button>
           )}
@@ -610,6 +704,7 @@ export default function ClassForm({
 
       <input type="hidden" name="level" value={jenjang || (defaultValues?.level ?? '')} />
       <input type="hidden" name="class_type" value={classType} />
+      <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, jenis, fokusTypes, '', semester)} />
 
       {/* ── Pertemuan per minggu ── */}
       <div>
@@ -640,48 +735,6 @@ export default function ClassForm({
           ))}
         </div>
       )}
-
-      {/* ── Tanggal & Durasi ── */}
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5 space-y-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Periode & Durasi Kelas</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Tanggal Kelas Pertama <span className="text-red-500">*</span>
-            </label>
-            <DatePicker name="start_date" required value={startDate} onChange={v => {
-              setStartDate(v)
-              if (endDate && v > endDate) setEndDate('')
-            }} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Tanggal Kelas Terakhir <span className="text-red-500">*</span>
-            </label>
-            <DatePicker name="end_date" required value={endDate} onChange={setEndDate} min={startDate || undefined} />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Durasi per Sesi (menit)</label>
-          <div className="flex gap-2">
-            {[60, 90, 120, 150].map(d => (
-              <button key={d} type="button" onClick={() => setDurationMinutes(d)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  durationMinutes === d
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50'
-                }`}
-              >{d}</button>
-            ))}
-          </div>
-          <input type="hidden" name="duration_minutes" value={durationMinutes} />
-        </div>
-        {startDate && endDate && slots.length > 0 && (
-          <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-            Jadwal akan otomatis di-generate dari <strong>{startDate}</strong> sampai <strong>{endDate}</strong>.
-          </div>
-        )}
-      </div>
 
       {/* ── Status ── */}
       {showActiveToggle && (

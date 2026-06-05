@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { fetchCriticalEvaluationData } from '@/lib/supabase/studentCriticalQueries'
 import { evaluateBatchCritical, getCriticalStudentIds } from '@/lib/studentCritical'
 import Link from 'next/link'
+import Image from 'next/image'
 import StudentFilters from '@/components/admin/siswa/StudentFilters'
 import CriticalBadge from '@/components/siswa/CriticalBadge'
 
@@ -18,6 +19,7 @@ type StudentProfile = {
   nickname: string | null
   created_at: string
   is_active: boolean
+  avatar_url: string | null
 }
 
 type ClassStudentRow = {
@@ -125,7 +127,7 @@ export default async function SiswaPage({
   ] = await Promise.all([
     admin
       .from('profiles')
-      .select('id, full_name, email, phone, role, level, grade, nickname, created_at, is_active')
+      .select('id, full_name, email, phone, role, level, grade, nickname, created_at, is_active, avatar_url')
       .eq('role', 'student')
       .order('created_at', { ascending: false })
       .limit(300),
@@ -501,7 +503,6 @@ export default async function SiswaPage({
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-snug">{label}</p>
             </div>
             <p className="text-2xl font-semibold leading-none text-gray-900">{statusCounts[key]}</p>
-            <p className="text-xs text-gray-500 mt-1">dari {totalStudents} siswa</p>
           </a>
         ))}
       </div>
@@ -598,10 +599,14 @@ export default async function SiswaPage({
                       {/* Nama */}
                       <td className="pl-3 pr-4 py-3">
                         <Link href={studentHref(s.id, s.full_name)} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-blue-700">
-                              {getInitials(s.full_name)}
-                            </span>
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 overflow-hidden">
+                            {s.avatar_url ? (
+                              <Image src={s.avatar_url} alt={s.full_name ?? ''} width={32} height={32} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs font-semibold text-blue-700">
+                                {getInitials(s.full_name)}
+                              </span>
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">

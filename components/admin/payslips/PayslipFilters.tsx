@@ -5,31 +5,29 @@ import { useRouter } from 'next/navigation'
 interface Props {
   q: string
   statusFilter: string
-  month?: string
+  month: string
 }
 
-const FILTER_OPTIONS = [
-  { label: 'Semua',              value: '' },
-  { label: 'Overdue',            value: 'overdue' },
-  { label: 'Terkirim',           value: 'sent' },
-  { label: 'Sebagian Terbayar',  value: 'partially_paid' },
-  { label: 'Lunas',              value: 'paid' },
+const STATUS_OPTIONS = [
+  { label: 'Semua Status', value: '' },
+  { label: 'Draft',        value: 'draft' },
+  { label: 'Terkirim',     value: 'sent' },
+  { label: 'Dibayar',      value: 'paid' },
 ]
 
-export default function InvoiceFilters({ q, statusFilter, month = '' }: Props) {
+export default function PayslipFilters({ q, statusFilter, month }: Props) {
   const router = useRouter()
 
   function buildUrl(newStatus: string, newQ?: string) {
     const params = new URLSearchParams()
-    const search = newQ !== undefined ? newQ : q
     if (month) params.set('month', month)
+    const search = newQ !== undefined ? newQ : q
     if (search) params.set('q', search)
     if (newStatus) params.set('status', newStatus)
-    const qs = params.toString()
-    return qs ? `/admin/invoices?${qs}` : '/admin/invoices'
+    return `/admin/payslips?${params.toString()}`
   }
 
-  const resetUrl = month ? `/admin/invoices?month=${month}` : '/admin/invoices'
+  const resetUrl = `/admin/payslips?month=${month}`
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -41,11 +39,11 @@ export default function InvoiceFilters({ q, statusFilter, month = '' }: Props) {
         <input
           type="text"
           defaultValue={q}
-          placeholder="Cari nama siswa..."
+          placeholder="Cari nama tutor..."
           onChange={(e) => {
             const v = e.target.value
-            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._invoiceSearchTimer)
-            ;(window as unknown as Record<string, ReturnType<typeof setTimeout>>)._invoiceSearchTimer = setTimeout(() => {
+            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._payslipSearchTimer)
+            ;(window as unknown as Record<string, ReturnType<typeof setTimeout>>)._payslipSearchTimer = setTimeout(() => {
               router.push(buildUrl(statusFilter, v))
             }, 300)
           }}
@@ -61,14 +59,14 @@ export default function InvoiceFilters({ q, statusFilter, month = '' }: Props) {
           statusFilter ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-gray-700'
         }`}
       >
-        {FILTER_OPTIONS.map(opt => (
+        {STATUS_OPTIONS.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
 
-      {(q || statusFilter || month) && (
+      {(q || statusFilter) && (
         <a
-          href="/admin/invoices"
+          href={resetUrl}
           className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-slate-100 rounded-lg transition-colors whitespace-nowrap"
         >
           Reset

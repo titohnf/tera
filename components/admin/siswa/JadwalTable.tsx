@@ -19,10 +19,13 @@ type Session = {
   scheduled_at: string
   topic: string | null
   status: string
+  subject_id: string | null
 }
 
 type EnrolledClass = {
   id: string
+  name: string | null
+  is_active: boolean
   subject_name: string | null
   tutor: { full_name: string } | null
 }
@@ -37,48 +40,49 @@ const ATTENDANCE_STATUS: Record<string, { label: string; cls: string }> = {
 interface Props {
   sessions: Session[]
   enrolledClasses: EnrolledClass[]
+  subjectNameMap: Record<string, string>
   attendanceMap: Record<string, string>
+  sessionTutorMap: Record<string, string>
+  sessionComprehensionMap: Record<string, string>
   studentId: string
 }
 
-function getSemesterKey(date: Date): string {
-  const m = date.getMonth() + 1
-  const y = date.getFullYear()
-  return m >= 7 ? `1-${y}` : `2-${y}`
+
+interface ClassTableProps {
+  cls: EnrolledClass
+  sessions: Session[]
+  subjectNameMap: Record<string, string>
+  attendanceMap: Record<string, string>
+  sessionTutorMap: Record<string, string>
+  sessionComprehensionMap: Record<string, string>
+  studentId: string
 }
 
-function getSemesterLabel(key: string): string {
-  const [sem, year] = key.split('-')
-  const y = parseInt(year)
-  return sem === '1' ? `Semester 1 — ${y}/${y + 1}` : `Semester 2 — ${y - 1}/${y}`
-}
-
-export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, studentId }: Props) {
+function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessionTutorMap, sessionComprehensionMap, studentId }: ClassTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [detailMap, setDetailMap] = useState<Record<string, JadwalSessionDetail | null>>({})
   const [, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  const semesterKeys = Array.from(
-    new Set(sessions.map(s => getSemesterKey(new Date(s.scheduled_at))))
-  ).sort().reverse()
-
-  const [selectedSemester, setSelectedSemester] = useState<string>(semesterKeys[0] ?? '')
+  const [collapsed, setCollapsed] = useState<boolean>(!cls.is_active)
+  const [selectedStatus, setSelectedStatus] = useState<string>('')
   const [selectedMapel, setSelectedMapel] = useState<string>('')
 
+  const getSubjectNameRaw = (s: Session): string =>
+    (s.subject_id && subjectNameMap[s.subject_id])
+      ? subjectNameMap[s.subject_id]
+      : (cls.subject_name ?? '')
+
+  const getSubjectName = getSubjectNameRaw
+
   const mapelOptions = Array.from(
-    new Set(
-      sessions
-        .map(s => enrolledClasses.find(c => c.id === s.class_id)?.subject_name)
-        .filter((n): n is string => !!n)
-    )
+    new Set(sessions.map(getSubjectName).filter(n => !!n))
   ).sort()
 
   const filteredSessions = sessions.filter(s => {
-    const semMatch = !selectedSemester || getSemesterKey(new Date(s.scheduled_at)) === selectedSemester
-    const subjectName = enrolledClasses.find(c => c.id === s.class_id)?.subject_name ?? ''
-    const mapelMatch = !selectedMapel || subjectName === selectedMapel
-    return semMatch && mapelMatch
+    const statusMatch = !selectedStatus || s.status === selectedStatus
+    const mapelMatch = !selectedMapel || getSubjectName(s) === selectedMapel
+    return statusMatch && mapelMatch
   })
 
   function handleRowClick(sessionId: string) {
@@ -98,51 +102,100 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
     })
   }
 
-  if (sessions.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-6">Belum ada sesi.</p>
-  }
-
   const selectCls = "text-sm text-gray-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+  const completedSessions = sessions.filter(s => s.status === 'completed')
+  const completedCount = completedSessions.length
+  const hadirCount = completedSessions.filter(s => {
+    const st = attendanceMap[s.id]
+    return st === 'present' || st === 'late'
+  }).length
+  const hadirPct = completedCount > 0 ? Math.round((hadirCount / completedCount) * 100) : null
+
+  const subjectLevelsMap = new Map<string, number[]>()
+  for (const s of completedSessions) {
+    const level = sessionComprehensionMap[s.id]
+    if (!level) continue
+    const subj = getSubjectNameRaw(s)
+    if (!subj) continue
+    const arr = subjectLevelsMap.get(subj) ?? []
+    arr.push(parseInt(level[1]))
+    subjectLevelsMap.set(subj, arr)
+  }
+  const subjectAvgLevels = Array.from(subjectLevelsMap.entries()).map(([subj, levels]) => ({
+    subj,
+    avg: `L${Math.round(levels.reduce((a, b) => a + b, 0) / levels.length)}`,
+  }))
 
   return (
     <div className="space-y-3">
-      {/* Filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <select
-          value={selectedSemester}
-          onChange={e => { setSelectedSemester(e.target.value); setExpandedId(null) }}
-          className={selectCls}
-        >
-          {semesterKeys.map(key => (
-            <option key={key} value={key}>{getSemesterLabel(key)}</option>
+      {/* Class name toggle */}
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+      >
+        <div className="flex flex-col items-start">
+          <span className={`text-sm font-semibold ${cls.is_active ? 'text-gray-800' : 'text-gray-500'}`}>{cls.name}</span>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {completedCount} Terlaksana
+            {hadirPct !== null && <> · {hadirCount} Hadir ({hadirPct}%)</>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {subjectAvgLevels.map(({ subj, avg }) => (
+            <span key={subj} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${COMPREHENSION_LEVELS[avg]?.bg ?? 'bg-gray-100'} ${COMPREHENSION_LEVELS[avg]?.text ?? 'text-gray-600'}`}>
+              {subj} · {avg}
+            </span>
           ))}
-        </select>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+            {cls.is_active ? 'Aktif' : 'Selesai'}
+          </span>
+          <svg className={`w-4 h-4 transition-transform text-gray-400 ${collapsed ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
 
-        {mapelOptions.length > 0 && (
-          <select
-            value={selectedMapel}
-            onChange={e => { setSelectedMapel(e.target.value); setExpandedId(null) }}
-            className={selectCls}
-          >
-            <option value="">Semua Mapel</option>
-            {mapelOptions.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      <div className="rounded-lg border border-slate-100 overflow-hidden">
-        <table className="w-full text-sm table-fixed">
+      {!collapsed && <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        {/* Filters + label */}
+        <div className="flex items-center justify-between gap-2 flex-wrap px-5 pt-4 pb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={selectedStatus}
+              onChange={e => { setSelectedStatus(e.target.value); setExpandedId(null) }}
+              className={selectCls}
+            >
+              <option value="">Semua Status</option>
+              <option value="completed">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
+              <option value="scheduled">Terjadwal</option>
+              <option value="ongoing">Berlangsung</option>
+            </select>
+            {mapelOptions.length > 0 && (
+              <select
+                value={selectedMapel}
+                onChange={e => { setSelectedMapel(e.target.value); setExpandedId(null) }}
+                className={selectCls}
+              >
+                <option value="">Semua Mapel</option>
+                {mapelOptions.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              <th className="w-8 pl-3 pr-1 py-2.5 text-left">No</th>
-              <th className="w-28 px-3 py-2.5 text-left">Tanggal</th>
-              <th className="w-16 px-3 py-2.5 text-left">Jam</th>
-              <th className="w-24 px-3 py-2.5 text-left hidden sm:table-cell">Mapel</th>
-              <th className="w-24 px-3 py-2.5 text-left hidden md:table-cell">Tutor</th>
-              <th className="w-24 px-3 py-2.5 text-left">Kehadiran</th>
-              <th className="w-12 pr-4 pl-2 py-2.5" />
+            <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="w-8 pl-4 pr-3 py-3 text-left">No</th>
+              <th className="px-4 py-3 text-left">Tanggal</th>
+              <th className="px-4 py-3 text-left">Jam</th>
+              <th className="px-4 py-3 text-left hidden sm:table-cell">Mapel</th>
+              <th className="px-4 py-3 text-left hidden md:table-cell">Tutor</th>
+              <th className="px-4 py-3 text-left">Kehadiran</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -153,7 +206,6 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
                 </td>
               </tr>
             ) : filteredSessions.map((s, idx) => {
-              const cls = enrolledClasses.find(c => c.id === s.class_id)
               const dt = new Date(s.scheduled_at)
               const attendance = attendanceMap[s.id]
               const attendanceSt = attendance
@@ -163,33 +215,40 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
               const isLoading = loadingId === s.id
               const detail = detailMap[s.id]
 
-
               return (
                 <Fragment key={s.id}>
                   <tr
                     onClick={() => handleRowClick(s.id)}
-                    className={`cursor-pointer transition-colors ${isExpanded ? 'font-medium bg-slate-50 [&>td]:text-gray-900 [&>td]:border-t [&>td]:border-t-slate-300 border-b border-b-slate-300 [&>td:last-child]:border-r [&>td:last-child]:border-r-slate-300' : 'hover:bg-slate-50'}`}
+                    className={`cursor-pointer transition-colors ${
+                      s.status === 'cancelled'
+                        ? isExpanded
+                          ? 'font-medium bg-red-50 [&>td]:border-t [&>td]:border-t-red-200 border-b border-b-red-200 [&>td:last-child]:border-r [&>td:last-child]:border-r-red-200'
+                          : 'bg-red-100/80 hover:bg-red-100'
+                        : isExpanded
+                          ? 'font-medium bg-slate-50 [&>td]:text-gray-900 [&>td]:border-t [&>td]:border-t-slate-300 border-b border-b-slate-300 [&>td:last-child]:border-r [&>td:last-child]:border-r-slate-300'
+                          : 'hover:bg-slate-50'
+                    }`}
                   >
-                    <td className={`w-8 pl-3 pr-1 py-2.5 text-gray-400 text-xs border-l-[3px] ${isExpanded ? 'border-l-blue-500' : 'border-l-transparent'}`}>{idx + 1}</td>
-                    <td className="px-3 py-2.5 whitespace-nowrap text-gray-700">
+                    <td className={`pl-4 pr-3 py-3 text-gray-400 text-xs border-l-[3px] ${isExpanded ? 'border-l-blue-500' : 'border-l-transparent'}`}>{idx + 1}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-700">
                       {dt.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </td>
-                    <td className="w-16 px-3 py-2.5 whitespace-nowrap text-gray-500">
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                       {dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="px-3 py-2.5 text-gray-500 hidden sm:table-cell truncate">{cls?.subject_name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 hidden sm:table-cell truncate">{getSubjectName(s) || '—'}</td>
                     <td
-                      className="px-3 py-2.5 text-gray-500 hidden md:table-cell truncate"
-                      title={cls?.tutor?.full_name ?? undefined}
+                      className="px-4 py-3 text-gray-500 hidden md:table-cell truncate"
+                      title={sessionTutorMap[s.id] ?? cls.tutor?.full_name ?? undefined}
                     >
-                      {cls?.tutor?.full_name?.split(' ')[0] ?? '—'}
+                      {(sessionTutorMap[s.id] ?? cls.tutor?.full_name)?.split(' ')[0] ?? '—'}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-4 py-3">
                       {attendanceSt
                         ? <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${attendanceSt.cls}`}>{attendanceSt.label}</span>
                         : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="w-12 pr-4 pl-2 py-2.5">
+                    <td className="pr-4 pl-2 py-3">
                       <div className="flex justify-end">
                         <svg
                           className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
@@ -339,7 +398,40 @@ export default function JadwalTable({ sessions, enrolledClasses, attendanceMap, 
             })}
           </tbody>
         </table>
-      </div>
+        </div>
+      </div>}
+    </div>
+  )
+}
+
+export default function JadwalTable({ sessions, enrolledClasses, subjectNameMap, attendanceMap, sessionTutorMap, sessionComprehensionMap, studentId }: Props) {
+  if (sessions.length === 0) {
+    return <p className="text-sm text-gray-400 text-center py-6">Belum ada sesi.</p>
+  }
+
+  const classesWithSessions = enrolledClasses.filter(cls =>
+    sessions.some(s => s.class_id === cls.id)
+  )
+
+  if (classesWithSessions.length === 0) {
+    return <p className="text-sm text-gray-400 text-center py-6">Belum ada sesi.</p>
+  }
+
+  return (
+    <div className="space-y-3">
+      {classesWithSessions.map((cls, i) => (
+        <div key={cls.id}>
+          <ClassSessionTable
+            cls={cls}
+            sessions={sessions.filter(s => s.class_id === cls.id)}
+            subjectNameMap={subjectNameMap}
+            attendanceMap={attendanceMap}
+            sessionTutorMap={sessionTutorMap}
+            sessionComprehensionMap={sessionComprehensionMap}
+            studentId={studentId}
+          />
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,0 +1,158 @@
+import { createAdminClient } from '@/lib/supabase/server-admin'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/invoices/StudentClassInvoiceTable'
+import CatatPembayaranButton, { type PayableClass } from '@/components/admin/invoices/CatatPembayaranButton'
+import GenerateInvoiceButton, { type GeneratableClass } from '@/components/admin/invoices/GenerateInvoiceButton'
+
+type InvoiceRow = {
+  id: string
+  invoice_number: string
+  class_id: string | null
+  total_due: number
+  issued_at: string
+  due_date: string | null
+  status: string
+  classes: { name: string } | null
+}
+
+type PaymentRow = {
+  id: string
+  invoice_id: string
+  amount: number
+  paid_at: string
+  created_at: string
+}
+
+function effectiveStatus(inv: InvoiceRow, today: string): string {
+  if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.due_date && inv.due_date < today) {
+    return 'overdue'
+  }
+  return inv.status
+}
+
+export default async function StudentInvoiceDetailPage({
+  params,
+}: {
+  params: Promise<{ studentId: string }>
+}) {
+  const { studentId } = await params
+  const admin = createAdminClient()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [profileRes, invoicesRes] = await Promise.all([
+    admin.from('profiles').select('id, full_name').eq('id', studentId).single(),
+    admin
+      .from('invoices')
+      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, classes!class_id(name)')
+      .eq('student_id', studentId)
+      .order('issued_at', { ascending: false })
+      .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
+  ])
+
+  if (!profileRes.data) notFound()
+
+  const profile = profileRes.data
+  const invoices = invoicesRes.data ?? []
+  const invoiceIds = invoices.map(i => i.id)
+
+  const { data: rawPayments } = invoiceIds.length > 0
+    ? await (admin
+        .from('invoice_payments')
+        .select('id, invoice_id, amount, paid_at, created_at')
+        .in('invoice_id', invoiceIds)
+        .order('paid_at', { ascending: true })
+        .order('created_at', { ascending: true }) as unknown as Promise<{ data: PaymentRow[] | null }>)
+    : { data: [] as PaymentRow[] }
+
+  const allPayments = rawPayments ?? []
+  const paymentsByInvoice = new Map<string, PaymentRow[]>()
+  for (const p of allPayments) {
+    if (!paymentsByInvoice.has(p.invoice_id)) paymentsByInvoice.set(p.invoice_id, [])
+    paymentsByInvoice.get(p.invoice_id)!.push(p)
+  }
+
+  // Group invoices by class
+  const classMap = new Map<string, ClassGroup>()
+  for (const inv of invoices) {
+    const key = inv.class_id ?? '__no_class__'
+    const className = inv.classes?.name ?? 'Tanpa Kelas'
+    if (!classMap.has(key)) classMap.set(key, { classId: inv.class_id, className, invoices: [] })
+    classMap.get(key)!.invoices.push({
+      id: inv.id,
+      invoice_number: inv.invoice_number,
+      total_due: inv.total_due,
+      issued_at: inv.issued_at,
+      due_date: inv.due_date,
+      status: inv.status,
+      eff_status: effectiveStatus(inv, today),
+      payments: paymentsByInvoice.get(inv.id) ?? [],
+    })
+  }
+
+  const groups = Array.from(classMap.values())
+
+  // Compute generatable classes (not lunas)
+  const generatableClasses: GeneratableClass[] = groups
+    .filter(group => {
+      const classPrice = group.invoices[group.invoices.length - 1]?.total_due ?? 0
+      const latestInvoice = group.invoices[0]
+      const latestPaid = latestInvoice?.status === 'paid'
+        ? latestInvoice.total_due
+        : (latestInvoice?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
+      const kekurangan = latestInvoice ? Math.max(0, latestInvoice.total_due - latestPaid) : 0
+      return !(kekurangan === 0 && classPrice > 0)
+    })
+    .map(group => ({
+      classId: group.classId,
+      className: group.className,
+      hasExisting: group.invoices.length > 0,
+    }))
+
+  // Compute payable classes for the global button
+  const payableClasses: PayableClass[] = []
+  for (const group of groups) {
+    const active = group.invoices.find(inv =>
+      inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
+    )
+    if (!active) continue
+    const paid = active.payments.reduce((s, p) => s + p.amount, 0)
+    const remaining = active.total_due - paid
+    if (remaining <= 0) continue
+    payableClasses.push({
+      classId: group.classId,
+      className: group.className,
+      invoiceId: active.id,
+      remaining,
+      bulanLabel: new Date(active.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+    })
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/invoices"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">{profile.full_name}</h1>
+            <p className="text-sm text-gray-400">Riwayat Invoice</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateInvoiceButton studentId={studentId} generatableClasses={generatableClasses} />
+          <CatatPembayaranButton payableClasses={payableClasses} />
+        </div>
+      </div>
+
+      <StudentClassInvoiceTable groups={groups} />
+    </div>
+  )
+}
