@@ -180,7 +180,7 @@ export async function updatePayment(paymentId: string, amount: number, paidAt: s
 
   const { error } = await ctx.admin
     .from('invoice_payments')
-    .update({ amount, paid_at: paidAt, updated_at: new Date().toISOString() })
+    .update({ amount, paid_at: paidAt })
     .eq('id', paymentId)
 
   if (error) return { error: error.message }
@@ -258,6 +258,16 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
+  const { data: draftCheck } = await ctx.admin
+    .from('invoices')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('class_id', classId)
+    .eq('status', 'draft')
+    .limit(1)
+    .maybeSingle()
+  if (draftCheck) return { error: 'Masih ada invoice draft yang belum dikirim. Kirim atau hapus dulu sebelum membuat invoice baru.' }
+
   const [{ data: student }, { data: cls }] = await Promise.all([
     ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
     ctx.admin.from('classes').select('name, level, class_type, start_date, end_date').eq('id', classId).single(),
@@ -320,40 +330,51 @@ async function syncNextInvoice(
   invoiceId: string,
   admin: ReturnType<typeof createAdminClient>
 ) {
-  // Load current invoice
+  // Load the invoice that triggered the sync to get student+class
   const { data: curr } = await admin
     .from('invoices')
-    .select('student_id, class_id, issued_at, total_due, line_items')
+    .select('student_id, class_id')
     .eq('id', invoiceId)
-    .single() as { data: { student_id: string; class_id: string; issued_at: string; total_due: number; line_items: Array<{ is_deduction?: boolean; months: number; amount: number; description: string }> } | null }
+    .single() as { data: { student_id: string; class_id: string } | null }
 
   if (!curr?.student_id || !curr?.class_id) return
 
-  // Find the immediately next invoice for same student+class
-  const { data: next } = await admin
+  // Fetch ALL invoices for this student+class, oldest first
+  const { data: allInvoices } = await admin
     .from('invoices')
-    .select('id, status')
+    .select('id, status, line_items, issued_at, created_at')
     .eq('student_id', curr.student_id)
     .eq('class_id', curr.class_id)
-    .gt('issued_at', curr.issued_at)
     .order('issued_at', { ascending: true })
-    .limit(1)
-    .single() as { data: { id: string; status: string } | null }
+    .order('created_at', { ascending: true }) as { data: { id: string; status: string; line_items: any[]; issued_at: string; created_at: string }[] | null }
 
-  if (!next) return
+  if (!allInvoices || allInvoices.length < 2) return
 
-  // All payments for the current invoice
-  const { data: payments } = await admin
+  // Find the draft invoice (the one to sync) — the latest one with status draft
+  const draftInvoice = [...allInvoices].reverse().find(inv => inv.status === 'draft')
+  if (!draftInvoice) return
+
+  // Charge items always from the first invoice
+  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean }>
+  const chargeItems = firstLineItems.filter(i => !i.is_deduction)
+
+  // Collect ALL payments across every invoice EXCEPT the draft itself
+  const precedingIds = allInvoices
+    .filter(inv => inv.id !== draftInvoice.id)
+    .map(inv => inv.id)
+
+  if (precedingIds.length === 0) return
+
+  const { data: paymentRows } = await admin
     .from('invoice_payments')
-    .select('amount, paid_at')
-    .eq('invoice_id', invoiceId)
-    .order('created_at', { ascending: true }) as { data: { amount: number; paid_at: string }[] | null }
+    .select('amount, paid_at, created_at')
+    .in('invoice_id', precedingIds)
+    .order('paid_at', { ascending: true })
+    .order('created_at', { ascending: true }) as { data: { amount: number; paid_at: string; created_at: string }[] | null }
 
-  const allPayments = payments ?? []
+  const allPayments = paymentRows ?? []
   const totalPaid = allPayments.reduce((s, p) => s + p.amount, 0)
 
-  // Rebuild next invoice line_items: current charge items + deduction rows
-  const chargeItems = curr.line_items.filter(i => !i.is_deduction)
   const deductionItems = allPayments.map((p, idx) => ({
     description: `Pembayaran Tahap ${idx + 1} (${new Date(p.paid_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`,
     months: 0,
@@ -361,24 +382,25 @@ async function syncNextInvoice(
     is_deduction: true,
   }))
 
+  const chargeTotal = chargeItems.reduce((s, i) => s + (i.months === 0 ? i.amount : i.months * i.amount), 0)
+  const newTotalDue = Math.max(0, chargeTotal - totalPaid)
   const newLineItems = [...chargeItems, ...deductionItems]
-  const newTotalDue = curr.total_due - totalPaid
 
-  const newStatus = newTotalDue <= 0
-    ? 'paid'
-    : next.status === 'paid'
-      ? 'partially_paid'
-      : next.status
+  if (newTotalDue <= 0) {
+    await admin.from('invoice_payments').delete().eq('invoice_id', draftInvoice.id)
+    await admin.from('invoices').delete().eq('id', draftInvoice.id)
+    return
+  }
 
   await admin
     .from('invoices')
     .update({
       line_items: newLineItems,
-      total_due: Math.max(0, newTotalDue),
-      status: newStatus,
+      total_due: newTotalDue,
+      status: 'draft',
       updated_at: new Date().toISOString(),
     })
-    .eq('id', next.id)
+    .eq('id', draftInvoice.id)
 }
 
 export async function recordPayment(invoiceId: string, paymentAmount: number, paidAt?: string) {
@@ -431,36 +453,46 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  const { data: prevInvoice } = await ctx.admin
+  const { data: draftCheck } = await ctx.admin
     .from('invoices')
-    .select('id, total_due, issued_at, student_name, parent_name, line_items')
+    .select('id')
     .eq('student_id', studentId)
     .eq('class_id', classId)
-    .order('issued_at', { ascending: false })
-    .order('created_at', { ascending: false })
+    .eq('status', 'draft')
     .limit(1)
-    .single() as any
+    .maybeSingle()
+  if (draftCheck) return { error: 'Masih ada invoice draft yang belum dikirim. Kirim atau hapus dulu sebelum membuat invoice baru.' }
 
-  if (!prevInvoice) return { error: 'Invoice sebelumnya tidak ditemukan' }
+  // Fetch all invoices for this student+class, oldest first
+  const { data: allInvoices } = await ctx.admin
+    .from('invoices')
+    .select('id, line_items, student_name, parent_name')
+    .eq('student_id', studentId)
+    .eq('class_id', classId)
+    .order('issued_at', { ascending: true })
+    .order('created_at', { ascending: true }) as any
 
-  const prevLineItems = (prevInvoice.line_items ?? []) as Array<{
+  if (!allInvoices?.length) return { error: 'Invoice sebelumnya tidak ditemukan' }
+
+  // Charge items always come from the first invoice (canonical class fee, never changes)
+  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{
     description: string; months: number; amount: number; is_deduction: boolean
   }>
+  const chargeItems = firstLineItems.filter((item: any) => !item.is_deduction)
 
-  // Charge items from previous invoice (non-deduction rows)
-  const chargeItems = prevLineItems.filter(item => !item.is_deduction)
+  const latestInvoice = allInvoices[allInvoices.length - 1]
 
-  // Fetch actual payments from invoice_payments for the previous invoice
-  const { data: payments } = await ctx.admin
+  // Collect ALL payments across every invoice in the chain, sorted chronologically
+  const allInvoiceIds = allInvoices.map((inv: any) => inv.id)
+  const { data: allPaymentRows } = await ctx.admin
     .from('invoice_payments')
-    .select('id, amount, paid_at')
-    .eq('invoice_id', prevInvoice.id)
+    .select('id, amount, paid_at, created_at')
+    .in('invoice_id', allInvoiceIds)
     .order('paid_at', { ascending: true })
     .order('created_at', { ascending: true }) as any
 
-  const allPayments: Array<{ id: string; amount: number; paid_at: string }> = payments ?? []
+  const allPayments: Array<{ id: string; amount: number; paid_at: string }> = allPaymentRows ?? []
 
-  // Build deduction line items from actual payment records
   const deductionItems = allPayments.map((p, idx) => {
     const date = new Date(p.paid_at).toLocaleDateString('id-ID', {
       day: 'numeric', month: 'long', year: 'numeric',
@@ -507,8 +539,8 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
       invoice_number: invoiceNumber,
       class_id: classId,
       student_id: studentId,
-      student_name: prevInvoice.student_name,
-      parent_name: prevInvoice.parent_name,
+      student_name: latestInvoice.student_name,
+      parent_name: latestInvoice.parent_name,
       line_items: lineItems,
       total_due: newTotal,
       payment_method: 'Transfer Bank',

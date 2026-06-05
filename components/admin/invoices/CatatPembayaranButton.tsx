@@ -10,6 +10,7 @@ export type PayableClass = {
   invoiceId: string
   remaining: number
   bulanLabel: string
+  studentName?: string
 }
 
 interface Props {
@@ -104,11 +105,12 @@ export default function CatatPembayaranButton({ payableClasses }: Props) {
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pilih Kelas</p>
                   {payableClasses.map(pc => (
                     <button
-                      key={pc.classId ?? '__no_class__'}
+                      key={pc.invoiceId}
                       onClick={() => setSelected(pc)}
                       className="w-full flex items-center justify-between px-4 py-3 text-left border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors"
                     >
                       <div>
+                        {pc.studentName && <p className="text-xs text-gray-400">{pc.studentName}</p>}
                         <p className="text-sm font-medium text-gray-800">{pc.className}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{pc.bulanLabel}</p>
                       </div>

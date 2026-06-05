@@ -11,6 +11,9 @@ export type EnrollmentRow = {
   classPrice: number
   kekurangan: number
   status: 'lunas' | 'angsuran' | 'menunggu'
+  invoiceId: string | null
+  bulanLabel: string
+  hasExisting: boolean
 }
 
 const CLASS_STATUS_BADGE: Record<string, string> = {
@@ -119,7 +122,7 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                   <SortIcon active={sortKey === 'status'} dir={sortDir} />
                 </span>
               </th>
-              <th className="px-4 py-3 w-8" />
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

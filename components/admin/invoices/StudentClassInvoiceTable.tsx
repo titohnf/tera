@@ -92,15 +92,11 @@ function ClassCard({ group }: { group: ClassGroup }) {
       return diff !== 0 ? diff : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     })
 
-  // Latest invoice already carries forward all previous payment deductions
-  const latestInvoice = group.invoices[0]
-  const latestPaid = latestInvoice?.status === 'paid'
-    ? latestInvoice.total_due
-    : (latestInvoice?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
-  const kekurangan = latestInvoice ? Math.max(0, latestInvoice.total_due - latestPaid) : 0
-  const totalActuallyPaid = classPrice - kekurangan
+  // Total paid = sum of all payments across every invoice in the chain
+  const totalActuallyPaid = allPayments.reduce((s, p) => s + p.amount, 0)
+  const kekurangan = Math.max(0, classPrice - totalActuallyPaid)
   const progressPct = classPrice > 0 ? Math.min(100, Math.round((totalActuallyPaid / classPrice) * 100)) : 0
-  const status = classStatus(kekurangan, latestPaid, classPrice)
+  const status = classStatus(kekurangan, totalActuallyPaid, classPrice)
 
   function handleKirim(invoiceId: string) {
     startTransition(async () => {

@@ -126,13 +126,15 @@ export default async function StudentInvoiceDetailPage({
   // Compute payable classes for the global button
   const payableClasses: PayableClass[] = []
   for (const group of groups) {
+    const classPrice = group.invoices[group.invoices.length - 1]?.total_due ?? 0
+    const totalPaid = group.invoices.flatMap(inv => inv.payments).reduce((s, p) => s + p.amount, 0)
+    const remaining = Math.max(0, classPrice - totalPaid)
+    if (remaining <= 0) continue
+
     const active = group.invoices.find(inv =>
       inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
     )
     if (!active) continue
-    const paid = active.payments.reduce((s, p) => s + p.amount, 0)
-    const remaining = active.total_due - paid
-    if (remaining <= 0) continue
     payableClasses.push({
       classId: group.classId,
       className: group.className,

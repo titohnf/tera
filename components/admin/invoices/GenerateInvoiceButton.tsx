@@ -8,10 +8,12 @@ export type GeneratableClass = {
   classId: string | null
   className: string
   hasExisting: boolean
+  studentId?: string
+  studentName?: string
 }
 
 interface Props {
-  studentId: string
+  studentId?: string
   generatableClasses: GeneratableClass[]
 }
 
@@ -25,8 +27,8 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
 
   function handleOpen() {
     setError('')
+    setOpen(true)
     if (!multi) handleGenerate(generatableClasses[0])
-    else setOpen(true)
   }
 
   function handleClose() {
@@ -37,10 +39,11 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
   function handleGenerate(gc: GeneratableClass) {
     setError('')
     startTransition(async () => {
+      const sid = gc.studentId ?? studentId ?? ''
       const classId = gc.classId ?? ''
       const res = gc.hasExisting
-        ? await generateNextInvoice(studentId, classId, 0)
-        : await generateFirstInvoice(studentId, classId)
+        ? await generateNextInvoice(sid, classId, 0)
+        : await generateFirstInvoice(sid, classId)
       if (res && 'error' in res) { setError(res.error ?? 'Gagal'); return }
       handleClose()
       router.refresh()
@@ -80,13 +83,16 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Pilih Kelas</p>
               {generatableClasses.map(gc => (
                 <button
-                  key={gc.classId ?? '__no_class__'}
+                  key={`${gc.studentId ?? ''}__${gc.classId ?? '__no_class__'}`}
                   onClick={() => handleGenerate(gc)}
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-4 py-3 text-left border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 disabled:opacity-60 transition-colors"
                 >
-                  <p className="text-sm font-medium text-gray-800">{gc.className}</p>
-                  <span className="text-xs text-gray-400">{gc.hasExisting ? 'Invoice berikutnya' : 'Invoice pertama'}</span>
+                  <div>
+                    {gc.studentName && <p className="text-xs text-gray-400">{gc.studentName}</p>}
+                    <p className="text-sm font-medium text-gray-800">{gc.className}</p>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0">{gc.hasExisting ? 'Invoice berikutnya' : 'Invoice pertama'}</span>
                 </button>
               ))}
               {error && <p className="text-xs text-red-600 pt-1">{error}</p>}

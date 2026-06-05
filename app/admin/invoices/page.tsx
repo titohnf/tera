@@ -1,8 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import Link from 'next/link'
 import InvoicePageFilters from '@/components/admin/invoices/InvoicePageFilters'
 import MetricCard from '@/components/dashboard/MetricCard'
 import InvoiceEnrollmentTable from '@/components/admin/invoices/InvoiceEnrollmentTable'
+import GenerateInvoiceButton from '@/components/admin/invoices/GenerateInvoiceButton'
+import CatatPembayaranButton from '@/components/admin/invoices/CatatPembayaranButton'
 
 type EnrollmentRow = {
   student_id: string
@@ -92,6 +93,9 @@ export default async function InvoicesPage({
     classPrice: number
     kekurangan: number
     status: 'lunas' | 'angsuran' | 'menunggu'
+    invoiceId: string | null
+    bulanLabel: string
+    hasExisting: boolean
   }
 
   const allRows: Row[] = enrollments.map(e => {
@@ -103,6 +107,7 @@ export default async function InvoicesPage({
       ? latestInv.total_due
       : (latestInv?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
     const kekurangan = latestInv ? Math.max(0, latestInv.total_due - latestPaid) : 0
+    const activeInv = invs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
     return {
       studentId: e.student_id,
       studentName: e.profiles?.full_name ?? '—',
@@ -111,8 +116,20 @@ export default async function InvoicesPage({
       classPrice,
       kekurangan,
       status: computeStatus(invs),
+      invoiceId: activeInv?.id ?? null,
+      bulanLabel: activeInv ? new Date(activeInv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '',
+      hasExisting: invs.length > 0,
     }
   })
+
+  // Global action lists
+  const allGeneratable = allRows
+    .filter(r => r.status !== 'lunas')
+    .map(r => ({ classId: r.classId, className: r.className, hasExisting: r.hasExisting, studentId: r.studentId, studentName: r.studentName }))
+
+  const allPayable = allRows
+    .filter(r => r.invoiceId && r.kekurangan > 0)
+    .map(r => ({ classId: r.classId, className: r.className, invoiceId: r.invoiceId!, remaining: r.kekurangan, bulanLabel: r.bulanLabel, studentName: r.studentName }))
 
   // Filters
   let rows = allRows
@@ -127,17 +144,12 @@ export default async function InvoicesPage({
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Tagihan & Pembayaran</h1>
-        <Link
-          href="/admin/invoices/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Buat Invoice
-        </Link>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-gray-900">Invoice</h1>
+        <div className="flex items-center gap-2">
+          <GenerateInvoiceButton generatableClasses={allGeneratable} />
+          <CatatPembayaranButton payableClasses={allPayable} />
+        </div>
       </div>
 
       {/* Cards */}
