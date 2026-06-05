@@ -123,12 +123,28 @@ function ClassCard({
     startTransition(async () => {
       await updateInvoiceStatus(invoiceId, 'sent')
       router.refresh()
+
+      // Download PDF to admin's device
+      try {
+        const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
+        if (res.ok) {
+          const blob = await res.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `Invoice-${inv?.invoice_number ?? invoiceId}.pdf`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+      } catch {
+        // PDF download failed silently — WhatsApp still opens
+      }
+
       if (parentPhone && inv) {
         const totalFmt = formatRupiah(inv.total_due)
         const dueDateFmt = inv.due_date
           ? new Date(inv.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
           : null
-        const invoiceUrl = `${window.location.origin}/admin/invoices/${invoiceId}/cetak`
         const sapaan = parentName ? `Bapak/Ibu ${parentName}` : 'Bapak/Ibu'
         const lines = [
           `Assalamu'alaikum ${sapaan},`,
@@ -139,8 +155,7 @@ function ClassCard({
           `💰 Total Tagihan: *${totalFmt}*`,
           dueDateFmt ? `📅 Jatuh Tempo: *${dueDateFmt}*` : null,
           '',
-          `Detail invoice: ${invoiceUrl}`,
-          '',
+          'Terlampir file PDF invoice.',
           'Terima kasih 🙏',
           'Tera Learning Center',
         ].filter(l => l !== null).join('\n')
