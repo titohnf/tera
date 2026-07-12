@@ -9,7 +9,7 @@ type SubmitAction = (sessionId: string, records: unknown) => Promise<{ error?: s
 interface Student {
   id: string
   full_name: string
-  currentStatus: AttendanceStatus
+  currentStatus: AttendanceStatus | null
   notes: string
 }
 
@@ -31,7 +31,7 @@ export default function AttendanceForm({
   sessionStatus: string
   submitAction?: SubmitAction
 }) {
-  const [records, setRecords] = useState<Record<string, { status: AttendanceStatus; notes: string }>>(
+  const [records, setRecords] = useState<Record<string, { status: AttendanceStatus | null; notes: string }>>(
     Object.fromEntries(students.map(s => [s.id, { status: s.currentStatus, notes: s.notes }]))
   )
   const [isPending, startTransition] = useTransition()
@@ -51,11 +51,13 @@ export default function AttendanceForm({
 
   function handleSave() {
     startTransition(async () => {
-      const rows = Object.entries(records).map(([student_id, r]) => ({
-        student_id,
-        status: r.status,
-        notes: r.notes,
-      }))
+      const rows = Object.entries(records)
+        .filter(([, r]) => r.status !== null)
+        .map(([student_id, r]) => ({
+          student_id,
+          status: r.status as AttendanceStatus,
+          notes: r.notes,
+        }))
       const result = await submitAction(sessionId, rows)
       if (result.error) {
         setMessage({ type: 'error', text: result.error })

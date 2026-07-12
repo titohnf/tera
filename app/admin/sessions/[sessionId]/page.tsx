@@ -154,7 +154,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       id: sid,
       full_name: profile?.full_name ?? 'Siswa',
       avatar_url: profile?.avatar_url ?? null,
-      currentStatus: (attendanceMap[cs.student_id]?.status ?? 'absent') as AttendanceStatus,
+      currentStatus: (attendanceMap[cs.student_id]?.status ?? null) as AttendanceStatus | null,
       attendanceNotes: attendanceMap[cs.student_id]?.notes ?? '',
       existingNote: noteMap[sid] ?? null,
     }
@@ -254,7 +254,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           />
 
           {/* Syarat penyelesaian otomatis */}
-          {completionCheck && session.status !== 'completed' && session.status !== 'cancelled' && (
+          {completionCheck && session.status !== 'cancelled' && (
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Syarat Penyelesaian Otomatis
@@ -262,10 +262,10 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               <div className="space-y-1.5">
                 {[
                   { label: 'Topik', ok: completionCheck.hasTopic },
+                  { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
-                  { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
-                  { label: `Asesmen (${completionCheck.assessmentsCount})`, ok: completionCheck.hasAssessments },
+                  { label: `Asesmen & Nilai (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
                 ].map(({ label, ok }) => (
                   <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
                     {ok

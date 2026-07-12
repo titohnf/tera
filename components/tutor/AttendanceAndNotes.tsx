@@ -12,7 +12,7 @@ interface Student {
   id: string
   full_name: string
   avatar_url?: string | null
-  currentStatus: AttendanceStatus
+  currentStatus: AttendanceStatus | null
   attendanceNotes: string
   existingNote: { body: string; template_id: string | null } | null
 }
@@ -56,7 +56,7 @@ export default function AttendanceAndNotes({
   submitAttendanceAction?: SubmitAttendanceAction
   saveNoteAction?: SaveNoteAction
 }) {
-  const [records, setRecords] = useState<Record<string, { status: AttendanceStatus; notes: string }>>(
+  const [records, setRecords] = useState<Record<string, { status: AttendanceStatus | null; notes: string }>>(
     Object.fromEntries(students.map(s => [s.id, { status: s.currentStatus, notes: s.attendanceNotes }]))
   )
 
@@ -68,7 +68,9 @@ export default function AttendanceAndNotes({
   const [savedNotes, setSavedNotes] = useState<Set<string>>(
     new Set(students.filter(s => s.existingNote).map(s => s.id))
   )
-  const [expandedNote, setExpandedNote] = useState<string | null>(null)
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(
+    () => new Set(students.map(s => s.id))
+  )
 
   const [isPending, startTransition] = useTransition()
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -84,11 +86,20 @@ export default function AttendanceAndNotes({
 
   function setStatus(studentId: string, status: AttendanceStatus) {
     setRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status } }))
-    if (status === 'present' || status === 'late') {
-      setExpandedNote(studentId)
+    if (status === 'absent' || status === 'excused') {
+      setExpandedNotes(prev => { const next = new Set(prev); next.delete(studentId); return next })
     } else {
-      setExpandedNote(prev => prev === studentId ? null : prev)
+      setExpandedNotes(prev => { const next = new Set(prev); next.add(studentId); return next })
     }
+  }
+
+  function toggleExpanded(studentId: string) {
+    setExpandedNotes(prev => {
+      const next = new Set(prev)
+      if (next.has(studentId)) next.delete(studentId)
+      else next.add(studentId)
+      return next
+    })
   }
 
   function toggleTemplate(studentId: string, category: string, template: Template) {
@@ -118,11 +129,13 @@ export default function AttendanceAndNotes({
   function handleSave() {
     startTransition(async () => {
       // Save attendance
-      const rows = Object.entries(records).map(([student_id, r]) => ({
-        student_id,
-        status: r.status,
-        notes: r.notes,
-      }))
+      const rows = Object.entries(records)
+        .filter(([, r]) => r.status !== null)
+        .map(([student_id, r]) => ({
+          student_id,
+          status: r.status as AttendanceStatus,
+          notes: r.notes,
+        }))
       const attendanceResult = await submitAttendanceAction(sessionId, rows)
       if (attendanceResult.error) {
         setSaveMessage({ type: 'error', text: attendanceResult.error })
@@ -184,7 +197,7 @@ export default function AttendanceAndNotes({
         {students.map((student, idx) => {
           const rec = records[student.id]
           const studentState = noteData[student.id]
-          const isExpanded = expandedNote === student.id
+          const isExpanded = expandedNotes.has(student.id)
           const hasSavedNote = savedNotes.has(student.id)
           const noteBody = buildNoteBody(templatesByCategory, studentState)
           const selectedCount = Object.values(studentState).filter(v => v !== null).length
@@ -218,7 +231,7 @@ export default function AttendanceAndNotes({
                   ))}
                 </div>
                 <button
-                  onClick={() => setExpandedNote(isExpanded ? null : student.id)}
+                  onClick={() => toggleExpanded(student.id)}
                   className="shrink-0 p-1 text-gray-300 hover:text-gray-500 transition-colors"
                 >
                   <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

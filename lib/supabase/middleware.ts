@@ -25,7 +25,20 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('auth timeout')), 8000)
+      ),
+    ])
+    user = data.user
+  } catch {
+    // Auth service unreachable/slow: let the request through rather than
+    // hanging the edge function until the platform kills it.
+    return supabaseResponse
+  }
 
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login')

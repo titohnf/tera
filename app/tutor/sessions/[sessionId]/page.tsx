@@ -109,7 +109,7 @@ export default async function SessionPage({
     return {
       id: sid,
       full_name: profile?.full_name ?? 'Siswa',
-      currentStatus: (attendanceMap[cs.student_id]?.status ?? 'absent') as AttendanceStatus,
+      currentStatus: (attendanceMap[cs.student_id]?.status ?? null) as AttendanceStatus | null,
       attendanceNotes: attendanceMap[cs.student_id]?.notes ?? '',
       existingNote: noteMap[sid] ?? null,
     }

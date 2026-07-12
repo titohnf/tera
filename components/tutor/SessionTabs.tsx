@@ -10,7 +10,7 @@ import type { AttendanceStatus } from '@/lib/types/database'
 interface Student {
   id: string
   full_name: string
-  currentStatus: AttendanceStatus
+  currentStatus: AttendanceStatus | null
   attendanceNotes: string
   existingNote: { body: string; template_id: string | null } | null
 }

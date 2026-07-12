@@ -62,13 +62,14 @@ function parseTimeToMinutes(t: string): number {
   return h * 60 + (m ?? 0)
 }
 
-function buildClassName(classType: string, jenjang: string, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null) {
+function buildClassName(classType: string, jenjang: string, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null, academicYear: string) {
   const tipeLabel = classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : ''
   const jenisLabel = jenis === 'reguler' ? 'Reguler'
     : jenis === 'fokus' ? (fokusTypes.length > 0 ? `Fokus ${fokusTypes.join('/')}` : 'Fokus')
     : ''
   const smLabel = semester ? `SM ${semester}` : ''
-  return [tipeLabel, jenjang, jenisLabel, smLabel, namaUnik].filter(Boolean).join(' ')
+  const taLabel = smLabel && academicYear ? academicYear : ''
+  return [tipeLabel, jenjang, jenisLabel, smLabel, taLabel, namaUnik].filter(Boolean).join(' ')
 }
 
 function emptySlot(): SlotState {
@@ -328,18 +329,17 @@ export default function ClassForm({
   const [namaUnik, setNamaUnik] = useState('')
   const [className, setClassName] = useState(defaultValues?.name ?? '')
   const nameManuallyEdited = useRef(!!defaultValues?.name)
+  const [academicYear, setAcademicYear] = useState(defaultValues?.academic_year ?? '')
 
   useEffect(() => {
     if (nameManuallyEdited.current) return
     if (!classType && !jenjang && !jenis) return
-    setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester))
-  }, [classType, jenjang, jenis, fokusTypes, namaUnik, semester])
+    setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear))
+  }, [classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear])
 
   function toggleFokus(type: string) {
     setFokusTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
   }
-
-  const [academicYear, setAcademicYear] = useState(defaultValues?.academic_year ?? '')
   const [startDate, setStartDate] = useState(defaultValues?.start_date ?? today)
   const [endDate, setEndDate] = useState(defaultValues?.end_date ?? '')
   const [durationMinutes, setDurationMinutes] = useState(defaultValues?.duration_minutes ?? 90)
@@ -695,7 +695,7 @@ export default function ClassForm({
           />
           {nameManuallyEdited.current && (
             <button type="button"
-              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester)) }}
+              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear)) }}
               className="text-xs text-gray-400 hover:text-blue-600 mt-1 transition-colors"
             >↺ Reset ke nama otomatis</button>
           )}
@@ -704,7 +704,7 @@ export default function ClassForm({
 
       <input type="hidden" name="level" value={jenjang || (defaultValues?.level ?? '')} />
       <input type="hidden" name="class_type" value={classType} />
-      <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, jenis, fokusTypes, '', semester)} />
+      <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, jenis, fokusTypes, '', semester, academicYear)} />
 
       {/* ── Pertemuan per minggu ── */}
       <div>

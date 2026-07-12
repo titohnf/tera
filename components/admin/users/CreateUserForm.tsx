@@ -26,7 +26,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function CreateUserForm({ initialRole = 'student' }: { initialRole?: string }) {
   const [state, formAction, pending] = useActionState(createUser, null)
-  const [role]  = useState(initialRole)
+  const [role] = useState(initialRole)
   const [level, setLevel] = useState('')
   const [grade, setGrade] = useState<number | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
