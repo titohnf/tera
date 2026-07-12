@@ -13,6 +13,7 @@ interface Props {
 const RANGE_OPTIONS = [
   { key: '', label: 'Semua' },
   { key: 'upcoming', label: 'Yang Akan Datang' },
+  { key: 'past', label: 'Yang Sudah Berlangsung' },
   { key: 'custom', label: 'Custom' },
 ]
 

@@ -68,6 +68,8 @@ export default async function TutorClassesPage({
 
   if (teachingRange === 'upcoming') {
     rangeStart = now
+  } else if (teachingRange === 'past') {
+    rangeEnd = now
   } else if (teachingRange === 'custom' && teachingFrom && teachingTo) {
     rangeStart = new Date(`${teachingFrom}T00:00:00`)
     rangeEnd = new Date(`${teachingTo}T23:59:59`)
@@ -87,7 +89,7 @@ export default async function TutorClassesPage({
       performance_notes(count)
     `)
     .eq('tutor_id', user.id)
-    .order('scheduled_at', { ascending: true })
+    .order('scheduled_at', { ascending: teachingRange !== 'past' })
 
   if (rangeStart) teachingQuery = teachingQuery.gte('scheduled_at', rangeStart.toISOString())
   if (rangeEnd) teachingQuery = teachingQuery.lte('scheduled_at', rangeEnd.toISOString())
