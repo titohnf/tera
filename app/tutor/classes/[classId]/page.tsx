@@ -46,11 +46,39 @@ type SessionRow = {
   performance_notes: CountRow
 }
 
-export default async function TutorClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
+export default async function TutorClassDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ classId: string }>
+  searchParams: Promise<{ filter?: string }>
+}) {
   const { classId } = await params
+  const { filter = 'upcoming' } = await searchParams
   const user = await getUser()
   if (!user) return null
   const admin = createAdminClient()
+  const now = new Date().toISOString()
+
+  let sessionsQuery = admin
+    .from('sessions')
+    .select(`
+      id, scheduled_at, duration_minutes, location, status, topic,
+      subjects(name),
+      materials(count),
+      assessments(count),
+      attendances(count),
+      performance_notes(count)
+    `)
+    .eq('class_id', classId)
+    .eq('tutor_id', user.id)
+    .order('scheduled_at', { ascending: filter !== 'past' })
+
+  if (filter === 'upcoming') {
+    sessionsQuery = sessionsQuery.gte('scheduled_at', now).neq('status', 'cancelled')
+  } else if (filter === 'past') {
+    sessionsQuery = sessionsQuery.lt('scheduled_at', now).eq('status', 'completed')
+  }
 
   const [
     { data: cls },
@@ -85,20 +113,7 @@ export default async function TutorClassDetailPage({ params }: { params: Promise
       .eq('is_active', true) as unknown as Promise<{
         data: { student_id: string; profiles: StudentProfile | null }[] | null
       }>,
-    admin
-      .from('sessions')
-      .select(`
-        id, scheduled_at, duration_minutes, location, status, topic,
-        subjects(name),
-        materials(count),
-        assessments(count),
-        attendances(count),
-        performance_notes(count)
-      `)
-      .eq('class_id', classId)
-      .eq('tutor_id', user.id)
-      .order('scheduled_at', { ascending: true })
-      .limit(100) as unknown as Promise<{ data: SessionRow[] | null }>,
+    sessionsQuery.limit(100) as unknown as Promise<{ data: SessionRow[] | null }>,
     admin
       .from('subjects')
       .select('id, name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>,
@@ -235,7 +250,28 @@ export default async function TutorClassDetailPage({ params }: { params: Promise
       </div>
 
       <div className="bg-white rounded-2xl shadow ring-1 ring-gray-900/5 p-6">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Sesi Kelas Ini</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sesi Kelas Ini</p>
+          <div className="flex gap-2">
+            {[
+              { key: 'upcoming', label: 'Mendatang' },
+              { key: 'past', label: 'Riwayat' },
+              { key: 'all', label: 'Semua' },
+            ].map(tab => (
+              <Link
+                key={tab.key}
+                href={`/tutor/classes/${classId}?filter=${tab.key}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  filter === tab.key
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </div>
+        </div>
 
         {!sessions || sessions.length === 0 ? (
           <div className="text-center text-sm text-gray-500 py-8">Belum ada sesi untuk kelas ini.</div>

@@ -15,6 +15,7 @@ interface SessionCalendarProps {
   year: number
   month: number // 0-indexed
   navBase?: string // base URL for prev/next navigation, defaults to /admin/sessions
+  sessionHrefBase?: string // base URL for session links, defaults to /admin/sessions
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -31,7 +32,7 @@ const MONTHS = [
   'Juli','Agustus','September','Oktober','November','Desember',
 ]
 
-export default function SessionCalendar({ sessions, year, month, navBase = '/admin/sessions' }: SessionCalendarProps) {
+export default function SessionCalendar({ sessions, year, month, navBase = '/admin/sessions', sessionHrefBase = '/admin/sessions' }: SessionCalendarProps) {
   const today = new Date()
 
   // Build day grid
@@ -117,7 +118,7 @@ export default function SessionCalendar({ sessions, year, month, navBase = '/adm
                   return (
                     <Link
                       key={s.id}
-                      href={`/admin/sessions/${s.id}`}
+                      href={`${sessionHrefBase}/${s.id}`}
                       className={`block truncate text-[11px] px-1.5 py-0.5 rounded font-medium leading-tight hover:opacity-80 transition-opacity ${STATUS_COLOR[s.status] ?? 'bg-gray-100 text-gray-500'}`}
                       title={`${s.className} · ${time}${s.tutorName ? ` · ${s.tutorName}` : ''}`}
                     >
