@@ -81,9 +81,10 @@ export default async function TutorClassesPage() {
             const studentCount = countByClass[cls.id] ?? 0
             const next = nextByClass[cls.id]
             return (
-              <div
+              <Link
                 key={cls.id}
-                className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-5 py-4"
+                href={`/tutor/classes/${cls.id}`}
+                className="block bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-5 py-4 hover:bg-blue-50/50 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -118,12 +119,9 @@ export default async function TutorClassesPage() {
                         {new Date(next.scheduled_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    <Link
-                      href={`/tutor/schedule`}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      Lihat jadwal →
-                    </Link>
+                    <span className="text-xs text-blue-600">
+                      Lihat detail →
+                    </span>
                   </div>
                 )}
 
@@ -132,7 +130,7 @@ export default async function TutorClassesPage() {
                     <p className="text-xs text-gray-400">Tidak ada sesi terjadwal.</p>
                   </div>
                 )}
-              </div>
+              </Link>
             )
           })}
         </div>
