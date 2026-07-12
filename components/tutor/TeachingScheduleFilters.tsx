@@ -7,6 +7,7 @@ interface Props {
   range: string
   from: string
   to: string
+  compliance: string
 }
 
 const RANGE_OPTIONS = [
@@ -19,26 +20,37 @@ const RANGE_OPTIONS = [
   { key: 'custom', label: 'Custom' },
 ]
 
-export default function TeachingScheduleFilters({ range, from, to }: Props) {
+const COMPLIANCE_OPTIONS = [
+  { key: '', label: 'Semua Kelengkapan' },
+  { key: 'complete', label: 'Lengkap' },
+  { key: 'incomplete', label: 'Belum Lengkap' },
+]
+
+export default function TeachingScheduleFilters({ range, from, to, compliance }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [customFrom, setCustomFrom] = useState(from)
   const [customTo, setCustomTo] = useState(to)
 
-  function go(params: Record<string, string>) {
-    const filtered: Record<string, string> = {}
-    Object.entries(params).forEach(([k, v]) => { if (v) filtered[k] = v })
-    const qs = new URLSearchParams(filtered).toString()
+  function go(overrides: Record<string, string>) {
+    const params: Record<string, string> = {
+      ...(range ? { range } : {}),
+      ...(customFrom ? { from: customFrom } : {}),
+      ...(customTo ? { to: customTo } : {}),
+      ...(compliance ? { compliance } : {}),
+      ...overrides,
+    }
+    Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
+    const qs = new URLSearchParams(params).toString()
     router.push(qs ? `${pathname}?${qs}` : pathname)
   }
 
   function selectRange(key: string) {
     if (key === 'custom') {
-      if (customFrom && customTo) go({ range: 'custom', from: customFrom, to: customTo })
-      else go({ range: 'custom' })
+      go(customFrom && customTo ? { range: 'custom', from: customFrom, to: customTo } : { range: 'custom', from: '', to: '' })
       return
     }
-    go({ range: key })
+    go({ range: key, from: '', to: '' })
   }
 
   function applyCustom(nextFrom: string, nextTo: string) {
@@ -75,6 +87,10 @@ export default function TeachingScheduleFilters({ range, from, to }: Props) {
           />
         </div>
       )}
+
+      <select value={compliance} onChange={e => go({ compliance: e.target.value })} className={selectCls(!!compliance)}>
+        {COMPLIANCE_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+      </select>
     </div>
   )
 }

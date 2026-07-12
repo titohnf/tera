@@ -57,12 +57,12 @@ const TEACHING_PAGE_SIZE = 10
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; range?: string; from?: string; to?: string; page?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; range?: string; from?: string; to?: string; page?: string; compliance?: string }>
 }) {
   const {
     level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '',
     range: teachingRange = '', from: teachingFrom = '', to: teachingTo = '',
-    page: pageParam = '1',
+    page: pageParam = '1', compliance: teachingCompliance = '',
   } = await searchParams
   const user = await getUser()
   if (!user) return null
@@ -101,8 +101,6 @@ export default async function TutorClassesPage({
   // Default (no range): show all sessions, no date bound
 
   const page = Math.max(1, parseInt(pageParam) || 1)
-  const rangeOffset = (page - 1) * TEACHING_PAGE_SIZE
-  const rangeLimit = rangeOffset + TEACHING_PAGE_SIZE - 1
 
   let teachingQuery = admin
     .from('sessions')
@@ -113,21 +111,18 @@ export default async function TutorClassesPage({
       assessments(count),
       attendances(count),
       performance_notes(count)
-    `, { count: 'exact' })
+    `)
     .eq('tutor_id', user.id)
     .order('scheduled_at', { ascending: true })
 
   if (rangeStart) teachingQuery = teachingQuery.gte('scheduled_at', rangeStart.toISOString())
   if (rangeEnd) teachingQuery = teachingQuery.lte('scheduled_at', rangeEnd.toISOString())
 
-  const { data: teachingSessions, count: teachingTotalCount } = await teachingQuery.range(rangeOffset, rangeLimit) as unknown as {
+  const { data: teachingSessionsRaw } = await teachingQuery.limit(500) as unknown as {
     data: TeachingSessionRow[] | null
-    count: number | null
   }
 
-  const teachingTotalPages = Math.max(1, Math.ceil((teachingTotalCount ?? 0) / TEACHING_PAGE_SIZE))
-
-  const teachingSessionIds = (teachingSessions ?? []).map(s => s.id)
+  const teachingSessionIds = (teachingSessionsRaw ?? []).map(s => s.id)
   const { data: teachingGradedData } = teachingSessionIds.length > 0
     ? await admin
         .from('assessments')
@@ -153,6 +148,26 @@ export default async function TutorClassesPage({
       hasGradedAssessments: teachingGradedSessionIds.has(session.id),
     }
   }
+
+  function isTeachingSessionComplete(session: TeachingSessionRow): boolean {
+    if (session.status === 'cancelled') return true
+    const counts = getTeachingCounts(session)
+    const hasTopic = !!counts.topic
+    const baseComplete = hasTopic && counts.hasMaterials && counts.hasAssessments
+    if (session.status !== 'completed') return baseComplete
+    return baseComplete && counts.hasAttendance && counts.hasNotes
+  }
+
+  let teachingSessionsFiltered = teachingSessionsRaw ?? []
+  if (teachingCompliance === 'complete') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(isTeachingSessionComplete)
+  } else if (teachingCompliance === 'incomplete') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(s => !isTeachingSessionComplete(s))
+  }
+
+  const teachingTotalCount = teachingSessionsFiltered.length
+  const teachingTotalPages = Math.max(1, Math.ceil(teachingTotalCount / TEACHING_PAGE_SIZE))
+  const teachingSessions = teachingSessionsFiltered.slice((page - 1) * TEACHING_PAGE_SIZE, page * TEACHING_PAGE_SIZE)
 
   const { data: classes } = await admin
     .from('classes')
@@ -279,6 +294,7 @@ export default async function TutorClassesPage({
       ...(teachingRange ? { range: teachingRange } : {}),
       ...(teachingFrom ? { from: teachingFrom } : {}),
       ...(teachingTo ? { to: teachingTo } : {}),
+      ...(teachingCompliance ? { compliance: teachingCompliance } : {}),
       ...(targetPage > 1 ? { page: String(targetPage) } : {}),
     }
     const qs = new URLSearchParams(params).toString()
@@ -439,7 +455,7 @@ export default async function TutorClassesPage({
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
-          <TeachingScheduleFilters range={teachingRange} from={teachingFrom} to={teachingTo} />
+          <TeachingScheduleFilters range={teachingRange} from={teachingFrom} to={teachingTo} compliance={teachingCompliance} />
         </div>
 
         {!teachingSessions || teachingSessions.length === 0 ? (
@@ -451,6 +467,7 @@ export default async function TutorClassesPage({
             {teachingSessions.map(session => {
               const date = new Date(session.scheduled_at)
               const counts = getTeachingCounts(session)
+              const complete = isTeachingSessionComplete(session)
               return (
                 <Link
                   key={session.id}
@@ -485,6 +502,13 @@ export default async function TutorClassesPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
+                    {session.status !== 'cancelled' && (
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {complete ? 'Lengkap' : 'Belum Lengkap'}
+                      </span>
+                    )}
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${SESSION_STATUS_COLOR[session.status] ?? 'bg-gray-100 text-gray-600'}`}>
                       {SESSION_STATUS_LABEL[session.status] ?? session.status}
                     </span>
