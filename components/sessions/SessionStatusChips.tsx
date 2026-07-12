@@ -44,8 +44,6 @@ export default function SessionStatusChips({
 }) {
   if (status === 'cancelled') return null
 
-  const isPast = status === 'completed' || status === 'overdue'
-
   return (
     <div className="flex flex-wrap gap-1 mt-2">
       <Chip
@@ -62,27 +60,23 @@ export default function SessionStatusChips({
         inactiveClass="bg-amber-50 text-amber-600 border-amber-200"
       />
       <Chip
+        active={counts.hasAttendance}
+        label="Presensi"
+        activeClass="bg-green-50 text-green-700 border-green-200"
+        inactiveClass="bg-red-50 text-red-600 border-red-200"
+      />
+      <Chip
+        active={counts.hasNotes}
+        label="Catatan"
+        activeClass="bg-green-50 text-green-700 border-green-200"
+        inactiveClass="bg-red-50 text-red-600 border-red-200"
+      />
+      <Chip
         active={counts.hasAssessments}
-        label="Asesmen"
+        label="Asesmen & Nilai"
         activeClass="bg-green-50 text-green-700 border-green-200"
         inactiveClass="bg-amber-50 text-amber-600 border-amber-200"
       />
-      {isPast && (
-        <>
-          <Chip
-            active={counts.hasAttendance}
-            label="Presensi"
-            activeClass="bg-green-50 text-green-700 border-green-200"
-            inactiveClass="bg-red-50 text-red-600 border-red-200"
-          />
-          <Chip
-            active={counts.hasNotes}
-            label="Catatan"
-            activeClass="bg-green-50 text-green-700 border-green-200"
-            inactiveClass="bg-red-50 text-red-600 border-red-200"
-          />
-        </>
-      )}
     </div>
   )
 }

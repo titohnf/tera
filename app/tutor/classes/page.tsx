@@ -467,7 +467,6 @@ export default async function TutorClassesPage({
             {teachingSessions.map(session => {
               const date = new Date(session.scheduled_at)
               const counts = getTeachingCounts(session)
-              const complete = isTeachingSessionComplete(session)
               return (
                 <Link
                   key={session.id}
@@ -502,13 +501,6 @@ export default async function TutorClassesPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    {session.status !== 'cancelled' && (
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {complete ? 'Lengkap' : 'Belum Lengkap'}
-                      </span>
-                    )}
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${SESSION_STATUS_COLOR[session.status] ?? 'bg-gray-100 text-gray-600'}`}>
                       {SESSION_STATUS_LABEL[session.status] ?? session.status}
                     </span>
