@@ -49,7 +49,7 @@ export async function createUser(prevState: ActionState, formData: FormData): Pr
   if (authError) return { error: authError.message }
 
   const userId = authData.user.id
-  const extra: Record<string, string | number | null> = { updated_at: new Date().toISOString() }
+  const extra: Record<string, string | number | null> = { role, updated_at: new Date().toISOString() }
   if (phone) extra.phone = phone
   if (nickname) extra.nickname = nickname
   if (birthDate) extra.birth_date = birthDate

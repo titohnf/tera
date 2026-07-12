@@ -4,6 +4,7 @@ import Link from 'next/link'
 const FROM_CONFIG: Record<string, { label: string; href: string; title: string; role: string }> = {
   siswa: { label: 'Siswa',     href: '/admin/siswa', title: 'Tambah Siswa Baru',  role: 'student' },
   tutor: { label: 'Tutor',     href: '/admin/tutor', title: 'Tambah Tutor Baru',  role: 'tutor'   },
+  admin: { label: 'Admin',     href: '/admin/admin', title: 'Tambah Admin Baru',  role: 'admin'   },
 }
 
 export default async function NewUserPage({

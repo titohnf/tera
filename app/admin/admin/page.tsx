@@ -41,7 +41,7 @@ export default async function AdminPage({
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Admin</h1>
         <Link
-          href="/admin/users/new"
+          href="/admin/users/new?from=admin"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
