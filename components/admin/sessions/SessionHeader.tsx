@@ -6,26 +6,10 @@ import SessionForm from './SessionForm'
 
 type Status = 'scheduled' | 'ongoing' | 'completed' | 'cancelled'
 
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Terjadwal',
-  ongoing: 'Berlangsung',
-  completed: 'Selesai',
-  cancelled: 'Dibatalkan',
-  overdue: 'Belum diselesaikan',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  ongoing: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-600',
-  cancelled: 'bg-red-100 text-red-600',
-  overdue: 'bg-orange-100 text-orange-700',
-}
-
 interface Props {
   subject: string | null
   dateStr: string
-  displayStatus: string
+  displayStatus: { label: string; color: string }
   sessionId: string
   status: string
   scheduledAt: string
@@ -69,8 +53,8 @@ export default function SessionHeader({
             <p className="text-sm text-gray-500">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[displayStatus] ?? 'bg-gray-100 text-gray-500'}`}>
-              {STATUS_LABEL[displayStatus] ?? displayStatus}
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
+              {displayStatus.label}
             </span>
             {canEdit && (
               <button

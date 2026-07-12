@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import SessionForm from '@/components/admin/sessions/SessionForm'
 import { createSession } from '@/lib/actions/admin/sessions'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 
 type CountRow = [{ count: number }]
 
@@ -33,36 +34,11 @@ type CurriculumTopic = {
   topic: string | null
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  overdue:   'bg-orange-100 text-orange-700',
-  ongoing:   'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-600',
-  cancelled: 'bg-red-100 text-red-600',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Terjadwal',
-  overdue:   'Belum selesai',
-  ongoing:   'Berlangsung',
-  completed: 'Selesai',
-  cancelled: 'Dibatalkan',
-}
-
-function effectiveStatus(session: SessionRow): string {
-  if (session.status !== 'scheduled' && session.status !== 'ongoing') return session.status
-  const date = new Date(session.scheduled_at)
-  const sessionEnd = new Date(date.getTime() + session.duration_minutes * 60_000)
-  const now = new Date()
-  if (now < date) return 'scheduled'
-  if (now <= sessionEnd) return 'ongoing'
-  return 'overdue'
-}
-
 export default function ClassSessions({
   classId,
   sessions,
   gradedSessionIds,
+  pendingSessionIds,
   tutors,
   subjects,
   defaultTutorId,
@@ -73,6 +49,7 @@ export default function ClassSessions({
   classId: string
   sessions: SessionRow[]
   gradedSessionIds: string[]
+  pendingSessionIds?: string[]
   tutors: TutorOption[]
   subjects: SubjectOption[]
   defaultTutorId?: string
@@ -80,6 +57,7 @@ export default function ClassSessions({
   curriculumTopics?: CurriculumTopic[]
   studentGrade?: number | null
 }) {
+  const pendingSessionIdSet = new Set(pendingSessionIds ?? [])
   const [showForm, setShowForm] = useState(false)
 
   const totalSessions = sessions.length
@@ -167,7 +145,7 @@ export default function ClassSessions({
             <tbody className="divide-y divide-slate-100">
               {sessions.map((session, idx) => {
                 const date = new Date(session.scheduled_at)
-                const status = effectiveStatus(session)
+                const displayStatus = getSessionDisplayStatus(session.status, pendingSessionIdSet.has(session.id))
                 return (
                   <tr key={session.id} className="hover:bg-slate-50 transition-colors">
                     <td className="pl-6 pr-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>
@@ -196,8 +174,8 @@ export default function ClassSessions({
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/sessions/${session.id}`} className="block">
-                        <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[status] ?? 'bg-gray-100 text-gray-500'}`}>
-                          {STATUS_LABEL[status] ?? status}
+                        <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${displayStatus.color}`}>
+                          {displayStatus.label}
                         </span>
                       </Link>
                     </td>

@@ -13,6 +13,7 @@ import SessionHeader from '@/components/admin/sessions/SessionHeader'
 import ResetSessionButton from '@/components/admin/sessions/ResetSessionButton'
 import SessionTabs from '@/components/sessions/SessionTabs'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -62,6 +63,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
     { data: materials },
     { data: assessments },
     { data: curriculumTopics },
+    { data: pendingRequest },
   ] = await Promise.all([
     admin
       .from('class_students')
@@ -105,6 +107,12 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             }[] | null
           }>
       : Promise.resolve({ data: [] }),
+    admin
+      .from('session_change_requests')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('status', 'pending')
+      .maybeSingle(),
   ])
 
   // Auto-complete if all criteria already met (handles sessions filled before this feature existed)
@@ -136,14 +144,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const dateStr = date.toISOString().split('T')[0]
   const timeStr = date.toTimeString().slice(0, 5)
   const updateWithId = updateSession.bind(null, sessionId)
-  const sessionEnd = new Date(date.getTime() + session.duration_minutes * 60_000)
-  const now = new Date()
-  const effectiveStatus =
-    session.status === 'scheduled' || session.status === 'ongoing'
-      ? now < date ? 'scheduled'
-        : now <= sessionEnd ? 'ongoing'
-        : 'overdue'
-      : session.status
+  const displayStatus = getSessionDisplayStatus(session.status, !!pendingRequest)
 
   const attendanceMap = Object.fromEntries((attendances ?? []).map(a => [a.student_id, a]))
   const noteMap = Object.fromEntries((existingNotes ?? []).map(n => [n.student_id, n]))
@@ -193,7 +194,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           <SessionHeader
             subject={session.subjects?.name ?? null}
             dateStr={date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            displayStatus={effectiveStatus}
+            displayStatus={displayStatus}
             sessionId={sessionId}
             status={session.status}
             scheduledAt={session.scheduled_at}
@@ -252,7 +253,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             durationMinutes={session.duration_minutes}
             location={session.location}
             subjects={session.subjects?.name ?? null}
-            displayStatus={effectiveStatus}
+            displayStatus={session.status}
           />
 
           {/* Syarat penyelesaian otomatis */}

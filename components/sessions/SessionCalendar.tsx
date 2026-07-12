@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 
 type SessionEvent = {
   id: string
@@ -8,6 +9,7 @@ type SessionEvent = {
   status: string
   className: string
   tutorName: string | null
+  hasPendingChangeRequest?: boolean
 }
 
 interface SessionCalendarProps {
@@ -16,13 +18,6 @@ interface SessionCalendarProps {
   month: number // 0-indexed
   navBase?: string // base URL for prev/next navigation, defaults to /admin/sessions
   sessionHrefBase?: string // base URL for session links, defaults to /admin/sessions
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  ongoing:   'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-500',
-  cancelled: 'bg-red-100 text-red-500 line-through',
 }
 
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
@@ -115,12 +110,13 @@ export default function SessionCalendar({ sessions, year, month, navBase = '/adm
               <div className="space-y-0.5">
                 {daySessions.slice(0, 3).map(s => {
                   const time = new Date(s.scheduled_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                  const displayStatus = getSessionDisplayStatus(s.status, !!s.hasPendingChangeRequest)
                   return (
                     <Link
                       key={s.id}
                       href={`${sessionHrefBase}/${s.id}`}
-                      className={`block truncate text-[11px] px-1.5 py-0.5 rounded font-medium leading-tight hover:opacity-80 transition-opacity ${STATUS_COLOR[s.status] ?? 'bg-gray-100 text-gray-500'}`}
-                      title={`${s.className} · ${time}${s.tutorName ? ` · ${s.tutorName}` : ''}`}
+                      className={`block truncate text-[11px] px-1.5 py-0.5 rounded font-medium leading-tight hover:opacity-80 transition-opacity ${displayStatus.color} ${s.status === 'cancelled' ? 'line-through' : ''}`}
+                      title={`${s.className} · ${time}${s.tutorName ? ` · ${s.tutorName}` : ''} · ${displayStatus.label}`}
                     >
                       {time} {s.className}
                     </Link>

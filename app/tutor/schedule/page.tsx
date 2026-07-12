@@ -35,12 +35,23 @@ export default async function SchedulePage({
       }[] | null
     }
 
+  const sessionIds = (sessions ?? []).map(s => s.id)
+  const { data: pendingRequests } = sessionIds.length > 0
+    ? await admin
+        .from('session_change_requests')
+        .select('session_id')
+        .in('session_id', sessionIds)
+        .eq('status', 'pending') as unknown as { data: { session_id: string }[] | null }
+    : { data: [] as { session_id: string }[] }
+  const pendingSessionIds = new Set((pendingRequests ?? []).map(r => r.session_id))
+
   const events = (sessions ?? []).map(s => ({
     id: s.id,
     scheduled_at: s.scheduled_at,
     status: s.status,
     className: s.classes?.name ?? 'Kelas',
     tutorName: null,
+    hasPendingChangeRequest: pendingSessionIds.has(s.id),
   }))
 
   return (
