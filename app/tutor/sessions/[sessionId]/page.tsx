@@ -30,16 +30,10 @@ type SessionDetail = {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Terjadwal',
-  ongoing: 'Berlangsung',
-  completed: 'Selesai',
   cancelled: 'Dibatalkan',
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  ongoing: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-100 text-red-600',
 }
 
@@ -193,16 +187,11 @@ export default async function SessionPage({
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-lg font-semibold text-gray-900">{session.classes?.name ?? 'Kelas'}</h1>
-                  {session.classes?.level && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{session.classes.level}</span>
-                  )}
-                </div>
+                <h1 className="text-lg font-semibold text-gray-900 mb-1">{session.classes?.name ?? 'Kelas'}</h1>
                 <p className="text-sm text-gray-500">{session.topic ?? 'Topik belum ditentukan'}</p>
               </div>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? ''}`}>
-                {STATUS_LABEL[session.status] ?? session.status}
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-blue-100 text-blue-700'}`}>
+                {STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
               </span>
             </div>
 
