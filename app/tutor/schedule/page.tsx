@@ -60,7 +60,8 @@ export default async function SchedulePage({
     .order('scheduled_at', { ascending: filter === 'upcoming' })
 
   if (filter === 'upcoming') {
-    query = query.gte('scheduled_at', now).in('status', ['scheduled', 'ongoing'])
+    // Includes sessions completed ahead of schedule — they stay "upcoming" until their date passes
+    query = query.gte('scheduled_at', now).neq('status', 'cancelled')
   } else if (filter === 'past') {
     query = query.lt('scheduled_at', now).eq('status', 'completed')
   }
