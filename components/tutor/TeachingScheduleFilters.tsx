@@ -12,11 +12,7 @@ interface Props {
 
 const RANGE_OPTIONS = [
   { key: '', label: 'Semua' },
-  { key: 'today', label: 'Hari Ini' },
-  { key: 'tomorrow', label: 'Besok' },
-  { key: 'week', label: 'Minggu Ini' },
-  { key: 'month', label: 'Bulan Ini' },
-  { key: 'next7', label: '7 Hari ke Depan' },
+  { key: 'upcoming', label: 'Yang Akan Datang' },
   { key: 'custom', label: 'Custom' },
 ]
 

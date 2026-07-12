@@ -66,28 +66,8 @@ export default async function TutorClassesPage({
   let rangeStart: Date | null = null
   let rangeEnd: Date | null = null
 
-  if (teachingRange === 'today') {
-    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-    rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
-  } else if (teachingRange === 'tomorrow') {
-    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
-    rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999)
-  } else if (teachingRange === 'week') {
-    const dayOffset = (now.getDay() + 6) % 7 // Monday = 0
-    rangeStart = new Date(now)
-    rangeStart.setDate(now.getDate() - dayOffset)
-    rangeStart.setHours(0, 0, 0, 0)
-    rangeEnd = new Date(rangeStart)
-    rangeEnd.setDate(rangeStart.getDate() + 6)
-    rangeEnd.setHours(23, 59, 59, 999)
-  } else if (teachingRange === 'month') {
-    rangeStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
-    rangeEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
-  } else if (teachingRange === 'next7') {
-    rangeStart = new Date(now)
-    rangeEnd = new Date(now)
-    rangeEnd.setDate(rangeEnd.getDate() + 7)
-    rangeEnd.setHours(23, 59, 59, 999)
+  if (teachingRange === 'upcoming') {
+    rangeStart = now
   } else if (teachingRange === 'custom' && teachingFrom && teachingTo) {
     rangeStart = new Date(`${teachingFrom}T00:00:00`)
     rangeEnd = new Date(`${teachingTo}T23:59:59`)
