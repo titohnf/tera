@@ -44,39 +44,16 @@ export default function SessionStatusChips({
 }) {
   if (status === 'cancelled') return null
 
+  const activeClass = 'bg-green-50 text-green-700 border-green-200'
+  const inactiveClass = 'bg-gray-50 text-gray-500 border-gray-200'
+
   return (
     <div className="flex flex-wrap gap-1 mt-2">
-      <Chip
-        active={!!counts.topic}
-        label={counts.topic ? `Topik: ${counts.topic}` : 'Topik'}
-        activeClass="bg-green-50 text-green-700 border-green-200 max-w-[180px]"
-        inactiveClass="bg-amber-50 text-amber-600 border-amber-200"
-        maxW="max-w-[180px]"
-      />
-      <Chip
-        active={counts.hasMaterials}
-        label="Materi"
-        activeClass="bg-green-50 text-green-700 border-green-200"
-        inactiveClass="bg-amber-50 text-amber-600 border-amber-200"
-      />
-      <Chip
-        active={counts.hasAttendance}
-        label="Presensi"
-        activeClass="bg-green-50 text-green-700 border-green-200"
-        inactiveClass="bg-red-50 text-red-600 border-red-200"
-      />
-      <Chip
-        active={counts.hasNotes}
-        label="Catatan"
-        activeClass="bg-green-50 text-green-700 border-green-200"
-        inactiveClass="bg-red-50 text-red-600 border-red-200"
-      />
-      <Chip
-        active={counts.hasAssessments}
-        label="Asesmen & Nilai"
-        activeClass="bg-green-50 text-green-700 border-green-200"
-        inactiveClass="bg-amber-50 text-amber-600 border-amber-200"
-      />
+      <Chip active={!!counts.topic} label="Topik" activeClass={activeClass} inactiveClass={inactiveClass} />
+      <Chip active={counts.hasMaterials} label="Materi" activeClass={activeClass} inactiveClass={inactiveClass} />
+      <Chip active={counts.hasAttendance} label="Presensi" activeClass={activeClass} inactiveClass={inactiveClass} />
+      <Chip active={counts.hasNotes} label="Catatan" activeClass={activeClass} inactiveClass={inactiveClass} />
+      <Chip active={counts.hasAssessments} label="Asesmen & Nilai" activeClass={activeClass} inactiveClass={inactiveClass} />
     </div>
   )
 }

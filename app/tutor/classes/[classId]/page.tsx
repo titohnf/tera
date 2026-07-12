@@ -292,16 +292,16 @@ export default async function TutorClassDetailPage({
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-900">{session.subjects?.name ?? 'Sesi'}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-gray-500 mt-1">
                         {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                         {session.location ? ` • ${session.location}` : ''}
-                        {` • ${session.duration_minutes} menit`}
+                        {session.topic ? ` • ${session.topic}` : ''}
                       </p>
                       <SessionStatusChips status={session.status} counts={counts} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-green-100 text-green-700'}`}>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-blue-100 text-blue-700'}`}>
                       {STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
