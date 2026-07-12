@@ -29,10 +29,12 @@ export default function SessionChangeRequestPanel({
   sessionId,
   existingRequest,
   tutors,
+  currentTutorName,
 }: {
   sessionId: string
   existingRequest: PendingRequest | null
   tutors: { id: string; full_name: string }[]
+  currentTutorName: string | null
 }) {
   const [mode, setMode] = useState<SessionRequestType | null>(null)
   const [reason, setReason] = useState('')
@@ -90,7 +92,9 @@ export default function SessionChangeRequestPanel({
             </p>
           )}
           {existingRequest.request_type === 'change_tutor' && existingRequest.new_tutor_name && (
-            <p className="text-xs text-gray-600">Ke: {existingRequest.new_tutor_name}</p>
+            <p className="text-xs text-gray-600">
+              Dari: {currentTutorName ?? '—'} → Ke: {existingRequest.new_tutor_name}
+            </p>
           )}
           <p className="text-xs text-gray-600">Alasan: {existingRequest.reason}</p>
         </div>
@@ -117,6 +121,11 @@ export default function SessionChangeRequestPanel({
           <p className="text-xs font-medium text-red-700">
             Pengajuan {REQUEST_LABEL[existingRequest.request_type]} sebelumnya ditolak admin
           </p>
+          {existingRequest.request_type === 'change_tutor' && existingRequest.new_tutor_name && (
+            <p className="text-xs text-gray-600">
+              Dari: {currentTutorName ?? '—'} → Ke: {existingRequest.new_tutor_name}
+            </p>
+          )}
           {existingRequest.admin_note && (
             <p className="text-xs text-gray-600">Catatan: {existingRequest.admin_note}</p>
           )}

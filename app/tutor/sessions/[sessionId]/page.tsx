@@ -103,7 +103,7 @@ export default async function SessionPage({
     supabase
       .from('profiles')
       .select('full_name')
-      .eq('id', user.id)
+      .eq('id', session.tutor_id)
       .single(),
     session.subject_id
       ? supabase
@@ -339,6 +339,7 @@ export default async function SessionPage({
               sessionId={sessionId}
               existingRequest={sessionChangeRequest}
               tutors={otherTutors ?? []}
+              currentTutorName={tutorName}
             />
           )}
         </div>
