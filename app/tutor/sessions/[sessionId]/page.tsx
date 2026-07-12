@@ -112,7 +112,7 @@ export default async function SessionPage({
   const [{ data: latestRequest }, { data: otherTutors }] = await Promise.all([
     supabase
       .from('session_change_requests')
-      .select('id, request_type, reason, new_scheduled_at, new_tutor_id, status, admin_note, profiles!new_tutor_id(full_name)')
+      .select('id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status, admin_note, profiles!new_tutor_id(full_name)')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -134,6 +134,7 @@ export default async function SessionPage({
         new_scheduled_at: latestRequest.new_scheduled_at,
         new_tutor_id: latestRequest.new_tutor_id,
         new_tutor_name: (latestRequest.profiles as unknown as { full_name: string } | null)?.full_name ?? null,
+        new_tutor_confirmed: latestRequest.new_tutor_confirmed,
         status: latestRequest.status,
         admin_note: latestRequest.admin_note,
       }

@@ -20,11 +20,14 @@ export async function approveSessionChangeRequest(requestId: string): Promise<{ 
 
   const { data: request } = await admin
     .from('session_change_requests')
-    .select('id, session_id, request_type, new_scheduled_at, new_tutor_id, status')
+    .select('id, session_id, request_type, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status')
     .eq('id', requestId)
     .single()
   if (!request) return { error: 'Pengajuan tidak ditemukan' }
   if (request.status !== 'pending') return { error: 'Pengajuan ini sudah diproses' }
+  if (request.request_type === 'change_tutor' && request.new_tutor_confirmed !== true) {
+    return { error: 'Tutor pengganti belum konfirmasi kesediaannya' }
+  }
 
   if (request.request_type === 'cancel') {
     await admin.from('sessions').update({ status: 'cancelled' }).eq('id', request.session_id)

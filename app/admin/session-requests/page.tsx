@@ -8,6 +8,7 @@ type RequestRow = {
   reason: string
   new_scheduled_at: string | null
   new_tutor_id: string | null
+  new_tutor_confirmed: boolean | null
   status: 'pending' | 'approved' | 'rejected'
   admin_note: string | null
   created_at: string
@@ -46,7 +47,7 @@ export default async function SessionRequestsPage({
   let query = admin
     .from('session_change_requests')
     .select(`
-      id, request_type, reason, new_scheduled_at, new_tutor_id, status, admin_note, created_at, session_id,
+      id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status, admin_note, created_at, session_id,
       sessions(scheduled_at, classes(name)),
       requester:profiles!requested_by(full_name),
       new_tutor:profiles!new_tutor_id(full_name)
@@ -114,7 +115,14 @@ export default async function SessionRequestsPage({
                     </p>
                   )}
                   {req.request_type === 'change_tutor' && req.new_tutor && (
-                    <p className="text-xs text-gray-500">Ke: {req.new_tutor.full_name}</p>
+                    <p className="text-xs text-gray-500">
+                      Ke: {req.new_tutor.full_name}
+                      {req.status === 'pending' && (
+                        req.new_tutor_confirmed === true
+                          ? <span className="text-green-600"> · sudah konfirmasi bersedia</span>
+                          : <span className="text-amber-600"> · menunggu konfirmasi tutor pengganti</span>
+                      )}
+                    </p>
                   )}
                   <p className="text-xs text-gray-600 mt-2 bg-gray-50 rounded-lg px-3 py-2">{req.reason}</p>
                   {req.admin_note && (
@@ -127,7 +135,9 @@ export default async function SessionRequestsPage({
                     Lihat sesi →
                   </Link>
                 </div>
-                {req.status === 'pending' && <RequestActions requestId={req.id} />}
+                {req.status === 'pending' && (req.request_type !== 'change_tutor' || req.new_tutor_confirmed === true) && (
+                  <RequestActions requestId={req.id} />
+                )}
               </div>
             </div>
           ))}

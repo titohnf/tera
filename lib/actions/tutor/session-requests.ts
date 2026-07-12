@@ -84,3 +84,66 @@ export async function withdrawSessionChangeRequest(
   revalidatePath('/admin/session-requests')
   return {}
 }
+
+// Called by the proposed replacement tutor (new_tutor_id), before the request
+// ever reaches admin. Declining auto-rejects the request; accepting just marks
+// it confirmed so it becomes actionable by admin.
+export async function respondToTutorSwapRequest(
+  requestId: string,
+  accept: boolean
+): Promise<{ error?: string }> {
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+  const admin = createAdminClient()
+
+  const { data: request } = await admin
+    .from('session_change_requests')
+    .select('id, session_id, status, new_tutor_id, new_tutor_confirmed, request_type')
+    .eq('id', requestId)
+    .single()
+
+  if (!request) return { error: 'Pengajuan tidak ditemukan' }
+  if (request.new_tutor_id !== user.id) return { error: 'Tidak diizinkan' }
+  if (request.request_type !== 'change_tutor') return { error: 'Pengajuan tidak valid' }
+  if (request.status !== 'pending' || request.new_tutor_confirmed !== null) {
+    return { error: 'Pengajuan ini sudah direspons' }
+  }
+
+  const { error } = await admin
+    .from('session_change_requests')
+    .update(
+      accept
+        ? { new_tutor_confirmed: true }
+        : {
+            new_tutor_confirmed: false,
+            status: 'rejected',
+            reviewed_at: new Date().toISOString(),
+            admin_note: 'Ditolak oleh tutor pengganti yang diajukan.',
+          }
+    )
+    .eq('id', requestId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/tutor')
+  revalidatePath(`/tutor/sessions/${request.session_id}`)
+  revalidatePath('/admin/session-requests')
+  return {}
+}
+
+// Called by the requesting tutor to dismiss a resolved (approved/rejected)
+// notice from their dashboard.
+export async function acknowledgeSessionChangeRequest(requestId: string): Promise<{ error?: string }> {
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+  const admin = createAdminClient()
+
+  const { error } = await admin
+    .from('session_change_requests')
+    .update({ acknowledged_at: new Date().toISOString() })
+    .eq('id', requestId)
+    .eq('requested_by', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/tutor')
+  return {}
+}

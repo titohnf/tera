@@ -14,6 +14,7 @@ type PendingRequest = {
   new_scheduled_at: string | null
   new_tutor_id: string | null
   new_tutor_name: string | null
+  new_tutor_confirmed: boolean | null
   status: 'pending' | 'approved' | 'rejected'
   admin_note: string | null
 }
@@ -76,7 +77,9 @@ export default function SessionChangeRequestPanel({
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-amber-800">{REQUEST_LABEL[existingRequest.request_type]}</span>
             <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-              Menunggu Admin
+              {existingRequest.request_type === 'change_tutor' && existingRequest.new_tutor_confirmed !== true
+                ? 'Menunggu Tutor Pengganti'
+                : 'Menunggu Admin'}
             </span>
           </div>
           {existingRequest.request_type === 'reschedule' && existingRequest.new_scheduled_at && (

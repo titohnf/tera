@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import Link from 'next/link'
 import { computeSalary } from '@/lib/salary'
+import DashboardAlerts from '@/components/tutor/DashboardAlerts'
+import type { SwapRequestAlert, ResolvedNoticeAlert } from '@/components/tutor/DashboardAlerts'
 import type { SessionRow, SalarySchemeRow, SessionPaymentRow, AttendanceRow } from '@/lib/types/database'
 
 type SessionWithClass = SessionRow & { classes: { name: string; level: string | null } | null }
@@ -52,6 +54,47 @@ export default async function TutorDashboard() {
       .gte('created_at', startOfMonth) as unknown as Promise<{ data: SessionPaymentRow[] | null }>,
   ])
 
+  const [{ data: swapRequestsRaw }, { data: resolvedNoticesRaw }] = await Promise.all([
+    supabase
+      .from('session_change_requests')
+      .select('id, reason, sessions(scheduled_at, classes(name)), requester:profiles!requested_by(full_name)')
+      .eq('new_tutor_id', user.id)
+      .eq('status', 'pending')
+      .is('new_tutor_confirmed', null)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('session_change_requests')
+      .select('id, request_type, status, admin_note, sessions(classes(name))')
+      .eq('requested_by', user.id)
+      .in('status', ['approved', 'rejected'])
+      .is('acknowledged_at', null)
+      .order('reviewed_at', { ascending: true }),
+  ])
+
+  const swapRequests: SwapRequestAlert[] = ((swapRequestsRaw ?? []) as unknown as {
+    id: string; reason: string
+    sessions: { scheduled_at: string; classes: { name: string } | null } | null
+    requester: { full_name: string } | null
+  }[]).map(r => ({
+    id: r.id,
+    className: r.sessions?.classes?.name ?? 'Kelas',
+    scheduledAt: r.sessions?.scheduled_at ?? new Date().toISOString(),
+    requesterName: r.requester?.full_name ?? 'Tutor lain',
+    reason: r.reason,
+  }))
+
+  const resolvedNotices: ResolvedNoticeAlert[] = ((resolvedNoticesRaw ?? []) as unknown as {
+    id: string; request_type: 'cancel' | 'reschedule' | 'change_tutor'
+    status: 'approved' | 'rejected'; admin_note: string | null
+    sessions: { classes: { name: string } | null } | null
+  }[]).map(r => ({
+    id: r.id,
+    requestType: r.request_type,
+    status: r.status,
+    className: r.sessions?.classes?.name ?? 'Kelas',
+    adminNote: r.admin_note,
+  }))
+
   const sessionIds = (completedSessions ?? []).map(s => s.id)
   type AttendancePick = Pick<AttendanceRow, 'session_id' | 'status'>
   const attendances: AttendancePick[] = sessionIds.length > 0
@@ -75,6 +118,8 @@ export default async function TutorDashboard() {
   return (
     <div>
       <h1 className="text-xl font-semibold text-gray-900 mb-6">Dashboard</h1>
+
+      <DashboardAlerts swapRequests={swapRequests} resolvedNotices={resolvedNotices} />
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <StatCard label="Sesi Bulan Ini" value={String(salaryReport.totalSessions)} sub="sesi selesai" color="blue" />

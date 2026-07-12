@@ -11,10 +11,12 @@ create table session_change_requests (
   reason text not null,
   new_scheduled_at timestamptz,
   new_tutor_id uuid references profiles(id) on delete set null,
+  new_tutor_confirmed boolean, -- null = not yet responded; only relevant for request_type = 'change_tutor'
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   reviewed_by uuid references profiles(id) on delete set null,
   reviewed_at timestamptz,
   admin_note text,
+  acknowledged_at timestamptz, -- when the requesting tutor dismissed the resolved notice
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -43,6 +45,15 @@ create policy "Tutor can withdraw their own pending change requests"
   on session_change_requests for delete using (
     requested_by = auth.uid() and status = 'pending'
   );
+
+create policy "Tutor can acknowledge resolved requests they made"
+  on session_change_requests for update using (requested_by = auth.uid());
+
+create policy "Proposed tutor can view swap requests naming them"
+  on session_change_requests for select using (new_tutor_id = auth.uid());
+
+create policy "Proposed tutor can respond to swap requests naming them"
+  on session_change_requests for update using (new_tutor_id = auth.uid());
 
 create policy "Admin can manage all session change requests"
   on session_change_requests for all using (is_admin());
