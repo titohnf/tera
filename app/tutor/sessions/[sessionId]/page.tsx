@@ -11,6 +11,7 @@ import { createAssessment, submitGrades } from '@/lib/actions/assessments'
 import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
 import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
+import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 type SessionDetail = {
@@ -107,6 +108,36 @@ export default async function SessionPage({
           .order('sort_order')
       : Promise.resolve({ data: [] }),
   ])
+
+  const [{ data: latestRequest }, { data: otherTutors }] = await Promise.all([
+    supabase
+      .from('session_change_requests')
+      .select('id, request_type, reason, new_scheduled_at, new_tutor_id, status, admin_note, profiles!new_tutor_id(full_name)')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('role', 'tutor')
+      .eq('is_active', true)
+      .neq('id', user.id)
+      .order('full_name'),
+  ])
+
+  const sessionChangeRequest = latestRequest && latestRequest.status !== 'approved'
+    ? {
+        id: latestRequest.id,
+        request_type: latestRequest.request_type,
+        reason: latestRequest.reason,
+        new_scheduled_at: latestRequest.new_scheduled_at,
+        new_tutor_id: latestRequest.new_tutor_id,
+        new_tutor_name: (latestRequest.profiles as unknown as { full_name: string } | null)?.full_name ?? null,
+        status: latestRequest.status,
+        admin_note: latestRequest.admin_note,
+      }
+    : null
 
   const enrolledStudents = enrolledResult.data ?? []
   const attendances = attendanceResult.data ?? []
@@ -290,6 +321,14 @@ export default async function SessionPage({
                 ))}
               </div>
             </div>
+          )}
+
+          {session.status !== 'cancelled' && (
+            <SessionChangeRequestPanel
+              sessionId={sessionId}
+              existingRequest={sessionChangeRequest}
+              tutors={otherTutors ?? []}
+            />
           )}
         </div>
       </div>
