@@ -53,15 +53,23 @@ const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; sfilter?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string }>
 }) {
-  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '', sfilter = 'upcoming' } = await searchParams
+  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '' } = await searchParams
   const user = await getUser()
   if (!user) return null
   const admin = createAdminClient()
-  const now = new Date().toISOString()
 
-  let teachingQuery = admin
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  const dayOffset = (now.getDay() + 6) % 7 // Monday = 0
+  startOfWeek.setDate(now.getDate() - dayOffset)
+  startOfWeek.setHours(0, 0, 0, 0)
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+  endOfWeek.setHours(23, 59, 59, 999)
+
+  const { data: teachingSessions } = await admin
     .from('sessions')
     .select(`
       id, scheduled_at, duration_minutes, location, status, topic,
@@ -72,17 +80,11 @@ export default async function TutorClassesPage({
       performance_notes(count)
     `)
     .eq('tutor_id', user.id)
-    .order('scheduled_at', { ascending: sfilter !== 'past' })
-
-  if (sfilter === 'upcoming') {
-    teachingQuery = teachingQuery.gte('scheduled_at', now).neq('status', 'cancelled')
-  } else if (sfilter === 'past') {
-    teachingQuery = teachingQuery.lt('scheduled_at', now).eq('status', 'completed')
-  }
-
-  const { data: teachingSessions } = await teachingQuery.limit(50) as unknown as {
-    data: TeachingSessionRow[] | null
-  }
+    .gte('scheduled_at', startOfWeek.toISOString())
+    .lte('scheduled_at', endOfWeek.toISOString())
+    .order('scheduled_at', { ascending: true }) as unknown as {
+      data: TeachingSessionRow[] | null
+    }
 
   const teachingSessionIds = (teachingSessions ?? []).map(s => s.id)
   const { data: teachingGradedData } = teachingSessionIds.length > 0
@@ -380,32 +382,13 @@ export default async function TutorClassesPage({
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
-          <div className="flex gap-2">
-            {[
-              { key: 'upcoming', label: 'Mendatang' },
-              { key: 'past', label: 'Riwayat' },
-              { key: 'all', label: 'Semua' },
-            ].map(tab => (
-              <Link
-                key={tab.key}
-                href={`/tutor/classes?sfilter=${tab.key}`}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  sfilter === tab.key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {tab.label}
-              </Link>
-            ))}
-          </div>
+        <div className="px-5 pt-5 pb-3">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar Minggu Ini</h2>
         </div>
 
         {!teachingSessions || teachingSessions.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-10 px-5">
-            Tidak ada sesi ditemukan.
+            Tidak ada sesi minggu ini.
           </p>
         ) : (
           <div className="px-5 pb-5 space-y-2">
