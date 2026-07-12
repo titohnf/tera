@@ -205,7 +205,6 @@ export default async function SessionPage({
         .in('assessment_id', assessmentIds)
     : { data: [] }
 
-  const presentCount = attendances.filter(a => a.status === 'present' || a.status === 'late').length
   const date = new Date(session.scheduled_at)
 
   return (
@@ -235,29 +234,6 @@ export default async function SessionPage({
                   </span>
                 )
               })()}
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t text-sm">
-              <div>
-                <p className="text-xs text-gray-500 mb-0.5">Tanggal & Waktu</p>
-                <p className="font-medium">
-                  {date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </p>
-                <p className="text-gray-500 text-xs">
-                  {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                  {' '}({session.duration_minutes} menit)
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
-                <p className="font-medium">{session.location ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-0.5">Kehadiran</p>
-                <p className="font-medium">
-                  {presentCount} / {enrolledStudents.length} siswa
-                </p>
-              </div>
             </div>
           </div>
 
