@@ -3,6 +3,8 @@ import { getUser } from '@/lib/supabase/get-user'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/admin/classes/ClassFilters'
+import SessionStatusChips from '@/components/sessions/SessionStatusChips'
+import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 
 type ClassRow = {
   id: string
@@ -15,18 +17,99 @@ type ClassRow = {
   end_date: string | null
 }
 
+type CountRow = [{ count: number }]
+
+type TeachingSessionRow = {
+  id: string
+  scheduled_at: string
+  duration_minutes: number
+  location: string | null
+  status: string
+  topic: string | null
+  classes: { name: string; level: string | null } | null
+  materials: CountRow
+  assessments: CountRow
+  attendances: CountRow
+  performance_notes: CountRow
+}
+
+const SESSION_STATUS_LABEL: Record<string, string> = {
+  scheduled: 'Terjadwal',
+  ongoing: 'Berlangsung',
+  completed: 'Selesai',
+  cancelled: 'Dibatalkan',
+}
+
+const SESSION_STATUS_COLOR: Record<string, string> = {
+  scheduled: 'bg-blue-100 text-blue-700',
+  ongoing: 'bg-green-100 text-green-700',
+  completed: 'bg-gray-100 text-gray-600',
+  cancelled: 'bg-red-100 text-red-600',
+}
+
 const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; sfilter?: string }>
 }) {
-  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '' } = await searchParams
+  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '', sfilter = 'upcoming' } = await searchParams
   const user = await getUser()
   if (!user) return null
   const admin = createAdminClient()
+  const now = new Date().toISOString()
+
+  let teachingQuery = admin
+    .from('sessions')
+    .select(`
+      id, scheduled_at, duration_minutes, location, status, topic,
+      classes(name, level),
+      materials(count),
+      assessments(count),
+      attendances(count),
+      performance_notes(count)
+    `)
+    .eq('tutor_id', user.id)
+    .order('scheduled_at', { ascending: sfilter !== 'past' })
+
+  if (sfilter === 'upcoming') {
+    teachingQuery = teachingQuery.gte('scheduled_at', now).neq('status', 'cancelled')
+  } else if (sfilter === 'past') {
+    teachingQuery = teachingQuery.lt('scheduled_at', now).eq('status', 'completed')
+  }
+
+  const { data: teachingSessions } = await teachingQuery.limit(50) as unknown as {
+    data: TeachingSessionRow[] | null
+  }
+
+  const teachingSessionIds = (teachingSessions ?? []).map(s => s.id)
+  const { data: teachingGradedData } = teachingSessionIds.length > 0
+    ? await admin
+        .from('assessments')
+        .select('session_id, assessment_results(count)')
+        .in('session_id', teachingSessionIds) as unknown as {
+          data: { session_id: string; assessment_results: CountRow }[] | null
+        }
+    : { data: null }
+
+  const teachingGradedSessionIds = new Set(
+    (teachingGradedData ?? [])
+      .filter(a => (a.assessment_results[0]?.count ?? 0) > 0)
+      .map(a => a.session_id)
+  )
+
+  function getTeachingCounts(session: TeachingSessionRow): SessionCounts {
+    return {
+      topic: session.topic,
+      hasMaterials: (session.materials[0]?.count ?? 0) > 0,
+      hasAssessments: (session.assessments[0]?.count ?? 0) > 0,
+      hasAttendance: (session.attendances[0]?.count ?? 0) > 0,
+      hasNotes: (session.performance_notes[0]?.count ?? 0) > 0,
+      hasGradedAssessments: teachingGradedSessionIds.has(session.id),
+    }
+  }
 
   const { data: classes } = await admin
     .from('classes')
@@ -292,6 +375,87 @@ export default async function TutorClassesPage({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
+          <div className="flex gap-2">
+            {[
+              { key: 'upcoming', label: 'Mendatang' },
+              { key: 'past', label: 'Riwayat' },
+              { key: 'all', label: 'Semua' },
+            ].map(tab => (
+              <Link
+                key={tab.key}
+                href={`/tutor/classes?sfilter=${tab.key}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  sfilter === tab.key
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {!teachingSessions || teachingSessions.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-10 px-5">
+            Tidak ada sesi ditemukan.
+          </p>
+        ) : (
+          <div className="px-5 pb-5 space-y-2">
+            {teachingSessions.map(session => {
+              const date = new Date(session.scheduled_at)
+              const counts = getTeachingCounts(session)
+              return (
+                <Link
+                  key={session.id}
+                  href={`/tutor/sessions/${session.id}`}
+                  className="flex items-center justify-between rounded-xl ring-1 ring-gray-900/5 px-5 py-4 hover:bg-blue-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="text-center w-12 shrink-0">
+                      <p className="text-xs text-gray-500">
+                        {date.toLocaleDateString('id-ID', { month: 'short' })}
+                      </p>
+                      <p className="text-xl font-bold text-gray-900">{date.getDate()}</p>
+                      <p className="text-xs text-gray-500">
+                        {date.toLocaleDateString('id-ID', { weekday: 'short' })}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-900">{session.classes?.name ?? 'Kelas'}</p>
+                        {session.classes?.level && (
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                            {session.classes.level}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        {session.location ? ` • ${session.location}` : ''}
+                        {` • ${session.duration_minutes} menit`}
+                      </p>
+                      <SessionStatusChips status={session.status} counts={counts} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ml-3">
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${SESSION_STATUS_COLOR[session.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {SESSION_STATUS_LABEL[session.status] ?? session.status}
+                    </span>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

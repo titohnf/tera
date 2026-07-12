@@ -179,11 +179,11 @@ export default async function SessionPage({
 
   return (
     <div>
-      <Link href="/tutor/schedule" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-5">
+      <Link href="/tutor/classes" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-5">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Jadwal
+        Kelas Saya
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
