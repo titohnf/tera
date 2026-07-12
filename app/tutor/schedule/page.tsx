@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
+import Link from 'next/link'
 import SessionCalendar from '@/components/sessions/SessionCalendar'
 
 export default async function SchedulePage({
@@ -44,7 +45,11 @@ export default async function SchedulePage({
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-gray-900 mb-6">Jadwal</h1>
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <Link href="/tutor/classes" className="hover:text-blue-600">Kelas Saya</Link>
+        <span>/</span>
+        <span className="text-gray-900 font-medium">Kalender</span>
+      </div>
 
       <SessionCalendar
         sessions={events}

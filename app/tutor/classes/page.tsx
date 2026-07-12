@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import Link from 'next/link'
+import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/admin/classes/ClassFilters'
 
 type ClassRow = {
@@ -136,6 +137,8 @@ export default async function TutorClassesPage({
   else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
 
   const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
+  const regularCount = allClasses.filter(c => c.class_type === 'group').length
+  const privateCount = allClasses.filter(c => c.class_type === 'private').length
   const hasFilter = !!(q || levelFilter || statusFilter || typeFilter)
   const tableTitle = hasFilter
     ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
@@ -143,10 +146,28 @@ export default async function TutorClassesPage({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Kelas Saya</h1>
-        <p className="text-sm text-gray-500 mt-1">Daftar kelas yang kamu ampu.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Kelas Saya</h1>
+          <p className="text-sm text-gray-500 mt-1">Daftar kelas yang kamu ampu.</p>
+        </div>
+        <Link
+          href="/tutor/schedule"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-blue-50/50 transition-colors shrink-0"
+        >
+          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Kalender
+        </Link>
       </div>
+
+      {allClasses.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          <MetricCard label="Grup" value={regularCount} />
+          <MetricCard label="Privat" value={privateCount} />
+        </div>
+      )}
 
       {allClasses.length > 0 && (
         <ClassFilters
