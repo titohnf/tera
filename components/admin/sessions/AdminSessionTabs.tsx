@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { saveSessionCpUrls } from '@/lib/actions/admin/curriculum'
+import { saveSessionCpUrls, updateSessionTopic } from '@/lib/actions/admin/curriculum'
 import SessionTopicEditor from './SessionTopicEditor'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import MaterialList from '@/components/materials/MaterialList'
@@ -142,6 +142,7 @@ export default function AdminSessionTabs({
                 initialCpIds={selectedCpIds}
                 curriculumTopics={curriculumTopics}
                 hasSubject={hasSubject}
+                saveAction={updateSessionTopic}
               />
             </div>
             <div className="border-t pt-6">

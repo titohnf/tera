@@ -255,6 +255,7 @@ export default async function SessionPage({
                   classId={session.class_id}
                 />
               }
+              saveTopicAction={updateSessionTopicTutor}
               submitAttendanceAction={submitAttendance}
               saveNoteAction={savePerformanceNote}
               createAssessmentAction={createAssessment}

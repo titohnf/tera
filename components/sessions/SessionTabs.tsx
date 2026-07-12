@@ -16,6 +16,12 @@ type SubmitGradesAction = (assessmentId: string, sessionId: string, data: unknow
 type DeleteMaterialAction = (materialId: string, filePath: string | null, sessionId: string) => Promise<{ error?: string }>
 type DeleteAssessmentAction = (assessmentId: string, sessionId: string) => Promise<{ error?: string; success?: boolean }>
 type SignedUrlAction = (filePath: string) => Promise<{ error?: string; url?: string }>
+type SaveTopicAction = (
+  sessionId: string,
+  curriculumTopicId: string | null,
+  topicText: string,
+  selectedCpIds: string[],
+) => Promise<{ error?: string }>
 
 // ── Data types ────────────────────────────────────────────────────────────────
 interface Student {
@@ -106,6 +112,7 @@ export default function SessionTabs({
   deleteAssessmentAction,
   deleteMaterialAction,
   signedUrlAction,
+  saveTopicAction,
 }: {
   sessionId: string
   sessionStatus: string
@@ -131,6 +138,7 @@ export default function SessionTabs({
   deleteAssessmentAction?: DeleteAssessmentAction
   deleteMaterialAction: DeleteMaterialAction
   signedUrlAction: SignedUrlAction
+  saveTopicAction: SaveTopicAction
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>('materials')
 
@@ -176,6 +184,7 @@ export default function SessionTabs({
             initialCpIds={selectedCpIds}
             curriculumTopics={curriculumTopics}
             hasSubject={hasSubject}
+            saveAction={saveTopicAction}
           />
 
           <div className="border-t border-slate-200 my-5" />

@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { updateSession } from '@/lib/actions/admin/sessions'
+import { updateSessionTopic } from '@/lib/actions/admin/curriculum'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { savePerformanceNoteAdmin } from '@/lib/actions/admin/notes'
@@ -230,6 +231,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             subjectName={session.subjects?.name ?? null}
             grade={sessionGrade}
             materialUploader={<MaterialUploaderAdmin sessionId={sessionId} />}
+            saveTopicAction={updateSessionTopic}
             submitAttendanceAction={submitAttendanceAdmin}
             saveNoteAction={savePerformanceNoteAdmin}
             createAssessmentAction={createAssessmentAdmin}

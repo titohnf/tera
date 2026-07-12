@@ -5,7 +5,12 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { checkAndCompleteSession } from '@/lib/actions/session-completion'
 
-export async function updateSessionTopicTutor(sessionId: string, topic: string) {
+export async function updateSessionTopicTutor(
+  sessionId: string,
+  curriculumTopicId: string | null,
+  topicText: string,
+  selectedCpIds: string[] = [],
+): Promise<{ error?: string }> {
   const user = await getUser()
   if (!user) return { error: 'Tidak terautentikasi' }
 
@@ -22,7 +27,12 @@ export async function updateSessionTopicTutor(sessionId: string, topic: string) 
 
   const { error } = await admin
     .from('sessions')
-    .update({ topic: topic.trim() || null, updated_at: new Date().toISOString() })
+    .update({
+      curriculum_topic_id: curriculumTopicId,
+      topic: topicText,
+      selected_cp_ids: selectedCpIds,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', sessionId)
 
   if (error) return { error: error.message }
@@ -31,5 +41,5 @@ export async function updateSessionTopicTutor(sessionId: string, topic: string) 
 
   revalidatePath(`/tutor/sessions/${sessionId}`)
   revalidatePath(`/admin/sessions/${sessionId}`)
-  return { success: true }
+  return {}
 }

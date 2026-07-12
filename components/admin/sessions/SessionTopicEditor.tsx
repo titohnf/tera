@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
-import { updateSessionTopic } from '@/lib/actions/admin/curriculum'
+
+type SaveTopicAction = (
+  sessionId: string,
+  curriculumTopicId: string | null,
+  topicText: string,
+  selectedCpIds: string[],
+) => Promise<{ error?: string }>
 
 interface CurriculumTopic {
   id: string
@@ -28,6 +34,7 @@ interface Props {
   initialCpIds?: string[]
   curriculumTopics: CurriculumTopic[]
   hasSubject?: boolean
+  saveAction: SaveTopicAction
 }
 
 export default function SessionTopicEditor({
@@ -37,8 +44,10 @@ export default function SessionTopicEditor({
   initialCpIds = [],
   curriculumTopics,
   hasSubject,
+  saveAction,
 }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   // De-duplicate topics: group rows by (semester, theme, topic)
   const topicGroups = useMemo<TopicGroup[]>(() => {
@@ -98,8 +107,13 @@ export default function SessionTopicEditor({
   function save() {
     if (!isDirty) return
     const group = topicGroups.find(g => g.key === selectedGroupKey)
+    setError(null)
     startTransition(async () => {
-      await updateSessionTopic(sessionId, group?.representativeId ?? null, group?.topicName ?? '', [...selectedCpIds])
+      const result = await saveAction(sessionId, group?.representativeId ?? null, group?.topicName ?? '', [...selectedCpIds])
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
       setSavedGroupKey(selectedGroupKey)
       setSavedCpIds(new Set(selectedCpIds))
     })
@@ -203,10 +217,11 @@ export default function SessionTopicEditor({
         >
           {isPending ? 'Menyimpan...' : 'Simpan Topik'}
         </button>
-        {!isDirty && savedGroupKey && (
+        {!isDirty && savedGroupKey && !error && (
           <span className="text-xs text-green-600">Tersimpan</span>
         )}
       </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   )
 }
