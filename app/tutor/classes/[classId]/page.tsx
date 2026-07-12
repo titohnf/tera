@@ -10,16 +10,10 @@ const DAY_NAMES: Record<number, string> = {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Terjadwal',
-  ongoing: 'Berlangsung',
-  completed: 'Selesai',
   cancelled: 'Dibatalkan',
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  ongoing: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-100 text-red-600',
 }
 
@@ -307,8 +301,8 @@ export default async function TutorClassDetailPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {STATUS_LABEL[session.status] ?? session.status}
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-green-100 text-green-700'}`}>
+                      {STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
