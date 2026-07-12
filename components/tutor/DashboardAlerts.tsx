@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 import {
   respondToTutorSwapRequest,
   acknowledgeSessionChangeRequest,
+  acknowledgeTutorSwapRejection,
   type SessionRequestType,
 } from '@/lib/actions/tutor/session-requests'
 
@@ -16,6 +17,7 @@ const REQUEST_LABEL: Record<SessionRequestType, string> = {
 export type SwapRequestAlert = {
   id: string
   className: string
+  subjectName: string | null
   scheduledAt: string
   requesterName: string
   reason: string
@@ -26,6 +28,14 @@ export type ResolvedNoticeAlert = {
   requestType: SessionRequestType
   status: 'approved' | 'rejected'
   className: string
+  subjectName: string | null
+  adminNote: string | null
+}
+
+export type SwapRejectedNoticeAlert = {
+  id: string
+  className: string
+  subjectName: string | null
   adminNote: string | null
 }
 
@@ -40,6 +50,7 @@ function SwapRequestCard({ alert }: { alert: SwapRequestAlert }) {
     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
       <p className="text-sm font-medium text-blue-900">
         {alert.requesterName} mengajukan agar kamu menggantikan sesi <strong>{alert.className}</strong>
+        {alert.subjectName && <> — {alert.subjectName}</>}
       </p>
       <p className="text-xs text-blue-700 mt-0.5">
         {new Date(alert.scheduledAt).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}
@@ -81,7 +92,40 @@ function ResolvedNoticeCard({ alert }: { alert: ResolvedNoticeAlert }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className={`text-sm font-medium ${isApproved ? 'text-green-800' : 'text-red-800'}`}>
-            Pengajuan {REQUEST_LABEL[alert.requestType]} untuk {alert.className} {isApproved ? 'disetujui' : 'ditolak'}
+            Pengajuan {REQUEST_LABEL[alert.requestType]} untuk {alert.className}
+            {alert.subjectName && ` — ${alert.subjectName}`} {isApproved ? 'disetujui' : 'ditolak'}
+          </p>
+          {alert.adminNote && (
+            <p className="text-xs text-gray-600 mt-1">Catatan: {alert.adminNote}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={dismiss}
+          className="text-xs text-gray-500 hover:text-gray-700 shrink-0 disabled:opacity-50"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SwapRejectedNoticeCard({ alert }: { alert: SwapRejectedNoticeAlert }) {
+  const [pending, startTransition] = useTransition()
+
+  function dismiss() {
+    startTransition(() => { void acknowledgeTutorSwapRejection(alert.id) })
+  }
+
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-red-800">
+            Admin menolak pengajuan ganti tutor untuk {alert.className}
+            {alert.subjectName && ` — ${alert.subjectName}`}, yang sebelumnya kamu setujui untuk gantikan
           </p>
           {alert.adminNote && (
             <p className="text-xs text-gray-600 mt-1">Catatan: {alert.adminNote}</p>
@@ -103,16 +147,19 @@ function ResolvedNoticeCard({ alert }: { alert: ResolvedNoticeAlert }) {
 export default function DashboardAlerts({
   swapRequests,
   resolvedNotices,
+  swapRejectedNotices,
 }: {
   swapRequests: SwapRequestAlert[]
   resolvedNotices: ResolvedNoticeAlert[]
+  swapRejectedNotices: SwapRejectedNoticeAlert[]
 }) {
-  if (swapRequests.length === 0 && resolvedNotices.length === 0) return null
+  if (swapRequests.length === 0 && resolvedNotices.length === 0 && swapRejectedNotices.length === 0) return null
 
   return (
     <div className="space-y-2 mb-6">
       {swapRequests.map(alert => <SwapRequestCard key={alert.id} alert={alert} />)}
       {resolvedNotices.map(alert => <ResolvedNoticeCard key={alert.id} alert={alert} />)}
+      {swapRejectedNotices.map(alert => <SwapRejectedNoticeCard key={alert.id} alert={alert} />)}
     </div>
   )
 }

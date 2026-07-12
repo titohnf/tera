@@ -2,10 +2,11 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
-import ClassFilters from '@/components/admin/classes/ClassFilters'
+import ClassFilters from '@/components/tutor/ClassFilters'
 import TeachingScheduleFilters from '@/components/tutor/TeachingScheduleFilters'
 import SessionStatusChips from '@/components/sessions/SessionStatusChips'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 
 type ClassRow = {
   id: string
@@ -16,6 +17,7 @@ type ClassRow = {
   status: string
   start_date: string | null
   end_date: string | null
+  scope: 'main' | 'substitute'
 }
 
 type CountRow = [{ count: number }]
@@ -35,14 +37,6 @@ type TeachingSessionRow = {
   performance_notes: CountRow
 }
 
-const SESSION_STATUS_LABEL: Record<string, string> = {
-  cancelled: 'Dibatalkan',
-}
-
-const SESSION_STATUS_COLOR: Record<string, string> = {
-  cancelled: 'bg-red-100 text-red-600',
-}
-
 const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
@@ -51,12 +45,12 @@ const TEACHING_PAGE_SIZE = 10
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; range?: string; from?: string; to?: string; page?: string; compliance?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; scope?: string; range?: string; from?: string; to?: string; page?: string; compliance?: string; sessionStatus?: string }>
 }) {
   const {
-    level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '',
+    level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '', scope: scopeFilter = '',
     range: teachingRange = '', from: teachingFrom = '', to: teachingTo = '',
-    page: pageParam = '1', compliance: teachingCompliance = '',
+    page: pageParam = '1', compliance: teachingCompliance = '', sessionStatus: sessionStatusFilter = '',
   } = await searchParams
   const user = await getUser()
   if (!user) return null
@@ -78,27 +72,58 @@ export default async function TutorClassesPage({
 
   const page = Math.max(1, parseInt(pageParam) || 1)
 
+  const sessionFields = `
+    id, class_id, scheduled_at, duration_minutes, location, status, topic,
+    classes(name, level),
+    materials(count),
+    assessments(count),
+    attendances(count),
+    performance_notes(count)
+  `
+
   let teachingQuery = admin
     .from('sessions')
-    .select(`
-      id, class_id, scheduled_at, duration_minutes, location, status, topic,
-      classes(name, level),
-      materials(count),
-      assessments(count),
-      attendances(count),
-      performance_notes(count)
-    `)
+    .select(sessionFields)
     .eq('tutor_id', user.id)
     .order('scheduled_at', { ascending: teachingRange !== 'past' })
 
   if (rangeStart) teachingQuery = teachingQuery.gte('scheduled_at', rangeStart.toISOString())
   if (rangeEnd) teachingQuery = teachingQuery.lte('scheduled_at', rangeEnd.toISOString())
 
-  const { data: teachingSessionsRaw } = await teachingQuery.limit(500) as unknown as {
+  const { data: ownSessions } = await teachingQuery.limit(500) as unknown as {
     data: TeachingSessionRow[] | null
   }
 
-  const teachingSessionIds = (teachingSessionsRaw ?? []).map(s => s.id)
+  // Sessions this tutor has agreed to take over but admin hasn't approved yet —
+  // still surfaced here (as "Menunggu Verifikasi Admin") so the tutor can track them.
+  const { data: pendingSwapRequests } = await admin
+    .from('session_change_requests')
+    .select('session_id')
+    .eq('new_tutor_id', user.id)
+    .eq('request_type', 'change_tutor')
+    .eq('status', 'pending')
+    .eq('new_tutor_confirmed', true) as unknown as { data: { session_id: string }[] | null }
+
+  const pendingSwapSessionIds = (pendingSwapRequests ?? []).map(r => r.session_id)
+  const ownSessionIds = new Set((ownSessions ?? []).map(s => s.id))
+  const newSwapIds = pendingSwapSessionIds.filter(id => !ownSessionIds.has(id))
+
+  let pendingSwapSessions: TeachingSessionRow[] = []
+  if (newSwapIds.length > 0) {
+    let swapQuery = admin.from('sessions').select(sessionFields).in('id', newSwapIds)
+    if (rangeStart) swapQuery = swapQuery.gte('scheduled_at', rangeStart.toISOString())
+    if (rangeEnd) swapQuery = swapQuery.lte('scheduled_at', rangeEnd.toISOString())
+    const { data } = await swapQuery as unknown as { data: TeachingSessionRow[] | null }
+    pendingSwapSessions = data ?? []
+  }
+
+  const teachingSessionsRaw = [...(ownSessions ?? []), ...pendingSwapSessions].sort((a, b) =>
+    teachingRange === 'past'
+      ? b.scheduled_at.localeCompare(a.scheduled_at)
+      : a.scheduled_at.localeCompare(b.scheduled_at)
+  )
+
+  const teachingSessionIds = teachingSessionsRaw.map(s => s.id)
   const { data: teachingGradedData } = teachingSessionIds.length > 0
     ? await admin
         .from('assessments')
@@ -134,24 +159,64 @@ export default async function TutorClassesPage({
     return baseComplete && counts.hasAttendance && counts.hasNotes
   }
 
+  const { data: pendingRequestsRaw } = teachingSessionIds.length > 0
+    ? await admin
+        .from('session_change_requests')
+        .select('session_id')
+        .in('session_id', teachingSessionIds)
+        .eq('status', 'pending') as unknown as { data: { session_id: string }[] | null }
+    : { data: [] as { session_id: string }[] }
+  const pendingRequestSessionIds = new Set((pendingRequestsRaw ?? []).map(r => r.session_id))
+
   let teachingSessionsFiltered = teachingSessionsRaw ?? []
   if (teachingCompliance === 'complete') {
     teachingSessionsFiltered = teachingSessionsFiltered.filter(isTeachingSessionComplete)
   } else if (teachingCompliance === 'incomplete') {
     teachingSessionsFiltered = teachingSessionsFiltered.filter(s => !isTeachingSessionComplete(s))
   }
+  if (sessionStatusFilter === 'on_schedule') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(s => s.status !== 'cancelled' && !pendingRequestSessionIds.has(s.id))
+  } else if (sessionStatusFilter === 'awaiting_admin') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(s => s.status !== 'cancelled' && pendingRequestSessionIds.has(s.id))
+  } else if (sessionStatusFilter === 'cancelled') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(s => s.status === 'cancelled')
+  }
 
   const teachingTotalCount = teachingSessionsFiltered.length
   const teachingTotalPages = Math.max(1, Math.ceil(teachingTotalCount / TEACHING_PAGE_SIZE))
   const teachingSessions = teachingSessionsFiltered.slice((page - 1) * TEACHING_PAGE_SIZE, page * TEACHING_PAGE_SIZE)
 
-  const { data: classes } = await admin
-    .from('classes')
-    .select('id, name, level, is_active, class_type, status, start_date, end_date')
-    .eq('tutor_id', user.id)
-    .order('name') as unknown as { data: ClassRow[] | null }
+  const classFields = 'id, name, level, is_active, class_type, status, start_date, end_date'
 
-  const allClasses = classes ?? []
+  const { data: mainClassesRaw } = await admin
+    .from('classes')
+    .select(classFields)
+    .eq('tutor_id', user.id)
+    .order('name') as unknown as { data: Omit<ClassRow, 'scope'>[] | null }
+
+  const mainClasses = mainClassesRaw ?? []
+  const mainClassIds = new Set(mainClasses.map(c => c.id))
+
+  const { data: substituteSessions } = await admin
+    .from('sessions')
+    .select('class_id')
+    .eq('tutor_id', user.id) as unknown as { data: { class_id: string }[] | null }
+
+  const substituteClassIds = [...new Set((substituteSessions ?? []).map(s => s.class_id))]
+    .filter(id => !mainClassIds.has(id))
+
+  const { data: substituteClassesRaw } = substituteClassIds.length > 0
+    ? await admin
+        .from('classes')
+        .select(classFields)
+        .in('id', substituteClassIds)
+        .order('name') as unknown as { data: Omit<ClassRow, 'scope'>[] | null }
+    : { data: [] as Omit<ClassRow, 'scope'>[] }
+
+  const allClasses: ClassRow[] = [
+    ...mainClasses.map(c => ({ ...c, scope: 'main' as const })),
+    ...(substituteClassesRaw ?? []).map(c => ({ ...c, scope: 'substitute' as const })),
+  ]
   const classIds = allClasses.map(c => c.id)
 
   type StudentCountRow = { class_id: string }
@@ -252,11 +317,12 @@ export default async function TutorClassesPage({
   if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter)
   if (typeFilter === 'group') filtered = filtered.filter(c => c.class_type === 'group')
   else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
+  if (scopeFilter === 'main' || scopeFilter === 'substitute') filtered = filtered.filter(c => c.scope === scopeFilter)
 
   const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
   const regularCount = allClasses.filter(c => c.class_type === 'group').length
   const privateCount = allClasses.filter(c => c.class_type === 'private').length
-  const hasFilter = !!(q || levelFilter || statusFilter || typeFilter)
+  const hasFilter = !!(q || levelFilter || statusFilter || typeFilter || scopeFilter)
   const tableTitle = hasFilter
     ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
     : `${allClasses.length} Kelas`
@@ -267,10 +333,12 @@ export default async function TutorClassesPage({
       ...(levelFilter ? { level: levelFilter } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(typeFilter ? { type: typeFilter } : {}),
+      ...(scopeFilter ? { scope: scopeFilter } : {}),
       ...(teachingRange ? { range: teachingRange } : {}),
       ...(teachingFrom ? { from: teachingFrom } : {}),
       ...(teachingTo ? { to: teachingTo } : {}),
       ...(teachingCompliance ? { compliance: teachingCompliance } : {}),
+      ...(sessionStatusFilter ? { sessionStatus: sessionStatusFilter } : {}),
       ...(targetPage > 1 ? { page: String(targetPage) } : {}),
     }
     const qs = new URLSearchParams(params).toString()
@@ -311,6 +379,7 @@ export default async function TutorClassesPage({
               level={levelFilter}
               type={typeFilter}
               status={statusFilter}
+              scope={scopeFilter}
               availableLevels={availableLevels}
             />
           )}
@@ -347,7 +416,14 @@ export default async function TutorClassesPage({
                     <tr key={cls.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/tutor/classes/${cls.id}`} className="block">
-                          <p className="font-medium text-gray-900">{cls.name}</p>
+                          <p className="font-medium text-gray-900 flex items-center gap-2">
+                            {cls.name}
+                            {cls.scope === 'substitute' && (
+                              <span className="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                                Pengganti
+                              </span>
+                            )}
+                          </p>
                           {cls.level && <span className="text-sm text-gray-400">{cls.level}</span>}
                         </Link>
                       </td>
@@ -431,7 +507,13 @@ export default async function TutorClassesPage({
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
-          <TeachingScheduleFilters range={teachingRange} from={teachingFrom} to={teachingTo} compliance={teachingCompliance} />
+          <TeachingScheduleFilters
+            range={teachingRange}
+            from={teachingFrom}
+            to={teachingTo}
+            compliance={teachingCompliance}
+            sessionStatus={sessionStatusFilter}
+          />
         </div>
 
         {!teachingSessions || teachingSessions.length === 0 ? (
@@ -443,6 +525,7 @@ export default async function TutorClassesPage({
             {teachingSessions.map(session => {
               const date = new Date(session.scheduled_at)
               const counts = getTeachingCounts(session)
+              const displayStatus = getSessionDisplayStatus(session.status, pendingRequestSessionIds.has(session.id))
               return (
                 <Link
                   key={session.id}
@@ -470,8 +553,8 @@ export default async function TutorClassesPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${SESSION_STATUS_COLOR[session.status] ?? 'bg-blue-100 text-blue-700'}`}>
-                      {SESSION_STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
+                      {displayStatus.label}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

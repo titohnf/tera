@@ -4,17 +4,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import SessionStatusChips from '@/components/sessions/SessionStatusChips'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu', 0: 'Minggu',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  cancelled: 'Dibatalkan',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  cancelled: 'bg-red-100 text-red-600',
 }
 
 type CountRow = [{ count: number }]
@@ -80,16 +73,16 @@ export default async function TutorClassDetailPage({
     { data: enrolled },
     { data: sessions },
     { data: subjects },
+    { count: substituteSessionCount },
   ] = await Promise.all([
     admin
       .from('classes')
-      .select('id, name, level, class_type, is_active, start_date, end_date, class_subjects(subject_id, subjects(name))')
+      .select('id, name, level, class_type, is_active, start_date, end_date, tutor_id, class_subjects(subject_id, subjects(name))')
       .eq('id', classId)
-      .eq('tutor_id', user.id)
       .single() as unknown as Promise<{
         data: {
           id: string; name: string; level: string | null; class_type: string | null
-          is_active: boolean; start_date: string | null; end_date: string | null
+          is_active: boolean; start_date: string | null; end_date: string | null; tutor_id: string
           class_subjects: { subject_id: string; subjects: { name: string } | null }[]
         } | null
       }>,
@@ -111,9 +104,16 @@ export default async function TutorClassDetailPage({
     admin
       .from('subjects')
       .select('id, name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>,
+    admin
+      .from('sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('class_id', classId)
+      .eq('tutor_id', user.id),
   ])
 
   if (!cls) notFound()
+  const isMainTutor = cls.tutor_id === user.id
+  if (!isMainTutor && !substituteSessionCount) notFound()
 
   const sessionIds = (sessions ?? []).map(s => s.id)
   const { data: gradedData } = sessionIds.length > 0
@@ -130,6 +130,15 @@ export default async function TutorClassDetailPage({
       .filter(a => (a.assessment_results[0]?.count ?? 0) > 0)
       .map(a => a.session_id)
   )
+
+  const { data: pendingRequestsRaw } = sessionIds.length > 0
+    ? await admin
+        .from('session_change_requests')
+        .select('session_id')
+        .in('session_id', sessionIds)
+        .eq('status', 'pending') as unknown as { data: { session_id: string }[] | null }
+    : { data: [] as { session_id: string }[] }
+  const pendingRequestSessionIds = new Set((pendingRequestsRaw ?? []).map(r => r.session_id))
 
   function getCounts(session: SessionRow): SessionCounts {
     return {
@@ -274,6 +283,7 @@ export default async function TutorClassDetailPage({
             {sessions.map(session => {
               const date = new Date(session.scheduled_at)
               const counts = getCounts(session)
+              const displayStatus = getSessionDisplayStatus(session.status, pendingRequestSessionIds.has(session.id))
               return (
                 <Link
                   key={session.id}
@@ -301,8 +311,8 @@ export default async function TutorClassDetailPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-blue-100 text-blue-700'}`}>
-                      {STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
+                      {displayStatus.label}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

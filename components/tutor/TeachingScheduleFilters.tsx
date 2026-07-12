@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { SESSION_DISPLAY_STATUS_OPTIONS } from '@/lib/session-status'
 
 interface Props {
   range: string
   from: string
   to: string
   compliance: string
+  sessionStatus: string
 }
 
 const RANGE_OPTIONS = [
@@ -23,7 +25,7 @@ const COMPLIANCE_OPTIONS = [
   { key: 'incomplete', label: 'Belum Lengkap' },
 ]
 
-export default function TeachingScheduleFilters({ range, from, to, compliance }: Props) {
+export default function TeachingScheduleFilters({ range, from, to, compliance, sessionStatus }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [customFrom, setCustomFrom] = useState(from)
@@ -35,6 +37,7 @@ export default function TeachingScheduleFilters({ range, from, to, compliance }:
       ...(customFrom ? { from: customFrom } : {}),
       ...(customTo ? { to: customTo } : {}),
       ...(compliance ? { compliance } : {}),
+      ...(sessionStatus ? { sessionStatus } : {}),
       ...overrides,
     }
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
@@ -87,6 +90,10 @@ export default function TeachingScheduleFilters({ range, from, to, compliance }:
 
       <select value={compliance} onChange={e => go({ compliance: e.target.value })} className={selectCls(!!compliance)}>
         {COMPLIANCE_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+      </select>
+
+      <select value={sessionStatus} onChange={e => go({ sessionStatus: e.target.value })} className={selectCls(!!sessionStatus)}>
+        {SESSION_DISPLAY_STATUS_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
       </select>
     </div>
   )

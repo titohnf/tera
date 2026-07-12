@@ -147,3 +147,21 @@ export async function acknowledgeSessionChangeRequest(requestId: string): Promis
   revalidatePath('/tutor')
   return {}
 }
+
+// Called by the proposed tutor to dismiss a notice that admin rejected the
+// swap request after they had already agreed to take it on.
+export async function acknowledgeTutorSwapRejection(requestId: string): Promise<{ error?: string }> {
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+  const admin = createAdminClient()
+
+  const { error } = await admin
+    .from('session_change_requests')
+    .update({ new_tutor_acknowledged_at: new Date().toISOString() })
+    .eq('id', requestId)
+    .eq('new_tutor_id', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/tutor')
+  return {}
+}

@@ -12,6 +12,7 @@ import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
 import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
+import { getSessionDisplayStatus } from '@/lib/session-status'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 type SessionDetail = {
@@ -30,14 +31,6 @@ type SessionDetail = {
   subjects: { name: string } | null
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  cancelled: 'Dibatalkan',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  cancelled: 'bg-red-100 text-red-600',
-}
-
 export default async function SessionPage({
   params,
 }: {
@@ -50,12 +43,24 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, classes(name, level), subjects(name)')
+    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, classes(name, level), subjects(name), tutor_id')
     .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single() as { data: SessionDetail | null; error: unknown }
+    .single() as { data: (SessionDetail & { tutor_id: string }) | null; error: unknown }
 
   if (!session) notFound()
+
+  const isOwnSession = session.tutor_id === user.id
+  if (!isOwnSession) {
+    const { data: pendingSwap } = await supabase
+      .from('session_change_requests')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('new_tutor_id', user.id)
+      .eq('status', 'pending')
+      .eq('new_tutor_confirmed', true)
+      .maybeSingle()
+    if (!pendingSwap) notFound()
+  }
 
   const [
     enrolledResult,
@@ -222,9 +227,14 @@ export default async function SessionPage({
                 <h1 className="text-lg font-semibold text-gray-900 mb-1">{session.classes?.name ?? 'Kelas'}</h1>
                 <p className="text-sm text-gray-500">{session.topic ?? 'Topik belum ditentukan'}</p>
               </div>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? 'bg-blue-100 text-blue-700'}`}>
-                {STATUS_LABEL[session.status] ?? 'Sesuai Jadwal'}
-              </span>
+              {(() => {
+                const displayStatus = getSessionDisplayStatus(session.status, sessionChangeRequest?.status === 'pending')
+                return (
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
+                    {displayStatus.label}
+                  </span>
+                )
+              })()}
             </div>
 
             <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t text-sm">
