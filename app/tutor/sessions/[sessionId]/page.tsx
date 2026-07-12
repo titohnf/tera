@@ -16,11 +16,15 @@ import type { AttendanceStatus } from '@/lib/types/database'
 type SessionDetail = {
   id: string
   class_id: string
+  subject_id: string | null
   scheduled_at: string
   duration_minutes: number
   location: string | null
   status: string
   topic: string | null
+  curriculum_topic_id: string | null
+  selected_cp_ids: string[] | null
+  cp_urls: Record<string, string> | null
   classes: { name: string; level: string | null } | null
   subjects: { name: string } | null
 }
@@ -51,7 +55,7 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, scheduled_at, duration_minutes, location, status, topic, classes(name, level), subjects(name)')
+    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, classes(name, level), subjects(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single() as { data: SessionDetail | null; error: unknown }
@@ -66,10 +70,11 @@ export default async function SessionPage({
     materialsResult,
     assessmentsResult,
     profileResult,
+    curriculumTopicsResult,
   ] = await Promise.all([
     supabase
       .from('class_students')
-      .select('student_id, profiles(id, full_name)')
+      .select('student_id, profiles(id, full_name, grade)')
       .eq('class_id', session.class_id)
       .eq('is_active', true),
     supabase
@@ -100,6 +105,13 @@ export default async function SessionPage({
       .select('full_name')
       .eq('id', user.id)
       .single(),
+    session.subject_id
+      ? supabase
+          .from('curriculum_topics')
+          .select('id, grade_level, semester, theme, topic, learning_outcomes')
+          .eq('subject_id', session.subject_id)
+          .order('sort_order')
+      : Promise.resolve({ data: [] }),
   ])
 
   const enrolledStudents = enrolledResult.data ?? []
@@ -109,6 +121,25 @@ export default async function SessionPage({
   const materials = materialsResult.data ?? []
   const assessments = assessmentsResult.data ?? []
   const tutorName = (profileResult.data as { full_name: string } | null)?.full_name ?? null
+  const curriculumTopics = (curriculumTopicsResult.data ?? []) as {
+    id: string; grade_level: string; semester: number
+    theme: string | null; topic: string; learning_outcomes: string | null
+  }[]
+
+  // Derive grade from enrolled students (mode of their grades)
+  const enrolledGrades = enrolledStudents
+    .map(cs => (cs.profiles as unknown as { grade: number | null } | null)?.grade)
+    .filter((g): g is number => g != null)
+  const sessionGrade = enrolledGrades.length > 0
+    ? enrolledGrades.sort((a, b) =>
+        enrolledGrades.filter(v => v === b).length - enrolledGrades.filter(v => v === a).length
+      )[0]
+    : null
+
+  // Filter by grade only — semester grouping is shown in the dropdown itself
+  const filteredCurriculumTopics = curriculumTopics.filter(t =>
+    sessionGrade == null || t.grade_level === `Kelas ${sessionGrade}`
+  )
 
   // Auto-complete if all criteria already met (handles sessions filled before this feature existed)
   await checkAndCompleteSession(sessionId)
@@ -204,8 +235,13 @@ export default async function SessionPage({
               sessionId={sessionId}
               sessionStatus={session.status}
               topic={session.topic}
-              curriculumTopicId={null}
-              curriculumTopics={[]}
+              curriculumTopicId={session.curriculum_topic_id ?? null}
+              curriculumTopics={filteredCurriculumTopics}
+              hasSubject={!!session.subject_id}
+              selectedCpIds={session.selected_cp_ids ?? []}
+              cpUrls={session.cp_urls ?? {}}
+              subjectName={session.subjects?.name ?? null}
+              grade={sessionGrade}
               students={students}
               templates={templates}
               materials={materials}
