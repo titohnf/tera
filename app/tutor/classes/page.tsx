@@ -52,24 +52,53 @@ const SESSION_STATUS_COLOR: Record<string, string> = {
 const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
+const TEACHING_PAGE_SIZE = 10
+
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; classId?: string; teachStatus?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; range?: string; from?: string; to?: string; page?: string }>
 }) {
-  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '', classId: teachingClassFilter = '', teachStatus: teachingStatusFilter = '' } = await searchParams
+  const {
+    level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '',
+    range: teachingRange = '', from: teachingFrom = '', to: teachingTo = '',
+    page: pageParam = '1',
+  } = await searchParams
   const user = await getUser()
   if (!user) return null
   const admin = createAdminClient()
 
   const now = new Date()
-  const startOfWeek = new Date(now)
-  const dayOffset = (now.getDay() + 6) % 7 // Monday = 0
-  startOfWeek.setDate(now.getDate() - dayOffset)
-  startOfWeek.setHours(0, 0, 0, 0)
-  const endOfWeek = new Date(startOfWeek)
-  endOfWeek.setDate(startOfWeek.getDate() + 6)
-  endOfWeek.setHours(23, 59, 59, 999)
+  let rangeStart: Date | null = null
+  let rangeEnd: Date | null = null
+
+  if (teachingRange === 'week') {
+    const dayOffset = (now.getDay() + 6) % 7 // Monday = 0
+    rangeStart = new Date(now)
+    rangeStart.setDate(now.getDate() - dayOffset)
+    rangeStart.setHours(0, 0, 0, 0)
+    rangeEnd = new Date(rangeStart)
+    rangeEnd.setDate(rangeStart.getDate() + 6)
+    rangeEnd.setHours(23, 59, 59, 999)
+  } else if (teachingRange === 'month') {
+    rangeStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+    rangeEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+  } else if (teachingRange === 'next7') {
+    rangeStart = new Date(now)
+    rangeEnd = new Date(now)
+    rangeEnd.setDate(rangeEnd.getDate() + 7)
+    rangeEnd.setHours(23, 59, 59, 999)
+  } else if (teachingRange === 'custom' && teachingFrom && teachingTo) {
+    rangeStart = new Date(`${teachingFrom}T00:00:00`)
+    rangeEnd = new Date(`${teachingTo}T23:59:59`)
+  } else {
+    // Default: next 10 upcoming sessions, no upper bound
+    rangeStart = now
+  }
+
+  const page = Math.max(1, parseInt(pageParam) || 1)
+  const rangeOffset = (page - 1) * TEACHING_PAGE_SIZE
+  const rangeLimit = rangeOffset + TEACHING_PAGE_SIZE - 1
 
   let teachingQuery = admin
     .from('sessions')
@@ -80,18 +109,19 @@ export default async function TutorClassesPage({
       assessments(count),
       attendances(count),
       performance_notes(count)
-    `)
+    `, { count: 'exact' })
     .eq('tutor_id', user.id)
-    .gte('scheduled_at', startOfWeek.toISOString())
-    .lte('scheduled_at', endOfWeek.toISOString())
     .order('scheduled_at', { ascending: true })
 
-  if (teachingClassFilter) teachingQuery = teachingQuery.eq('class_id', teachingClassFilter)
-  if (teachingStatusFilter) teachingQuery = teachingQuery.eq('status', teachingStatusFilter)
+  if (rangeStart) teachingQuery = teachingQuery.gte('scheduled_at', rangeStart.toISOString())
+  if (rangeEnd) teachingQuery = teachingQuery.lte('scheduled_at', rangeEnd.toISOString())
 
-  const { data: teachingSessions } = await teachingQuery as unknown as {
+  const { data: teachingSessions, count: teachingTotalCount } = await teachingQuery.range(rangeOffset, rangeLimit) as unknown as {
     data: TeachingSessionRow[] | null
+    count: number | null
   }
+
+  const teachingTotalPages = Math.max(1, Math.ceil((teachingTotalCount ?? 0) / TEACHING_PAGE_SIZE))
 
   const teachingSessionIds = (teachingSessions ?? []).map(s => s.id)
   const { data: teachingGradedData } = teachingSessionIds.length > 0
@@ -235,6 +265,21 @@ export default async function TutorClassesPage({
   const tableTitle = hasFilter
     ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
     : `${allClasses.length} Kelas`
+
+  function teachingPageUrl(targetPage: number) {
+    const params: Record<string, string> = {
+      ...(q ? { q } : {}),
+      ...(levelFilter ? { level: levelFilter } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(typeFilter ? { type: typeFilter } : {}),
+      ...(teachingRange ? { range: teachingRange } : {}),
+      ...(teachingFrom ? { from: teachingFrom } : {}),
+      ...(teachingTo ? { to: teachingTo } : {}),
+      ...(targetPage > 1 ? { page: String(targetPage) } : {}),
+    }
+    const qs = new URLSearchParams(params).toString()
+    return qs ? `/tutor/classes?${qs}` : '/tutor/classes'
+  }
 
   return (
     <div className="space-y-5">
@@ -389,19 +434,15 @@ export default async function TutorClassesPage({
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar Minggu Ini</h2>
-          {allClasses.length > 0 && (
-            <TeachingScheduleFilters
-              classId={teachingClassFilter}
-              teachStatus={teachingStatusFilter}
-              classes={allClasses.map(c => ({ id: c.id, name: c.name }))}
-            />
-          )}
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+            {teachingRange ? 'Jadwal Mengajar' : '10 Jadwal Mengajar Berikutnya'}
+          </h2>
+          <TeachingScheduleFilters range={teachingRange} from={teachingFrom} to={teachingTo} />
         </div>
 
         {!teachingSessions || teachingSessions.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-10 px-5">
-            {teachingClassFilter || teachingStatusFilter ? 'Tidak ada sesi yang sesuai filter.' : 'Tidak ada sesi minggu ini.'}
+            Tidak ada sesi ditemukan.
           </p>
         ) : (
           <div className="px-5 pb-5 space-y-2">
@@ -452,6 +493,36 @@ export default async function TutorClassesPage({
                 </Link>
               )
             })}
+          </div>
+        )}
+
+        {teachingTotalPages > 1 && (
+          <div className="flex items-center justify-between px-5 pb-5 pt-1">
+            <p className="text-sm text-gray-500">Halaman {page} dari {teachingTotalPages}</p>
+            <div className="flex gap-2">
+              <Link
+                href={teachingPageUrl(page - 1)}
+                aria-disabled={page <= 1}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  page <= 1
+                    ? 'border-gray-100 text-gray-300 pointer-events-none'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Sebelumnya
+              </Link>
+              <Link
+                href={teachingPageUrl(page + 1)}
+                aria-disabled={page >= teachingTotalPages}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  page >= teachingTotalPages
+                    ? 'border-gray-100 text-gray-300 pointer-events-none'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Berikutnya
+              </Link>
+            </div>
           </div>
         )}
       </div>
