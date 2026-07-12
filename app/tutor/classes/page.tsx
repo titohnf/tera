@@ -227,19 +227,24 @@ export default async function TutorClassesPage({
   let nextSessions: SessionRow[] = []
   let completedSessions: SessionRow[] = []
   let slots: SlotRow[] = []
+  let tutorSlots: SlotRow[] = []
   let subjects: { id: string; name: string }[] = []
 
   if (classIds.length > 0) {
-    const [{ data: students }, { data: next }, { data: completed }, { data: slotsData }, { data: subjectsData }] = await Promise.all([
+    const [{ data: students }, { data: next }, { data: completed }, { data: slotsData }, { data: tutorSlotsData }, { data: subjectsData }] = await Promise.all([
       admin
         .from('class_students')
         .select('class_id')
         .in('class_id', classIds)
         .eq('is_active', true) as unknown as Promise<{ data: StudentCountRow[] | null }>,
+      // Scoped to this tutor's own sessions — this "Sesi" column shows the
+      // tutor's involvement in the class, not the class's overall schedule
+      // (matters for substitute classes, where they only cover a subset).
       admin
         .from('sessions')
         .select('class_id, scheduled_at, status')
         .in('class_id', classIds)
+        .eq('tutor_id', user.id)
         .eq('status', 'scheduled')
         .gte('scheduled_at', new Date().toISOString())
         .order('scheduled_at', { ascending: true }) as unknown as Promise<{ data: SessionRow[] | null }>,
@@ -247,12 +252,18 @@ export default async function TutorClassesPage({
         .from('sessions')
         .select('class_id, scheduled_at, status')
         .in('class_id', classIds)
+        .eq('tutor_id', user.id)
         .eq('status', 'completed') as unknown as Promise<{ data: SessionRow[] | null }>,
       admin
         .from('class_slots')
         .select('class_id, day_of_week, subject_ids')
         .in('class_id', classIds)
         .order('slot_index', { ascending: true }) as unknown as Promise<{ data: SlotRow[] | null }>,
+      admin
+        .from('class_slots')
+        .select('class_id, day_of_week, subject_ids')
+        .in('class_id', classIds)
+        .eq('tutor_id', user.id) as unknown as Promise<{ data: SlotRow[] | null }>,
       admin
         .from('subjects')
         .select('id, name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>,
@@ -261,6 +272,7 @@ export default async function TutorClassesPage({
     nextSessions = next ?? []
     completedSessions = completed ?? []
     slots = slotsData ?? []
+    tutorSlots = tutorSlotsData ?? []
     subjects = subjectsData ?? []
   }
 
@@ -275,16 +287,20 @@ export default async function TutorClassesPage({
   }
 
   const completedCountByClass: Record<string, number> = {}
-  const slotsPerWeekByClass: Record<string, number> = {}
   for (const s of completedSessions) {
     completedCountByClass[s.class_id] = (completedCountByClass[s.class_id] ?? 0) + 1
+  }
+
+  const slotsPerWeekByClass: Record<string, number> = {}
+  for (const slot of tutorSlots) {
+    if (slot.day_of_week == null) continue
+    slotsPerWeekByClass[slot.class_id] = (slotsPerWeekByClass[slot.class_id] ?? 0) + 1
   }
 
   const subjectNameMap = new Map(subjects.map(s => [s.id, s.name]))
   const jadwalMap = new Map<string, { day: string; subject: string }[]>()
   for (const slot of slots) {
     if (slot.day_of_week == null) continue
-    slotsPerWeekByClass[slot.class_id] = (slotsPerWeekByClass[slot.class_id] ?? 0) + 1
     const dayLabel = DAYS[slot.day_of_week] ?? ''
     const subjectLabel = (slot.subject_ids ?? []).map(id => subjectNameMap.get(id)).filter(Boolean).join(', ') || '—'
     const existing = jadwalMap.get(slot.class_id) ?? []
