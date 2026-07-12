@@ -90,32 +90,65 @@ export default async function TutorClassesPage({
   if (rangeStart) teachingQuery = teachingQuery.gte('scheduled_at', rangeStart.toISOString())
   if (rangeEnd) teachingQuery = teachingQuery.lte('scheduled_at', rangeEnd.toISOString())
 
-  const { data: ownSessions } = await teachingQuery.limit(500) as unknown as {
-    data: TeachingSessionRow[] | null
-  }
+  const classFields = 'id, name, level, is_active, class_type, status, start_date, end_date'
 
-  // Sessions this tutor has agreed to take over but admin hasn't approved yet —
-  // still surfaced here (as "Menunggu Verifikasi Admin") so the tutor can track them.
-  const { data: pendingSwapRequests } = await admin
-    .from('session_change_requests')
-    .select('session_id')
-    .eq('new_tutor_id', user.id)
-    .eq('request_type', 'change_tutor')
-    .eq('status', 'pending')
-    .eq('new_tutor_confirmed', true) as unknown as { data: { session_id: string }[] | null }
+  // Batch 1: everything that only depends on user.id / searchParams — no
+  // dependency on each other, so fetch them all at once instead of serially.
+  const [
+    { data: ownSessions },
+    { data: pendingSwapRequests },
+    { data: mainClassesRaw },
+    { data: substituteSessions },
+  ] = await Promise.all([
+    teachingQuery.limit(500) as unknown as Promise<{ data: TeachingSessionRow[] | null }>,
+    // Sessions this tutor has agreed to take over but admin hasn't approved yet —
+    // still surfaced here (as "Menunggu Verifikasi Admin") so the tutor can track them.
+    admin
+      .from('session_change_requests')
+      .select('session_id')
+      .eq('new_tutor_id', user.id)
+      .eq('request_type', 'change_tutor')
+      .eq('status', 'pending')
+      .eq('new_tutor_confirmed', true) as unknown as Promise<{ data: { session_id: string }[] | null }>,
+    admin
+      .from('classes')
+      .select(classFields)
+      .eq('tutor_id', user.id)
+      .order('name') as unknown as Promise<{ data: Omit<ClassRow, 'scope'>[] | null }>,
+    admin
+      .from('sessions')
+      .select('class_id')
+      .eq('tutor_id', user.id) as unknown as Promise<{ data: { class_id: string }[] | null }>,
+  ])
 
   const pendingSwapSessionIds = (pendingSwapRequests ?? []).map(r => r.session_id)
   const ownSessionIds = new Set((ownSessions ?? []).map(s => s.id))
   const newSwapIds = pendingSwapSessionIds.filter(id => !ownSessionIds.has(id))
 
-  let pendingSwapSessions: TeachingSessionRow[] = []
-  if (newSwapIds.length > 0) {
-    let swapQuery = admin.from('sessions').select(sessionFields).in('id', newSwapIds)
-    if (rangeStart) swapQuery = swapQuery.gte('scheduled_at', rangeStart.toISOString())
-    if (rangeEnd) swapQuery = swapQuery.lte('scheduled_at', rangeEnd.toISOString())
-    const { data } = await swapQuery as unknown as { data: TeachingSessionRow[] | null }
-    pendingSwapSessions = data ?? []
-  }
+  const mainClasses = mainClassesRaw ?? []
+  const mainClassIds = new Set(mainClasses.map(c => c.id))
+  const substituteClassIds = [...new Set((substituteSessions ?? []).map(s => s.class_id))]
+    .filter(id => !mainClassIds.has(id))
+
+  // Batch 2: depends on batch 1's results, but the two queries here don't
+  // depend on each other.
+  let swapQuery = admin.from('sessions').select(sessionFields).in('id', newSwapIds.length > 0 ? newSwapIds : [''])
+  if (rangeStart) swapQuery = swapQuery.gte('scheduled_at', rangeStart.toISOString())
+  if (rangeEnd) swapQuery = swapQuery.lte('scheduled_at', rangeEnd.toISOString())
+
+  const [{ data: pendingSwapSessionsRaw }, { data: substituteClassesRaw }] = await Promise.all([
+    newSwapIds.length > 0
+      ? (swapQuery as unknown as Promise<{ data: TeachingSessionRow[] | null }>)
+      : Promise.resolve({ data: [] as TeachingSessionRow[] }),
+    substituteClassIds.length > 0
+      ? admin
+          .from('classes')
+          .select(classFields)
+          .in('id', substituteClassIds)
+          .order('name') as unknown as Promise<{ data: Omit<ClassRow, 'scope'>[] | null }>
+      : Promise.resolve({ data: [] as Omit<ClassRow, 'scope'>[] }),
+  ])
+  const pendingSwapSessions = pendingSwapSessionsRaw ?? []
 
   const teachingSessionsRaw = [...(ownSessions ?? []), ...pendingSwapSessions].sort((a, b) =>
     teachingRange === 'past'
@@ -124,14 +157,92 @@ export default async function TutorClassesPage({
   )
 
   const teachingSessionIds = teachingSessionsRaw.map(s => s.id)
-  const { data: teachingGradedData } = teachingSessionIds.length > 0
-    ? await admin
-        .from('assessments')
-        .select('session_id, assessment_results(count)')
-        .in('session_id', teachingSessionIds) as unknown as {
-          data: { session_id: string; assessment_results: CountRow }[] | null
-        }
-    : { data: null }
+
+  const allClasses: ClassRow[] = [
+    ...mainClasses.map(c => ({ ...c, scope: 'main' as const })),
+    ...(substituteClassesRaw ?? []).map(c => ({ ...c, scope: 'substitute' as const })),
+  ]
+  const classIds = allClasses.map(c => c.id)
+
+  type StudentCountRow = { class_id: string }
+  type SessionRow = { class_id: string; scheduled_at: string; status: string }
+  type SlotRow = { class_id: string; day_of_week: number | null; subject_ids: string[] }
+
+  // Batch 3: depends on teachingSessionIds/classIds from batches 1-2, but
+  // none of these queries depend on each other — one round trip for all.
+  const [
+    { data: teachingGradedData },
+    { data: pendingRequestsRaw },
+    { data: students },
+    { data: next },
+    { data: completed },
+    { data: slotsData },
+    { data: tutorSlotsData },
+    { data: subjectsData },
+  ] = await Promise.all([
+    teachingSessionIds.length > 0
+      ? admin
+          .from('assessments')
+          .select('session_id, assessment_results(count)')
+          .in('session_id', teachingSessionIds) as unknown as Promise<{
+            data: { session_id: string; assessment_results: CountRow }[] | null
+          }>
+      : Promise.resolve({ data: null as { session_id: string; assessment_results: CountRow }[] | null }),
+    teachingSessionIds.length > 0
+      ? admin
+          .from('session_change_requests')
+          .select('session_id')
+          .in('session_id', teachingSessionIds)
+          .eq('status', 'pending') as unknown as Promise<{ data: { session_id: string }[] | null }>
+      : Promise.resolve({ data: [] as { session_id: string }[] }),
+    classIds.length > 0
+      ? admin
+          .from('class_students')
+          .select('class_id')
+          .in('class_id', classIds)
+          .eq('is_active', true) as unknown as Promise<{ data: StudentCountRow[] | null }>
+      : Promise.resolve({ data: [] as StudentCountRow[] }),
+    // Scoped to this tutor's own sessions — this "Sesi" column shows the
+    // tutor's involvement in the class, not the class's overall schedule
+    // (matters for substitute classes, where they only cover a subset).
+    classIds.length > 0
+      ? admin
+          .from('sessions')
+          .select('class_id, scheduled_at, status')
+          .in('class_id', classIds)
+          .eq('tutor_id', user.id)
+          .eq('status', 'scheduled')
+          .gte('scheduled_at', new Date().toISOString())
+          .order('scheduled_at', { ascending: true }) as unknown as Promise<{ data: SessionRow[] | null }>
+      : Promise.resolve({ data: [] as SessionRow[] }),
+    classIds.length > 0
+      ? admin
+          .from('sessions')
+          .select('class_id, scheduled_at, status')
+          .in('class_id', classIds)
+          .eq('tutor_id', user.id)
+          .eq('status', 'completed') as unknown as Promise<{ data: SessionRow[] | null }>
+      : Promise.resolve({ data: [] as SessionRow[] }),
+    classIds.length > 0
+      ? admin
+          .from('class_slots')
+          .select('class_id, day_of_week, subject_ids')
+          .in('class_id', classIds)
+          .order('slot_index', { ascending: true }) as unknown as Promise<{ data: SlotRow[] | null }>
+      : Promise.resolve({ data: [] as SlotRow[] }),
+    classIds.length > 0
+      ? admin
+          .from('class_slots')
+          .select('class_id, day_of_week, subject_ids')
+          .in('class_id', classIds)
+          .eq('tutor_id', user.id) as unknown as Promise<{ data: SlotRow[] | null }>
+      : Promise.resolve({ data: [] as SlotRow[] }),
+    classIds.length > 0
+      ? admin
+          .from('subjects')
+          .select('id, name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ])
 
   const teachingGradedSessionIds = new Set(
     (teachingGradedData ?? [])
@@ -159,13 +270,6 @@ export default async function TutorClassesPage({
     return baseComplete && counts.hasAttendance && counts.hasNotes
   }
 
-  const { data: pendingRequestsRaw } = teachingSessionIds.length > 0
-    ? await admin
-        .from('session_change_requests')
-        .select('session_id')
-        .in('session_id', teachingSessionIds)
-        .eq('status', 'pending') as unknown as { data: { session_id: string }[] | null }
-    : { data: [] as { session_id: string }[] }
   const pendingRequestSessionIds = new Set((pendingRequestsRaw ?? []).map(r => r.session_id))
 
   let teachingSessionsFiltered = teachingSessionsRaw ?? []
@@ -186,95 +290,12 @@ export default async function TutorClassesPage({
   const teachingTotalPages = Math.max(1, Math.ceil(teachingTotalCount / TEACHING_PAGE_SIZE))
   const teachingSessions = teachingSessionsFiltered.slice((page - 1) * TEACHING_PAGE_SIZE, page * TEACHING_PAGE_SIZE)
 
-  const classFields = 'id, name, level, is_active, class_type, status, start_date, end_date'
-
-  const { data: mainClassesRaw } = await admin
-    .from('classes')
-    .select(classFields)
-    .eq('tutor_id', user.id)
-    .order('name') as unknown as { data: Omit<ClassRow, 'scope'>[] | null }
-
-  const mainClasses = mainClassesRaw ?? []
-  const mainClassIds = new Set(mainClasses.map(c => c.id))
-
-  const { data: substituteSessions } = await admin
-    .from('sessions')
-    .select('class_id')
-    .eq('tutor_id', user.id) as unknown as { data: { class_id: string }[] | null }
-
-  const substituteClassIds = [...new Set((substituteSessions ?? []).map(s => s.class_id))]
-    .filter(id => !mainClassIds.has(id))
-
-  const { data: substituteClassesRaw } = substituteClassIds.length > 0
-    ? await admin
-        .from('classes')
-        .select(classFields)
-        .in('id', substituteClassIds)
-        .order('name') as unknown as { data: Omit<ClassRow, 'scope'>[] | null }
-    : { data: [] as Omit<ClassRow, 'scope'>[] }
-
-  const allClasses: ClassRow[] = [
-    ...mainClasses.map(c => ({ ...c, scope: 'main' as const })),
-    ...(substituteClassesRaw ?? []).map(c => ({ ...c, scope: 'substitute' as const })),
-  ]
-  const classIds = allClasses.map(c => c.id)
-
-  type StudentCountRow = { class_id: string }
-  type SessionRow = { class_id: string; scheduled_at: string; status: string }
-  type SlotRow = { class_id: string; day_of_week: number | null; subject_ids: string[] }
-
-  let studentCounts: StudentCountRow[] = []
-  let nextSessions: SessionRow[] = []
-  let completedSessions: SessionRow[] = []
-  let slots: SlotRow[] = []
-  let tutorSlots: SlotRow[] = []
-  let subjects: { id: string; name: string }[] = []
-
-  if (classIds.length > 0) {
-    const [{ data: students }, { data: next }, { data: completed }, { data: slotsData }, { data: tutorSlotsData }, { data: subjectsData }] = await Promise.all([
-      admin
-        .from('class_students')
-        .select('class_id')
-        .in('class_id', classIds)
-        .eq('is_active', true) as unknown as Promise<{ data: StudentCountRow[] | null }>,
-      // Scoped to this tutor's own sessions — this "Sesi" column shows the
-      // tutor's involvement in the class, not the class's overall schedule
-      // (matters for substitute classes, where they only cover a subset).
-      admin
-        .from('sessions')
-        .select('class_id, scheduled_at, status')
-        .in('class_id', classIds)
-        .eq('tutor_id', user.id)
-        .eq('status', 'scheduled')
-        .gte('scheduled_at', new Date().toISOString())
-        .order('scheduled_at', { ascending: true }) as unknown as Promise<{ data: SessionRow[] | null }>,
-      admin
-        .from('sessions')
-        .select('class_id, scheduled_at, status')
-        .in('class_id', classIds)
-        .eq('tutor_id', user.id)
-        .eq('status', 'completed') as unknown as Promise<{ data: SessionRow[] | null }>,
-      admin
-        .from('class_slots')
-        .select('class_id, day_of_week, subject_ids')
-        .in('class_id', classIds)
-        .order('slot_index', { ascending: true }) as unknown as Promise<{ data: SlotRow[] | null }>,
-      admin
-        .from('class_slots')
-        .select('class_id, day_of_week, subject_ids')
-        .in('class_id', classIds)
-        .eq('tutor_id', user.id) as unknown as Promise<{ data: SlotRow[] | null }>,
-      admin
-        .from('subjects')
-        .select('id, name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>,
-    ])
-    studentCounts = students ?? []
-    nextSessions = next ?? []
-    completedSessions = completed ?? []
-    slots = slotsData ?? []
-    tutorSlots = tutorSlotsData ?? []
-    subjects = subjectsData ?? []
-  }
+  const studentCounts = students ?? []
+  const nextSessions: SessionRow[] = next ?? []
+  const completedSessions: SessionRow[] = completed ?? []
+  const slots: SlotRow[] = slotsData ?? []
+  const tutorSlots: SlotRow[] = tutorSlotsData ?? []
+  const subjects = subjectsData ?? []
 
   const countByClass: Record<string, number> = {}
   for (const s of studentCounts) {
