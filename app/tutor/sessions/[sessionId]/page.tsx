@@ -3,12 +3,14 @@ import { getUser } from '@/lib/supabase/get-user'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import SessionTabs from '@/components/sessions/SessionTabs'
+import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
 import MaterialUploader from '@/components/materials/MaterialUploader'
 import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
 import { createAssessment, submitGrades } from '@/lib/actions/assessments'
 import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
 import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
+import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 type SessionDetail = {
@@ -20,6 +22,7 @@ type SessionDetail = {
   status: string
   topic: string | null
   classes: { name: string; level: string | null } | null
+  subjects: { name: string } | null
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -48,7 +51,7 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, scheduled_at, duration_minutes, location, status, topic, classes(name, level)')
+    .select('id, class_id, scheduled_at, duration_minutes, location, status, topic, classes(name, level), subjects(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single() as { data: SessionDetail | null; error: unknown }
@@ -62,6 +65,7 @@ export default async function SessionPage({
     templatesResult,
     materialsResult,
     assessmentsResult,
+    profileResult,
   ] = await Promise.all([
     supabase
       .from('class_students')
@@ -91,6 +95,11 @@ export default async function SessionPage({
       .select('id, title, description, max_score, due_at, link_url, created_at')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single(),
   ])
 
   const enrolledStudents = enrolledResult.data ?? []
@@ -99,6 +108,17 @@ export default async function SessionPage({
   const templates = templatesResult.data ?? []
   const materials = materialsResult.data ?? []
   const assessments = assessmentsResult.data ?? []
+  const tutorName = (profileResult.data as { full_name: string } | null)?.full_name ?? null
+
+  // Auto-complete if all criteria already met (handles sessions filled before this feature existed)
+  await checkAndCompleteSession(sessionId)
+
+  // Re-fetch status in case it was just completed + get completion diagnostics
+  const [{ data: freshSession }, completionCheck] = await Promise.all([
+    supabase.from('sessions').select('status').eq('id', sessionId).single(),
+    getSessionCompletionStatus(sessionId),
+  ])
+  if (freshSession) session.status = freshSession.status
 
   const attendanceMap = Object.fromEntries(attendances.map(a => [a.student_id, a]))
   const noteMap = Object.fromEntries(existingNotes.map(n => [n.student_id, n]))
@@ -135,73 +155,118 @@ export default async function SessionPage({
         Jadwal
       </Link>
 
-      {/* Session header */}
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5 mb-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-lg font-semibold text-gray-900">{session.classes?.name ?? 'Kelas'}</h1>
-              {session.classes?.level && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{session.classes.level}</span>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
+        {/* Kolom kiri — header + tab konten */}
+        <div className="space-y-4">
+          {/* Session header */}
+          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-lg font-semibold text-gray-900">{session.classes?.name ?? 'Kelas'}</h1>
+                  {session.classes?.level && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{session.classes.level}</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{session.topic ?? 'Topik belum ditentukan'}</p>
+              </div>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? ''}`}>
+                {STATUS_LABEL[session.status] ?? session.status}
+              </span>
             </div>
-            <p className="text-sm text-gray-500">{session.topic ?? 'Topik belum ditentukan'}</p>
+
+            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t text-sm">
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Tanggal & Waktu</p>
+                <p className="font-medium">
+                  {date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+                <p className="text-gray-500 text-xs">
+                  {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  {' '}({session.duration_minutes} menit)
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
+                <p className="font-medium">{session.location ?? '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Kehadiran</p>
+                <p className="font-medium">
+                  {presentCount} / {enrolledStudents.length} siswa
+                </p>
+              </div>
+            </div>
           </div>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[session.status] ?? ''}`}>
-            {STATUS_LABEL[session.status] ?? session.status}
-          </span>
+
+          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
+            <SessionTabs
+              sessionId={sessionId}
+              sessionStatus={session.status}
+              topic={session.topic}
+              curriculumTopicId={null}
+              curriculumTopics={[]}
+              students={students}
+              templates={templates}
+              materials={materials}
+              assessments={assessments}
+              assessmentStudents={students.map(s => ({ id: s.id, full_name: s.full_name }))}
+              results={results ?? []}
+              materialUploader={
+                <MaterialUploader
+                  sessionId={sessionId}
+                  tutorId={user.id}
+                  classId={session.class_id}
+                />
+              }
+              submitAttendanceAction={submitAttendance}
+              saveNoteAction={savePerformanceNote}
+              createAssessmentAction={createAssessment}
+              submitGradesAction={submitGrades}
+              deleteMaterialAction={deleteMaterial}
+              signedUrlAction={getSignedUrl}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t text-sm">
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Tanggal & Waktu</p>
-            <p className="font-medium">
-              {date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-            <p className="text-gray-500 text-xs">
-              {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-              {' '}({session.duration_minutes} menit)
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
-            <p className="font-medium">{session.location ?? '-'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Kehadiran</p>
-            <p className="font-medium">
-              {presentCount} / {enrolledStudents.length} siswa
-            </p>
-          </div>
+        {/* Kolom kanan — info sesi + syarat penyelesaian */}
+        <div className="space-y-4 lg:sticky lg:top-6">
+          <SessionInfoCard
+            classLevel={session.classes?.level ?? null}
+            tutorName={tutorName}
+            date={date}
+            durationMinutes={session.duration_minutes}
+            location={session.location}
+            subjects={session.subjects?.name ?? null}
+            displayStatus={session.status}
+          />
+
+          {completionCheck && session.status !== 'cancelled' && (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Syarat Penyelesaian Otomatis
+              </p>
+              <div className="space-y-1.5">
+                {[
+                  { label: 'Topik', ok: completionCheck.hasTopic },
+                  { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
+                  { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
+                  { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
+                  { label: `Asesmen & Nilai (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
+                ].map(({ label, ok }) => (
+                  <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
+                    {ok
+                      ? <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      : <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    }
+                    {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      <SessionTabs
-        sessionId={sessionId}
-        sessionStatus={session.status}
-        topic={session.topic}
-        curriculumTopicId={null}
-        curriculumTopics={[]}
-        students={students}
-        templates={templates}
-        materials={materials}
-        assessments={assessments}
-        assessmentStudents={students.map(s => ({ id: s.id, full_name: s.full_name }))}
-        results={results ?? []}
-        materialUploader={
-          <MaterialUploader
-            sessionId={sessionId}
-            tutorId={user.id}
-            classId={session.class_id}
-          />
-        }
-        submitAttendanceAction={submitAttendance}
-        saveNoteAction={savePerformanceNote}
-        createAssessmentAction={createAssessment}
-        submitGradesAction={submitGrades}
-        deleteMaterialAction={deleteMaterial}
-        signedUrlAction={getSignedUrl}
-      />
     </div>
   )
 }
