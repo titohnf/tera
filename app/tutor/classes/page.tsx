@@ -72,7 +72,13 @@ export default async function TutorClassesPage({
   let rangeStart: Date | null = null
   let rangeEnd: Date | null = null
 
-  if (teachingRange === 'week') {
+  if (teachingRange === 'today') {
+    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+    rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  } else if (teachingRange === 'tomorrow') {
+    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
+    rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999)
+  } else if (teachingRange === 'week') {
     const dayOffset = (now.getDay() + 6) % 7 // Monday = 0
     rangeStart = new Date(now)
     rangeStart.setDate(now.getDate() - dayOffset)
@@ -91,10 +97,8 @@ export default async function TutorClassesPage({
   } else if (teachingRange === 'custom' && teachingFrom && teachingTo) {
     rangeStart = new Date(`${teachingFrom}T00:00:00`)
     rangeEnd = new Date(`${teachingTo}T23:59:59`)
-  } else {
-    // Default: next 10 upcoming sessions, no upper bound
-    rangeStart = now
   }
+  // Default (no range): show all sessions, no date bound
 
   const page = Math.max(1, parseInt(pageParam) || 1)
   const rangeOffset = (page - 1) * TEACHING_PAGE_SIZE
@@ -434,9 +438,7 @@ export default async function TutorClassesPage({
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-            {teachingRange ? 'Jadwal Mengajar' : '10 Jadwal Mengajar Berikutnya'}
-          </h2>
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
           <TeachingScheduleFilters range={teachingRange} from={teachingFrom} to={teachingTo} />
         </div>
 
