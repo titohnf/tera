@@ -57,10 +57,7 @@ export default async function MaterialsPage({
         classId={session.class_id}
       />
 
-      <div className="mt-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          Materi Terupload ({materials?.length ?? 0})
-        </h2>
+      <div className="mt-4">
         <MaterialList materials={materials ?? []} sessionId={sessionId} />
       </div>
     </div>

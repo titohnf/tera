@@ -6,11 +6,11 @@ import { updateSessionTopic } from '@/lib/actions/admin/curriculum'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { savePerformanceNoteAdmin } from '@/lib/actions/admin/notes'
-import { createAssessmentAdmin, submitGradesAdmin, deleteAssessmentAdmin } from '@/lib/actions/admin/assessments'
+import { createAssessmentAdmin, submitGradesAdmin, deleteAssessmentAdmin, updateAssessmentAdmin } from '@/lib/actions/admin/assessments'
 import { deleteMaterialAdmin, getSignedUrlAdmin } from '@/lib/actions/admin/materials'
 import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
+import SessionPayrollReview from '@/components/admin/users/SessionPayrollReview'
 import SessionHeader from '@/components/admin/sessions/SessionHeader'
-import ResetSessionButton from '@/components/admin/sessions/ResetSessionButton'
 import SessionTabs from '@/components/sessions/SessionTabs'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import { getSessionDisplayStatus } from '@/lib/session-status'
@@ -37,6 +37,11 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           selected_cp_ids: string[]
           cp_urls: Record<string, string>
           class_id: string; tutor_id: string; subject_id: string | null
+          payroll_status: string
+          payroll_rejection_reason: string | null
+          payroll_reviewed_at: string | null
+          payroll_tutor_note: string | null
+          payroll_tutor_note_at: string | null
           classes: { id: string; name: string; level: string | null } | null
           profiles: { full_name: string; email: string } | null
           subjects: { name: string } | null
@@ -78,7 +83,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       .eq('session_id', sessionId),
     admin
       .from('performance_notes')
-      .select('student_id, body, template_id')
+      .select('student_id, category, body, template_id')
       .eq('session_id', sessionId),
     admin
       .from('performance_note_templates')
@@ -147,7 +152,11 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const displayStatus = getSessionDisplayStatus(session.status, !!pendingRequest)
 
   const attendanceMap = Object.fromEntries((attendances ?? []).map(a => [a.student_id, a]))
-  const noteMap = Object.fromEntries((existingNotes ?? []).map(n => [n.student_id, n]))
+  const notesByStudent: Record<string, Record<string, { body: string; template_id: string | null }>> = {}
+  for (const n of existingNotes ?? []) {
+    if (!notesByStudent[n.student_id]) notesByStudent[n.student_id] = {}
+    notesByStudent[n.student_id][n.category] = { body: n.body, template_id: n.template_id }
+  }
 
   const students = (classStudents ?? []).map(cs => {
     const profile = cs.profiles
@@ -158,7 +167,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       avatar_url: profile?.avatar_url ?? null,
       currentStatus: (attendanceMap[cs.student_id]?.status ?? null) as AttendanceStatus | null,
       attendanceNotes: attendanceMap[cs.student_id]?.notes ?? '',
-      existingNote: noteMap[sid] ?? null,
+      existingNotes: notesByStudent[sid] ?? {},
     }
   })
 
@@ -232,12 +241,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             subjectName={session.subjects?.name ?? null}
             grade={sessionGrade}
             materialUploader={<MaterialUploaderAdmin sessionId={sessionId} />}
+            isAdmin
             saveTopicAction={updateSessionTopic}
             submitAttendanceAction={submitAttendanceAdmin}
             saveNoteAction={savePerformanceNoteAdmin}
             createAssessmentAction={createAssessmentAdmin}
             submitGradesAction={submitGradesAdmin}
             deleteAssessmentAction={deleteAssessmentAdmin}
+            updateAssessmentAction={updateAssessmentAdmin}
             deleteMaterialAction={deleteMaterialAdmin}
             signedUrlAction={getSignedUrlAdmin}
           />
@@ -260,7 +271,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           {completionCheck && session.status !== 'cancelled' && (
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Syarat Penyelesaian Otomatis
+                Kelengkapan Jurnal
               </p>
               <div className="space-y-1.5">
                 {[
@@ -268,7 +279,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
-                  { label: `Asesmen & Nilai (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
+                  { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
                 ].map(({ label, ok }) => (
                   <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
                     {ok
@@ -282,9 +293,36 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          <div className="flex justify-end">
-            <ResetSessionButton sessionId={sessionId} />
-          </div>
+          {/* Review sesi */}
+          {session.status === 'completed' && (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Status Penyelesaian Sesi
+              </p>
+
+              {!completionCheck?.canComplete && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1">
+                    Belum Lengkap
+                  </p>
+                  <p className="text-xs text-orange-700">
+                    Sesi ini belum bisa direview karena syarat penyelesaian otomatis di atas belum semuanya terpenuhi.
+                  </p>
+                </div>
+              )}
+
+              {completionCheck?.canComplete && (
+                <SessionPayrollReview
+                  sessionId={sessionId}
+                  payrollStatus={session.payroll_status}
+                  rejectionReason={session.payroll_rejection_reason}
+                  rejectionReasonAt={session.payroll_reviewed_at}
+                  tutorNote={session.payroll_tutor_note}
+                  tutorNoteAt={session.payroll_tutor_note_at}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

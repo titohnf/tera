@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { checkAndCompleteSession } from './session-completion'
+import { isSessionTutor } from './session-access'
 
 export async function addFileMaterial(sessionId: string, payload: {
   title: string
@@ -16,14 +17,7 @@ export async function addFileMaterial(sessionId: string, payload: {
   if (!user) return { error: 'Tidak terautentikasi' }
 
   const admin = createAdminClient()
-  const { data: session } = await admin
-    .from('sessions')
-    .select('id')
-    .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single()
-
-  if (!session) return { error: 'Sesi tidak ditemukan' }
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
 
   const { error } = await admin.from('materials').insert({
     session_id: sessionId,
@@ -59,14 +53,7 @@ export async function addLinkMaterial(sessionId: string, payload: {
   if (!/^https?:\/\//i.test(url)) url = `https://${url}`
 
   const admin = createAdminClient()
-  const { data: session } = await admin
-    .from('sessions')
-    .select('id')
-    .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single()
-
-  if (!session) return { error: 'Sesi tidak ditemukan' }
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
 
   const { error } = await admin.from('materials').insert({
     session_id: sessionId,

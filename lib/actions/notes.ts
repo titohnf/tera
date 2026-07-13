@@ -5,10 +5,12 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { checkAndCompleteSession } from './session-completion'
+import { isSessionTutor } from './session-access'
 
 const NoteSchema = z.object({
   student_id: z.string().uuid(),
-  body: z.string().min(1, 'Catatan tidak boleh kosong').max(2000),
+  category: z.string().min(1),
+  body: z.string().max(2000),
   template_id: z.string().uuid().nullable().optional(),
 })
 
@@ -21,22 +23,31 @@ export async function savePerformanceNote(sessionId: string, data: unknown) {
 
   const admin = createAdminClient()
 
-  const { data: session } = await admin
-    .from('sessions')
-    .select('id')
-    .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single()
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
 
-  if (!session) return { error: 'Sesi tidak ditemukan' }
+  const body = parsed.data.body.trim()
+
+  if (!body) {
+    const { error } = await admin
+      .from('performance_notes')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('student_id', parsed.data.student_id)
+      .eq('category', parsed.data.category)
+    if (error) return { error: error.message }
+    revalidatePath(`/tutor/sessions/${sessionId}`)
+    revalidatePath(`/admin/sessions/${sessionId}`)
+    return { success: true }
+  }
 
   const { error } = await admin.from('performance_notes').upsert({
     session_id: sessionId,
     student_id: parsed.data.student_id,
+    category: parsed.data.category,
     tutor_id: user.id,
     template_id: parsed.data.template_id ?? null,
-    body: parsed.data.body,
-  }, { onConflict: 'session_id,student_id' })
+    body,
+  }, { onConflict: 'session_id,student_id,category' })
 
   if (error) return { error: error.message }
 

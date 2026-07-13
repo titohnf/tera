@@ -86,6 +86,32 @@ export async function submitGradesAdmin(assessmentId: string, sessionId: string,
   return { success: true }
 }
 
+export async function updateAssessmentAdmin(assessmentId: string, sessionId: string, data: unknown) {
+  const parsed = AssessmentSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }
+
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('assessments')
+    .update({
+      title: parsed.data.title,
+      description: parsed.data.description ?? null,
+      max_score: parsed.data.max_score,
+      due_at: parsed.data.due_at ?? null,
+      link_url: parsed.data.link_url ?? null,
+    })
+    .eq('id', assessmentId)
+    .eq('session_id', sessionId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  revalidatePath(`/tutor/sessions/${sessionId}`)
+  return { success: true }
+}
+
 export async function deleteAssessmentAdmin(assessmentId: string, sessionId: string) {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }

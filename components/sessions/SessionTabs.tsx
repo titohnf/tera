@@ -15,6 +15,7 @@ type CreateAssessmentAction = (sessionId: string, data: unknown) => Promise<{ er
 type SubmitGradesAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type DeleteMaterialAction = (materialId: string, filePath: string | null, sessionId: string) => Promise<{ error?: string }>
 type DeleteAssessmentAction = (assessmentId: string, sessionId: string) => Promise<{ error?: string; success?: boolean }>
+type UpdateAssessmentAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type SignedUrlAction = (filePath: string) => Promise<{ error?: string; url?: string }>
 type SaveTopicAction = (
   sessionId: string,
@@ -29,7 +30,7 @@ interface Student {
   full_name: string
   currentStatus: AttendanceStatus | null
   attendanceNotes: string
-  existingNote: { body: string; template_id: string | null } | null
+  existingNotes: Record<string, { body: string; template_id: string | null }>
 }
 
 interface Template {
@@ -110,9 +111,11 @@ export default function SessionTabs({
   createAssessmentAction,
   submitGradesAction,
   deleteAssessmentAction,
+  updateAssessmentAction,
   deleteMaterialAction,
   signedUrlAction,
   saveTopicAction,
+  isAdmin,
 }: {
   sessionId: string
   sessionStatus: string
@@ -136,9 +139,11 @@ export default function SessionTabs({
   createAssessmentAction: CreateAssessmentAction
   submitGradesAction: SubmitGradesAction
   deleteAssessmentAction?: DeleteAssessmentAction
+  updateAssessmentAction?: UpdateAssessmentAction
   deleteMaterialAction: DeleteMaterialAction
   signedUrlAction: SignedUrlAction
   saveTopicAction: SaveTopicAction
+  isAdmin?: boolean
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>('materials')
 
@@ -185,24 +190,21 @@ export default function SessionTabs({
             curriculumTopics={curriculumTopics}
             hasSubject={hasSubject}
             saveAction={saveTopicAction}
+            isAdmin={isAdmin}
           />
 
           <div className="border-t border-slate-200 my-5" />
 
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Upload Materi</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Materi Pembelajaran</p>
           {materialUploader}
-
-          <div className="border-t border-slate-200 my-5" />
-
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-            Materi ({materials.length})
-          </p>
-          <MaterialList
-            materials={materials}
-            sessionId={sessionId}
-            deleteAction={deleteMaterialAction}
-            signedUrlAction={signedUrlAction}
-          />
+          <div className="mt-4">
+            <MaterialList
+              materials={materials}
+              sessionId={sessionId}
+              deleteAction={deleteMaterialAction}
+              signedUrlAction={signedUrlAction}
+            />
+          </div>
         </div>
       )}
 
@@ -217,6 +219,7 @@ export default function SessionTabs({
             createAction={createAssessmentAction}
             submitGradesAction={submitGradesAction}
             deleteAction={deleteAssessmentAction}
+            updateAction={updateAssessmentAction}
             subjectName={subjectName}
             grade={grade}
             topic={topic}

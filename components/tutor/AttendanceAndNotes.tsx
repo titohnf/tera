@@ -14,7 +14,7 @@ interface Student {
   avatar_url?: string | null
   currentStatus: AttendanceStatus | null
   attendanceNotes: string
-  existingNote: { body: string; template_id: string | null } | null
+  existingNotes: Record<string, { body: string; template_id: string | null }>
 }
 
 interface Template {
@@ -56,17 +56,32 @@ export default function AttendanceAndNotes({
   submitAttendanceAction?: SubmitAttendanceAction
   saveNoteAction?: SaveNoteAction
 }) {
+  const templatesByCategory: Record<string, Template[]> = {}
+  for (const t of templates) {
+    if (!templatesByCategory[t.category]) templatesByCategory[t.category] = []
+    templatesByCategory[t.category].push(t)
+  }
+  const categories = Object.keys(templatesByCategory)
+
   const [records, setRecords] = useState<Record<string, { status: AttendanceStatus | null; notes: string }>>(
     Object.fromEntries(students.map(s => [s.id, { status: s.currentStatus, notes: s.attendanceNotes }]))
   )
 
   // noteData: per student → per category → { templateId, body }
+  // Seeded from existingNotes (one row per category) so previously-saved notes
+  // show as selected, each in their own category, on reload.
   const [noteData, setNoteData] = useState<Record<string, StudentNoteState>>(
-    Object.fromEntries(students.map(s => [s.id, {}]))
+    Object.fromEntries(students.map(s => {
+      const studentState: StudentNoteState = {}
+      for (const [category, note] of Object.entries(s.existingNotes)) {
+        studentState[category] = { templateId: note.template_id ?? '', body: note.body }
+      }
+      return [s.id, studentState]
+    }))
   )
 
   const [savedNotes, setSavedNotes] = useState<Set<string>>(
-    new Set(students.filter(s => s.existingNote).map(s => s.id))
+    new Set(students.filter(s => Object.keys(s.existingNotes).length > 0).map(s => s.id))
   )
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(
     () => new Set(students.map(s => s.id))
@@ -76,13 +91,6 @@ export default function AttendanceAndNotes({
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const isDisabled = sessionStatus === 'cancelled'
-
-  const templatesByCategory: Record<string, Template[]> = {}
-  for (const t of templates) {
-    if (!templatesByCategory[t.category]) templatesByCategory[t.category] = []
-    templatesByCategory[t.category].push(t)
-  }
-  const categories = Object.keys(templatesByCategory)
 
   function setStatus(studentId: string, status: AttendanceStatus) {
     setRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status } }))
@@ -142,21 +150,26 @@ export default function AttendanceAndNotes({
         return
       }
 
-      // Save notes for present/late students who have note content
+      // Save notes for present/late students — one save call per category,
+      // kept independent so Attitude/Progress/Recommendation don't merge.
       const noteStudents = students.filter(s => {
         const status = records[s.id]?.status
         return status === 'present' || status === 'late'
       })
+      const catList = categories.length > 0 ? categories : ['_']
 
       const noteResults = await Promise.all(
-        noteStudents.map(async s => {
-          const studentState = noteData[s.id]
-          const body = categories.length > 0
-            ? buildNoteBody(templatesByCategory, studentState)
-            : Object.values(studentState).find(v => v)?.body ?? ''
-          if (!body.trim()) return null
-          const firstTemplateId = Object.values(studentState).find(v => v?.templateId)?.templateId ?? null
-          return saveNoteAction(sessionId, { student_id: s.id, body, template_id: firstTemplateId })
+        noteStudents.flatMap(s => {
+          const studentState = noteData[s.id] ?? {}
+          return catList.map(category => {
+            const entry = studentState[category]
+            return saveNoteAction(sessionId, {
+              student_id: s.id,
+              category,
+              body: entry?.body ?? '',
+              template_id: entry?.templateId || null,
+            })
+          })
         })
       )
 
@@ -168,8 +181,11 @@ export default function AttendanceAndNotes({
 
       // Mark saved notes
       const newSaved = new Set(savedNotes)
-      noteStudents.forEach((s, i) => {
-        if (noteResults[i] !== null) newSaved.add(s.id)
+      noteStudents.forEach(s => {
+        const studentState = noteData[s.id] ?? {}
+        const hasContent = catList.some(cat => (studentState[cat]?.body ?? '').trim())
+        if (hasContent) newSaved.add(s.id)
+        else newSaved.delete(s.id)
       })
       setSavedNotes(newSaved)
       setSaveMessage({ type: 'success', text: 'Presensi dan catatan berhasil disimpan!' })

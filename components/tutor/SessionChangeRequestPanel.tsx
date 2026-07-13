@@ -30,11 +30,13 @@ export default function SessionChangeRequestPanel({
   existingRequest,
   tutors,
   currentTutorName,
+  isPast = false,
 }: {
   sessionId: string
   existingRequest: PendingRequest | null
   tutors: { id: string; full_name: string }[]
   currentTutorName: string | null
+  isPast?: boolean
 }) {
   const [mode, setMode] = useState<SessionRequestType | null>(null)
   const [reason, setReason] = useState('')
@@ -42,6 +44,8 @@ export default function SessionChangeRequestPanel({
   const [newTutorId, setNewTutorId] = useState('')
   const [error, setError] = useState('')
   const [pending, startTransition] = useTransition()
+
+  if (isPast && !existingRequest) return null
 
   function reset() {
     setMode(null)
@@ -132,7 +136,11 @@ export default function SessionChangeRequestPanel({
         </div>
       )}
 
-      {!mode ? (
+      {isPast ? (
+        <p className="text-xs text-gray-400">
+          Jadwal sesi ini sudah lewat — pengajuan perubahan tidak dapat diajukan lagi.
+        </p>
+      ) : !mode ? (
         <div className="flex flex-col gap-2">
           <button
             type="button"

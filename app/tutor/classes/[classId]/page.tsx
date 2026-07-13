@@ -5,6 +5,14 @@ import Link from 'next/link'
 import SessionStatusChips from '@/components/sessions/SessionStatusChips'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
+
+const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
+  incomplete: { label: 'Belum Lengkap', cls: 'bg-orange-100 text-orange-700' },
+  pending: { label: 'Menunggu Review', cls: 'bg-yellow-100 text-yellow-700' },
+  approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Ditolak', cls: 'bg-red-100 text-red-700' },
+}
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu', 0: 'Minggu',
@@ -26,6 +34,7 @@ type SessionRow = {
   location: string | null
   status: string
   topic: string | null
+  payroll_status: string
   subjects: { name: string } | null
   materials: CountRow
   assessments: CountRow
@@ -50,7 +59,7 @@ export default async function TutorClassDetailPage({
   let sessionsQuery = admin
     .from('sessions')
     .select(`
-      id, scheduled_at, duration_minutes, location, status, topic,
+      id, scheduled_at, duration_minutes, location, status, topic, payroll_status,
       subjects(name),
       materials(count),
       assessments(count),
@@ -116,6 +125,12 @@ export default async function TutorClassDetailPage({
   if (!isMainTutor && !substituteSessionCount) notFound()
 
   const sessionIds = (sessions ?? []).map(s => s.id)
+
+  // Re-verify completeness for pending-review sessions — payroll_status alone
+  // can be stale if data changed after the session was auto-completed.
+  const pendingReviewIds = (sessions ?? []).filter(s => s.status === 'completed' && s.payroll_status === 'pending').map(s => s.id)
+  const pendingReviewChecks = await Promise.all(pendingReviewIds.map(id => getSessionCompletionStatus(id)))
+  const stillCompleteMap = new Map(pendingReviewIds.map((id, i) => [id, pendingReviewChecks[i]?.canComplete ?? false]))
   const { data: gradedData } = sessionIds.length > 0
     ? await admin
         .from('assessments')
@@ -288,32 +303,58 @@ export default async function TutorClassDetailPage({
                 <Link
                   key={session.id}
                   href={`/tutor/sessions/${session.id}`}
-                  className="flex items-center justify-between rounded-xl ring-1 ring-gray-900/5 px-5 py-4 hover:bg-blue-50/50 transition-colors"
+                  className="flex items-stretch rounded-xl ring-1 ring-gray-900/5 px-5 py-4 hover:bg-blue-50/50 transition-colors"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="text-center w-12 shrink-0">
-                      <p className="text-xs text-gray-500">
-                        {date.toLocaleDateString('id-ID', { month: 'short' })}
-                      </p>
-                      <p className="text-xl font-bold text-gray-900">{date.getDate()}</p>
-                      <p className="text-xs text-gray-500">
-                        {date.toLocaleDateString('id-ID', { weekday: 'short' })}
-                      </p>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">{session.subjects?.name ?? 'Sesi'}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                        {session.location ? ` • ${session.location}` : ''}
-                        {session.topic ? ` • ${session.topic}` : ''}
-                      </p>
-                      <SessionStatusChips status={session.status} counts={counts} />
-                    </div>
+                  <div className="text-center w-12 shrink-0 flex flex-col justify-center">
+                    <p className="text-xs text-gray-500">
+                      {date.toLocaleDateString('id-ID', { month: 'short' })}
+                    </p>
+                    <p className="text-xl font-bold text-gray-900">{date.getDate()}</p>
+                    <p className="text-xs text-gray-500">
+                      {date.toLocaleDateString('id-ID', { weekday: 'short' })}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 ml-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
+
+                  <div className="w-px bg-gray-100 mx-4 shrink-0" />
+
+                  <div className="min-w-0 flex-1 flex flex-col justify-center">
+                    <p className="text-sm font-semibold text-gray-900">{session.subjects?.name ?? 'Sesi'}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      {session.location ? ` • ${session.location}` : ''}
+                      {session.topic ? ` • ${session.topic}` : ''}
+                    </p>
+                    <SessionStatusChips status={session.status} counts={counts} />
+                  </div>
+
+                  <div className="w-px bg-gray-100 mx-4 shrink-0" />
+
+                  <div className="shrink-0 flex flex-col items-start justify-center px-1">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Status Jadwal</p>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${displayStatus.color}`}>
                       {displayStatus.label}
                     </span>
+                  </div>
+
+                  {session.status === 'completed' && (() => {
+                    const key = session.payroll_status === 'pending' && stillCompleteMap.get(session.id) === false
+                      ? 'incomplete'
+                      : session.payroll_status
+                    const badge = PAYROLL_BADGE[key] ?? PAYROLL_BADGE.pending
+                    return (
+                      <>
+                        <div className="w-px bg-gray-100 mx-4 shrink-0" />
+                        <div className="shrink-0 flex flex-col items-start justify-center px-1">
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Status Payroll</p>
+                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+                      </>
+                    )
+                  })()}
+
+                  <div className="shrink-0 flex items-center pl-4">
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

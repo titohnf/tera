@@ -33,17 +33,19 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     { count: studentCount },
     { count: attendanceCount },
     { data: presentLateAttendances },
-    { count: notesCount },
+    { data: notedStudents },
     { count: materialsCount },
     { data: assessmentList },
   ] = await Promise.all([
     admin.from('class_students').select('*', { count: 'exact', head: true }).eq('class_id', session.class_id).eq('is_active', true),
     admin.from('attendances').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
     admin.from('attendances').select('student_id').eq('session_id', sessionId).in('status', ['present', 'late']),
-    admin.from('performance_notes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
+    // A student may have up to one note per category — count distinct students, not rows
+    admin.from('performance_notes').select('student_id').eq('session_id', sessionId),
     admin.from('materials').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
     admin.from('assessments').select('id').eq('session_id', sessionId),
   ])
+  const notesCount = new Set((notedStudents ?? []).map(n => n.student_id)).size
 
   const sc = studentCount ?? 0
   const assessmentIds = (assessmentList ?? []).map(a => a.id)
@@ -68,7 +70,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     ? false
     : presentLateCount === 0
       ? true
-      : (notesCount ?? 0) >= presentLateCount
+      : notesCount >= presentLateCount
   const hasMaterials = (materialsCount ?? 0) >= 1
   // Requires at least 1 assessment AND all students graded in every assessment
   const hasAssessments = assessmentsCount >= 1 && gradedCount >= assessmentsCount * sc
@@ -79,7 +81,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     hasTopic,
     attendanceCount: attendanceCount ?? 0,
     presentLateCount,
-    notesCount: notesCount ?? 0,
+    notesCount,
     materialsCount: materialsCount ?? 0,
     assessmentsCount,
     gradedCount,

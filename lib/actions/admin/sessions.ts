@@ -216,31 +216,6 @@ export async function rescheduleSession(sessionId: string, prevState: ActionStat
   return null
 }
 
-export async function resetSession(sessionId: string): Promise<ActionState> {
-  const ctx = await verifyAdmin()
-  if (!ctx) return { error: 'Tidak diizinkan' }
-
-  const { admin } = ctx
-
-  await Promise.all([
-    admin.from('attendances').delete().eq('session_id', sessionId),
-    admin.from('performance_notes').delete().eq('session_id', sessionId),
-    admin.from('materials').delete().eq('session_id', sessionId),
-    admin.from('assessments').delete().eq('session_id', sessionId),
-  ])
-
-  const { error } = await admin
-    .from('sessions')
-    .update({ topic: null, status: 'scheduled', updated_at: new Date().toISOString() })
-    .eq('id', sessionId)
-
-  if (error) return { error: error.message }
-
-  revalidatePath(`/admin/sessions/${sessionId}`)
-  revalidatePath('/admin/sessions')
-  return null
-}
-
 export async function deleteSession(sessionId: string): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }

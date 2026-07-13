@@ -5,6 +5,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { checkAndCompleteSession } from './session-completion'
+import { isSessionTutor } from './session-access'
 
 const AttendanceSchema = z.array(z.object({
   student_id: z.string().uuid(),
@@ -21,14 +22,10 @@ export async function submitAttendance(sessionId: string, records: unknown) {
 
   const admin = createAdminClient()
 
-  // Verify the session belongs to this tutor
-  const { data: session } = await admin
-    .from('sessions')
-    .select('id, status')
-    .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single()
+  // Verify the session belongs to this tutor (or they're a confirmed incoming swap tutor)
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
 
+  const { data: session } = await admin.from('sessions').select('id, status').eq('id', sessionId).single()
   if (!session) return { error: 'Sesi tidak ditemukan' }
   if (session.status === 'cancelled') return { error: 'Sesi sudah dibatalkan' }
 

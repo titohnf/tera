@@ -58,8 +58,10 @@ export default function NoteEditor({
 
   function handleSave() {
     startTransition(async () => {
+      const category = templates.find(t => t.id === activeNote.template_id)?.category ?? '_'
       const result = await savePerformanceNote(sessionId, {
         student_id: activeStudentId,
+        category,
         body: activeNote.body,
         template_id: activeNote.template_id,
       })

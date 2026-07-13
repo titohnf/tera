@@ -14,7 +14,7 @@ interface CurriculumTopic {
   grade_level: string
   semester: number
   theme: string | null
-  topic: string
+  topic: string | null
   learning_outcomes: string | null
 }
 
@@ -35,6 +35,7 @@ interface Props {
   curriculumTopics: CurriculumTopic[]
   hasSubject?: boolean
   saveAction: SaveTopicAction
+  isAdmin?: boolean
 }
 
 export default function SessionTopicEditor({
@@ -45,6 +46,7 @@ export default function SessionTopicEditor({
   curriculumTopics,
   hasSubject,
   saveAction,
+  isAdmin,
 }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +55,7 @@ export default function SessionTopicEditor({
   const topicGroups = useMemo<TopicGroup[]>(() => {
     const map = new Map<string, TopicGroup>()
     for (const t of curriculumTopics) {
+      if (!t.topic?.trim()) continue // skip theme-only placeholder rows
       const key = `${t.semester}|${t.theme ?? ''}|${t.topic}`
       if (!map.has(key)) {
         map.set(key, {
@@ -130,14 +133,18 @@ export default function SessionTopicEditor({
     }, {})
   }, [topicGroups])
 
-  if (curriculumTopics.length === 0) {
+  if (topicGroups.length === 0) {
     return (
       <p className="text-xs text-gray-400">
         {hasSubject === false
           ? 'Sesi ini belum memiliki mata pelajaran — pilih mata pelajaran di bagian edit sesi agar topik kurikulum bisa ditampilkan.'
-          : <>Belum ada topik kurikulum untuk mata pelajaran / kelas ini.{' '}
-              <a href="/admin/curriculum" className="text-blue-600 hover:underline">Kelola kurikulum</a>
-            </>
+          : isAdmin
+            ? <>Belum ada topik kurikulum untuk mata pelajaran / kelas ini.{' '}
+                <a href="/admin/curriculum" className="text-blue-600 hover:underline">Kelola kurikulum</a>
+              </>
+            : <>Belum ada topik kurikulum untuk mata pelajaran / kelas ini. Hubungi admin untuk menambahkannya via{' '}
+                <a href="https://wa.me/+6281315502949" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">WhatsApp</a>
+              </>
         }
       </p>
     )

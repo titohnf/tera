@@ -5,6 +5,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { checkAndCompleteSession } from './session-completion'
+import { isSessionTutor } from './session-access'
 
 const AssessmentSchema = z.object({
   title: z.string().min(1).max(200),
@@ -23,14 +24,7 @@ export async function createAssessment(sessionId: string, data: unknown) {
 
   const admin = createAdminClient()
 
-  const { data: session } = await admin
-    .from('sessions')
-    .select('id')
-    .eq('id', sessionId)
-    .eq('tutor_id', user.id)
-    .single()
-
-  if (!session) return { error: 'Sesi tidak ditemukan' }
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
 
   const { error } = await admin.from('assessments').insert({
     session_id: sessionId,
@@ -45,6 +39,67 @@ export async function createAssessment(sessionId: string, data: unknown) {
   if (error) return { error: error.message }
 
   await checkAndCompleteSession(sessionId)
+
+  revalidatePath(`/tutor/sessions/${sessionId}/assessment`)
+  revalidatePath(`/tutor/sessions/${sessionId}`)
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  return { success: true }
+}
+
+const UpdateAssessmentSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().optional(),
+  max_score: z.number().min(1).max(1000).default(100),
+  due_at: z.string().datetime().nullable().optional(),
+  link_url: z.string().url().nullable().optional(),
+})
+
+export async function updateAssessment(assessmentId: string, sessionId: string, data: unknown) {
+  const parsed = UpdateAssessmentSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }
+
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+
+  const admin = createAdminClient()
+
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
+
+  const { error } = await admin
+    .from('assessments')
+    .update({
+      title: parsed.data.title,
+      description: parsed.data.description ?? null,
+      max_score: parsed.data.max_score,
+      due_at: parsed.data.due_at ?? null,
+      link_url: parsed.data.link_url ?? null,
+    })
+    .eq('id', assessmentId)
+    .eq('session_id', sessionId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/tutor/sessions/${sessionId}/assessment`)
+  revalidatePath(`/tutor/sessions/${sessionId}`)
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  return { success: true }
+}
+
+export async function deleteAssessment(assessmentId: string, sessionId: string) {
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+
+  const admin = createAdminClient()
+
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
+
+  const { error } = await admin
+    .from('assessments')
+    .delete()
+    .eq('id', assessmentId)
+    .eq('session_id', sessionId)
+
+  if (error) return { error: error.message }
 
   revalidatePath(`/tutor/sessions/${sessionId}/assessment`)
   revalidatePath(`/tutor/sessions/${sessionId}`)

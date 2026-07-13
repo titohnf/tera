@@ -80,6 +80,7 @@ type AssessmentResultRow = {
 
 type NoteRow = {
   id: string
+  category: string
   body: string
   created_at: string
   session_id: string
@@ -267,7 +268,7 @@ export default async function SiswaDetailPage({
       : Promise.resolve({ data: [] as SessionRow[] }),
     admin.from('attendances').select('session_id, status').eq('student_id', studentId) as unknown as Promise<{ data: AttendanceRow[] | null }>,
     admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes').eq('student_id', studentId).order('issued_at', { ascending: false }).limit(24) as unknown as Promise<{ data: InvoiceRow[] | null }>,
-    admin.from('performance_notes').select('id, body, created_at, session_id, sessions(scheduled_at, topic, class_id), profiles!tutor_id(full_name)').eq('student_id', studentId).order('created_at', { ascending: false }).limit(30) as unknown as Promise<{ data: NoteRow[] | null }>,
+    admin.from('performance_notes').select('id, category, body, created_at, session_id, sessions(scheduled_at, topic, class_id), profiles!tutor_id(full_name)').eq('student_id', studentId).order('created_at', { ascending: false }).limit(30) as unknown as Promise<{ data: NoteRow[] | null }>,
   ])
 
   const sessions: SessionRow[] = sessionsRes.data ?? []
@@ -741,6 +742,9 @@ export default async function SiswaDetailPage({
                     <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
                       {notes.map(note => (
                         <div key={note.id} className="px-4 py-4">
+                          {note.category !== '_' && (
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{note.category}</p>
+                          )}
                           <p className="text-sm text-gray-800 leading-relaxed">{note.body}</p>
                           <p className="text-xs text-gray-400 mt-1.5">
                             {note.profiles?.full_name ?? 'Tutor'}

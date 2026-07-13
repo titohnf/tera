@@ -12,7 +12,7 @@ interface Student {
   full_name: string
   currentStatus: AttendanceStatus | null
   attendanceNotes: string
-  existingNote: { body: string; template_id: string | null } | null
+  existingNotes: Record<string, { body: string; template_id: string | null }>
 }
 
 interface Template {

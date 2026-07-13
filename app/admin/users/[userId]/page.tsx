@@ -5,6 +5,8 @@ import PasswordResetButton from '@/components/admin/users/PasswordResetButton'
 import UserAvatarUpload from '@/components/admin/users/UserAvatarUpload'
 import { getWorkloadLevel, WORKLOAD_CONFIG } from '@/lib/tutorWorkload'
 import TutorStatusButton from '@/components/admin/users/TutorStatusButton'
+import { getSessionCompletionStatus, type CompletionCheck } from '@/lib/actions/session-completion'
+import MonthFilter from '@/components/admin/users/MonthFilter'
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-700',
@@ -18,6 +20,12 @@ const ROLE_LABEL: Record<string, string> = {
   tutor: 'Tutor',
   student: 'Siswa',
   parent: 'Orang Tua',
+}
+
+const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
+  pending: { label: 'Menunggu Review', cls: 'bg-gray-100 text-gray-600' },
+  approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Ditolak', cls: 'bg-red-100 text-red-600' },
 }
 
 const DAYS_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
@@ -77,6 +85,9 @@ type TutorSessionRow = {
   topic: string | null
   location: string | null
   selected_cp_ids: string[]
+  payroll_status: string
+  payroll_rejection_reason: string | null
+  payroll_tutor_note: string | null
 }
 
 type AttendanceRow = {
@@ -130,14 +141,24 @@ export default async function UserDetailPage({
   searchParams,
 }: {
   params: Promise<{ userId: string }>
-  searchParams: Promise<{ tab?: string }>
+  searchParams: Promise<{ tab?: string; month?: string }>
 }) {
   const { userId } = await params
-  const { tab = 'jadwal' } = await searchParams
+  const { tab = 'jadwal', month } = await searchParams
   const admin = createAdminClient()
 
   const now = new Date()
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const selectedMonth = month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const [selMonthYear, selMonthNum] = selectedMonth.split('-').map(Number)
+  const monthStart = new Date(selMonthYear, selMonthNum - 1, 1).toISOString()
+  const monthEnd = new Date(selMonthYear, selMonthNum, 1).toISOString()
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    return {
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+    }
+  })
 
   const { data: user } = await admin
     .from('profiles')
@@ -155,10 +176,7 @@ export default async function UserDetailPage({
   let tutorPayslips: PayslipRow[] = []
   let tutorAvailability: AvailabilityRow[] = []
   let tutorRecentSessions: TutorSessionRow[] = []
-  let recentAttendanceCounts: Map<string, number> = new Map()
-  let recentNotesCountMap: Map<string, number> = new Map()
-  let recentAssessmentCountMap: Map<string, number> = new Map()
-  let recentMaterialsCountMap: Map<string, number> = new Map()
+  let recentCompletionMap: Map<string, CompletionCheck> = new Map()
   let historicalSessionStats: Map<string, { count: number; firstDate: string; lastDate: string }> = new Map()
   let classStudentCountMap: Map<string, number> = new Map()
   let classMonthSessionMap: Map<string, number> = new Map()
@@ -206,14 +224,17 @@ export default async function UserDetailPage({
           .select('class_id')
           .in('class_id', classIds)
           .eq('status', 'completed')
-          .gte('scheduled_at', firstOfMonth) as unknown as Promise<{ data: { class_id: string }[] | null }>,
+          .gte('scheduled_at', monthStart)
+          .lt('scheduled_at', monthEnd) as unknown as Promise<{ data: { class_id: string }[] | null }>,
         admin
           .from('sessions')
-          .select('id, class_id, scheduled_at, duration_minutes, status, topic, location, selected_cp_ids')
+          .select('id, class_id, scheduled_at, duration_minutes, status, topic, location, selected_cp_ids, payroll_status, payroll_rejection_reason, payroll_tutor_note')
           .eq('tutor_id', userId)
           .eq('status', 'completed')
+          .gte('scheduled_at', monthStart)
+          .lt('scheduled_at', monthEnd)
           .order('scheduled_at', { ascending: false })
-          .limit(5) as unknown as Promise<{ data: TutorSessionRow[] | null }>,
+          .limit(100) as unknown as Promise<{ data: TutorSessionRow[] | null }>,
       ])
 
       // Student count per class (deduplicated)
@@ -231,27 +252,13 @@ export default async function UserDetailPage({
 
       tutorRecentSessions = recentSessionsRes.data ?? []
 
-      // Checklist data for recent sessions
+      // Completion checklist for recent sessions — same criteria used to auto-complete a session
       if (tutorRecentSessions.length > 0) {
-        const recentIds = tutorRecentSessions.map(s => s.id)
-        const [attendancesRes, notesRes, assessmentsRes, materialsRes] = await Promise.all([
-          admin.from('attendances').select('session_id').in('session_id', recentIds) as unknown as Promise<{ data: { session_id: string }[] | null }>,
-          admin.from('performance_notes').select('session_id').in('session_id', recentIds) as unknown as Promise<{ data: { session_id: string }[] | null }>,
-          admin.from('assessments').select('session_id').in('session_id', recentIds) as unknown as Promise<{ data: { session_id: string }[] | null }>,
-          admin.from('materials').select('session_id').in('session_id', recentIds) as unknown as Promise<{ data: { session_id: string }[] | null }>,
-        ])
-        for (const a of attendancesRes.data ?? []) {
-          recentAttendanceCounts.set(a.session_id, (recentAttendanceCounts.get(a.session_id) ?? 0) + 1)
-        }
-        for (const n of notesRes.data ?? []) {
-          recentNotesCountMap.set(n.session_id, (recentNotesCountMap.get(n.session_id) ?? 0) + 1)
-        }
-        for (const a of assessmentsRes.data ?? []) {
-          recentAssessmentCountMap.set(a.session_id, (recentAssessmentCountMap.get(a.session_id) ?? 0) + 1)
-        }
-        for (const m of materialsRes.data ?? []) {
-          recentMaterialsCountMap.set(m.session_id, (recentMaterialsCountMap.get(m.session_id) ?? 0) + 1)
-        }
+        const checks = await Promise.all(tutorRecentSessions.map(s => getSessionCompletionStatus(s.id)))
+        tutorRecentSessions.forEach((s, i) => {
+          const check = checks[i]
+          if (check) recentCompletionMap.set(s.id, check)
+        })
       }
 
       // Historical class session stats
@@ -278,12 +285,22 @@ export default async function UserDetailPage({
       // Fetch recent sessions even if no classes
       const { data } = await admin
         .from('sessions')
-        .select('id, class_id, scheduled_at, duration_minutes, status')
+        .select('id, class_id, scheduled_at, duration_minutes, status, payroll_status, payroll_rejection_reason, payroll_tutor_note')
         .eq('tutor_id', userId)
         .eq('status', 'completed')
+        .gte('scheduled_at', monthStart)
+        .lt('scheduled_at', monthEnd)
         .order('scheduled_at', { ascending: false })
-        .limit(5) as unknown as { data: TutorSessionRow[] | null }
+        .limit(100) as unknown as { data: TutorSessionRow[] | null }
       tutorRecentSessions = data ?? []
+
+      if (tutorRecentSessions.length > 0) {
+        const checks = await Promise.all(tutorRecentSessions.map(s => getSessionCompletionStatus(s.id)))
+        tutorRecentSessions.forEach((s, i) => {
+          const check = checks[i]
+          if (check) recentCompletionMap.set(s.id, check)
+        })
+      }
     }
   }
 
@@ -583,7 +600,14 @@ export default async function UserDetailPage({
 
               {/* Tab: Jadwal */}
               {tab === 'jadwal' && (
-                schedDays.length === 0 ? (
+                <div>
+                <div className="flex items-center justify-between px-5 pt-5 pb-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Kelas — {formatMonth(selectedMonth)}
+                  </p>
+                  <MonthFilter options={monthOptions} value={selectedMonth} />
+                </div>
+                {schedDays.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-sm text-gray-400 mb-2">Belum ada ketersediaan atau jadwal kelas.</p>
                     <Link href={`/admin/users/${userId}/edit`} className="text-sm text-blue-600 hover:underline">
@@ -820,48 +844,40 @@ export default async function UserDetailPage({
                       )}
                     </div>
                   )
-                })()
+                })()}
+                </div>
               )}
 
               {/* Tab: Sesi */}
               {tab === 'sesi' && (
-                tutorRecentSessions.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-10">Belum ada sesi terlaksana.</p>
-                ) : (
-                  <div className="overflow-x-auto">
+                <div>
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Sesi — {formatMonth(selectedMonth)}
+                    </p>
+                    <MonthFilter options={monthOptions} value={selectedMonth} />
+                  </div>
+                  {tutorRecentSessions.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-10">Belum ada sesi terlaksana di bulan ini.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                           <th className="pl-5 pr-2 py-3 text-center w-8">#</th>
                           <th className="px-4 py-3 text-left">Tanggal</th>
                           <th className="px-4 py-3 text-left">Kelas</th>
-                          <th className="px-4 py-3 text-left hidden sm:table-cell">Status</th>
-                          <th className="pr-5 pl-4 py-3 text-left">Ketuntasan</th>
+                          <th className="px-4 py-3 text-left">Ketuntasan</th>
+                          <th className="pr-5 pl-4 py-3 text-left hidden sm:table-cell">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {tutorRecentSessions.map((s, idx) => {
-                          const hasTopic = !!s.topic && (s.selected_cp_ids ?? []).length > 0
-                          const hasPresensi = (recentAttendanceCounts.get(s.id) ?? 0) > 0
-                          const hasCatatan = (recentNotesCountMap.get(s.id) ?? 0) > 0
-                          const hasMateri = (recentMaterialsCountMap.get(s.id) ?? 0) > 0
-                          const hasAsesmen = (recentAssessmentCountMap.get(s.id) ?? 0) > 0
-                          const completedCount = [hasTopic, hasPresensi, hasCatatan, hasMateri, hasAsesmen].filter(Boolean).length
-                          const sDate = new Date(s.scheduled_at)
-                          const sEnd = new Date(sDate.getTime() + s.duration_minutes * 60_000)
-                          const nowTs = new Date()
-                          const effStatus = (s.status === 'scheduled' || s.status === 'ongoing')
-                            ? nowTs < sDate ? 'scheduled' : nowTs <= sEnd ? 'ongoing' : 'overdue'
-                            : s.status
-                          const displayStatus = effStatus === 'completed' && completedCount < 5 ? 'overdue' : effStatus
-                          const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-                            completed: { label: 'Selesai',       cls: 'bg-green-100 text-green-700' },
-                            scheduled: { label: 'Terjadwal',     cls: 'bg-blue-100 text-blue-700' },
-                            ongoing:   { label: 'Berlangsung',   cls: 'bg-yellow-100 text-yellow-700' },
-                            overdue:   { label: 'Belum lengkap', cls: 'bg-orange-100 text-orange-700' },
-                            cancelled: { label: 'Dibatalkan',    cls: 'bg-red-100 text-red-600' },
-                          }
-                          const statusInfo = STATUS_LABEL[displayStatus] ?? { label: displayStatus, cls: 'bg-gray-100 text-gray-500' }
+                          const check = recentCompletionMap.get(s.id)
+                          const completedCount = check
+                            ? [check.hasTopic, check.hasAllAttendance, check.hasAllNotes, check.hasMaterials, check.hasAssessments].filter(Boolean).length
+                            : 0
+                          const canReview = check?.canComplete ?? false
                           const subjectName = classSubjectMap.get(s.class_id)
                           return (
                             <tr
@@ -882,14 +898,7 @@ export default async function UserDetailPage({
                                   {subjectName && <p className="text-xs text-gray-400">{subjectName}</p>}
                                 </Link>
                               </td>
-                              <td className="px-4 py-3 hidden sm:table-cell">
-                                <Link href={`/admin/sessions/${s.id}`} className="block">
-                                  <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${statusInfo.cls}`}>
-                                    {statusInfo.label}
-                                  </span>
-                                </Link>
-                              </td>
-                              <td className="pr-5 pl-4 py-3">
+                              <td className="px-4 py-3">
                                 <Link href={`/admin/sessions/${s.id}`} className="flex items-center gap-2">
                                   <span className={`text-sm font-semibold ${completedCount === 5 ? 'text-green-600' : completedCount >= 3 ? 'text-yellow-600' : 'text-red-500'}`}>
                                     {completedCount}/5
@@ -897,13 +906,35 @@ export default async function UserDetailPage({
                                   <span className="text-xs text-gray-400">selesai</span>
                                 </Link>
                               </td>
+                              <td className="pr-5 pl-4 py-3 hidden sm:table-cell">
+                                <Link href={`/admin/sessions/${s.id}`} className="block space-y-1">
+                                  {canReview ? (
+                                    <>
+                                      <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${PAYROLL_BADGE[s.payroll_status]?.cls ?? PAYROLL_BADGE.pending.cls}`}>
+                                        {PAYROLL_BADGE[s.payroll_status]?.label ?? PAYROLL_BADGE.pending.label}
+                                      </span>
+                                      {s.payroll_status === 'rejected' && s.payroll_rejection_reason && (
+                                        <p className="text-xs text-gray-400 italic max-w-[220px]">{s.payroll_rejection_reason}</p>
+                                      )}
+                                      {s.payroll_status === 'pending' && s.payroll_tutor_note && (
+                                        <p className="text-xs text-gray-400 italic max-w-[220px]">Ada pengajuan peninjauan ulang</p>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="inline-flex text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                                      Belum lengkap
+                                    </span>
+                                  )}
+                                </Link>
+                              </td>
                             </tr>
                           )
                         })}
                       </tbody>
                     </table>
-                  </div>
-                )
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Tab: Slip Gaji */}
@@ -1236,7 +1267,7 @@ export default async function UserDetailPage({
                       <span className="text-sm font-semibold text-gray-800">{totalActiveStudents}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">Sesi bulan ini</span>
+                      <span className="text-sm text-gray-500">Sesi {formatMonth(selectedMonth)}</span>
                       <span className="text-sm font-semibold text-gray-800">{sessionsThisMonth}</span>
                     </div>
                   </div>

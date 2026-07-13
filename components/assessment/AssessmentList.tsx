@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { createAssessment, submitGrades } from '@/lib/actions/assessments'
 
 type CreateAction = (sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type SubmitGradesAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 type DeleteAction = (assessmentId: string, sessionId: string) => Promise<{ error?: string; success?: boolean }>
+type UpdateAction = (assessmentId: string, sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
 
 interface AssessmentItem {
   id: string
@@ -61,6 +62,7 @@ export default function AssessmentList({
   createAction = createAssessment,
   submitGradesAction = submitGrades,
   deleteAction,
+  updateAction,
   subjectName,
   grade,
   topic,
@@ -72,6 +74,7 @@ export default function AssessmentList({
   createAction?: CreateAction
   submitGradesAction?: SubmitGradesAction
   deleteAction?: DeleteAction
+  updateAction?: UpdateAction
   subjectName?: string | null
   grade?: number | null
   topic?: string | null
@@ -85,6 +88,33 @@ export default function AssessmentList({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const [grades, setGrades] = useState<Record<string, Record<string, { score: string; feedback: string }>>>({})
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editLinkUrl, setEditLinkUrl] = useState('')
+  const [editMaxScore, setEditMaxScore] = useState(100)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const knownIdsRef = useRef<Set<string>>(new Set(initialAssessments.map(a => a.id)))
+
+  useEffect(() => {
+    const newIds = initialAssessments.map(a => a.id).filter(id => !knownIdsRef.current.has(id))
+    if (newIds.length > 0) {
+      setExpandedIds(prev => new Set([...prev, ...newIds]))
+    }
+    knownIdsRef.current = new Set(initialAssessments.map(a => a.id))
+  }, [initialAssessments])
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpenId) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpenId])
 
   function getGrade(assessmentId: string, studentId: string) {
     return grades[assessmentId]?.[studentId] ?? {
@@ -165,6 +195,39 @@ export default function AssessmentList({
     })
   }
 
+  function startEditing(assessment: AssessmentItem) {
+    setEditingId(assessment.id)
+    setEditTitle(assessment.title)
+    setEditDescription(assessment.description ?? '')
+    setEditLinkUrl(assessment.link_url ?? '')
+    setEditMaxScore(assessment.max_score)
+  }
+
+  function handleSaveEdit(assessment: AssessmentItem) {
+    if (!updateAction) return
+    const title = editTitle.trim()
+    if (!title) return
+
+    let linkUrl: string | null = editLinkUrl.trim() || null
+    if (linkUrl && !/^https?:\/\//i.test(linkUrl)) linkUrl = `https://${linkUrl}`
+
+    startTransition(async () => {
+      const result = await updateAction(assessment.id, sessionId, {
+        title,
+        description: editDescription.trim() || undefined,
+        max_score: editMaxScore,
+        due_at: assessment.due_at ?? null,
+        link_url: linkUrl,
+      })
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setError('')
+        setEditingId(null)
+      }
+    })
+  }
+
   const gradedCountByAssessment = (assessmentId: string) =>
     results.filter(r => r.assessment_id === assessmentId && r.score !== null).length
 
@@ -175,67 +238,157 @@ export default function AssessmentList({
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Daftar Asesmen</p>
           <div className="space-y-2">
           {initialAssessments.map(assessment => (
-            <div key={assessment.id} className="border border-slate-200 rounded-xl overflow-hidden">
+            <div key={assessment.id} className="border border-slate-200 rounded-xl">
               <div
-                className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-blue-50/50"
+                className={`flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-blue-50/50 rounded-xl ${editingId !== assessment.id && expandedIds.has(assessment.id) ? 'rounded-b-none' : ''}`}
                 onClick={() => toggleExpanded(assessment.id)}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{assessment.title}</p>
-                  {assessment.description && (
-                    <p className="text-xs text-gray-500 mt-0.5">{assessment.description}</p>
+                  {editingId === assessment.id ? (
+                    <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Judul Asesmen</label>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={e => setEditTitle(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Escape') setEditingId(null) }}
+                          autoFocus
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Deskripsi <span className="text-gray-400">(opsional)</span></label>
+                        <textarea
+                          value={editDescription}
+                          onChange={e => setEditDescription(e.target.value)}
+                          rows={2}
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(opsional)</span></label>
+                        <input
+                          type="url"
+                          value={editLinkUrl}
+                          onChange={e => setEditLinkUrl(e.target.value)}
+                          placeholder="https://forms.google.com/..."
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-xs text-gray-600 shrink-0">Skor Maksimal:</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={1000}
+                          value={editMaxScore}
+                          onChange={e => setEditMaxScore(Number(e.target.value))}
+                          className="w-24 px-2 py-1 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => handleSaveEdit(assessment)}
+                          disabled={isPending || !editTitle.trim()}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                        >
+                          {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          disabled={isPending}
+                          className="px-4 py-2 border border-slate-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-gray-900">{assessment.title}</p>
+                      {assessment.description && (
+                        <p className="text-xs text-gray-500 mt-0.5">{assessment.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-1">
+                        {(() => {
+                          const graded = gradedCountByAssessment(assessment.id)
+                          const ungraded = students.length - graded
+                          return (
+                            <span className={`text-xs font-medium ${ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
+                              {ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
+                            </span>
+                          )
+                        })()}
+                        {assessment.link_url && (
+                          <a
+                            href={assessment.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Buka link soal
+                          </a>
+                        )}
+                      </div>
+                    </>
                   )}
-                  <div className="flex items-center gap-3 mt-1">
-                    {(() => {
-                      const graded = gradedCountByAssessment(assessment.id)
-                      const ungraded = students.length - graded
-                      return (
-                        <span className={`text-xs font-medium ${ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
-                          {ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
-                        </span>
-                      )
-                    })()}
-                    {assessment.link_url && (
-                      <a
-                        href={assessment.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                        Buka link soal
-                      </a>
-                    )}
-                    {deleteAction && (
-                      <button
-                        onClick={e => { e.stopPropagation(); handleDelete(assessment.id) }}
-                        disabled={isPending}
-                        className="text-xs text-gray-400 hover:text-red-500 transition-colors inline-flex items-center gap-1"
-                        title="Hapus asesmen"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Hapus
-                      </button>
-                    )}
-                  </div>
                 </div>
-                <div className="shrink-0 ml-3">
-                  <svg
-                    className={`w-4 h-4 text-gray-400 transition-transform ${expandedIds.has(assessment.id) ? 'rotate-180' : ''}`}
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                <div className="shrink-0 ml-3 flex items-center gap-1">
+                  {editingId !== assessment.id && (updateAction || deleteAction) && (
+                    <div className="relative" ref={menuOpenId === assessment.id ? menuRef : undefined}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === assessment.id ? null : assessment.id) }}
+                        className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        title="Opsi asesmen"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                      </button>
+                      {menuOpenId === assessment.id && (
+                        <div
+                          className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg ring-1 ring-gray-900/10 py-1 z-10"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {updateAction && (
+                            <button
+                              onClick={() => { startEditing(assessment); setMenuOpenId(null) }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                            >
+                              Edit asesmen
+                            </button>
+                          )}
+                          {deleteAction && (
+                            <button
+                              onClick={() => { handleDelete(assessment.id); setMenuOpenId(null) }}
+                              disabled={isPending}
+                              className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50"
+                            >
+                              Hapus
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {editingId !== assessment.id && (
+                    <svg
+                      className={`w-4 h-4 text-gray-400 transition-transform ${expandedIds.has(assessment.id) ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
                 </div>
               </div>
 
-              {expandedIds.has(assessment.id) && (
-                <div className="border-t border-slate-200 px-5 py-4">
+              {editingId !== assessment.id && expandedIds.has(assessment.id) && (
+                <div className="border-t border-slate-200 px-5 py-4 rounded-b-xl">
                   <table className="w-full text-sm mb-4">
                     <thead>
                       <tr className="text-xs text-gray-400 border-b border-slate-200">
@@ -345,13 +498,28 @@ export default function AssessmentList({
               />
             </div>
             {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-            <button
-              onClick={handleCreateAssessment}
-              disabled={isPending || !newTitle.trim()}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
-            >
-              {isPending ? 'Menyimpan...' : 'Simpan'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCreateAssessment}
+                disabled={isPending || !newTitle.trim()}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+              >
+                {isPending ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreate(false)
+                  setNewDescription('')
+                  setNewMaxScore(100)
+                  setNewLinkUrl('')
+                  setError('')
+                }}
+                disabled={isPending}
+                className="px-4 py-2 border border-slate-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       ) : (

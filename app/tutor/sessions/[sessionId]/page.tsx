@@ -7,13 +7,18 @@ import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
 import MaterialUploader from '@/components/materials/MaterialUploader'
 import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
-import { createAssessment, submitGrades } from '@/lib/actions/assessments'
+import { createAssessment, submitGrades, deleteAssessment, updateAssessment } from '@/lib/actions/assessments'
 import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
 import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
+import RequestPayrollReReview from '@/components/tutor/RequestPayrollReReview'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import type { AttendanceStatus } from '@/lib/types/database'
+
+function formatPayrollTimestamp(iso: string): string {
+  return new Date(iso).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+}
 
 type SessionDetail = {
   id: string
@@ -27,6 +32,11 @@ type SessionDetail = {
   curriculum_topic_id: string | null
   selected_cp_ids: string[] | null
   cp_urls: Record<string, string> | null
+  payroll_status: string
+  payroll_rejection_reason: string | null
+  payroll_reviewed_at: string | null
+  payroll_tutor_note: string | null
+  payroll_tutor_note_at: string | null
   classes: { name: string; level: string | null } | null
   subjects: { name: string } | null
 }
@@ -43,7 +53,7 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, classes(name, level), subjects(name), tutor_id')
+    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, payroll_status, payroll_rejection_reason, payroll_reviewed_at, payroll_tutor_note, payroll_tutor_note_at, classes(name, level), subjects(name), tutor_id')
     .eq('id', sessionId)
     .single() as { data: (SessionDetail & { tutor_id: string }) | null; error: unknown }
 
@@ -83,7 +93,7 @@ export default async function SessionPage({
       .eq('session_id', sessionId),
     supabase
       .from('performance_notes')
-      .select('student_id, body, template_id')
+      .select('student_id, category, body, template_id')
       .eq('session_id', sessionId),
     supabase
       .from('performance_note_templates')
@@ -183,7 +193,11 @@ export default async function SessionPage({
   if (freshSession) session.status = freshSession.status
 
   const attendanceMap = Object.fromEntries(attendances.map(a => [a.student_id, a]))
-  const noteMap = Object.fromEntries(existingNotes.map(n => [n.student_id, n]))
+  const notesByStudent: Record<string, Record<string, { body: string; template_id: string | null }>> = {}
+  for (const n of existingNotes) {
+    if (!notesByStudent[n.student_id]) notesByStudent[n.student_id] = {}
+    notesByStudent[n.student_id][n.category] = { body: n.body, template_id: n.template_id }
+  }
 
   const students = enrolledStudents.map(cs => {
     const profile = (cs.profiles as unknown as { id: string; full_name: string } | null)
@@ -193,7 +207,7 @@ export default async function SessionPage({
       full_name: profile?.full_name ?? 'Siswa',
       currentStatus: (attendanceMap[cs.student_id]?.status ?? null) as AttendanceStatus | null,
       attendanceNotes: attendanceMap[cs.student_id]?.notes ?? '',
-      existingNote: noteMap[sid] ?? null,
+      existingNotes: notesByStudent[sid] ?? {},
     }
   })
 
@@ -267,6 +281,8 @@ export default async function SessionPage({
               saveNoteAction={savePerformanceNote}
               createAssessmentAction={createAssessment}
               submitGradesAction={submitGrades}
+              deleteAssessmentAction={deleteAssessment}
+              updateAssessmentAction={updateAssessment}
               deleteMaterialAction={deleteMaterial}
               signedUrlAction={getSignedUrl}
             />
@@ -288,7 +304,7 @@ export default async function SessionPage({
           {completionCheck && session.status !== 'cancelled' && (
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Syarat Penyelesaian Otomatis
+                Kelengkapan Jurnal
               </p>
               <div className="space-y-1.5">
                 {[
@@ -296,7 +312,7 @@ export default async function SessionPage({
                   { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
-                  { label: `Asesmen & Nilai (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
+                  { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.assessmentsCount * completionCheck.studentCount})`, ok: completionCheck.hasAssessments },
                 ].map(({ label, ok }) => (
                   <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
                     {ok
@@ -310,12 +326,71 @@ export default async function SessionPage({
             </div>
           )}
 
+          {session.status === 'completed' && (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Status Penyelesaian Sesi
+              </p>
+
+              {completionCheck?.canComplete && session.payroll_status === 'pending' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide mb-1">
+                    Menunggu Review
+                  </p>
+                  <p className="text-xs text-yellow-700">
+                    Sesi ini sudah lengkap dan sedang menunggu admin mengecek kelayakannya untuk perhitungan gaji.
+                  </p>
+                  {session.payroll_tutor_note && (
+                    <div className="bg-white/70 border border-yellow-200/70 rounded-lg p-3 mt-2">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">Catatan Anda</p>
+                      <p className="text-xs text-gray-700">{session.payroll_tutor_note}</p>
+                      {session.payroll_tutor_note_at && (
+                        <p className="text-xs text-gray-400 mt-1">{formatPayrollTimestamp(session.payroll_tutor_note_at)}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {session.payroll_status === 'approved' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">
+                    Disetujui
+                  </p>
+                  <p className="text-xs text-green-700">
+                    Sesi ini sudah disetujui admin dan masuk ke perhitungan gaji.
+                  </p>
+                  {session.payroll_reviewed_at && (
+                    <p className="text-xs text-gray-400 mt-1">{formatPayrollTimestamp(session.payroll_reviewed_at)}</p>
+                  )}
+                </div>
+              )}
+
+              {session.payroll_status === 'rejected' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">
+                    Ditolak
+                  </p>
+                  <p className="text-xs text-red-700">
+                    <span className="font-semibold">Catatan Perbaikan:</span>{' '}
+                    {session.payroll_rejection_reason ?? 'Admin menolak sesi ini untuk perhitungan gaji.'}
+                  </p>
+                  {session.payroll_reviewed_at && (
+                    <p className="text-xs text-gray-400 mt-1">{formatPayrollTimestamp(session.payroll_reviewed_at)}</p>
+                  )}
+                  <RequestPayrollReReview sessionId={sessionId} />
+                </div>
+              )}
+            </div>
+          )}
+
           {session.status !== 'cancelled' && (
             <SessionChangeRequestPanel
               sessionId={sessionId}
               existingRequest={sessionChangeRequest}
               tutors={otherTutors ?? []}
               currentTutorName={tutorName}
+              isPast={Date.now() > date.getTime() + session.duration_minutes * 60_000}
             />
           )}
         </div>
