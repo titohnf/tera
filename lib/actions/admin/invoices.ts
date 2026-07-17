@@ -270,19 +270,22 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
 
   const [{ data: student }, { data: cls }] = await Promise.all([
     ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
-    ctx.admin.from('classes').select('name, level, class_type, start_date, end_date').eq('id', classId).single(),
+    ctx.admin.from('classes').select('name, level, class_type, jenis, start_date, end_date').eq('id', classId).single(),
   ])
 
   if (!student) return { error: 'Siswa tidak ditemukan' }
   if (!cls) return { error: 'Kelas tidak ditemukan' }
 
-  const { data: rates } = await ctx.admin
+  const billingJenis = (cls as any).jenis === 'reguler' ? 'Reguler' : (cls as any).jenis === 'fokus' ? 'Fokus' : null
+
+  const { data: rates } = billingJenis ? await ctx.admin
     .from('billing_rates')
     .select('amount, jenis, billing_rate_periods!inner(is_active)')
     .eq('class_type', (cls as any).class_type)
     .eq('jenjang', (cls as any).level)
+    .eq('jenis', billingJenis)
     .eq('billing_rate_periods.is_active', true)
-    .limit(1) as any
+    .limit(1) as any : { data: [] as any[] }
 
   const rate = rates?.[0]
   const amount = rate ? Number(rate.amount) : 0
@@ -581,14 +584,14 @@ export async function generateDraftInvoices(
       student_id,
       class_id,
       profiles!student_id(full_name, parent_name),
-      classes!class_id(name, level, class_type, start_date, end_date)
+      classes!class_id(name, level, class_type, jenis, start_date, end_date)
     `)
     .eq('is_active', true) as unknown as {
       data: {
         student_id: string
         class_id: string
         profiles: { full_name: string; parent_name: string | null } | null
-        classes: { name: string; level: string | null; class_type: string | null; start_date: string | null; end_date: string | null } | null
+        classes: { name: string; level: string | null; class_type: string | null; jenis: string | null; start_date: string | null; end_date: string | null } | null
       }[] | null
     }
 
@@ -671,9 +674,11 @@ export async function generateDraftInvoices(
     rateMap.set(`${r.class_type}|${r.jenjang}|${r.jenis}`, r.amount)
   }
 
-  function getRate(classType: string | null, jenjang: string | null): number {
+  function getRate(classType: string | null, jenjang: string | null, jenis: string | null): number {
     if (!classType || !jenjang) return 0
-    return rateMap.get(`${classType}|${jenjang}|Reguler`) ?? rateMap.get(`${classType}|${jenjang}|Fokus`) ?? 0
+    const billingJenis = jenis === 'reguler' ? 'Reguler' : jenis === 'fokus' ? 'Fokus' : null
+    if (!billingJenis) return 0
+    return rateMap.get(`${classType}|${jenjang}|${billingJenis}`) ?? 0
   }
 
   const toInsert: object[] = []
@@ -699,7 +704,7 @@ export async function generateDraftInvoices(
       const sessionCount = sessionCountByClass.get(e.class_id) ?? 0
       if (sessionCount === 0) { skipped++; continue } // no sessions planned, skip
 
-      const ratePerSession = getRate(cls?.class_type ?? null, cls?.level ?? null)
+      const ratePerSession = getRate(cls?.class_type ?? null, cls?.level ?? null, cls?.jenis ?? null)
       const description = `Privat${cls?.level ? ` ${cls.level}` : ''} — ${sessionCount} pertemuan`
       lineItems = [{ description, months: sessionCount, amount: ratePerSession, is_deduction: false }]
       totalDue = sessionCount * ratePerSession
@@ -723,7 +728,7 @@ export async function generateDraftInvoices(
         totalDue = remaining
       } else {
         // First invoice: total for full enrollment period
-        const amount = getRate(cls?.class_type ?? null, cls?.level ?? null)
+        const amount = getRate(cls?.class_type ?? null, cls?.level ?? null, cls?.jenis ?? null)
         const months = cls?.start_date && cls?.end_date
           ? monthsBetween(cls.start_date, cls.end_date)
           : 1

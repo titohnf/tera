@@ -16,6 +16,7 @@ interface ClassItem {
   name: string
   level: string | null
   class_type: string | null
+  jenis: string | null
   start_date: string | null
   end_date: string | null
 }
@@ -118,9 +119,10 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
     const months =
       cls.start_date && cls.end_date ? monthsBetween(cls.start_date, cls.end_date) : 1
 
-    const rate = billingRates.find(
-      r => r.class_type === cls.class_type && r.jenjang === cls.level
-    )
+    const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
+    const rate = billingJenis
+      ? billingRates.find(r => r.class_type === cls.class_type && r.jenjang === cls.level && r.jenis === billingJenis)
+      : undefined
 
     const typeLabel = cls.class_type === 'private' ? 'Privat' : 'Grup'
     const description = [typeLabel, cls.level, rate?.jenis].filter(Boolean).join(' ')

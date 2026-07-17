@@ -1,13 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import Link from 'next/link'
-import { computeSalary } from '@/lib/salary'
-import DashboardAlerts from '@/components/tutor/DashboardAlerts'
-import type { SwapRequestAlert, ResolvedNoticeAlert, SwapRejectedNoticeAlert } from '@/components/tutor/DashboardAlerts'
+import { computeSalary, buildRateMap } from '@/lib/salary'
 import type { SessionRow, SalarySchemeRow, SessionPaymentRow, AttendanceRow } from '@/lib/types/database'
 
 type SessionWithClass = SessionRow & { classes: { name: string; level: string | null } | null }
-type SessionWithClassName = SessionRow & { classes: { name: string } | null }
+type SessionWithClassName = SessionRow & { classes: { name: string; class_type: string | null; level: string | null; jenis: string | null } | null }
+type SessionRate = { class_type: string; jenjang: string; jenis: string; rate_per_session: number }
 
 export default async function TutorDashboard() {
   const user = await getUser()
@@ -24,6 +23,7 @@ export default async function TutorDashboard() {
     { data: completedSessions },
     { data: schemes },
     { data: payments },
+    { data: activePeriod },
   ] = await Promise.all([
     supabase
       .from('sessions')
@@ -37,7 +37,7 @@ export default async function TutorDashboard() {
 
     supabase
       .from('sessions')
-      .select('id, scheduled_at, topic, status, class_id, classes(name)')
+      .select('id, scheduled_at, topic, status, class_id, classes(name, class_type, level, jenis)')
       .eq('tutor_id', user.id)
       .eq('status', 'completed')
       .gte('scheduled_at', startOfMonth) as unknown as Promise<{ data: SessionWithClassName[] | null }>,
@@ -52,69 +52,16 @@ export default async function TutorDashboard() {
       .select('*')
       .eq('tutor_id', user.id)
       .gte('created_at', startOfMonth) as unknown as Promise<{ data: SessionPaymentRow[] | null }>,
+
+    supabase.from('rate_periods').select('id').eq('is_active', true).limit(1).single(),
   ])
 
-  const [{ data: swapRequestsRaw }, { data: resolvedNoticesRaw }, { data: swapRejectedRaw }] = await Promise.all([
-    supabase
-      .from('session_change_requests')
-      .select('id, reason, sessions(scheduled_at, classes(name), subjects(name)), requester:profiles!requested_by(full_name)')
-      .eq('new_tutor_id', user.id)
-      .eq('status', 'pending')
-      .is('new_tutor_confirmed', null)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('session_change_requests')
-      .select('id, request_type, status, admin_note, sessions(classes(name), subjects(name))')
-      .eq('requested_by', user.id)
-      .in('status', ['approved', 'rejected'])
-      .is('acknowledged_at', null)
-      .order('reviewed_at', { ascending: true }),
-    supabase
-      .from('session_change_requests')
-      .select('id, admin_note, sessions(classes(name), subjects(name))')
-      .eq('new_tutor_id', user.id)
-      .eq('status', 'rejected')
-      .eq('new_tutor_confirmed', true)
-      .not('reviewed_by', 'is', null)
-      .is('new_tutor_acknowledged_at', null)
-      .order('reviewed_at', { ascending: true }),
-  ])
-
-  const swapRequests: SwapRequestAlert[] = ((swapRequestsRaw ?? []) as unknown as {
-    id: string; reason: string
-    sessions: { scheduled_at: string; classes: { name: string } | null; subjects: { name: string } | null } | null
-    requester: { full_name: string } | null
-  }[]).map(r => ({
-    id: r.id,
-    className: r.sessions?.classes?.name ?? 'Kelas',
-    subjectName: r.sessions?.subjects?.name ?? null,
-    scheduledAt: r.sessions?.scheduled_at ?? new Date().toISOString(),
-    requesterName: r.requester?.full_name ?? 'Tutor lain',
-    reason: r.reason,
-  }))
-
-  const resolvedNotices: ResolvedNoticeAlert[] = ((resolvedNoticesRaw ?? []) as unknown as {
-    id: string; request_type: 'cancel' | 'reschedule' | 'change_tutor'
-    status: 'approved' | 'rejected'; admin_note: string | null
-    sessions: { classes: { name: string } | null; subjects: { name: string } | null } | null
-  }[]).map(r => ({
-    id: r.id,
-    requestType: r.request_type,
-    status: r.status,
-    className: r.sessions?.classes?.name ?? 'Kelas',
-    subjectName: r.sessions?.subjects?.name ?? null,
-    adminNote: r.admin_note,
-  }))
-
-  const swapRejectedNotices: SwapRejectedNoticeAlert[] = ((swapRejectedRaw ?? []) as unknown as {
-    id: string; admin_note: string | null
-    sessions: { classes: { name: string } | null; subjects: { name: string } | null } | null
-  }[]).map(r => ({
-    id: r.id,
-    className: r.sessions?.classes?.name ?? 'Kelas',
-    subjectName: r.sessions?.subjects?.name ?? null,
-    adminNote: r.admin_note,
-  }))
+  const { data: activeRates } = activePeriod?.id
+    ? await (supabase
+        .from('session_rates')
+        .select('class_type, jenjang, jenis, rate_per_session')
+        .eq('period_id', activePeriod.id) as unknown as Promise<{ data: SessionRate[] | null }>)
+    : { data: [] as SessionRate[] }
 
   const sessionIds = (completedSessions ?? []).map(s => s.id)
   type AttendancePick = Pick<AttendanceRow, 'session_id' | 'status'>
@@ -134,13 +81,12 @@ export default async function TutorDashboard() {
     attendancesBySession,
     enrolledCountBySession: {},
     payments: payments ?? [],
+    rateMap: buildRateMap(activeRates ?? []),
   })
 
   return (
     <div>
       <h1 className="text-xl font-semibold text-gray-900 mb-6">Dashboard</h1>
-
-      <DashboardAlerts swapRequests={swapRequests} resolvedNotices={resolvedNotices} swapRejectedNotices={swapRejectedNotices} />
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <StatCard label="Sesi Bulan Ini" value={String(salaryReport.totalSessions)} sub="sesi selesai" color="blue" />

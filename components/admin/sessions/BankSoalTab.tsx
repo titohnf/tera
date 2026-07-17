@@ -15,9 +15,10 @@ interface Props {
   selectedCpIds: string[]
   cpRows: CpRow[]
   initialCpUrls: Record<string, string>
+  readOnly?: boolean
 }
 
-export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialCpUrls }: Props) {
+export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialCpUrls, readOnly = false }: Props) {
   const selectedCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
   const [urls, setUrls] = useState<Record<string, string>>(initialCpUrls)
   const [savedUrls, setSavedUrls] = useState<Record<string, string>>(initialCpUrls)
@@ -71,7 +72,8 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialC
                 value={url}
                 onChange={e => setUrl(cp.id, e.target.value)}
                 placeholder="https://..."
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"
               />
               {url && (
                 <a
@@ -93,19 +95,21 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialC
 
       {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={!isDirty || isPending}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-        >
-          {isPending ? 'Menyimpan...' : 'Simpan'}
-        </button>
-        {!isDirty && Object.values(savedUrls).some(Boolean) && (
-          <span className="text-xs text-green-600">Tersimpan</span>
-        )}
-      </div>
+      {!readOnly && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={save}
+            disabled={!isDirty || isPending}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {isPending ? 'Menyimpan...' : 'Simpan'}
+          </button>
+          {!isDirty && Object.values(savedUrls).some(Boolean) && (
+            <span className="text-xs text-green-600">Tersimpan</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -46,6 +46,8 @@ export async function approveSessionChangeRequest(requestId: string): Promise<{ 
   revalidatePath('/admin/session-requests')
   revalidatePath(`/tutor/sessions/${request.session_id}`)
   revalidatePath(`/admin/sessions/${request.session_id}`)
+  revalidatePath('/tutor', 'layout')
+  revalidatePath('/admin', 'layout')
   return {}
 }
 
@@ -75,5 +77,7 @@ export async function rejectSessionChangeRequest(requestId: string, adminNote: s
 
   revalidatePath('/admin/session-requests')
   revalidatePath(`/tutor/sessions/${request.session_id}`)
+  revalidatePath('/tutor', 'layout')
+  revalidatePath('/admin', 'layout')
   return {}
 }

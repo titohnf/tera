@@ -1,9 +1,49 @@
 import type { Session, SalaryScheme, Attendance, SessionPayment } from './types/database'
 
+export interface SessionRate {
+  class_type: string
+  jenjang: string
+  jenis: string
+  rate_per_session: number
+}
+
+export function buildRateMap(rates: SessionRate[]): Record<string, number> {
+  const map: Record<string, number> = {}
+  for (const r of rates) map[`${r.class_type}|${r.jenjang}|${r.jenis}`] = r.rate_per_session
+  return map
+}
+
+export function resolveAmounts(params: {
+  scheme: SalaryScheme | undefined
+  cls: { class_type?: string | null; level?: string | null; jenis?: string | null } | null
+  studentsPresent: number
+  rateMap: Record<string, number>
+}): { baseAmount: number; bonusAmount: number } {
+  const { scheme, cls, studentsPresent, rateMap } = params
+
+  let baseAmount = 0
+  if (scheme && scheme.base_amount > 0) {
+    baseAmount = scheme.base_amount
+  } else if (cls?.class_type && cls?.level && cls?.jenis) {
+    const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
+    baseAmount = billingJenis ? (rateMap[`${cls.class_type}|${cls.level}|${billingJenis}`] ?? 0) : 0
+  }
+
+  let bonusAmount = 0
+  if (scheme && scheme.bonus_type === 'student_count' && scheme.bonus_threshold !== null) {
+    if (studentsPresent >= scheme.bonus_threshold) {
+      bonusAmount = scheme.bonus_amount
+    }
+  }
+
+  return { baseAmount, bonusAmount }
+}
+
 export interface SalaryBreakdownItem {
   sessionId: string
   scheduledAt: string
   className: string
+  subject: string | null
   topic: string | null
   studentsPresent: number
   studentsEnrolled: number
@@ -12,6 +52,7 @@ export interface SalaryBreakdownItem {
   totalAmount: number
   paymentStatus: 'pending' | 'paid' | 'cancelled' | null
   paidAt: string | null
+  payrollStatus: string
 }
 
 export interface MonthlySummary {
@@ -34,15 +75,16 @@ export interface SalaryReport {
 }
 
 interface ComputeInput {
-  sessions: Array<Session & { classes: { name: string } }>
+  sessions: Array<Session & { classes: { name: string; class_type?: string | null; level?: string | null; jenis?: string | null }; subjects?: { name: string } | null; payroll_status?: string }>
   schemes: SalaryScheme[]
   attendancesBySession: Record<string, Attendance[]>
   enrolledCountBySession: Record<string, number>
   payments: SessionPayment[]
+  rateMap?: Record<string, number>
 }
 
 export function computeSalary(input: ComputeInput): SalaryReport {
-  const { sessions, schemes, attendancesBySession, enrolledCountBySession, payments } = input
+  const { sessions, schemes, attendancesBySession, enrolledCountBySession, payments, rateMap = {} } = input
 
   const schemeByClassId = Object.fromEntries(
     schemes.map(s => [s.class_id, s])
@@ -62,19 +104,18 @@ export function computeSalary(input: ComputeInput): SalaryReport {
       const studentsEnrolled = enrolledCountBySession[session.id] ?? 0
       const payment = paymentBySessionId[session.id] ?? null
 
-      const baseAmount = scheme?.base_amount ?? 0
-      let bonusAmount = 0
-
-      if (scheme && scheme.bonus_type === 'student_count' && scheme.bonus_threshold !== null) {
-        if (studentsPresent >= scheme.bonus_threshold) {
-          bonusAmount = scheme.bonus_amount
-        }
-      }
+      const { baseAmount, bonusAmount } = resolveAmounts({
+        scheme,
+        cls: session.classes,
+        studentsPresent,
+        rateMap,
+      })
 
       return {
         sessionId: session.id,
         scheduledAt: session.scheduled_at,
         className: session.classes?.name ?? '',
+        subject: session.subjects?.name ?? null,
         topic: session.topic,
         studentsPresent,
         studentsEnrolled,
@@ -83,6 +124,7 @@ export function computeSalary(input: ComputeInput): SalaryReport {
         totalAmount: payment?.total_amount ?? baseAmount + bonusAmount,
         paymentStatus: payment?.status ?? null,
         paidAt: payment?.paid_at ?? null,
+        payrollStatus: session.payroll_status ?? 'unavailable',
       }
     })
 

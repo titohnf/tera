@@ -4,10 +4,10 @@ import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/tutor/ClassFilters'
 import TeachingScheduleFilters from '@/components/tutor/TeachingScheduleFilters'
-import SessionStatusChips from '@/components/sessions/SessionStatusChips'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
+import { splitClassName } from '@/lib/format-class-name'
 
 type ClassRow = {
   id: string
@@ -18,7 +18,6 @@ type ClassRow = {
   status: string
   start_date: string | null
   end_date: string | null
-  scope: 'main' | 'substitute'
 }
 
 type CountRow = [{ count: number }]
@@ -33,6 +32,7 @@ type TeachingSessionRow = {
   topic: string | null
   payroll_status: string
   classes: { name: string; level: string | null } | null
+  subjects: { name: string } | null
   materials: CountRow
   assessments: CountRow
   attendances: CountRow
@@ -40,13 +40,14 @@ type TeachingSessionRow = {
 }
 
 const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
+  unavailable: { label: 'Belum Tersedia', cls: 'bg-gray-100 text-gray-500' },
   incomplete: { label: 'Belum Lengkap', cls: 'bg-orange-100 text-orange-700' },
   pending: { label: 'Menunggu Review', cls: 'bg-yellow-100 text-yellow-700' },
   approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
   rejected: { label: 'Ditolak', cls: 'bg-red-100 text-red-700' },
+  paid: { label: 'Dibayar', cls: 'bg-blue-100 text-blue-700' },
 }
 
-const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
 const TEACHING_PAGE_SIZE = 10
@@ -54,12 +55,13 @@ const TEACHING_PAGE_SIZE = 10
 export default async function TutorClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; scope?: string; range?: string; from?: string; to?: string; page?: string; compliance?: string; sessionStatus?: string }>
+  searchParams: Promise<{ status?: string; type?: string; q?: string; range?: string; from?: string; to?: string; page?: string; compliance?: string; sessionStatus?: string; payrollStatus?: string }>
 }) {
   const {
-    level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '', scope: scopeFilter = '',
+    status: statusFilter = '', type: typeFilter = '', q = '',
     range: teachingRange = '', from: teachingFrom = '', to: teachingTo = '',
     page: pageParam = '1', compliance: teachingCompliance = '', sessionStatus: sessionStatusFilter = '',
+    payrollStatus: payrollStatusFilter = '',
   } = await searchParams
   const user = await getUser()
   if (!user) return null
@@ -84,6 +86,7 @@ export default async function TutorClassesPage({
   const sessionFields = `
     id, class_id, scheduled_at, duration_minutes, location, status, topic, payroll_status,
     classes(name, level),
+    subjects(name),
     materials(count),
     assessments(count),
     attendances(count),
@@ -106,8 +109,13 @@ export default async function TutorClassesPage({
   const [
     { data: ownSessions },
     { data: pendingSwapRequests },
-    { data: mainClassesRaw },
-    { data: substituteSessions },
+    { data: ownedClassesRaw },
+    { data: paidPayslips },
+    // Classes where this tutor is officially assigned to teach a subject via
+    // class_slots but isn't classes.tutor_id (co-tutors on multi-subject
+    // classes, e.g. one tutor for Bahasa Indonesia, another for Matematika —
+    // classes.tutor_id is just whichever slot was entered first).
+    { data: assignedSlots },
   ] = await Promise.all([
     teachingQuery.limit(500) as unknown as Promise<{ data: TeachingSessionRow[] | null }>,
     // Sessions this tutor has agreed to take over but admin hasn't approved yet —
@@ -123,40 +131,56 @@ export default async function TutorClassesPage({
       .from('classes')
       .select(classFields)
       .eq('tutor_id', user.id)
-      .order('name') as unknown as Promise<{ data: Omit<ClassRow, 'scope'>[] | null }>,
+      .order('name') as unknown as Promise<{ data: ClassRow[] | null }>,
+    // A session counts as "Dibayar" once it's part of a payslip the admin has
+    // marked paid — payroll_status alone only reflects admin approval, not payout.
     admin
-      .from('sessions')
+      .from('payslips')
+      .select('line_items')
+      .eq('tutor_id', user.id)
+      .eq('status', 'paid') as unknown as Promise<{ data: { line_items: { sessionId: string }[] }[] | null }>,
+    admin
+      .from('class_slots')
       .select('class_id')
       .eq('tutor_id', user.id) as unknown as Promise<{ data: { class_id: string }[] | null }>,
   ])
 
+  const ownedClasses = ownedClassesRaw ?? []
+  const ownedClassIds = new Set(ownedClasses.map(c => c.id))
+  const assignedClassIds = [...new Set((assignedSlots ?? []).map(s => s.class_id))]
+    .filter(id => !ownedClassIds.has(id))
+
+  const { data: assignedClassesRaw } = assignedClassIds.length > 0
+    ? await admin.from('classes').select(classFields).in('id', assignedClassIds) as unknown as { data: ClassRow[] | null }
+    : { data: [] as ClassRow[] }
+
   const pendingSwapSessionIds = (pendingSwapRequests ?? []).map(r => r.session_id)
   const ownSessionIds = new Set((ownSessions ?? []).map(s => s.id))
   const newSwapIds = pendingSwapSessionIds.filter(id => !ownSessionIds.has(id))
+  const paidSessionIds = new Set(
+    (paidPayslips ?? []).flatMap(p => (p.line_items ?? []).map(li => li.sessionId))
+  )
 
-  const mainClasses = mainClassesRaw ?? []
+  const mainClasses = [...ownedClasses, ...(assignedClassesRaw ?? [])]
   const mainClassIds = new Set(mainClasses.map(c => c.id))
-  const substituteClassIds = [...new Set((substituteSessions ?? []).map(s => s.class_id))]
-    .filter(id => !mainClassIds.has(id))
 
-  // Batch 2: depends on batch 1's results, but the two queries here don't
-  // depend on each other.
+  // A session is a "Pengganti" session when it belongs to a class this tutor
+  // doesn't own as main tutor — covers both approved swaps and classes where
+  // they were assigned as a session-level substitute from the start. Those
+  // classes aren't listed in segmen Kelas (see allClasses below) — the tutor
+  // reaches class context (roster, session history) via this session instead.
+  function isSwappedSession(session: { class_id: string }): boolean {
+    return !mainClassIds.has(session.class_id)
+  }
+
+  // Batch 2: depends on batch 1's results.
   let swapQuery = admin.from('sessions').select(sessionFields).in('id', newSwapIds.length > 0 ? newSwapIds : [''])
   if (rangeStart) swapQuery = swapQuery.gte('scheduled_at', rangeStart.toISOString())
   if (rangeEnd) swapQuery = swapQuery.lte('scheduled_at', rangeEnd.toISOString())
 
-  const [{ data: pendingSwapSessionsRaw }, { data: substituteClassesRaw }] = await Promise.all([
-    newSwapIds.length > 0
-      ? (swapQuery as unknown as Promise<{ data: TeachingSessionRow[] | null }>)
-      : Promise.resolve({ data: [] as TeachingSessionRow[] }),
-    substituteClassIds.length > 0
-      ? admin
-          .from('classes')
-          .select(classFields)
-          .in('id', substituteClassIds)
-          .order('name') as unknown as Promise<{ data: Omit<ClassRow, 'scope'>[] | null }>
-      : Promise.resolve({ data: [] as Omit<ClassRow, 'scope'>[] }),
-  ])
+  const { data: pendingSwapSessionsRaw } = newSwapIds.length > 0
+    ? await (swapQuery as unknown as Promise<{ data: TeachingSessionRow[] | null }>)
+    : { data: [] as TeachingSessionRow[] }
   const pendingSwapSessions = pendingSwapSessionsRaw ?? []
 
   const teachingSessionsRaw = [...(ownSessions ?? []), ...pendingSwapSessions].sort((a, b) =>
@@ -167,10 +191,10 @@ export default async function TutorClassesPage({
 
   const teachingSessionIds = teachingSessionsRaw.map(s => s.id)
 
-  const allClasses: ClassRow[] = [
-    ...mainClasses.map(c => ({ ...c, scope: 'main' as const })),
-    ...(substituteClassesRaw ?? []).map(c => ({ ...c, scope: 'substitute' as const })),
-  ]
+  // Segmen Kelas only lists classes this tutor owns as main tutor — classes
+  // where they're only a session-level substitute don't count toward the
+  // Grup/Privat counters or show up as a row here.
+  const allClasses: ClassRow[] = mainClasses
   const classIds = allClasses.map(c => c.id)
 
   type StudentCountRow = { class_id: string }
@@ -183,7 +207,6 @@ export default async function TutorClassesPage({
     { data: teachingGradedData },
     { data: pendingRequestsRaw },
     { data: students },
-    { data: next },
     { data: completed },
     { data: slotsData },
     { data: tutorSlotsData },
@@ -211,19 +234,6 @@ export default async function TutorClassesPage({
           .in('class_id', classIds)
           .eq('is_active', true) as unknown as Promise<{ data: StudentCountRow[] | null }>
       : Promise.resolve({ data: [] as StudentCountRow[] }),
-    // Scoped to this tutor's own sessions — this "Sesi" column shows the
-    // tutor's involvement in the class, not the class's overall schedule
-    // (matters for substitute classes, where they only cover a subset).
-    classIds.length > 0
-      ? admin
-          .from('sessions')
-          .select('class_id, scheduled_at, status')
-          .in('class_id', classIds)
-          .eq('tutor_id', user.id)
-          .eq('status', 'scheduled')
-          .gte('scheduled_at', new Date().toISOString())
-          .order('scheduled_at', { ascending: true }) as unknown as Promise<{ data: SessionRow[] | null }>
-      : Promise.resolve({ data: [] as SessionRow[] }),
     classIds.length > 0
       ? admin
           .from('sessions')
@@ -274,7 +284,7 @@ export default async function TutorClassesPage({
     if (session.status === 'cancelled') return true
     const counts = getTeachingCounts(session)
     const hasTopic = !!counts.topic
-    const baseComplete = hasTopic && counts.hasMaterials && counts.hasAssessments
+    const baseComplete = hasTopic && counts.hasMaterials && counts.hasGradedAssessments
     if (session.status !== 'completed') return baseComplete
     return baseComplete && counts.hasAttendance && counts.hasNotes
   }
@@ -294,6 +304,21 @@ export default async function TutorClassesPage({
   } else if (sessionStatusFilter === 'cancelled') {
     teachingSessionsFiltered = teachingSessionsFiltered.filter(s => s.status === 'cancelled')
   }
+  if (payrollStatusFilter === 'unavailable') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(s => s.status !== 'completed')
+  } else if (payrollStatusFilter === 'paid') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(
+      s => s.status === 'completed' && s.payroll_status === 'approved' && paidSessionIds.has(s.id)
+    )
+  } else if (payrollStatusFilter === 'approved') {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(
+      s => s.status === 'completed' && s.payroll_status === 'approved' && !paidSessionIds.has(s.id)
+    )
+  } else if (payrollStatusFilter) {
+    teachingSessionsFiltered = teachingSessionsFiltered.filter(
+      s => s.status === 'completed' && s.payroll_status === payrollStatusFilter
+    )
+  }
 
   const teachingTotalCount = teachingSessionsFiltered.length
   const teachingTotalPages = Math.max(1, Math.ceil(teachingTotalCount / TEACHING_PAGE_SIZE))
@@ -306,7 +331,6 @@ export default async function TutorClassesPage({
   const stillCompleteMap = new Map(pendingReviewIds.map((id, i) => [id, pendingReviewChecks[i]?.canComplete ?? false]))
 
   const studentCounts = students ?? []
-  const nextSessions: SessionRow[] = next ?? []
   const completedSessions: SessionRow[] = completed ?? []
   const slots: SlotRow[] = slotsData ?? []
   const tutorSlots: SlotRow[] = tutorSlotsData ?? []
@@ -315,11 +339,6 @@ export default async function TutorClassesPage({
   const countByClass: Record<string, number> = {}
   for (const s of studentCounts) {
     countByClass[s.class_id] = (countByClass[s.class_id] ?? 0) + 1
-  }
-
-  const nextByClass: Record<string, SessionRow> = {}
-  for (const s of nextSessions) {
-    if (!nextByClass[s.class_id]) nextByClass[s.class_id] = s
   }
 
   const completedCountByClass: Record<string, number> = {}
@@ -356,25 +375,19 @@ export default async function TutorClassesPage({
     return { completed, target, pct }
   }
 
-  function fmtDate(iso: string) {
-    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-  }
-
   let filtered = allClasses
   if (q) {
     const lq = q.toLowerCase()
     filtered = filtered.filter(c => c.name.toLowerCase().includes(lq))
   }
-  if (levelFilter) filtered = filtered.filter(c => c.level === levelFilter)
   if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter)
   if (typeFilter === 'group') filtered = filtered.filter(c => c.class_type === 'group')
   else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
-  if (scopeFilter === 'main' || scopeFilter === 'substitute') filtered = filtered.filter(c => c.scope === scopeFilter)
 
-  const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
   const regularCount = allClasses.filter(c => c.class_type === 'group').length
   const privateCount = allClasses.filter(c => c.class_type === 'private').length
-  const hasFilter = !!(q || levelFilter || statusFilter || typeFilter || scopeFilter)
+  const completedSessionsCount = teachingSessionsRaw.filter(s => s.status === 'completed').length
+  const hasFilter = !!(q || statusFilter || typeFilter)
   const tableTitle = hasFilter
     ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
     : `${allClasses.length} Kelas`
@@ -382,15 +395,14 @@ export default async function TutorClassesPage({
   function teachingPageUrl(targetPage: number) {
     const params: Record<string, string> = {
       ...(q ? { q } : {}),
-      ...(levelFilter ? { level: levelFilter } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(typeFilter ? { type: typeFilter } : {}),
-      ...(scopeFilter ? { scope: scopeFilter } : {}),
       ...(teachingRange ? { range: teachingRange } : {}),
       ...(teachingFrom ? { from: teachingFrom } : {}),
       ...(teachingTo ? { to: teachingTo } : {}),
       ...(teachingCompliance ? { compliance: teachingCompliance } : {}),
       ...(sessionStatusFilter ? { sessionStatus: sessionStatusFilter } : {}),
+      ...(payrollStatusFilter ? { payrollStatus: payrollStatusFilter } : {}),
       ...(targetPage > 1 ? { page: String(targetPage) } : {}),
     }
     const qs = new URLSearchParams(params).toString()
@@ -401,7 +413,7 @@ export default async function TutorClassesPage({
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Kelas Saya</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Sesi Kelas</h1>
           <p className="text-sm text-gray-500 mt-1">Daftar kelas yang kamu ampu.</p>
         </div>
         <Link
@@ -415,10 +427,11 @@ export default async function TutorClassesPage({
         </Link>
       </div>
 
-      {allClasses.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+      {(allClasses.length > 0 || completedSessionsCount > 0) && (
+        <div className="grid grid-cols-3 gap-3">
           <MetricCard label="Grup" value={regularCount} />
           <MetricCard label="Privat" value={privateCount} />
+          <MetricCard label="Sesi Selesai" value={completedSessionsCount} />
         </div>
       )}
 
@@ -428,11 +441,8 @@ export default async function TutorClassesPage({
           {allClasses.length > 0 && (
             <ClassFilters
               q={q}
-              level={levelFilter}
               type={typeFilter}
               status={statusFilter}
-              scope={scopeFilter}
-              availableLevels={availableLevels}
             />
           )}
         </div>
@@ -462,21 +472,22 @@ export default async function TutorClassesPage({
                 {filtered.map(cls => {
                   const siswaCount = countByClass[cls.id] ?? 0
                   const progress = getProgress(cls)
-                  const next = nextByClass[cls.id]
 
                   return (
                     <tr key={cls.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/tutor/classes/${cls.id}`} className="block">
-                          <p className="font-medium text-gray-900 flex items-center gap-2">
-                            {cls.name}
-                            {cls.scope === 'substitute' && (
-                              <span className="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                                Pengganti
-                              </span>
-                            )}
-                          </p>
-                          {cls.level && <span className="text-sm text-gray-400">{cls.level}</span>}
+                          {(() => {
+                            const { semesterLabel, title } = splitClassName(cls.name)
+                            return (
+                              <>
+                                {semesterLabel && (
+                                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{semesterLabel}</p>
+                                )}
+                                <p className="font-medium text-gray-900">{title}</p>
+                              </>
+                            )
+                          })()}
                         </Link>
                       </td>
 
@@ -524,9 +535,6 @@ export default async function TutorClassesPage({
                           ) : (
                             <span className="text-sm text-gray-600">{progress.completed} sesi selesai</span>
                           )}
-                          <span className="block text-sm text-gray-400">
-                            Berikutnya: {next ? fmtDate(next.scheduled_at) : 'Belum ada'}
-                          </span>
                         </Link>
                       </td>
 
@@ -558,13 +566,14 @@ export default async function TutorClassesPage({
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Mengajar</h2>
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Informasi Sesi</h2>
           <TeachingScheduleFilters
             range={teachingRange}
             from={teachingFrom}
             to={teachingTo}
             compliance={teachingCompliance}
             sessionStatus={sessionStatusFilter}
+            payrollStatus={payrollStatusFilter}
           />
         </div>
 
@@ -576,7 +585,7 @@ export default async function TutorClassesPage({
           <div className="px-5 pb-5 space-y-2">
             {teachingSessions.map(session => {
               const date = new Date(session.scheduled_at)
-              const counts = getTeachingCounts(session)
+              const isComplete = isTeachingSessionComplete(session)
               const displayStatus = getSessionDisplayStatus(session.status, pendingRequestSessionIds.has(session.id))
               return (
                 <Link
@@ -597,34 +606,66 @@ export default async function TutorClassesPage({
                   <div className="w-px bg-gray-100 mx-4 shrink-0" />
 
                   <div className="min-w-0 flex-1 flex flex-col justify-center">
-                    <p className="text-sm font-semibold text-gray-900">{session.classes?.name ?? 'Kelas'}</p>
+                    {(() => {
+                      const { semesterLabel, title } = splitClassName(session.classes?.name ?? 'Kelas')
+                      return (
+                        <>
+                          {semesterLabel && (
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{semesterLabel}</p>
+                          )}
+                          <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            {title}
+                            {isSwappedSession(session) && (
+                              <span className="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                                Pengganti
+                              </span>
+                            )}
+                          </p>
+                        </>
+                      )
+                    })()}
                     <p className="text-xs text-gray-500 mt-1">
                       {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      {session.subjects?.name ? ` • ${session.subjects.name}` : ''}
                       {session.location ? ` • ${session.location}` : ''}
                       {session.topic ? ` • ${session.topic}` : ''}
                     </p>
-                    <SessionStatusChips status={session.status} counts={counts} />
                   </div>
 
                   <div className="w-px bg-gray-100 mx-4 shrink-0" />
 
-                  <div className="shrink-0 flex flex-col items-start justify-center px-1">
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Status Jadwal</p>
+                  <div className="w-32 shrink-0 flex flex-col items-start justify-center px-1">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Jadwal</p>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${displayStatus.color}`}>
                       {displayStatus.label}
                     </span>
                   </div>
 
-                  {session.status === 'completed' && (() => {
-                    const key = session.payroll_status === 'pending' && stillCompleteMap.get(session.id) === false
+                  <div className="w-px bg-gray-100 mx-4 shrink-0" />
+
+                  <div className="w-32 shrink-0 flex flex-col items-start justify-center px-1">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Kelengkapan</p>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
+                      isComplete ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {isComplete ? 'Lengkap' : 'Belum Lengkap'}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const key = session.status !== 'completed'
+                      ? 'unavailable'
+                      : session.payroll_status === 'pending' && stillCompleteMap.get(session.id) === false
                       ? 'incomplete'
+                      : session.payroll_status === 'approved' && paidSessionIds.has(session.id)
+                      ? 'paid'
                       : session.payroll_status
                     const badge = PAYROLL_BADGE[key] ?? PAYROLL_BADGE.pending
                     return (
                       <>
                         <div className="w-px bg-gray-100 mx-4 shrink-0" />
-                        <div className="shrink-0 flex flex-col items-start justify-center px-1">
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Status Payroll</p>
+                        <div className="w-32 shrink-0 flex flex-col items-start justify-center px-1">
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Payroll</p>
                           <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${badge.cls}`}>
                             {badge.label}
                           </span>

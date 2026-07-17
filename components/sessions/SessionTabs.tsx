@@ -90,6 +90,7 @@ interface CurriculumTopic {
 
 export default function SessionTabs({
   sessionId,
+  readOnlyReason,
   sessionStatus,
   topic,
   curriculumTopicId,
@@ -118,6 +119,7 @@ export default function SessionTabs({
   isAdmin,
 }: {
   sessionId: string
+  readOnlyReason?: 'not-tutor' | 'approved'
   sessionStatus: string
   topic: string | null
   curriculumTopicId: string | null
@@ -166,73 +168,92 @@ export default function SessionTabs({
         ))}
       </div>
 
-      {/* Presensi & Catatan */}
-      {activeTab === 'attendance' && (
-        <AttendanceAndNotes
-          sessionId={sessionId}
-          students={students}
-          templates={templates}
-          sessionStatus={sessionStatus}
-          submitAttendanceAction={submitAttendanceAction}
-          saveNoteAction={saveNoteAction}
-        />
+      {readOnlyReason && (
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 text-xs text-gray-500">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          {readOnlyReason === 'approved'
+            ? 'Mode lihat saja — sesi ini sudah disetujui admin dan tidak bisa diubah lagi.'
+            : 'Mode lihat saja — Anda bukan tutor yang mengajar sesi ini.'}
+        </div>
       )}
 
-      {/* Topik & Materi */}
-      {activeTab === 'materials' && (
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Topik Pembelajaran</p>
-          <SessionTopicEditor
+      <div>
+        {/* Presensi & Catatan */}
+        {activeTab === 'attendance' && (
+          <AttendanceAndNotes
             sessionId={sessionId}
-            initialTopicId={curriculumTopicId}
-            initialTopic={topic}
-            initialCpIds={selectedCpIds}
-            curriculumTopics={curriculumTopics}
-            hasSubject={hasSubject}
-            saveAction={saveTopicAction}
-            isAdmin={isAdmin}
+            students={students}
+            templates={templates}
+            sessionStatus={sessionStatus}
+            readOnly={!!readOnlyReason}
+            submitAttendanceAction={submitAttendanceAction}
+            saveNoteAction={saveNoteAction}
           />
+        )}
 
-          <div className="border-t border-slate-200 my-5" />
-
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Materi Pembelajaran</p>
-          {materialUploader}
-          <div className="mt-4">
-            <MaterialList
-              materials={materials}
+        {/* Topik & Materi */}
+        {activeTab === 'materials' && (
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Topik Pembelajaran</p>
+            <SessionTopicEditor
               sessionId={sessionId}
-              deleteAction={deleteMaterialAction}
-              signedUrlAction={signedUrlAction}
+              initialTopicId={curriculumTopicId}
+              initialTopic={topic}
+              initialCpIds={selectedCpIds}
+              curriculumTopics={curriculumTopics}
+              hasSubject={hasSubject}
+              saveAction={saveTopicAction}
+              isAdmin={isAdmin}
+              readOnly={!!readOnlyReason}
+            />
+
+            <div className="border-t border-slate-200 my-5" />
+
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Materi Pembelajaran</p>
+            {!readOnlyReason && materialUploader}
+            <div className="mt-4">
+              <MaterialList
+                materials={materials}
+                sessionId={sessionId}
+                readOnly={!!readOnlyReason}
+                deleteAction={deleteMaterialAction}
+                signedUrlAction={signedUrlAction}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Asesmen & Bank Soal */}
+        {activeTab === 'assessment' && (
+          <div className="space-y-6">
+            <AssessmentList
+              sessionId={sessionId}
+              assessments={assessments}
+              students={assessmentStudents}
+              results={results}
+              readOnly={!!readOnlyReason}
+              createAction={createAssessmentAction}
+              submitGradesAction={submitGradesAction}
+              deleteAction={deleteAssessmentAction}
+              updateAction={updateAssessmentAction}
+              subjectName={subjectName}
+              grade={grade}
+              topic={topic}
+            />
+            <div className="border-t border-slate-200" />
+            <BankSoalTab
+              sessionId={sessionId}
+              selectedCpIds={selectedCpIds ?? []}
+              cpRows={curriculumTopics}
+              initialCpUrls={cpUrls ?? {}}
+              readOnly={!!readOnlyReason}
             />
           </div>
-        </div>
-      )}
-
-      {/* Asesmen & Bank Soal */}
-      {activeTab === 'assessment' && (
-        <div className="space-y-6">
-          <AssessmentList
-            sessionId={sessionId}
-            assessments={assessments}
-            students={assessmentStudents}
-            results={results}
-            createAction={createAssessmentAction}
-            submitGradesAction={submitGradesAction}
-            deleteAction={deleteAssessmentAction}
-            updateAction={updateAssessmentAction}
-            subjectName={subjectName}
-            grade={grade}
-            topic={topic}
-          />
-          <div className="border-t border-slate-200" />
-          <BankSoalTab
-            sessionId={sessionId}
-            selectedCpIds={selectedCpIds ?? []}
-            cpRows={curriculumTopics}
-            initialCpUrls={cpUrls ?? {}}
-          />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

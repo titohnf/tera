@@ -4,7 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import SessionForm from '@/components/admin/sessions/SessionForm'
 import { createSession } from '@/lib/actions/admin/sessions'
-import { getSessionDisplayStatus } from '@/lib/session-status'
+const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
+  unavailable: { label: 'Belum Tersedia', cls: 'bg-gray-100 text-gray-500' },
+  pending: { label: 'Menunggu Review', cls: 'bg-yellow-100 text-yellow-700' },
+  approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Ditolak', cls: 'bg-red-100 text-red-700' },
+}
 
 type CountRow = [{ count: number }]
 
@@ -13,6 +18,7 @@ type SessionRow = {
   scheduled_at: string
   duration_minutes: number
   status: string
+  payroll_status: string
   location: string | null
   topic: string | null
   subjects: { name: string } | null
@@ -57,7 +63,6 @@ export default function ClassSessions({
   curriculumTopics?: CurriculumTopic[]
   studentGrade?: number | null
 }) {
-  const pendingSessionIdSet = new Set(pendingSessionIds ?? [])
   const [showForm, setShowForm] = useState(false)
 
   const totalSessions = sessions.length
@@ -138,14 +143,15 @@ export default function ClassSessions({
                 <th className="px-4 py-3 text-left">Tanggal</th>
                 <th className="px-4 py-3 text-left hidden sm:table-cell">Mapel / Topik</th>
                 <th className="px-4 py-3 text-left hidden md:table-cell">Tutor</th>
-                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Status Payroll</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sessions.map((session, idx) => {
                 const date = new Date(session.scheduled_at)
-                const displayStatus = getSessionDisplayStatus(session.status, pendingSessionIdSet.has(session.id))
+                const payrollKey = session.status !== 'completed' ? 'unavailable' : session.payroll_status
+                const payrollBadge = PAYROLL_BADGE[payrollKey] ?? PAYROLL_BADGE.pending
                 return (
                   <tr key={session.id} className="hover:bg-slate-50 transition-colors">
                     <td className="pl-6 pr-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>
@@ -174,8 +180,8 @@ export default function ClassSessions({
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/sessions/${session.id}`} className="block">
-                        <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${displayStatus.color}`}>
-                          {displayStatus.label}
+                        <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${payrollBadge.cls}`}>
+                          {payrollBadge.label}
                         </span>
                       </Link>
                     </td>

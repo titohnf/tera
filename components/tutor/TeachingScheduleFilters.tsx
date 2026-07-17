@@ -10,10 +10,11 @@ interface Props {
   to: string
   compliance: string
   sessionStatus: string
+  payrollStatus: string
 }
 
 const RANGE_OPTIONS = [
-  { key: '', label: 'Semua' },
+  { key: '', label: 'Semua Waktu' },
   { key: 'upcoming', label: 'Yang Akan Datang' },
   { key: 'past', label: 'Yang Sudah Berlangsung' },
   { key: 'custom', label: 'Custom' },
@@ -25,7 +26,18 @@ const COMPLIANCE_OPTIONS = [
   { key: 'incomplete', label: 'Belum Lengkap' },
 ]
 
-export default function TeachingScheduleFilters({ range, from, to, compliance, sessionStatus }: Props) {
+const PAYROLL_STATUS_OPTIONS = [
+  { key: '', label: 'Semua Payroll' },
+  { key: 'unavailable', label: 'Belum Tersedia' },
+  { key: 'pending', label: 'Menunggu Review' },
+  { key: 'approved', label: 'Disetujui' },
+  { key: 'paid', label: 'Dibayar' },
+  { key: 'rejected', label: 'Ditolak' },
+]
+
+export default function TeachingScheduleFilters({
+  range, from, to, compliance, sessionStatus, payrollStatus,
+}: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [customFrom, setCustomFrom] = useState(from)
@@ -38,6 +50,7 @@ export default function TeachingScheduleFilters({ range, from, to, compliance, s
       ...(customTo ? { to: customTo } : {}),
       ...(compliance ? { compliance } : {}),
       ...(sessionStatus ? { sessionStatus } : {}),
+      ...(payrollStatus ? { payrollStatus } : {}),
       ...overrides,
     }
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
@@ -88,12 +101,16 @@ export default function TeachingScheduleFilters({ range, from, to, compliance, s
         </div>
       )}
 
+      <select value={sessionStatus} onChange={e => go({ sessionStatus: e.target.value })} className={selectCls(!!sessionStatus)}>
+        {SESSION_DISPLAY_STATUS_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+      </select>
+
       <select value={compliance} onChange={e => go({ compliance: e.target.value })} className={selectCls(!!compliance)}>
         {COMPLIANCE_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
       </select>
 
-      <select value={sessionStatus} onChange={e => go({ sessionStatus: e.target.value })} className={selectCls(!!sessionStatus)}>
-        {SESSION_DISPLAY_STATUS_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+      <select value={payrollStatus} onChange={e => go({ payrollStatus: e.target.value })} className={selectCls(!!payrollStatus)}>
+        {PAYROLL_STATUS_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
       </select>
     </div>
   )

@@ -25,8 +25,10 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
   const classType = (formData.get('class_type') as string) || null
+  const jenis = (formData.get('jenis') as string)?.trim() || null
   const studentIds = formData.getAll('student_ids') as string[]
   const slotsJson = (formData.get('slots_json') as string) || '[]'
+  const fokusTypesJson = (formData.get('fokus_types') as string) || '[]'
   const startDate = (formData.get('start_date') as string) || null
   const endDate = (formData.get('end_date') as string) || null
   const durationMinutes = Number(formData.get('duration_minutes') ?? 90)
@@ -36,6 +38,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
 
   let slots: SlotInput[] = []
   try { slots = JSON.parse(slotsJson) } catch { return { error: 'Data slot tidak valid' } }
+  let fokusTypes: string[] = []
+  try { fokusTypes = JSON.parse(fokusTypesJson) } catch { fokusTypes = [] }
 
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
@@ -55,6 +59,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       tutor_id: primaryTutorId,
       level,
       class_type: classType,
+      jenis,
+      fokus_types: fokusTypes,
       base_price_per_session: 0,
       is_active: true,
       schedule_days: scheduleDays,
@@ -115,7 +121,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
 
     const rateMap = new Map<string, number>()
     for (const r of rates ?? []) rateMap.set(`${r.class_type}|${r.jenjang}|${r.jenis}`, r.amount)
-    const rateAmount = (rateMap.get(`${classType}|${level}|Reguler`) ?? rateMap.get(`${classType}|${level}|Fokus`) ?? 0)
+    const billingJenis = jenis === 'reguler' ? 'Reguler' : jenis === 'fokus' ? 'Fokus' : null
+    const rateAmount = billingJenis ? (rateMap.get(`${classType}|${level}|${billingJenis}`) ?? 0) : 0
 
     const months = classMonthsBetween(startDate!, endDate!)
     const description = nameBase || name || 'Biaya Kelas'
@@ -174,9 +181,11 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
   const classType = (formData.get('class_type') as string) || null
+  const jenis = (formData.get('jenis') as string)?.trim() || null
   const status = (formData.get('status') as string) || 'aktif'
   const isActive = status === 'aktif'
   const slotsJson = (formData.get('slots_json') as string) || '[]'
+  const fokusTypesJson = (formData.get('fokus_types') as string) || '[]'
   const startDate = (formData.get('start_date') as string) || null
   const endDate = (formData.get('end_date') as string) || null
   const durationMinutes = Number(formData.get('duration_minutes') ?? 90)
@@ -185,6 +194,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
 
   let slots: SlotInput[] = []
   try { slots = JSON.parse(slotsJson) } catch { return { error: 'Data slot tidak valid' } }
+  let fokusTypes: string[] = []
+  try { fokusTypes = JSON.parse(fokusTypesJson) } catch { fokusTypes = [] }
 
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
@@ -204,6 +215,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       tutor_id: primaryTutorId,
       level,
       class_type: classType,
+      jenis,
+      fokus_types: fokusTypes,
       is_active: isActive,
       status,
       schedule_days: scheduleDays,

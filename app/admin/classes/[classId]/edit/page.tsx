@@ -23,7 +23,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
   ] = await Promise.all([
     admin
       .from('classes')
-      .select('id, name, level, class_type, is_active, status, start_date, end_date, duration_minutes, semester, academic_year')
+      .select('id, name, level, class_type, jenis, fokus_types, is_active, status, start_date, end_date, duration_minutes, semester, academic_year')
       .eq('id', classId)
       .single(),
     admin.from('profiles').select('id, full_name').eq('role', 'tutor').order('full_name'),
@@ -107,6 +107,8 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
               name: cls.name,
               level: cls.level,
               class_type: (cls as any).class_type ?? null,
+              jenis: (cls as any).jenis ?? null,
+              fokus_types: (cls as any).fokus_types ?? null,
               is_active: cls.is_active,
               status: (cls as any).status ?? 'aktif',
               start_date: (cls as any).start_date ?? null,

@@ -3,6 +3,8 @@ import { getUser } from '@/lib/supabase/get-user'
 import { redirect } from 'next/navigation'
 import TutorSidebar from '@/components/layout/TutorSidebar'
 import HeaderUser from '@/components/layout/HeaderUser'
+import HeaderNotifications from '@/components/layout/HeaderNotifications'
+import { getTutorNotifications } from '@/lib/notifications'
 import type { UserRole } from '@/lib/types/database'
 
 export default async function TutorLayout({ children }: { children: React.ReactNode }) {
@@ -22,12 +24,14 @@ export default async function TutorLayout({ children }: { children: React.ReactN
   }
 
   const userData = { email: user.email ?? '', fullName: profile?.full_name ?? '' }
+  const notifications = await getTutorNotifications(user.id)
 
   return (
     <div className="flex h-screen bg-slate-100">
       <TutorSidebar />
       <div className="flex-1 flex flex-col min-h-0">
-        <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center justify-end px-6 shrink-0">
+        <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center justify-end gap-2 px-6 shrink-0">
+          <HeaderNotifications items={notifications} />
           <HeaderUser user={userData} profileHref="/tutor/profile" />
         </header>
         <main className="flex-1 overflow-y-auto">

@@ -59,6 +59,7 @@ export default function AssessmentList({
   assessments: initialAssessments,
   students,
   results,
+  readOnly = false,
   createAction = createAssessment,
   submitGradesAction = submitGrades,
   deleteAction,
@@ -71,6 +72,7 @@ export default function AssessmentList({
   assessments: AssessmentItem[]
   students: Student[]
   results: GradeResult[]
+  readOnly?: boolean
   createAction?: CreateAction
   submitGradesAction?: SubmitGradesAction
   deleteAction?: DeleteAction
@@ -79,7 +81,7 @@ export default function AssessmentList({
   grade?: number | null
   topic?: string | null
 }) {
-  const [showCreate, setShowCreate] = useState(() => initialAssessments.length === 0)
+  const [showCreate, setShowCreate] = useState(() => !readOnly && initialAssessments.length === 0)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(initialAssessments.map(a => a.id)))
   const [newTitle, setNewTitle] = useState(() => buildAutoTitle(subjectName, grade, topic, initialAssessments.length + 1))
   const [newDescription, setNewDescription] = useState('')
@@ -339,7 +341,7 @@ export default function AssessmentList({
                   )}
                 </div>
                 <div className="shrink-0 ml-3 flex items-center gap-1">
-                  {editingId !== assessment.id && (updateAction || deleteAction) && (
+                  {!readOnly && editingId !== assessment.id && (updateAction || deleteAction) && (
                     <div className="relative" ref={menuOpenId === assessment.id ? menuRef : undefined}>
                       <button
                         onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === assessment.id ? null : assessment.id) }}
@@ -411,7 +413,8 @@ export default function AssessmentList({
                                 value={g.score}
                                 onChange={e => setGrade(assessment.id, student.id, 'score', e.target.value)}
                                 placeholder="-"
-                                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={readOnly}
+                                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-700 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="py-1.5 pl-3">
@@ -421,7 +424,8 @@ export default function AssessmentList({
                                   <select
                                     value={g.feedback}
                                     onChange={e => setGrade(assessment.id, student.id, 'feedback', e.target.value)}
-                                    className={`w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${level ? `${level.bg} ${level.text}` : 'bg-white text-gray-500'}`}
+                                    disabled={readOnly}
+                                    className={`w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed ${level ? `${level.bg} ${level.text}` : 'bg-white text-gray-500'}`}
                                   >
                                     {COMPREHENSION_LEVELS.map(l => (
                                       <option key={l.value} value={l.value}>{l.label}</option>
@@ -437,13 +441,15 @@ export default function AssessmentList({
                     </tbody>
                   </table>
                   {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3">{error}</p>}
-                  <button
-                    onClick={() => handleSubmitGrades(assessment.id, assessment.max_score)}
-                    disabled={isPending}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
-                  >
-                    {isPending ? 'Menyimpan...' : 'Simpan Nilai'}
-                  </button>
+                  {!readOnly && (
+                    <button
+                      onClick={() => handleSubmitGrades(assessment.id, assessment.max_score)}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                    >
+                      {isPending ? 'Menyimpan...' : 'Simpan Nilai'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -452,7 +458,7 @@ export default function AssessmentList({
         </>
       )}
 
-      {showCreate ? (
+      {!readOnly && (showCreate ? (
         <div className="border border-slate-200 rounded-xl p-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Asesmen Baru</p>
           <div className="space-y-3">
@@ -535,7 +541,7 @@ export default function AssessmentList({
           </svg>
           Tambah Asesmen
         </button>
-      )}
+      ))}
     </div>
   )
 }

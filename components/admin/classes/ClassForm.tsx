@@ -43,6 +43,8 @@ type DefaultValues = {
   duration_minutes?: number | null
   semester?: number | null
   academic_year?: string | null
+  jenis?: string | null
+  fokus_types?: string[] | null
 }
 
 interface ClassFormProps {
@@ -324,8 +326,8 @@ export default function ClassForm({
   // Name builder
   const [classType, setClassType] = useState(defaultValues?.class_type ?? '')
   const [jenjang, setJenjang] = useState(defaultValues?.level ?? '')
-  const [jenis, setJenis] = useState<'reguler' | 'fokus' | ''>('')
-  const [fokusTypes, setFokusTypes] = useState<string[]>([])
+  const [jenis, setJenis] = useState<'reguler' | 'fokus' | ''>((defaultValues?.jenis as 'reguler' | 'fokus' | null) ?? '')
+  const [fokusTypes, setFokusTypes] = useState<string[]>(defaultValues?.fokus_types ?? [])
   const [namaUnik, setNamaUnik] = useState('')
   const [className, setClassName] = useState(defaultValues?.name ?? '')
   const nameManuallyEdited = useRef(!!defaultValues?.name)
@@ -704,6 +706,8 @@ export default function ClassForm({
 
       <input type="hidden" name="level" value={jenjang || (defaultValues?.level ?? '')} />
       <input type="hidden" name="class_type" value={classType} />
+      <input type="hidden" name="jenis" value={jenis} />
+      <input type="hidden" name="fokus_types" value={JSON.stringify(fokusTypes)} />
       <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, jenis, fokusTypes, '', semester, academicYear)} />
 
       {/* ── Pertemuan per minggu ── */}

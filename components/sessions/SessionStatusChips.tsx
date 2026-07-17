@@ -53,7 +53,7 @@ export default function SessionStatusChips({
       <Chip active={counts.hasMaterials} label="Materi" activeClass={activeClass} inactiveClass={inactiveClass} />
       <Chip active={counts.hasAttendance} label="Presensi" activeClass={activeClass} inactiveClass={inactiveClass} />
       <Chip active={counts.hasNotes} label="Catatan" activeClass={activeClass} inactiveClass={inactiveClass} />
-      <Chip active={counts.hasAssessments} label="Asesmen & Nilai" activeClass={activeClass} inactiveClass={inactiveClass} />
+      <Chip active={counts.hasGradedAssessments} label="Asesmen & Nilai" activeClass={activeClass} inactiveClass={inactiveClass} />
     </div>
   )
 }

@@ -6,14 +6,11 @@ import Link from 'next/link'
 
 interface Props {
   q: string
-  level: string
   type: string
   status: string
-  scope: string
-  availableLevels: string[]
 }
 
-export default function TutorClassFilters({ q, level, type, status, scope, availableLevels }: Props) {
+export default function TutorClassFilters({ q, type, status }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [searchValue, setSearchValue] = useState(q)
@@ -22,10 +19,8 @@ export default function TutorClassFilters({ q, level, type, status, scope, avail
   function buildUrl(overrides: Record<string, string>) {
     const params: Record<string, string> = {
       ...(q ? { q } : {}),
-      ...(level ? { level } : {}),
       ...(type ? { type } : {}),
       ...(status ? { status } : {}),
-      ...(scope ? { scope } : {}),
       ...overrides,
     }
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
@@ -41,7 +36,7 @@ export default function TutorClassFilters({ q, level, type, status, scope, avail
     }, 300)
   }
 
-  const hasFilter = !!(q || level || type || status || scope)
+  const hasFilter = !!(q || type || status)
 
   const selectCls = (active: boolean) =>
     `text-sm border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
@@ -70,17 +65,6 @@ export default function TutorClassFilters({ q, level, type, status, scope, avail
           </button>
         )}
       </div>
-
-      <select value={scope} onChange={e => router.push(buildUrl({ scope: e.target.value }))} className={selectCls(!!scope)}>
-        <option value="">Semua Kelas</option>
-        <option value="main">Kelas Utama</option>
-        <option value="substitute">Kelas Pengganti</option>
-      </select>
-
-      <select value={level} onChange={e => router.push(buildUrl({ level: e.target.value }))} className={selectCls(!!level)}>
-        <option value="">Semua Jenjang</option>
-        {availableLevels.map(l => <option key={l} value={l}>{l}</option>)}
-      </select>
 
       <select value={type} onChange={e => router.push(buildUrl({ type: e.target.value }))} className={selectCls(!!type)}>
         <option value="">Semua Tipe</option>

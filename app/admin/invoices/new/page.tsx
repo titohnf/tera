@@ -13,6 +13,7 @@ type ClassRow = {
   name: string
   level: string | null
   class_type: string | null
+  jenis: string | null
   start_date: string | null
   end_date: string | null
 }
@@ -46,7 +47,7 @@ export default async function NewInvoicePage({
       .order('full_name') as unknown as Promise<{ data: StudentRow[] | null }>,
     admin
       .from('classes')
-      .select('id, name, level, class_type, start_date, end_date')
+      .select('id, name, level, class_type, jenis, start_date, end_date')
       .eq('is_active', true)
       .order('name') as unknown as Promise<{ data: ClassRow[] | null }>,
     admin

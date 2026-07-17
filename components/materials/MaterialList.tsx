@@ -36,11 +36,13 @@ function formatSize(bytes: number | null) {
 export default function MaterialList({
   materials,
   sessionId,
+  readOnly = false,
   deleteAction = deleteMaterial,
   signedUrlAction = getSignedUrl,
 }: {
   materials: MaterialItem[]
   sessionId: string
+  readOnly?: boolean
   deleteAction?: DeleteAction
   signedUrlAction?: SignedUrlAction
 }) {
@@ -115,13 +117,15 @@ export default function MaterialList({
                   Unduh
                 </button>
               )}
-              <button
-                onClick={() => handleDelete(m.id, m.file_path)}
-                disabled={isPending && deletingId === m.id}
-                className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
-              >
-                Hapus
-              </button>
+              {!readOnly && (
+                <button
+                  onClick={() => handleDelete(m.id, m.file_path)}
+                  disabled={isPending && deletingId === m.id}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+                >
+                  Hapus
+                </button>
+              )}
             </div>
           </div>
         )

@@ -61,6 +61,8 @@ export async function createSessionChangeRequest(
 
   revalidatePath(`/tutor/sessions/${sessionId}`)
   revalidatePath('/admin/session-requests')
+  revalidatePath('/admin', 'layout')
+  revalidatePath('/tutor', 'layout')
   return {}
 }
 
@@ -72,6 +74,20 @@ export async function withdrawSessionChangeRequest(
   if (!user) return { error: 'Tidak terautentikasi' }
   const admin = createAdminClient()
 
+  const { data: request } = await admin
+    .from('session_change_requests')
+    .select('id, request_type, new_tutor_confirmed')
+    .eq('id', requestId)
+    .eq('requested_by', user.id)
+    .eq('status', 'pending')
+    .maybeSingle()
+  if (!request) return { error: 'Pengajuan tidak ditemukan' }
+  // Once the proposed substitute has confirmed, they're relying on this
+  // arrangement — don't let it get silently deleted out from under them.
+  if (request.request_type === 'change_tutor' && request.new_tutor_confirmed === true) {
+    return { error: 'Tutor pengganti sudah menyetujui — tidak bisa dibatalkan sendiri, hubungi admin untuk menolaknya' }
+  }
+
   const { error } = await admin
     .from('session_change_requests')
     .delete()
@@ -82,6 +98,7 @@ export async function withdrawSessionChangeRequest(
 
   revalidatePath(`/tutor/sessions/${sessionId}`)
   revalidatePath('/admin/session-requests')
+  revalidatePath('/admin', 'layout')
   return {}
 }
 
@@ -127,41 +144,51 @@ export async function respondToTutorSwapRequest(
   revalidatePath('/tutor')
   revalidatePath(`/tutor/sessions/${request.session_id}`)
   revalidatePath('/admin/session-requests')
+  // The admin notification bell lives in the shared admin layout, not just
+  // the session-requests page — revalidate the whole layout so it refreshes
+  // regardless of which admin page is currently open.
+  revalidatePath('/admin', 'layout')
   return {}
 }
 
 // Called by the requesting tutor to dismiss a resolved (approved/rejected)
-// notice from their dashboard.
+// notice, shown on the session detail page.
 export async function acknowledgeSessionChangeRequest(requestId: string): Promise<{ error?: string }> {
   const user = await getUser()
   if (!user) return { error: 'Tidak terautentikasi' }
   const admin = createAdminClient()
 
-  const { error } = await admin
+  const { data, error } = await admin
     .from('session_change_requests')
     .update({ acknowledged_at: new Date().toISOString() })
     .eq('id', requestId)
     .eq('requested_by', user.id)
+    .select('session_id')
+    .single()
   if (error) return { error: error.message }
 
   revalidatePath('/tutor')
+  if (data) revalidatePath(`/tutor/sessions/${data.session_id}`)
   return {}
 }
 
-// Called by the proposed tutor to dismiss a notice that admin rejected the
-// swap request after they had already agreed to take it on.
-export async function acknowledgeTutorSwapRejection(requestId: string): Promise<{ error?: string }> {
+// Called by the proposed tutor to dismiss a notice that admin approved or
+// rejected the swap request after they had already agreed to take it on.
+export async function acknowledgeTutorSwapOutcome(requestId: string): Promise<{ error?: string }> {
   const user = await getUser()
   if (!user) return { error: 'Tidak terautentikasi' }
   const admin = createAdminClient()
 
-  const { error } = await admin
+  const { data, error } = await admin
     .from('session_change_requests')
     .update({ new_tutor_acknowledged_at: new Date().toISOString() })
     .eq('id', requestId)
     .eq('new_tutor_id', user.id)
+    .select('session_id')
+    .single()
   if (error) return { error: error.message }
 
   revalidatePath('/tutor')
+  if (data) revalidatePath(`/tutor/sessions/${data.session_id}`)
   return {}
 }

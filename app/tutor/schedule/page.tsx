@@ -57,7 +57,7 @@ export default async function SchedulePage({
   return (
     <div>
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <Link href="/tutor/classes" className="hover:text-blue-600">Kelas Saya</Link>
+        <Link href="/tutor/classes" className="hover:text-blue-600">Sesi Kelas</Link>
         <span>/</span>
         <span className="text-gray-900 font-medium">Kalender</span>
       </div>

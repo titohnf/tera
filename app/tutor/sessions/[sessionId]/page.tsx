@@ -12,8 +12,13 @@ import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
 import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
+import SwapResponsePanel from '@/components/tutor/SwapResponsePanel'
+import SwapOutcomeBanner from '@/components/tutor/SwapOutcomeBanner'
+import ApprovedSwapInfo from '@/components/tutor/ApprovedSwapInfo'
+import ResolvedNoticeBanner from '@/components/tutor/ResolvedNoticeBanner'
 import RequestPayrollReReview from '@/components/tutor/RequestPayrollReReview'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { splitClassName } from '@/lib/format-class-name'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 function formatPayrollTimestamp(iso: string): string {
@@ -60,17 +65,123 @@ export default async function SessionPage({
   if (!session) notFound()
 
   const isOwnSession = session.tutor_id === user.id
-  if (!isOwnSession) {
-    const { data: pendingSwap } = await supabase
-      .from('session_change_requests')
-      .select('id')
-      .eq('session_id', sessionId)
-      .eq('new_tutor_id', user.id)
-      .eq('status', 'pending')
-      .eq('new_tutor_confirmed', true)
-      .maybeSingle()
-    if (!pendingSwap) notFound()
+  let isConfirmedSwapTutor = false
+  let swapResponseNeeded: { id: string; reason: string; requesterName: string | null } | null = null
+  let swapRejectedNotice: { id: string; admin_note: string | null } | null = null
+  let approvedSwapInfo: { id: string; fromTutorName: string | null } | null = null
+
+  // Requests where this viewer is the requester and the outcome hasn't been
+  // dismissed yet — shown regardless of whether they still teach this session
+  // (e.g. their own change_tutor request got approved and the session moved
+  // to someone else).
+  const { data: ownResolvedNotice } = await supabase
+    .from('session_change_requests')
+    .select('id, request_type, status, admin_note')
+    .eq('session_id', sessionId)
+    .eq('requested_by', user.id)
+    .in('status', ['approved', 'rejected'])
+    .is('acknowledged_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Swap this viewer confirmed as the proposed replacement, now resolved by
+  // admin — checked unconditionally since an approval flips session.tutor_id
+  // to this viewer, making isOwnSession true and skipping the block below.
+  const { data: swapOutcomeRaw } = await supabase
+    .from('session_change_requests')
+    .select('id, status, admin_note, new_tutor_acknowledged_at, requester:profiles!requested_by(full_name)')
+    .eq('session_id', sessionId)
+    .eq('new_tutor_id', user.id)
+    .eq('request_type', 'change_tutor')
+    .in('status', ['approved', 'rejected'])
+    .eq('new_tutor_confirmed', true)
+    .not('reviewed_by', 'is', null)
+    .order('reviewed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (swapOutcomeRaw?.status === 'approved') {
+    // Persistent, non-dismissible — the covering tutor keeps needing this
+    // link to the outgoing tutor's history for as long as they're on this
+    // session, unlike the one-off rejected notice below.
+    approvedSwapInfo = {
+      id: swapOutcomeRaw.id,
+      fromTutorName: (swapOutcomeRaw.requester as unknown as { full_name: string } | null)?.full_name ?? null,
+    }
+  } else if (swapOutcomeRaw?.status === 'rejected' && !swapOutcomeRaw.new_tutor_acknowledged_at) {
+    swapRejectedNotice = { id: swapOutcomeRaw.id, admin_note: swapOutcomeRaw.admin_note }
   }
+
+  if (!isOwnSession) {
+    const [{ data: mySwap }, { data: ownClass }, { count: hasSessionInClass }, { data: otherPendingSwaps }] = await Promise.all([
+      // The most recent change_tutor request naming this viewer as the
+      // proposed replacement — covers "needs my response", "already
+      // confirmed and pending admin", and "confirmed then rejected".
+      supabase
+        .from('session_change_requests')
+        .select('id, status, new_tutor_confirmed, new_tutor_acknowledged_at, reason, admin_note, requester:profiles!requested_by(full_name)')
+        .eq('session_id', sessionId)
+        .eq('new_tutor_id', user.id)
+        .eq('request_type', 'change_tutor')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // Main tutor of the class can still view a session a substitute is
+      // covering — keeps them in the loop even though they're not teaching it.
+      supabase
+        .from('classes')
+        .select('id')
+        .eq('id', session.class_id)
+        .eq('tutor_id', user.id)
+        .maybeSingle(),
+      // A substitute who has taught any session in this class can browse the
+      // full class history for context, not just their own sessions.
+      supabase
+        .from('sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('class_id', session.class_id)
+        .eq('tutor_id', user.id),
+      // Same, but for a substitute whose only session in this class is still
+      // an unapproved swap (tutor_id hasn't flipped over yet).
+      supabase
+        .from('session_change_requests')
+        .select('session_id, sessions!inner(class_id)')
+        .eq('new_tutor_id', user.id)
+        .eq('request_type', 'change_tutor')
+        .eq('status', 'pending')
+        .eq('new_tutor_confirmed', true)
+        .eq('sessions.class_id', session.class_id),
+    ])
+    const hasPendingSwapInClass = (otherPendingSwaps ?? []).length > 0
+    const pendingUnconfirmed = mySwap?.status === 'pending' && mySwap.new_tutor_confirmed === null
+    const pendingConfirmed = mySwap?.status === 'pending' && mySwap.new_tutor_confirmed === true
+    const rejectedUnacknowledged = mySwap?.status === 'rejected' && mySwap.new_tutor_confirmed === true && !mySwap.new_tutor_acknowledged_at
+
+    if (
+      !pendingConfirmed && !ownClass && !hasSessionInClass && !hasPendingSwapInClass &&
+      !pendingUnconfirmed && !rejectedUnacknowledged && !ownResolvedNotice
+    ) notFound()
+
+    isConfirmedSwapTutor = pendingConfirmed
+    if (pendingUnconfirmed && mySwap) {
+      swapResponseNeeded = {
+        id: mySwap.id,
+        reason: mySwap.reason,
+        requesterName: (mySwap.requester as unknown as { full_name: string } | null)?.full_name ?? null,
+      }
+    }
+  }
+
+  // View-only once payroll is approved (locked, even for the teaching tutor),
+  // or when the viewer is the class's main tutor but not the one teaching
+  // this particular session (covered by a substitute).
+  const isTeachingTutor = isOwnSession || isConfirmedSwapTutor
+  const canEdit = isTeachingTutor && session.payroll_status !== 'approved'
+  const readOnlyReason: 'not-tutor' | 'approved' | undefined = canEdit
+    ? undefined
+    : !isTeachingTutor
+    ? 'not-tutor'
+    : 'approved'
 
   const [
     enrolledResult,
@@ -141,7 +252,7 @@ export default async function SessionPage({
       .order('full_name'),
   ])
 
-  const sessionChangeRequest = latestRequest && latestRequest.status !== 'approved'
+  const sessionChangeRequest = latestRequest && latestRequest.status === 'pending'
     ? {
         id: latestRequest.id,
         request_type: latestRequest.request_type,
@@ -150,8 +261,6 @@ export default async function SessionPage({
         new_tutor_id: latestRequest.new_tutor_id,
         new_tutor_name: (latestRequest.profiles as unknown as { full_name: string } | null)?.full_name ?? null,
         new_tutor_confirmed: latestRequest.new_tutor_confirmed,
-        status: latestRequest.status,
-        admin_note: latestRequest.admin_note,
       }
     : null
 
@@ -227,7 +336,7 @@ export default async function SessionPage({
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Kelas Saya
+        Sesi Kelas
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
@@ -237,11 +346,21 @@ export default async function SessionPage({
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-lg font-semibold text-gray-900 mb-1">{session.classes?.name ?? 'Kelas'}</h1>
+                {(() => {
+                  const { semesterLabel, title } = splitClassName(session.classes?.name ?? 'Kelas')
+                  return (
+                    <>
+                      {semesterLabel && (
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">{semesterLabel}</p>
+                      )}
+                      <h1 className="text-lg font-semibold text-gray-900 mb-1">{title}</h1>
+                    </>
+                  )
+                })()}
                 <p className="text-sm text-gray-500">{session.topic ?? 'Topik belum ditentukan'}</p>
               </div>
               {(() => {
-                const displayStatus = getSessionDisplayStatus(session.status, sessionChangeRequest?.status === 'pending')
+                const displayStatus = getSessionDisplayStatus(session.status, !!sessionChangeRequest)
                 return (
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${displayStatus.color}`}>
                     {displayStatus.label}
@@ -254,6 +373,7 @@ export default async function SessionPage({
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
             <SessionTabs
               sessionId={sessionId}
+              readOnlyReason={readOnlyReason}
               sessionStatus={session.status}
               topic={session.topic}
               curriculumTopicId={session.curriculum_topic_id ?? null}
@@ -291,6 +411,65 @@ export default async function SessionPage({
 
         {/* Kolom kanan — info sesi + syarat penyelesaian */}
         <div className="space-y-4 lg:sticky lg:top-6">
+          {(swapResponseNeeded || swapRejectedNotice || approvedSwapInfo || ownResolvedNotice) && (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Pemberitahuan
+              </p>
+
+              <div className="space-y-3">
+                {swapResponseNeeded && (
+                  <SwapResponsePanel
+                    requestId={swapResponseNeeded.id}
+                    classId={session.class_id}
+                    requesterName={swapResponseNeeded.requesterName}
+                    reason={swapResponseNeeded.reason}
+                  />
+                )}
+
+                {approvedSwapInfo && (
+                  <ApprovedSwapInfo
+                    id={approvedSwapInfo.id}
+                    classId={session.class_id}
+                    fromTutorName={approvedSwapInfo.fromTutorName}
+                    toTutorName={tutorName}
+                  />
+                )}
+
+                {swapRejectedNotice && (
+                  <SwapOutcomeBanner
+                    id={swapRejectedNotice.id}
+                    status="rejected"
+                    adminNote={swapRejectedNotice.admin_note}
+                  />
+                )}
+
+                {ownResolvedNotice && (
+                  <ResolvedNoticeBanner
+                    id={ownResolvedNotice.id}
+                    requestType={ownResolvedNotice.request_type}
+                    status={ownResolvedNotice.status}
+                    adminNote={ownResolvedNotice.admin_note}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {canEdit && session.status !== 'cancelled' && (
+            <SessionChangeRequestPanel
+              sessionId={sessionId}
+              classId={session.class_id}
+              existingRequest={sessionChangeRequest}
+              tutors={otherTutors ?? []}
+              currentTutorName={tutorName}
+              isPast={Date.now() > date.getTime() + session.duration_minutes * 60_000}
+            />
+          )}
+
           <SessionInfoCard
             classLevel={session.classes?.level ?? null}
             tutorName={tutorName}
@@ -378,20 +557,10 @@ export default async function SessionPage({
                   {session.payroll_reviewed_at && (
                     <p className="text-xs text-gray-400 mt-1">{formatPayrollTimestamp(session.payroll_reviewed_at)}</p>
                   )}
-                  <RequestPayrollReReview sessionId={sessionId} />
+                  {canEdit && <RequestPayrollReReview sessionId={sessionId} />}
                 </div>
               )}
             </div>
-          )}
-
-          {session.status !== 'cancelled' && (
-            <SessionChangeRequestPanel
-              sessionId={sessionId}
-              existingRequest={sessionChangeRequest}
-              tutors={otherTutors ?? []}
-              currentTutorName={tutorName}
-              isPast={Date.now() > date.getTime() + session.duration_minutes * 60_000}
-            />
           )}
         </div>
       </div>

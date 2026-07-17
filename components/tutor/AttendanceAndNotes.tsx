@@ -46,6 +46,7 @@ export default function AttendanceAndNotes({
   students,
   templates,
   sessionStatus,
+  readOnly = false,
   submitAttendanceAction = submitAttendance,
   saveNoteAction = savePerformanceNote,
 }: {
@@ -53,6 +54,7 @@ export default function AttendanceAndNotes({
   students: Student[]
   templates: Template[]
   sessionStatus: string
+  readOnly?: boolean
   submitAttendanceAction?: SubmitAttendanceAction
   saveNoteAction?: SaveNoteAction
 }) {
@@ -90,7 +92,8 @@ export default function AttendanceAndNotes({
   const [isPending, startTransition] = useTransition()
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const isDisabled = sessionStatus === 'cancelled'
+  const isCancelled = sessionStatus === 'cancelled'
+  const isDisabled = isCancelled || readOnly
 
   function setStatus(studentId: string, status: AttendanceStatus) {
     setRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status } }))
@@ -196,7 +199,7 @@ export default function AttendanceAndNotes({
 
   return (
     <div>
-      {isDisabled && (
+      {isCancelled && (
         <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg mb-4">
           Sesi dibatalkan — presensi tidak dapat diubah.
         </div>
@@ -240,7 +243,7 @@ export default function AttendanceAndNotes({
                       data-active={rec?.status === opt.value}
                       onClick={() => setStatus(student.id, opt.value)}
                       disabled={isDisabled}
-                      className={`text-xs px-2.5 py-1.5 border rounded-lg font-medium transition-colors disabled:opacity-40 bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 ${opt.active}`}
+                      className={`text-xs px-2.5 py-1.5 border rounded-lg font-medium transition-colors disabled:cursor-not-allowed bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 ${opt.active}`}
                     >
                       {opt.label}
                     </button>
@@ -271,7 +274,8 @@ export default function AttendanceAndNotes({
                               <button
                                 key={t.id}
                                 onClick={() => toggleTemplate(student.id, category, t)}
-                                className={`text-xs px-2.5 py-1 border rounded-lg transition-colors font-medium ${
+                                disabled={readOnly}
+                                className={`text-xs px-2.5 py-1 border rounded-lg transition-colors font-medium disabled:cursor-not-allowed ${
                                   selected?.templateId === t.id
                                     ? 'bg-blue-600 text-white border-blue-600'
                                     : 'bg-white text-gray-700 border-slate-300 hover:bg-blue-50/50'
@@ -287,7 +291,8 @@ export default function AttendanceAndNotes({
                               value={selected.body}
                               onChange={e => updateCategoryBody(student.id, category, e.target.value)}
                               placeholder={`Deskripsi ${category.toLowerCase()}...`}
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                              disabled={readOnly}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"
                             />
                           )}
                         </div>
@@ -302,7 +307,8 @@ export default function AttendanceAndNotes({
                         [student.id]: { '_': { templateId: '', body: e.target.value } },
                       }))}
                       placeholder="Tulis catatan performa siswa..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                      disabled={readOnly}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"
                     />
                   )}
                   <p className="text-xs text-gray-400 text-right">{noteBody.length} / 2000 karakter</p>
@@ -321,13 +327,15 @@ export default function AttendanceAndNotes({
         </div>
       )}
 
-      <button
-        onClick={handleSave}
-        disabled={isPending || isDisabled}
-        className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {isPending ? 'Menyimpan...' : 'Simpan Presensi dan Catatan'}
-      </button>
+      {!readOnly && (
+        <button
+          onClick={handleSave}
+          disabled={isPending || isDisabled}
+          className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isPending ? 'Menyimpan...' : 'Simpan Presensi dan Catatan'}
+        </button>
+      )}
     </div>
   )
 }

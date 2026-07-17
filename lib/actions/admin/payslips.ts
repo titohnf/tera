@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
+import { buildRateMap, resolveAmounts } from '@/lib/salary'
 import type { SalarySchemeRow, AttendanceRow, PayslipRow, PayslipLineItem } from '@/lib/types/database'
 
 // ─── Internal types ────────────────────────────────────────────────────────────
@@ -15,7 +16,7 @@ type SessionWithClass = {
   status: string
   payroll_status: string
   topic: string | null
-  classes: { name: string; class_type: string | null; level: string | null } | null
+  classes: { name: string; class_type: string | null; level: string | null; jenis: string | null } | null
 }
 
 type SessionRate = {
@@ -31,15 +32,6 @@ function generatePayslipNumber(month: string): string {
   const [year, mon] = month.split('-')
   const seq = Math.floor(Math.random() * 9000) + 1000
   return `SG/${year}${mon}/${seq}`
-}
-
-function buildRateMap(rates: SessionRate[]): Record<string, number> {
-  const map: Record<string, number> = {}
-  for (const r of rates) {
-    const key = `${r.class_type}|${r.jenjang}`
-    if (r.jenis === 'Reguler' || !(key in map)) map[key] = r.rate_per_session
-  }
-  return map
 }
 
 // ─── Core computation (reused by both single and batch generation) ──────────────
@@ -68,17 +60,12 @@ function computePayslipData(params: {
       a => a.status === 'present' || a.status === 'late'
     ).length
 
-    let baseAmount = 0
-    if (scheme && scheme.base_amount > 0) {
-      baseAmount = scheme.base_amount
-    } else if (cls?.class_type && cls?.level) {
-      baseAmount = rateMap[`${cls.class_type}|${cls.level}`] ?? 0
-    }
-
-    let bonusAmount = 0
-    if (scheme?.bonus_type === 'student_count' && scheme.bonus_threshold !== null) {
-      if (studentsPresent >= scheme.bonus_threshold) bonusAmount = scheme.bonus_amount
-    }
+    const { baseAmount, bonusAmount } = resolveAmounts({
+      scheme,
+      cls,
+      studentsPresent,
+      rateMap,
+    })
 
     const baseName = cls?.name ?? ''
     const studentNames = studentNamesByClass[session.class_id] ?? []
@@ -131,7 +118,7 @@ async function fetchSharedData(month: string, supabase: ReturnType<typeof create
   ] = await Promise.all([
     supabase
       .from('sessions')
-      .select('id, class_id, tutor_id, scheduled_at, status, payroll_status, topic, classes(name, class_type, level)')
+      .select('id, class_id, tutor_id, scheduled_at, status, payroll_status, topic, classes(name, class_type, level, jenis)')
       .in('status', ['completed', 'scheduled', 'ongoing'])
       .gte('scheduled_at', startDate)
       .lt('scheduled_at', endDate) as unknown as Promise<{ data: SessionWithClass[] | null }>,
@@ -313,7 +300,7 @@ export async function generatePayslip(tutorId: string, month: string) {
     supabase.from('profiles').select('full_name').eq('id', tutorId).single(),
     supabase
       .from('sessions')
-      .select('id, class_id, tutor_id, scheduled_at, status, payroll_status, topic, classes(name, class_type, level)')
+      .select('id, class_id, tutor_id, scheduled_at, status, payroll_status, topic, classes(name, class_type, level, jenis)')
       .eq('tutor_id', tutorId)
       .eq('status', 'completed')
       .eq('payroll_status', 'approved')

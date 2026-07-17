@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import {
   createSessionChangeRequest,
@@ -15,8 +16,6 @@ type PendingRequest = {
   new_tutor_id: string | null
   new_tutor_name: string | null
   new_tutor_confirmed: boolean | null
-  status: 'pending' | 'approved' | 'rejected'
-  admin_note: string | null
 }
 
 const REQUEST_LABEL: Record<SessionRequestType, string> = {
@@ -27,12 +26,14 @@ const REQUEST_LABEL: Record<SessionRequestType, string> = {
 
 export default function SessionChangeRequestPanel({
   sessionId,
+  classId,
   existingRequest,
   tutors,
   currentTutorName,
   isPast = false,
 }: {
   sessionId: string
+  classId: string
   existingRequest: PendingRequest | null
   tutors: { id: string; full_name: string }[]
   currentTutorName: string | null
@@ -73,7 +74,38 @@ export default function SessionChangeRequestPanel({
     startTransition(() => { void withdrawSessionChangeRequest(existingRequest.id, sessionId) })
   }
 
-  if (existingRequest && existingRequest.status === 'pending') {
+  const isAcceptedSwap = existingRequest?.request_type === 'change_tutor' && existingRequest.new_tutor_confirmed === true
+
+  if (existingRequest && isAcceptedSwap) {
+    return (
+      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Pengajuan Perubahan
+        </p>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
+          <p className="text-sm font-medium text-yellow-800">
+            Pergantian tutor disetujui, saat ini sedang menunggu verifikasi dari admin.
+          </p>
+          <div className="bg-white/70 border border-yellow-200/70 rounded-lg px-3 py-2">
+            <p className="text-xs text-gray-600">
+              Dari: {currentTutorName ?? '—'} → Ke: {existingRequest.new_tutor_name ?? '—'}
+            </p>
+          </div>
+        </div>
+        <Link
+          href={`/tutor/classes/${classId}?previewSwap=${existingRequest.id}`}
+          className="group inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 underline underline-offset-2 hover:text-blue-800 mt-3"
+        >
+          Lihat detail & riwayat kelas ini
+          <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </Link>
+      </div>
+    )
+  }
+
+  if (existingRequest) {
     return (
       <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -119,22 +151,6 @@ export default function SessionChangeRequestPanel({
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
         Pengajuan Perubahan
       </p>
-
-      {existingRequest && existingRequest.status === 'rejected' && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 space-y-1">
-          <p className="text-xs font-medium text-red-700">
-            Pengajuan {REQUEST_LABEL[existingRequest.request_type]} sebelumnya ditolak admin
-          </p>
-          {existingRequest.request_type === 'change_tutor' && existingRequest.new_tutor_name && (
-            <p className="text-xs text-gray-600">
-              Dari: {currentTutorName ?? '—'} → Ke: {existingRequest.new_tutor_name}
-            </p>
-          )}
-          {existingRequest.admin_note && (
-            <p className="text-xs text-gray-600">Catatan: {existingRequest.admin_note}</p>
-          )}
-        </div>
-      )}
 
       {isPast ? (
         <p className="text-xs text-gray-400">

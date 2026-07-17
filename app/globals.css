@@ -90,6 +90,14 @@ input[type="radio"] {
   border-color: #2563eb !important;
 }
 
+.sticky-col-shadow {
+  box-shadow: none;
+  transition: box-shadow 150ms ease-out;
+}
+[data-scrolled] .sticky-col-shadow {
+  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.15);
+}
+
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -99,3 +107,13 @@ select {
   background-size: 1rem;
   padding-inline-end: 2.25rem !important;
 }
+
+
+
+
+
+
+
+
+
+
