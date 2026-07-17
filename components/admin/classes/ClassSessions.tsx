@@ -64,29 +64,71 @@ export default function ClassSessions({
   studentGrade?: number | null
 }) {
   const [showForm, setShowForm] = useState(false)
+  const [subjectFilter, setSubjectFilter] = useState('')
+  const [payrollFilter, setPayrollFilter] = useState('')
 
-  const totalSessions = sessions.length
-  const completedSessions = sessions.filter(s => s.status === 'completed').length
+  function payrollKeyOf(session: SessionRow) {
+    return session.status !== 'completed' ? 'unavailable' : session.payroll_status
+  }
+
+  const subjectNames = [...new Set(sessions.map(s => s.subjects?.name).filter((n): n is string => !!n))].sort()
+  const payrollKeys = [...new Set(sessions.map(payrollKeyOf))]
+  const payrollOptions = payrollKeys
+    .filter(k => PAYROLL_BADGE[k])
+    .sort((a, b) => Object.keys(PAYROLL_BADGE).indexOf(a) - Object.keys(PAYROLL_BADGE).indexOf(b))
+
+  const filteredSessions = sessions
+    .filter(s => !subjectFilter || s.subjects?.name === subjectFilter)
+    .filter(s => !payrollFilter || payrollKeyOf(s) === payrollFilter)
+
+  const totalSessions = filteredSessions.length
+  const completedSessions = filteredSessions.filter(s => s.status === 'completed').length
   const sessionPct = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="text-sm font-semibold text-gray-700">Sesi Kelas</h2>
-        <button
-          onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {showForm ? 'Tutup' : (
-            <>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Tambah Sesi
-            </>
+        <div className="flex items-center gap-2">
+          {subjectNames.length > 1 && (
+            <select
+              value={subjectFilter}
+              onChange={e => setSubjectFilter(e.target.value)}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Semua Mapel</option>
+              {subjectNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
           )}
-        </button>
+          {payrollOptions.length > 1 && (
+            <select
+              value={payrollFilter}
+              onChange={e => setPayrollFilter(e.target.value)}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Semua Status Payroll</option>
+              {payrollOptions.map(key => (
+                <option key={key} value={key}>{PAYROLL_BADGE[key].label}</option>
+              ))}
+            </select>
+          )}
+          <button
+            onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {showForm ? 'Tutup' : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Sesi
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Progress */}
@@ -134,6 +176,8 @@ export default function ClassSessions({
       {/* Table */}
       {sessions.length === 0 ? (
         <p className="text-center text-sm text-gray-400 py-8">Belum ada sesi untuk kelas ini.</p>
+      ) : filteredSessions.length === 0 ? (
+        <p className="text-center text-sm text-gray-400 py-8">Tidak ada sesi yang cocok dengan filter.</p>
       ) : (
         <div className="overflow-x-auto -mx-6">
           <table className="w-full text-sm">
@@ -148,10 +192,9 @@ export default function ClassSessions({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sessions.map((session, idx) => {
+              {filteredSessions.map((session, idx) => {
                 const date = new Date(session.scheduled_at)
-                const payrollKey = session.status !== 'completed' ? 'unavailable' : session.payroll_status
-                const payrollBadge = PAYROLL_BADGE[payrollKey] ?? PAYROLL_BADGE.pending
+                const payrollBadge = PAYROLL_BADGE[payrollKeyOf(session)] ?? PAYROLL_BADGE.pending
                 return (
                   <tr key={session.id} className="hover:bg-slate-50 transition-colors">
                     <td className="pl-6 pr-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>

@@ -72,7 +72,7 @@ export default function SessionStatusButtons({
           </button>
         )}
 
-        {(currentStatus === 'cancelled' || (currentStatus === 'scheduled' && now < sessionStart)) && (
+        {currentStatus !== 'completed' && !isOngoing && (
           <button
             onClick={handleDelete}
             disabled={isPending}
