@@ -31,7 +31,13 @@ function buildInitialState(slots: AvailabilitySlot[]): Record<number, DayState> 
   return map
 }
 
-export default function TutorAvailabilityPicker({ slots }: { slots: AvailabilitySlot[] }) {
+export default function TutorAvailabilityPicker({
+  slots,
+  onSave = updateTutorAvailability,
+}: {
+  slots: AvailabilitySlot[]
+  onSave?: (slots: AvailabilitySlot[]) => Promise<{ error: string } | null>
+}) {
   const [days, setDays] = useState<Record<number, DayState>>(buildInitialState(slots))
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +65,7 @@ export default function TutorAvailabilityPicker({ slots }: { slots: Availability
       }))
 
     startTransition(async () => {
-      const result = await updateTutorAvailability(slots)
+      const result = await onSave(slots)
       if (result?.error) setError(result.error)
       else setSaved(true)
     })

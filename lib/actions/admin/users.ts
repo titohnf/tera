@@ -193,3 +193,66 @@ export async function setTutorIsActive(userId: string, isActive: boolean): Promi
   revalidatePath('/admin/tutor')
   return null
 }
+
+export type AvailabilitySlot = { day_of_week: number; start_time: string; end_time: string }
+
+export async function adminUpdateTutorAvailability(
+  tutorId: string,
+  slots: AvailabilitySlot[]
+): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  for (const s of slots) {
+    if (s.start_time >= s.end_time) {
+      return { error: 'Jam selesai harus lebih dari jam mulai' }
+    }
+  }
+
+  const { error: deleteError } = await ctx.admin
+    .from('tutor_availability')
+    .delete()
+    .eq('tutor_id', tutorId)
+
+  if (deleteError) return { error: deleteError.message }
+
+  if (slots.length > 0) {
+    const { error: insertError } = await ctx.admin
+      .from('tutor_availability')
+      .insert(slots.map(s => ({ tutor_id: tutorId, ...s })))
+
+    if (insertError) return { error: insertError.message }
+  }
+
+  revalidatePath(`/admin/users/${tutorId}`)
+  revalidatePath('/admin/availability')
+  return null
+}
+
+export async function adminUpdateTutorSubjects(
+  tutorId: string,
+  selections: { subject_id: string; level: string }[]
+): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error: deleteError } = await ctx.admin
+    .from('tutor_subjects')
+    .delete()
+    .eq('tutor_id', tutorId)
+
+  if (deleteError) return { error: deleteError.message }
+
+  if (selections.length > 0) {
+    const { error: insertError } = await ctx.admin
+      .from('tutor_subjects')
+      .insert(selections.map(s => ({ tutor_id: tutorId, subject_id: s.subject_id, level: s.level })))
+
+    if (insertError) return { error: insertError.message }
+  }
+
+  revalidatePath(`/admin/users/${tutorId}`)
+  revalidatePath(`/admin/users/${tutorId}/edit`)
+  revalidatePath('/admin/availability')
+  return null
+}

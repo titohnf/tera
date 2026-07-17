@@ -33,9 +33,11 @@ function makeKey(subjectId: string, level: string) {
 export default function TutorSubjectPicker({
   subjects,
   selectedRows,
+  onSave = updateTutorSubjects,
 }: {
   subjects: Subject[]
   selectedRows: { subject_id: string; level: string }[]
+  onSave?: (selections: { subject_id: string; level: string }[]) => Promise<{ error: string } | null>
 }) {
   const [selected, setSelected] = useState<Set<string>>(
     new Set(selectedRows.map(r => makeKey(r.subject_id, r.level)))
@@ -62,7 +64,7 @@ export default function TutorSubjectPicker({
       return { subject_id, level }
     })
     startTransition(async () => {
-      const result = await updateTutorSubjects(selections)
+      const result = await onSave(selections)
       if (result?.error) setError(result.error)
       else setSaved(true)
     })
