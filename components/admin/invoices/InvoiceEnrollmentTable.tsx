@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { splitClassPrefix } from '@/lib/format-class-name'
 
 export type EnrollmentRow = {
   studentId: string
@@ -61,7 +62,7 @@ interface Props {
 }
 
 export default function InvoiceEnrollmentTable({ rows }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>('studentName')
+  const [sortKey, setSortKey] = useState<SortKey>('className')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   function handleSort(key: SortKey) {
@@ -75,6 +76,7 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
     else if (sortKey === 'className') cmp = a.className.localeCompare(b.className, 'id')
     else if (sortKey === 'classPrice') cmp = a.classPrice - b.classPrice
     else if (sortKey === 'status') cmp = STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+    if (cmp === 0) cmp = a.studentName.localeCompare(b.studentName, 'id')
     return sortDir === 'asc' ? cmp : -cmp
   })
 
@@ -98,16 +100,16 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              <th {...thProps('studentName')}>
-                <span className="inline-flex items-center">
-                  Nama Siswa
-                  <SortIcon active={sortKey === 'studentName'} dir={sortDir} />
-                </span>
-              </th>
               <th {...thProps('className')}>
                 <span className="inline-flex items-center">
                   Kelas
                   <SortIcon active={sortKey === 'className'} dir={sortDir} />
+                </span>
+              </th>
+              <th {...thProps('studentName')}>
+                <span className="inline-flex items-center">
+                  Nama Siswa
+                  <SortIcon active={sortKey === 'studentName'} dir={sortDir} />
                 </span>
               </th>
               <th {...thProps('classPrice', 'right')}>
@@ -126,16 +128,29 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {sorted.map(row => (
-              <tr key={`${row.studentId}__${row.classId}`} className="hover:bg-slate-50 transition-colors">
-                <td className="px-5 py-3">
-                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block font-medium text-gray-900 hover:text-blue-600 transition-colors">
-                    {row.studentName}
+            {sorted.map((row, i) => {
+              const isNewGroup = sortKey === 'className' && i > 0 && sorted[i - 1].classId !== row.classId
+              const { prefix, rest } = splitClassPrefix(row.className)
+              return (
+              <tr
+                key={`${row.studentId}__${row.classId}`}
+                className={`hover:bg-slate-50 transition-colors ${isNewGroup ? 'border-t-2 border-t-slate-300' : ''}`}
+              >
+                <td className="px-5 py-3 text-gray-600">
+                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block">
+                    {prefix ? (
+                      <>
+                        <span className="block font-semibold text-gray-700">{prefix}</span>
+                        {rest && <span className="block text-xs text-gray-400 mt-0.5">{rest.trim()}</span>}
+                      </>
+                    ) : (
+                      rest
+                    )}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-gray-600">
-                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block">
-                    {row.className}
+                <td className="px-4 py-3">
+                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                    {row.studentName}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -158,7 +173,8 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                   </Link>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       )}
