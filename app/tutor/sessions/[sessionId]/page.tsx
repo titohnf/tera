@@ -341,7 +341,7 @@ export default async function SessionPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
         {/* Kolom kiri — header + tab konten */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Session header */}
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
             <div className="flex items-start justify-between">

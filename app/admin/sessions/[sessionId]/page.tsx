@@ -199,7 +199,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
         {/* Kolom kiri — judul + tab konten */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <SessionHeader
             subject={session.subjects?.name ?? null}
             dateStr={date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
