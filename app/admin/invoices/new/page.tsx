@@ -65,6 +65,19 @@ export default async function NewInvoicePage({
   const classStudents = classStudentsRes.data ?? []
   const billingRates = billingRatesRes.data ?? []
 
+  const privateClassIds = classes.filter(c => c.class_type === 'private').map(c => c.id)
+  const sessionCounts: Record<string, number> = {}
+  if (privateClassIds.length > 0) {
+    const { data: sessions } = await admin
+      .from('sessions')
+      .select('class_id')
+      .in('class_id', privateClassIds)
+      .neq('status', 'cancelled') as unknown as { data: { class_id: string }[] | null }
+    for (const s of sessions ?? []) {
+      sessionCounts[s.class_id] = (sessionCounts[s.class_id] ?? 0) + 1
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -73,7 +86,7 @@ export default async function NewInvoicePage({
         </a>
         <h1 className="text-xl font-semibold text-gray-900">Buat Invoice</h1>
       </div>
-      <InvoiceForm students={students} classes={classes} classStudents={classStudents} billingRates={billingRates} initialStudentId={initialStudentId} />
+      <InvoiceForm students={students} classes={classes} classStudents={classStudents} billingRates={billingRates} sessionCounts={sessionCounts} initialStudentId={initialStudentId} />
     </div>
   )
 }

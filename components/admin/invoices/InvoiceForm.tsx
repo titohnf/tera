@@ -47,6 +47,7 @@ interface InvoiceFormProps {
   classes: ClassItem[]
   classStudents: ClassStudent[]
   billingRates: BillingRate[]
+  sessionCounts?: Record<string, number>
   initialStudentId?: string
 }
 
@@ -69,7 +70,7 @@ function monthsBetween(startStr: string, endStr: string): number {
   return Math.max(1, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1)
 }
 
-export default function InvoiceForm({ students, classes, classStudents, billingRates, initialStudentId }: InvoiceFormProps) {
+export default function InvoiceForm({ students, classes, classStudents, billingRates, sessionCounts = {}, initialStudentId }: InvoiceFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -116,9 +117,6 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
     const cls = classes.find(c => c.id === classId)
     if (!cls) return
 
-    const months =
-      cls.start_date && cls.end_date ? monthsBetween(cls.start_date, cls.end_date) : 1
-
     const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
     const rate = billingJenis
       ? billingRates.find(r => r.class_type === cls.class_type && r.jenjang === cls.level && r.jenis === billingJenis)
@@ -126,12 +124,18 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
 
     const typeLabel = cls.class_type === 'private' ? 'Privat' : 'Grup'
     const description = [typeLabel, cls.level, rate?.jenis].filter(Boolean).join(' ')
+    const isPrivate = cls.class_type === 'private'
+
+    const quantity = isPrivate
+      ? sessionCounts[cls.id] ?? 1
+      : cls.start_date && cls.end_date ? monthsBetween(cls.start_date, cls.end_date) : 1
 
     setLineItems([{
       description,
-      months,
+      months: quantity,
       amount: rate ? Number(rate.amount) : 0,
       is_deduction: false,
+      unit: isPrivate ? 'pertemuan' : 'bulan',
     }])
   }
 

@@ -289,14 +289,31 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
 
   const rate = rates?.[0]
   const amount = rate ? Number(rate.amount) : 0
-  const months = (cls as any).start_date && (cls as any).end_date
-    ? monthsBetween((cls as any).start_date, (cls as any).end_date)
-    : 1
+  const isPrivate = (cls as any).class_type === 'private'
+  const typeLabel = isPrivate ? 'Privat' : 'Grup'
 
-  const typeLabel = (cls as any).class_type === 'private' ? 'Privat' : 'Grup'
+  let quantity: number
+  let unit: 'bulan' | 'pertemuan'
+
+  if (isPrivate) {
+    unit = 'pertemuan'
+    const { count } = await ctx.admin
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('class_id', classId)
+      .neq('status', 'cancelled')
+    quantity = count ?? 0
+    if (quantity === 0) return { error: 'Belum ada sesi terjadwal untuk kelas privat ini' }
+  } else {
+    unit = 'bulan'
+    quantity = (cls as any).start_date && (cls as any).end_date
+      ? monthsBetween((cls as any).start_date, (cls as any).end_date)
+      : 1
+  }
+
   const description = [typeLabel, (cls as any).level, rate?.jenis].filter(Boolean).join(' ')
-  const lineItems = [{ description, months, amount, is_deduction: false }]
-  const totalDue = months * amount
+  const lineItems = [{ description, months: quantity, amount, is_deduction: false, unit }]
+  const totalDue = quantity * amount
 
   const issuedAt = firstOfCurrentMonth()
   const invoiceNumber = await generateInvoiceNumber(ctx.admin)
@@ -706,7 +723,7 @@ export async function generateDraftInvoices(
 
       const ratePerSession = getRate(cls?.class_type ?? null, cls?.level ?? null, cls?.jenis ?? null)
       const description = `Privat${cls?.level ? ` ${cls.level}` : ''} — ${sessionCount} pertemuan`
-      lineItems = [{ description, months: sessionCount, amount: ratePerSession, is_deduction: false }]
+      lineItems = [{ description, months: sessionCount, amount: ratePerSession, is_deduction: false, unit: 'pertemuan' }]
       totalDue = sessionCount * ratePerSession
 
     } else {
@@ -733,7 +750,7 @@ export async function generateDraftInvoices(
           ? monthsBetween(cls.start_date, cls.end_date)
           : 1
         const description = `Grup${cls?.level ? ` ${cls.level}` : ''} — ${months} bulan`
-        lineItems = [{ description, months, amount, is_deduction: false }]
+        lineItems = [{ description, months, amount, is_deduction: false, unit: 'bulan' }]
         totalDue = months * amount
       }
     }
