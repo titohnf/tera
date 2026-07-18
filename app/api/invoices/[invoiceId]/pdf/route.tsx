@@ -1,8 +1,12 @@
 export const runtime = 'nodejs'
 
+import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { renderToBuffer, Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
+
+const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
+const signaturePath = path.join(process.cwd(), 'public', 'ttd-stempel.png')
 
 type LineItem = {
   description: string
@@ -35,16 +39,20 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   bold: { fontFamily: 'Helvetica-Bold' },
   label: { fontSize: 7, color: '#888', textTransform: 'uppercase', marginBottom: 3 },
-  divider: { borderBottomWidth: 1.5, borderBottomColor: '#111', marginBottom: 10, marginTop: 4 },
+  divider: { borderBottomWidth: 0.75, borderBottomColor: '#999', marginBottom: 10, marginTop: 4 },
   thinDivider: { borderBottomWidth: 0.5, borderBottomColor: '#ccc', marginVertical: 4 },
-  tableHeader: { flexDirection: 'row', borderWidth: 1, borderColor: '#111', backgroundColor: '#f5f5f5', padding: 4 },
-  tableRow: { flexDirection: 'row', borderLeftWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderColor: '#111', padding: 4 },
-  tableFooter: { flexDirection: 'row', borderWidth: 1, borderColor: '#111', backgroundColor: '#f5f5f5', padding: 4 },
+  tableHeader: { flexDirection: 'row', borderWidth: 0.75, borderColor: '#999', backgroundColor: '#f5f5f5', padding: 4 },
+  tableRow: { flexDirection: 'row', borderLeftWidth: 0.75, borderRightWidth: 0.75, borderBottomWidth: 0.75, borderColor: '#999', padding: 4 },
+  tableFooter: { flexDirection: 'row', borderWidth: 0.75, borderColor: '#999', backgroundColor: '#f5f5f5', padding: 4 },
+  titleBlock: { alignItems: 'center', marginBottom: 10 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   col1: { flex: 3 },
   col2: { width: 50, textAlign: 'center' },
   col3: { width: 70, textAlign: 'right' },
   col4: { width: 75, textAlign: 'right' },
-  signBox: { flex: 1, alignItems: 'center', marginTop: 16 },
+  signBox: { alignItems: 'center', marginTop: 16 },
+  paymentRow: { flexDirection: 'row' },
+  paymentLabel: { fontFamily: 'Helvetica-Bold', width: 90 },
 })
 
 function formatRupiah(n: number) {
@@ -60,33 +68,34 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Header */}
-        <View style={s.row}>
+        <View style={s.headerRow}>
           <View>
-            <Text style={[s.bold, { fontSize: 11 }]}>Tera Learning Center</Text>
-            <Text style={{ color: '#555', marginTop: 2 }}>Ruko Depok Bersih Jl. Rawageni No. 9k</Text>
-            <Text style={{ color: '#555' }}>Kel. Ratujaya, Kec. Cipayung, Kota Depok</Text>
-            <Text style={{ color: '#555', marginTop: 2 }}>Telp: 0813 1550 2949  |  teralearningcenter.id@gmail.com</Text>
+            <Text style={[s.bold, { fontSize: 11 }]}>Bimbel Tera</Text>
+            <Text style={{ color: '#555', marginTop: 2 }}>Jl. Rawageni No. 9k, Kel. Ratujaya, Kec. Cipayung, Kota Depok</Text>
+            <Text style={{ color: '#555', marginTop: 2 }}>Telp: 0813 1550 2949  &middot;  teralearningcenter.id@gmail.com</Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[s.bold, { fontSize: 16, letterSpacing: 3 }]}>INVOICE</Text>
-            <Text style={{ fontFamily: 'Courier', fontSize: 8, marginTop: 4, color: '#555' }}>{invoice.invoice_number}</Text>
-          </View>
+          <Image src={logoPath} style={{ width: 60, height: 26 }} />
         </View>
 
         <View style={s.divider} />
+
+        <View style={s.titleBlock}>
+          <Text style={[s.bold, { fontSize: 16, letterSpacing: 3 }]}>INVOICE</Text>
+          <Text style={{ fontFamily: 'Courier', fontSize: 8, marginTop: 4, color: '#555' }}>{invoice.invoice_number}</Text>
+        </View>
 
         {/* Parties */}
         <View style={[s.row, { marginBottom: 16 }]}>
           <View style={{ flex: 1 }}>
             <Text style={[s.label, s.bold]}>Tagihan Dari</Text>
-            <Text style={s.bold}>Tera Learning Center</Text>
+            <Text style={s.bold}>Bimbel Tera</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[s.label, s.bold]}>Untuk</Text>
             <Text style={{ color: '#888', fontSize: 8 }}>Nama Siswa :</Text>
             <Text style={s.bold}>{invoice.student_name}</Text>
             <Text style={{ color: '#888', fontSize: 8, marginTop: 4 }}>Nama Orang Tua :</Text>
-            <Text>{invoice.parent_name}</Text>
+            <Text style={s.bold}>{invoice.parent_name}</Text>
           </View>
           <View style={{ flex: 1, alignItems: 'flex-end' }}>
             <Text style={[s.label, s.bold]}>Tanggal</Text>
@@ -137,23 +146,23 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
 
         {/* Payment info */}
         <View style={{ marginTop: 16, marginBottom: 16 }}>
-          <Text><Text style={s.bold}>Metode Pembayaran</Text> : {invoice.payment_method}</Text>
-          <Text style={{ marginTop: 4 }}><Text style={s.bold}>Rekening</Text> : {invoice.bank_account}</Text>
+          <View style={s.paymentRow}>
+            <Text style={s.paymentLabel}>Metode Pembayaran</Text>
+            <Text>: {invoice.payment_method}</Text>
+          </View>
+          <View style={[s.paymentRow, { marginTop: 4 }]}>
+            <Text style={s.paymentLabel}>Rekening</Text>
+            <Text>: {invoice.bank_account}</Text>
+          </View>
         </View>
 
-        {/* Signatures */}
-        <View style={[s.row, { marginTop: 24 }]}>
+        {/* Signature */}
+        <View style={{ alignItems: 'flex-end', marginTop: 24 }}>
           <View style={s.signBox}>
-            <Text>Mengetahui, Depok, {formatDate(invoice.issued_at)}</Text>
-            <Text style={[s.bold, { marginTop: 4 }]}>Orang Tua Siswa</Text>
-            <View style={{ height: 48 }} />
-            <Text>{invoice.parent_name}</Text>
-          </View>
-          <View style={s.signBox}>
-            <Text> </Text>
-            <Text style={[s.bold, { marginTop: 4 }]}>Pimpinan Tera Learning Center</Text>
-            <View style={{ height: 48 }} />
-            <Text>Suci Purnama Sari, M.Si.</Text>
+            <Text>Depok, {formatDate(invoice.issued_at)}</Text>
+            <Text style={[s.bold, { marginTop: 4 }]}>Pimpinan Bimbel Tera</Text>
+            <Image src={signaturePath} style={{ width: 116, height: 48, marginTop: 4 }} />
+            <Text style={s.bold}>Suci Purnama Sari, M.Si.</Text>
           </View>
         </View>
       </Page>
