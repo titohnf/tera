@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { computeSalary, buildRateMap } from '@/lib/salary'
 import type { SessionRow, SalarySchemeRow, SessionPaymentRow, AttendanceRow } from '@/lib/types/database'
 import StatCard from '@/components/tutor/StatCard'
+import InfoTooltip from '@/components/tutor/InfoTooltip'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { splitClassPrefix } from '@/lib/format-class-name'
 
 type SessionWithClass = SessionRow & { classes: { name: string; level: string | null } | null; subjects: { name: string } | null }
 type SessionWithClassName = SessionRow & { classes: { name: string; class_type: string | null; level: string | null; jenis: string | null } | null }
@@ -26,6 +28,8 @@ export default async function TutorDashboard() {
     { data: schemes },
     { data: payments },
     { data: activePeriod },
+    { data: overdueSessions },
+    { data: rejectedPayrollSessions },
   ] = await Promise.all([
     supabase
       .from('profiles')
@@ -61,6 +65,26 @@ export default async function TutorDashboard() {
       .gte('created_at', startOfMonth) as unknown as Promise<{ data: SessionPaymentRow[] | null }>,
 
     supabase.from('rate_periods').select('id').eq('is_active', true).limit(1).single(),
+
+    // Sesi yang jadwalnya sudah lewat tapi jurnalnya belum lengkap (belum berstatus completed)
+    supabase
+      .from('sessions')
+      .select('id, scheduled_at, classes(name)')
+      .eq('tutor_id', user.id)
+      .in('status', ['scheduled', 'ongoing'])
+      .lt('scheduled_at', now.toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(5) as unknown as Promise<{ data: { id: string; scheduled_at: string; classes: { name: string } | null }[] | null }>,
+
+    // Sesi yang payroll-nya ditolak dan perlu ditinjau ulang oleh tutor
+    supabase
+      .from('sessions')
+      .select('id, scheduled_at, payroll_rejection_reason, classes(name)')
+      .eq('tutor_id', user.id)
+      .eq('status', 'completed')
+      .eq('payroll_status', 'rejected')
+      .order('scheduled_at', { ascending: false })
+      .limit(5) as unknown as Promise<{ data: { id: string; scheduled_at: string; payroll_rejection_reason: string | null; classes: { name: string } | null }[] | null }>,
   ])
 
   const { data: activeRates } = activePeriod?.id
@@ -92,6 +116,90 @@ export default async function TutorDashboard() {
     : { data: [] as { session_id: string }[] }
   const pendingRequestSessionIds = new Set((pendingRequestsRaw ?? []).map(r => r.session_id))
 
+  // Siswa dengan skor asesmen di bawah standar ketuntasan (KKM 80), dihitung
+  // dari seluruh sesi completed yang pernah diajar tutor ini (tidak dibatasi bulan berjalan).
+  const KKM = 80
+  const { data: allCompletedSessions } = await supabase
+    .from('sessions')
+    .select('id, class_id')
+    .eq('tutor_id', user.id)
+    .eq('status', 'completed') as unknown as { data: { id: string; class_id: string }[] | null }
+
+  const allCompletedSessionIds = (allCompletedSessions ?? []).map(s => s.id)
+  const sessionClassMap = new Map((allCompletedSessions ?? []).map(s => [s.id, s.class_id]))
+
+  const { data: gradedAssessments } = allCompletedSessionIds.length > 0
+    ? await supabase
+        .from('assessments')
+        .select('id, session_id, max_score')
+        .in('session_id', allCompletedSessionIds) as unknown as { data: { id: string; session_id: string; max_score: number }[] | null }
+    : { data: [] as { id: string; session_id: string; max_score: number }[] }
+
+  const assessmentIds = (gradedAssessments ?? []).map(a => a.id)
+  const assessmentMetaMap = new Map((gradedAssessments ?? []).map(a => [a.id, a]))
+
+  const { data: allResults } = assessmentIds.length > 0
+    ? await supabase
+        .from('assessment_results')
+        .select('assessment_id, student_id, score')
+        .in('assessment_id', assessmentIds)
+        .not('score', 'is', null) as unknown as { data: { assessment_id: string; student_id: string; score: number }[] | null }
+    : { data: [] as { assessment_id: string; student_id: string; score: number }[] }
+
+  const studentStats = new Map<string, { studentId: string; classId: string; total: number; below: number }>()
+  for (const r of allResults ?? []) {
+    const meta = assessmentMetaMap.get(r.assessment_id)
+    if (!meta) continue
+    const classId = sessionClassMap.get(meta.session_id)
+    if (!classId) continue
+    const key = `${r.student_id}|${classId}`
+    const entry = studentStats.get(key) ?? { studentId: r.student_id, classId, total: 0, below: 0 }
+    entry.total += 1
+    const pct = (r.score / meta.max_score) * 100
+    if (pct < KKM) entry.below += 1
+    studentStats.set(key, entry)
+  }
+
+  // Tingkat keparahan berdasarkan persentase pertemuan di bawah KKM:
+  // darurat >=50% di bawah KKM, waspada 20-49%, aman <20%.
+  type Severity = 'darurat' | 'waspada' | 'aman'
+  function severityOf(pctBelow: number): Severity {
+    if (pctBelow >= 50) return 'darurat'
+    if (pctBelow >= 20) return 'waspada'
+    return 'aman'
+  }
+
+  const strugglingStats = [...studentStats.values()]
+    .map(s => ({ ...s, pctBelow: (s.below / s.total) * 100 }))
+    .sort((a, b) => b.pctBelow - a.pctBelow)
+    .slice(0, 5)
+
+  const strugglingStudentIds = [...new Set(strugglingStats.map(s => s.studentId))]
+  const strugglingClassIds = [...new Set(strugglingStats.map(s => s.classId))]
+
+  const [{ data: strugglingProfiles }, { data: strugglingClasses }] = await Promise.all([
+    strugglingStudentIds.length > 0
+      ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', strugglingStudentIds) as unknown as Promise<{ data: { id: string; full_name: string; avatar_url: string | null }[] | null }>
+      : Promise.resolve({ data: [] as { id: string; full_name: string; avatar_url: string | null }[] }),
+    strugglingClassIds.length > 0
+      ? supabase.from('classes').select('id, name').in('id', strugglingClassIds) as unknown as Promise<{ data: { id: string; name: string }[] | null }>
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ])
+
+  const studentProfileMap = new Map((strugglingProfiles ?? []).map(p => [p.id, p]))
+  const classNameMap = new Map((strugglingClasses ?? []).map(c => [c.id, c.name]))
+
+  const strugglingStudents = strugglingStats.map(s => ({
+    studentId: s.studentId,
+    studentName: studentProfileMap.get(s.studentId)?.full_name ?? 'Siswa',
+    avatarUrl: studentProfileMap.get(s.studentId)?.avatar_url ?? null,
+    className: classNameMap.get(s.classId) ?? 'Kelas',
+    classId: s.classId,
+    total: s.total,
+    below: s.below,
+    severity: severityOf(s.pctBelow),
+  }))
+
   const salaryReport = computeSalary({
     sessions: (completedSessions ?? []) as Parameters<typeof computeSalary>[0]['sessions'],
     schemes: schemes ?? [],
@@ -102,6 +210,23 @@ export default async function TutorDashboard() {
   })
 
   const displayName = profile?.nickname?.trim() || profile?.full_name?.trim().split(' ')[0] || ''
+
+  type ActionItem = { id: string; type: 'incomplete' | 'rejected'; className: string; date: Date; note?: string | null }
+  const actionItems: ActionItem[] = [
+    ...(overdueSessions ?? []).map(s => ({
+      id: s.id,
+      type: 'incomplete' as const,
+      className: s.classes?.name ?? 'Kelas',
+      date: new Date(s.scheduled_at),
+    })),
+    ...(rejectedPayrollSessions ?? []).map(s => ({
+      id: s.id,
+      type: 'rejected' as const,
+      className: s.classes?.name ?? 'Kelas',
+      date: new Date(s.scheduled_at),
+      note: s.payroll_rejection_reason,
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime())
 
   return (
     <div>
@@ -115,7 +240,7 @@ export default async function TutorDashboard() {
         <StatCard label="Total Pemasukan" value={formatRupiah(salaryReport.paidEarnings)} sub={`menunggu ${formatRupiah(salaryReport.pendingEarnings)}`} color="yellow" sensitive />
       </div>
 
-      <div>
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-700">Sesi Kelas yang Akan Datang</h2>
           <Link href="/tutor/classes" className="text-xs text-blue-600 hover:underline">Lihat semua</Link>
@@ -172,6 +297,90 @@ export default async function TutorDashboard() {
             })}
           </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">Status Akademik Siswa</h2>
+            <InfoTooltip text={`Berdasarkan persentase pertemuan bernilai di bawah KKM ${KKM}: Darurat (≥50%), Waspada (20–49%), Aman (<20%).`} />
+          </div>
+          {strugglingStudents.length === 0 ? (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 text-center text-sm text-gray-500">
+              Belum ada data nilai asesmen untuk menilai status akademik siswa.
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 divide-y divide-slate-100">
+              {strugglingStudents.map(s => (
+                <Link
+                  key={`${s.studentId}-${s.classId}`}
+                  href={`/tutor/classes/${s.classId}`}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-orange-50/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-slate-100 flex items-center justify-center">
+                    {s.avatarUrl ? (
+                      <img src={s.avatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-400">
+                        {s.studentName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 grow">
+                    <p className="text-sm font-medium text-gray-900 truncate">{s.studentName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {splitClassPrefix(s.className).prefix || s.className}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
+                    s.severity === 'darurat' ? 'bg-red-100 text-red-700'
+                    : s.severity === 'waspada' ? 'bg-amber-100 text-amber-700'
+                    : 'bg-green-100 text-green-700'
+                  }`}>
+                    {s.severity === 'darurat' ? 'Darurat' : s.severity === 'waspada' ? 'Waspada' : 'Aman'}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Perlu Tindakan</h2>
+          {actionItems.length === 0 ? (
+            <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 text-center text-sm text-gray-500">
+              Tidak ada yang perlu ditindaklanjuti saat ini.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {actionItems.map(item => (
+                <Link
+                  key={`${item.type}-${item.id}`}
+                  href={`/tutor/sessions/${item.id}`}
+                  className="flex items-center gap-3 bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-4 py-3.5 hover:bg-orange-50/50 transition-colors"
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${item.type === 'rejected' ? 'bg-red-500' : 'bg-orange-400'}`} />
+                  <div className="min-w-0 grow">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {item.type === 'rejected' ? 'Payroll ditolak' : 'Jurnal belum lengkap'} — {item.className}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {item.type === 'rejected'
+                        ? (item.note ?? 'Perbaiki dan ajukan peninjauan ulang')
+                        : `Sesi ${item.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} — lengkapi presensi, catatan, materi, dan asesmen`}
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
