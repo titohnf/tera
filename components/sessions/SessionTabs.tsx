@@ -23,6 +23,7 @@ type SaveTopicAction = (
   topicText: string,
   selectedCpIds: string[],
 ) => Promise<{ error?: string }>
+type SaveCpUrlsAction = (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
 
 // ── Data types ────────────────────────────────────────────────────────────────
 interface Student {
@@ -116,6 +117,7 @@ export default function SessionTabs({
   deleteMaterialAction,
   signedUrlAction,
   saveTopicAction,
+  saveCpUrlsAction,
   isAdmin,
 }: {
   sessionId: string
@@ -145,6 +147,7 @@ export default function SessionTabs({
   deleteMaterialAction: DeleteMaterialAction
   signedUrlAction: SignedUrlAction
   saveTopicAction: SaveTopicAction
+  saveCpUrlsAction?: SaveCpUrlsAction
   isAdmin?: boolean
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>('materials')
@@ -250,6 +253,7 @@ export default function SessionTabs({
               cpRows={curriculumTopics}
               initialCpUrls={cpUrls ?? {}}
               readOnly={!!readOnlyReason}
+              saveAction={saveCpUrlsAction}
             />
           </div>
         )}

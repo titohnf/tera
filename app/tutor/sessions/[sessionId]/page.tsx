@@ -9,7 +9,7 @@ import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
 import { createAssessment, submitGrades, deleteAssessment, updateAssessment } from '@/lib/actions/assessments'
 import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
-import { updateSessionTopicTutor } from '@/lib/actions/tutor/sessions'
+import { updateSessionTopicTutor, saveSessionCpUrlsTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
 import SwapResponsePanel from '@/components/tutor/SwapResponsePanel'
@@ -397,6 +397,7 @@ export default async function SessionPage({
                 />
               }
               saveTopicAction={updateSessionTopicTutor}
+              saveCpUrlsAction={saveSessionCpUrlsTutor}
               submitAttendanceAction={submitAttendance}
               saveNoteAction={savePerformanceNote}
               createAssessmentAction={createAssessment}

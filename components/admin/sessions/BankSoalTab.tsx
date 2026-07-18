@@ -16,9 +16,10 @@ interface Props {
   cpRows: CpRow[]
   initialCpUrls: Record<string, string>
   readOnly?: boolean
+  saveAction?: (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
 }
 
-export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialCpUrls, readOnly = false }: Props) {
+export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialCpUrls, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
   const selectedCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
   const [urls, setUrls] = useState<Record<string, string>>(initialCpUrls)
   const [savedUrls, setSavedUrls] = useState<Record<string, string>>(initialCpUrls)
@@ -33,7 +34,7 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialC
 
   function save() {
     startTransition(async () => {
-      const result = await saveSessionCpUrls(sessionId, urls)
+      const result = await saveAction(sessionId, urls)
       if (result.error) {
         setError(result.error)
       } else {
