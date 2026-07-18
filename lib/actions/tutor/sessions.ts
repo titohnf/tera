@@ -25,6 +25,42 @@ export async function updateSessionTopicTutor(
       curriculum_topic_id: curriculumTopicId,
       topic: topicText,
       selected_cp_ids: selectedCpIds,
+      custom_theme: null,
+      custom_learning_outcomes: [],
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', sessionId)
+
+  if (error) return { error: error.message }
+
+  await checkAndCompleteSession(sessionId)
+
+  revalidatePath(`/tutor/sessions/${sessionId}`)
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  return {}
+}
+
+export async function saveCustomTopicTutor(
+  sessionId: string,
+  theme: string,
+  topicText: string,
+  learningOutcomes: string[] = [],
+): Promise<{ error?: string }> {
+  const user = await getUser()
+  if (!user) return { error: 'Tidak terautentikasi' }
+
+  const admin = createAdminClient()
+
+  if (!(await isSessionTutor(admin, sessionId, user.id))) return { error: 'Sesi tidak ditemukan' }
+
+  const { error } = await admin
+    .from('sessions')
+    .update({
+      custom_theme: theme || null,
+      topic: topicText,
+      custom_learning_outcomes: learningOutcomes.filter(Boolean),
+      curriculum_topic_id: null,
+      selected_cp_ids: [],
       updated_at: new Date().toISOString(),
     })
     .eq('id', sessionId)

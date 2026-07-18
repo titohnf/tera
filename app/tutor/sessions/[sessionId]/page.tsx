@@ -9,7 +9,7 @@ import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
 import { createAssessment, submitGrades, deleteAssessment, updateAssessment } from '@/lib/actions/assessments'
 import { deleteMaterial, getSignedUrl } from '@/lib/actions/materials'
-import { updateSessionTopicTutor, saveSessionCpUrlsTutor } from '@/lib/actions/tutor/sessions'
+import { updateSessionTopicTutor, saveSessionCpUrlsTutor, saveCustomTopicTutor } from '@/lib/actions/tutor/sessions'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import SessionChangeRequestPanel from '@/components/tutor/SessionChangeRequestPanel'
 import SwapResponsePanel from '@/components/tutor/SwapResponsePanel'
@@ -37,12 +37,14 @@ type SessionDetail = {
   curriculum_topic_id: string | null
   selected_cp_ids: string[] | null
   cp_urls: Record<string, string> | null
+  custom_theme: string | null
+  custom_learning_outcomes: string[] | null
   payroll_status: string
   payroll_rejection_reason: string | null
   payroll_reviewed_at: string | null
   payroll_tutor_note: string | null
   payroll_tutor_note_at: string | null
-  classes: { name: string; level: string | null } | null
+  classes: { name: string; level: string | null; class_type: string | null } | null
   subjects: { name: string } | null
 }
 
@@ -58,7 +60,7 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, payroll_status, payroll_rejection_reason, payroll_reviewed_at, payroll_tutor_note, payroll_tutor_note_at, classes(name, level), subjects(name), tutor_id')
+    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, custom_theme, custom_learning_outcomes, payroll_status, payroll_rejection_reason, payroll_reviewed_at, payroll_tutor_note, payroll_tutor_note_at, classes(name, level, class_type), subjects(name), tutor_id')
     .eq('id', sessionId)
     .single() as { data: (SessionDetail & { tutor_id: string }) | null; error: unknown }
 
@@ -329,6 +331,7 @@ export default async function SessionPage({
     : { data: [] }
 
   const date = new Date(session.scheduled_at)
+  const isPrivateClass = session.classes?.class_type === 'private'
 
   return (
     <div>
@@ -398,6 +401,10 @@ export default async function SessionPage({
               }
               saveTopicAction={updateSessionTopicTutor}
               saveCpUrlsAction={saveSessionCpUrlsTutor}
+              isPrivateClass={isPrivateClass}
+              saveCustomTopicAction={saveCustomTopicTutor}
+              customTheme={session.custom_theme}
+              customLearningOutcomes={session.custom_learning_outcomes ?? []}
               submitAttendanceAction={submitAttendance}
               saveNoteAction={savePerformanceNote}
               createAssessmentAction={createAssessment}

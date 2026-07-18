@@ -69,6 +69,8 @@ export interface SessionRow {
   status: SessionStatus
   topic: string | null
   selected_cp_ids: string[]
+  custom_theme: string | null
+  custom_learning_outcomes: string[] | null
   created_at: string
   updated_at: string
 }

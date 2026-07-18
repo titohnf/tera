@@ -21,10 +21,16 @@ export async function getJadwalSessionDetail(
   const [sessionRes, attendanceRes, noteRes, materialsRes] = await Promise.all([
     admin
       .from('sessions')
-      .select('curriculum_topic_id, selected_cp_ids, topic')
+      .select('curriculum_topic_id, selected_cp_ids, topic, custom_theme, custom_learning_outcomes')
       .eq('id', sessionId)
       .maybeSingle() as unknown as Promise<{
-        data: { curriculum_topic_id: string | null; selected_cp_ids: string[] | null; topic: string | null } | null
+        data: {
+          curriculum_topic_id: string | null
+          selected_cp_ids: string[] | null
+          topic: string | null
+          custom_theme: string | null
+          custom_learning_outcomes: string[] | null
+        } | null
         error: unknown
       }>,
     admin
@@ -108,6 +114,15 @@ export async function getJadwalSessionDetail(
         bank_soal_url: cp_urls[id] ?? null,
       }
     })
+  } else if (session && (session.custom_theme || (session.custom_learning_outcomes?.length ?? 0) > 0)) {
+    // Kelas privat — tutor-authored tema/topik/CP, not linked to curriculum_topics
+    tema = session.custom_theme
+    topik = session.topic
+    cp_list = (session.custom_learning_outcomes ?? []).map((text, i) => ({
+      id: `custom-${i}`,
+      label: text,
+      bank_soal_url: null,
+    }))
   }
 
   const assessmentList = assessmentRows ?? []

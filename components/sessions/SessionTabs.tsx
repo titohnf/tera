@@ -24,6 +24,12 @@ type SaveTopicAction = (
   selectedCpIds: string[],
 ) => Promise<{ error?: string }>
 type SaveCpUrlsAction = (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
+type SaveCustomTopicAction = (
+  sessionId: string,
+  theme: string,
+  topicText: string,
+  learningOutcomes: string[],
+) => Promise<{ error?: string }>
 
 // ── Data types ────────────────────────────────────────────────────────────────
 interface Student {
@@ -119,6 +125,10 @@ export default function SessionTabs({
   saveTopicAction,
   saveCpUrlsAction,
   isAdmin,
+  isPrivateClass,
+  saveCustomTopicAction,
+  customTheme,
+  customLearningOutcomes,
 }: {
   sessionId: string
   readOnlyReason?: 'not-tutor' | 'approved'
@@ -131,6 +141,10 @@ export default function SessionTabs({
   cpUrls?: Record<string, string>
   subjectName?: string | null
   grade?: number | null
+  isPrivateClass?: boolean
+  saveCustomTopicAction?: SaveCustomTopicAction
+  customTheme?: string | null
+  customLearningOutcomes?: string[]
   students: Student[]
   templates: Template[]
   materials: MaterialItem[]
@@ -211,6 +225,10 @@ export default function SessionTabs({
               saveAction={saveTopicAction}
               isAdmin={isAdmin}
               readOnly={!!readOnlyReason}
+              isPrivateClass={isPrivateClass}
+              initialCustomTheme={customTheme}
+              initialCustomLearningOutcomes={customLearningOutcomes}
+              saveCustomAction={saveCustomTopicAction}
             />
 
             <div className="border-t border-slate-200 my-5" />
