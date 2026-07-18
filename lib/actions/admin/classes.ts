@@ -124,16 +124,18 @@ export async function createClass(prevState: ActionState, formData: FormData): P
     const billingJenis = jenis === 'reguler' ? 'Reguler' : jenis === 'fokus' ? 'Fokus' : null
     const rateAmount = billingJenis ? (rateMap.get(`${classType}|${level}|${billingJenis}`) ?? 0) : 0
 
-    const months = classMonthsBetween(startDate!, endDate!)
+    const isPrivate = classType === 'private'
+    const quantity = isPrivate ? generatedSessions.length : classMonthsBetween(startDate!, endDate!)
+    const unit: 'bulan' | 'pertemuan' = isPrivate ? 'pertemuan' : 'bulan'
     const description = nameBase || name || 'Biaya Kelas'
-    const lineItems = [{ description, months, amount: rateAmount, is_deduction: false, unit: 'bulan' as const }]
-    const totalDue = months * rateAmount
+    const lineItems = [{ description, months: quantity, amount: rateAmount, is_deduction: false, unit }]
+    const totalDue = quantity * rateAmount
 
     const issuedAt = new Date().toISOString().slice(0, 10)
     const due = new Date(); due.setDate(due.getDate() + 7)
     const dueDate = due.toISOString().slice(0, 10)
 
-    for (const studentId of studentIds) {
+    for (const studentId of quantity > 0 ? studentIds : []) {
       const profile = profiles?.find(p => p.id === studentId)
       if (!profile) continue
 
