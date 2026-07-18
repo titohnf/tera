@@ -13,11 +13,12 @@ export async function updateTutorProfile(_prev: State, formData: FormData): Prom
 
   const full_name = formData.get('full_name')?.toString().trim()
   const phone = formData.get('phone')?.toString().trim() || null
+  const nickname = formData.get('nickname')?.toString().trim() || null
 
   if (!full_name) return { error: 'Nama lengkap wajib diisi.' }
 
   const admin = createAdminClient()
-  const { error } = await admin.from('profiles').update({ full_name, phone }).eq('id', user.id)
+  const { error } = await admin.from('profiles').update({ full_name, phone, nickname }).eq('id', user.id)
   if (error) return { error: error.message }
 
   revalidatePath('/tutor')

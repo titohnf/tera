@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const admin = createAdminClient()
 
   const [{ data: profile }, { data: subjects }, { data: tutorSubjects }, { data: availability }] = await Promise.all([
-    admin.from('profiles').select('full_name, email, phone, avatar_url').eq('id', user.id).single(),
+    admin.from('profiles').select('full_name, email, phone, avatar_url, nickname').eq('id', user.id).single(),
     admin.from('subjects').select('id, name, level').order('name'),
     admin.from('tutor_subjects').select('subject_id, level').eq('tutor_id', user.id),
     admin.from('tutor_availability').select('day_of_week, start_time, end_time').eq('tutor_id', user.id),
@@ -27,9 +27,10 @@ export default async function ProfilePage() {
         <p className="text-sm text-gray-500 mt-1">Kelola informasi akun dan keamanan.</p>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-5 max-w-xl">
         <TutorProfileForm
           fullName={profile?.full_name ?? ''}
+          nickname={profile?.nickname ?? ''}
           phone={profile?.phone ?? ''}
           email={profile?.email ?? user.email ?? ''}
           avatarUrl={profile?.avatar_url ?? null}
