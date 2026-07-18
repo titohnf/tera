@@ -197,7 +197,7 @@ function ClassCard({
   return (
     <div>
       {/* Class header */}
-      <div className="hover:bg-slate-50 transition-colors">
+      <div className={`hover:bg-slate-50 transition-colors overflow-hidden ${isOpen ? 'rounded-t-2xl' : 'rounded-2xl'}`}>
         <button
           type="button"
           onClick={() => setIsOpen(v => !v)}
@@ -427,7 +427,7 @@ export default function StudentClassInvoiceTable({ groups, studentName, parentNa
   return (
     <div className="space-y-3">
       {groups.map(group => (
-        <div key={group.classId ?? '__no_class__'} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <div key={group.classId ?? '__no_class__'} className="bg-white border border-slate-200 rounded-2xl">
           <ClassCard group={group} studentName={studentName} parentName={parentName} parentPhone={parentPhone} />
         </div>
       ))}
