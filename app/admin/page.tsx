@@ -128,12 +128,12 @@ export default async function AdminDashboard({
     admin.from('profiles').select('id, created_at').eq('role', 'student').gte('created_at', chartWideFrom).order('created_at', { ascending: true }).limit(1000),
     admin.from('invoices').select('total_due, issued_at').eq('status', 'paid').gte('issued_at', chartWideFrom).limit(1000),
     admin.from('sessions')
-      .select('id, scheduled_at, status, classes(name), profiles!tutor_id(full_name)')
+      .select('id, scheduled_at, status, classes(id, name), profiles!tutor_id(full_name)')
       .gte('scheduled_at', calFrom)
       .lte('scheduled_at', calTo)
       .in('status', ['scheduled', 'ongoing', 'completed', 'cancelled'])
       .order('scheduled_at', { ascending: true })
-      .limit(200) as unknown as Promise<{ data: { id: string; scheduled_at: string; status: string; classes: { name: string } | null; profiles: { full_name: string } | null }[] | null }>,
+      .limit(200) as unknown as Promise<{ data: { id: string; scheduled_at: string; status: string; classes: { id: string; name: string } | null; profiles: { full_name: string } | null }[] | null }>,
     admin.from('payslips').select('grand_total, pay_date').in('status', ['sent', 'paid']).gte('pay_date', chartWideFrom).limit(500),
     admin.from('profiles').select('id, full_name, is_active').eq('role', 'tutor') as unknown as Promise<{ data: { id: string; full_name: string; is_active: boolean }[] | null }>,
     admin.from('classes').select('id, tutor_id').eq('is_active', true) as unknown as Promise<{ data: { id: string; tutor_id: string }[] | null }>,
@@ -465,6 +465,7 @@ export default async function AdminDashboard({
     id: s.id,
     scheduled_at: s.scheduled_at,
     status: s.status,
+    classId: s.classes?.id ?? null,
     className: s.classes?.name ?? 'Kelas',
     tutorName: s.profiles?.full_name ?? null,
   }))

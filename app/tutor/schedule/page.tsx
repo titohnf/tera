@@ -22,7 +22,7 @@ export default async function SchedulePage({
   const admin = createAdminClient()
   const { data: sessions } = await admin
     .from('sessions')
-    .select('id, scheduled_at, status, classes(name)')
+    .select('id, scheduled_at, status, classes(id, name)')
     .eq('tutor_id', user.id)
     .gte('scheduled_at', startOfMonth)
     .lte('scheduled_at', endOfMonth)
@@ -31,7 +31,7 @@ export default async function SchedulePage({
         id: string
         scheduled_at: string
         status: string
-        classes: { name: string } | null
+        classes: { id: string; name: string } | null
       }[] | null
     }
 
@@ -49,6 +49,7 @@ export default async function SchedulePage({
     id: s.id,
     scheduled_at: s.scheduled_at,
     status: s.status,
+    classId: s.classes?.id ?? null,
     className: s.classes?.name ?? 'Kelas',
     tutorName: null,
     hasPendingChangeRequest: pendingSessionIds.has(s.id),

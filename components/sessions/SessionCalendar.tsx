@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { classColorClass } from '@/lib/classColor'
 
 type SessionEvent = {
   id: string
   scheduled_at: string
   status: string
+  classId: string | null
   className: string
   tutorName: string | null
   hasPendingChangeRequest?: boolean
@@ -111,11 +113,12 @@ export default function SessionCalendar({ sessions, year, month, navBase = '/adm
                 {daySessions.slice(0, 3).map(s => {
                   const time = new Date(s.scheduled_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                   const displayStatus = getSessionDisplayStatus(s.status, !!s.hasPendingChangeRequest)
+                  const color = s.classId ? classColorClass(s.classId) : displayStatus.color
                   return (
                     <Link
                       key={s.id}
                       href={`${sessionHrefBase}/${s.id}`}
-                      className={`block truncate text-[11px] px-1.5 py-0.5 rounded font-medium leading-tight hover:opacity-80 transition-opacity ${displayStatus.color} ${s.status === 'cancelled' ? 'line-through' : ''}`}
+                      className={`block truncate text-[11px] px-1.5 py-0.5 rounded font-medium leading-tight hover:opacity-80 transition-opacity ${color} ${s.status === 'cancelled' ? 'line-through' : ''}`}
                       title={`${s.className} · ${time}${s.tutorName ? ` · ${s.tutorName}` : ''} · ${displayStatus.label}`}
                     >
                       {time} {s.className}

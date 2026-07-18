@@ -18,7 +18,7 @@ export default async function SessionsPage({
   const admin = createAdminClient()
   const { data: sessions } = await admin
     .from('sessions')
-    .select('id, scheduled_at, status, classes(name), profiles!tutor_id(full_name)')
+    .select('id, scheduled_at, status, classes(id, name), profiles!tutor_id(full_name)')
     .gte('scheduled_at', startOfMonth)
     .lte('scheduled_at', endOfMonth)
     .order('scheduled_at', { ascending: true }) as unknown as {
@@ -26,7 +26,7 @@ export default async function SessionsPage({
         id: string
         scheduled_at: string
         status: string
-        classes: { name: string } | null
+        classes: { id: string; name: string } | null
         profiles: { full_name: string } | null
       }[] | null
     }
@@ -45,6 +45,7 @@ export default async function SessionsPage({
     id: s.id,
     scheduled_at: s.scheduled_at,
     status: s.status,
+    classId: s.classes?.id ?? null,
     className: s.classes?.name ?? 'Kelas',
     tutorName: s.profiles?.full_name ?? null,
     hasPendingChangeRequest: pendingSessionIds.has(s.id),
