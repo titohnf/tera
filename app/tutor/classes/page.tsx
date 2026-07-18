@@ -7,7 +7,7 @@ import TeachingScheduleFilters from '@/components/tutor/TeachingScheduleFilters'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
-import { splitClassName } from '@/lib/format-class-name'
+import { splitClassName, splitClassPrefix } from '@/lib/format-class-name'
 
 type ClassRow = {
   id: string
@@ -197,7 +197,7 @@ export default async function TutorClassesPage({
   const allClasses: ClassRow[] = mainClasses
   const classIds = allClasses.map(c => c.id)
 
-  type StudentCountRow = { class_id: string }
+  type StudentCountRow = { class_id: string; profiles: { nickname: string | null; full_name: string } | null }
   type SessionRow = { class_id: string; scheduled_at: string; status: string }
   type SlotRow = { class_id: string; day_of_week: number | null; subject_ids: string[] }
 
@@ -230,7 +230,7 @@ export default async function TutorClassesPage({
     classIds.length > 0
       ? admin
           .from('class_students')
-          .select('class_id')
+          .select('class_id, profiles!student_id(nickname, full_name)')
           .in('class_id', classIds)
           .eq('is_active', true) as unknown as Promise<{ data: StudentCountRow[] | null }>
       : Promise.resolve({ data: [] as StudentCountRow[] }),
@@ -336,9 +336,14 @@ export default async function TutorClassesPage({
   const tutorSlots: SlotRow[] = tutorSlotsData ?? []
   const subjects = subjectsData ?? []
 
-  const countByClass: Record<string, number> = {}
+  const studentNamesByClass = new Map<string, string[]>()
   for (const s of studentCounts) {
-    countByClass[s.class_id] = (countByClass[s.class_id] ?? 0) + 1
+    const label = s.profiles?.nickname || s.profiles?.full_name
+    if (label) {
+      const arr = studentNamesByClass.get(s.class_id) ?? []
+      arr.push(label)
+      studentNamesByClass.set(s.class_id, arr)
+    }
   }
 
   const completedCountByClass: Record<string, number> = {}
@@ -461,7 +466,7 @@ export default async function TutorClassesPage({
               <thead>
                 <tr className="border-t border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <th className="pl-5 pr-4 py-3 text-left">Nama Kelas</th>
-                  <th className="px-4 py-3 text-center">Siswa</th>
+                  <th className="px-4 py-3 text-left">Siswa</th>
                   <th className="px-4 py-3 text-left hidden md:table-cell">Jadwal</th>
                   <th className="px-4 py-3 text-left hidden sm:table-cell">Sesi</th>
                   <th className="px-4 py-3 text-left">Status</th>
@@ -470,30 +475,32 @@ export default async function TutorClassesPage({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(cls => {
-                  const siswaCount = countByClass[cls.id] ?? 0
+                  const studentNames = studentNamesByClass.get(cls.id) ?? []
                   const progress = getProgress(cls)
+                  const { prefix, rest } = splitClassPrefix(cls.name)
 
                   return (
                     <tr key={cls.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/tutor/classes/${cls.id}`} className="block">
-                          {(() => {
-                            const { semesterLabel, title } = splitClassName(cls.name)
-                            return (
-                              <>
-                                {semesterLabel && (
-                                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{semesterLabel}</p>
-                                )}
-                                <p className="font-medium text-gray-900">{title}</p>
-                              </>
-                            )
-                          })()}
+                          {prefix ? (
+                            <>
+                              <p className="font-semibold text-gray-900">{prefix}</p>
+                              {rest && <p className="text-xs text-gray-400 mt-0.5">{rest}</p>}
+                            </>
+                          ) : (
+                            <p className="font-medium text-gray-900">{cls.name}</p>
+                          )}
                         </Link>
                       </td>
 
-                      <td className="px-4 py-3 text-center">
-                        <Link href={`/tutor/classes/${cls.id}`} className="block font-semibold text-gray-800">
-                          {siswaCount}
+                      <td className="px-4 py-3">
+                        <Link href={`/tutor/classes/${cls.id}`} className="block text-gray-700">
+                          {studentNames.length === 0 ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
+                            studentNames.join(', ')
+                          )}
                         </Link>
                       </td>
 
@@ -518,15 +525,13 @@ export default async function TutorClassesPage({
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm text-gray-600">{progress.completed}/{progress.target} sesi</span>
                                 <span className={`text-sm font-semibold ${
-                                  progress.pct >= 80 ? 'text-green-600' :
-                                  progress.pct >= 40 ? 'text-yellow-600' : 'text-red-500'
+                                  progress.pct >= 100 ? 'text-green-600' : 'text-blue-600'
                                 }`}>{progress.pct}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${
-                                    progress.pct >= 80 ? 'bg-green-500' :
-                                    progress.pct >= 40 ? 'bg-yellow-400' : 'bg-red-400'
+                                    progress.pct >= 100 ? 'bg-green-500' : 'bg-blue-500'
                                   }`}
                                   style={{ width: `${progress.pct}%` }}
                                 />

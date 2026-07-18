@@ -64,14 +64,15 @@ function parseTimeToMinutes(t: string): number {
   return h * 60 + (m ?? 0)
 }
 
-function buildClassName(classType: string, jenjang: string, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null, academicYear: string) {
+function buildClassName(classType: string, jenjang: string, grade: number | null, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null, academicYear: string) {
   const tipeLabel = classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : ''
+  const jenjangLabel = [grade, jenjang].filter(Boolean).join(' ')
   const jenisLabel = jenis === 'reguler' ? 'Reguler'
     : jenis === 'fokus' ? (fokusTypes.length > 0 ? `Fokus ${fokusTypes.join('/')}` : 'Fokus')
     : ''
   const smLabel = semester ? `SM ${semester}` : ''
   const taLabel = smLabel && academicYear ? academicYear : ''
-  return [tipeLabel, jenjang, jenisLabel, smLabel, taLabel, namaUnik].filter(Boolean).join(' ')
+  return [tipeLabel, jenjangLabel, jenisLabel, smLabel, taLabel, namaUnik].filter(Boolean).join(' ')
 }
 
 function emptySlot(): SlotState {
@@ -326,6 +327,7 @@ export default function ClassForm({
   // Name builder
   const [classType, setClassType] = useState(defaultValues?.class_type ?? '')
   const [jenjang, setJenjang] = useState(defaultValues?.level ?? '')
+  const [grade, setGrade] = useState<number | null>(null)
   const [jenis, setJenis] = useState<'reguler' | 'fokus' | ''>((defaultValues?.jenis as 'reguler' | 'fokus' | null) ?? '')
   const [fokusTypes, setFokusTypes] = useState<string[]>(defaultValues?.fokus_types ?? [])
   const [namaUnik, setNamaUnik] = useState('')
@@ -336,8 +338,8 @@ export default function ClassForm({
   useEffect(() => {
     if (nameManuallyEdited.current) return
     if (!classType && !jenjang && !jenis) return
-    setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear))
-  }, [classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear])
+    setClassName(buildClassName(classType, jenjang, grade, jenis, fokusTypes, namaUnik, semester, academicYear))
+  }, [classType, jenjang, grade, jenis, fokusTypes, namaUnik, semester, academicYear])
 
   function toggleFokus(type: string) {
     setFokusTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
@@ -417,12 +419,32 @@ export default function ClassForm({
     return unique.length === 1 ? unique[0] : null
   }, [effectiveLevels])
 
+  const effectiveGrades = useMemo(() => {
+    if (showStudentPicker) {
+      return (students ?? [])
+        .filter(s => selectedStudentIds.has(s.id))
+        .map(s => s.grade)
+    }
+    return []
+  }, [showStudentPicker, students, selectedStudentIds])
+
+  const suggestedGrade = useMemo(() => {
+    const nonNull = effectiveGrades.filter((g): g is number => g != null)
+    if (nonNull.length === 0) return null
+    const unique = [...new Set(nonNull)]
+    return unique.length === 1 ? unique[0] : null
+  }, [effectiveGrades])
+
   // Auto-select jenjang and tipe kelas reactively from student selection
   useEffect(() => {
     if (!defaultValues?.level) {
       setJenjang(suggestedLevel ?? '')
     }
   }, [suggestedLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setGrade(suggestedGrade)
+  }, [suggestedGrade])
 
   useEffect(() => {
     if (!showStudentPicker) return  // jangan reset nama saat mode edit
@@ -697,7 +719,7 @@ export default function ClassForm({
           />
           {nameManuallyEdited.current && (
             <button type="button"
-              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, jenis, fokusTypes, namaUnik, semester, academicYear)) }}
+              onClick={() => { nameManuallyEdited.current = false; setClassName(buildClassName(classType, jenjang, grade, jenis, fokusTypes, namaUnik, semester, academicYear)) }}
               className="text-xs text-gray-400 hover:text-blue-600 mt-1 transition-colors"
             >↺ Reset ke nama otomatis</button>
           )}
@@ -708,7 +730,7 @@ export default function ClassForm({
       <input type="hidden" name="class_type" value={classType} />
       <input type="hidden" name="jenis" value={jenis} />
       <input type="hidden" name="fokus_types" value={JSON.stringify(fokusTypes)} />
-      <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, jenis, fokusTypes, '', semester, academicYear)} />
+      <input type="hidden" name="name_base" value={buildClassName(classType, jenjang, grade, jenis, fokusTypes, '', semester, academicYear)} />
 
       {/* ── Pertemuan per minggu ── */}
       <div>

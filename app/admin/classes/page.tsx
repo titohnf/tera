@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/admin/classes/ClassFilters'
+import { splitClassPrefix } from '@/lib/format-class-name'
 
 type ClassRow = {
   id: string
@@ -28,27 +29,20 @@ export default async function ClassesPage({
 
   const now = new Date()
 
-  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: nextSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }] = await Promise.all([
+  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }] = await Promise.all([
     admin
       .from('classes')
       .select('id, name, level, is_active, class_type, status, start_date, end_date, profiles!tutor_id(full_name), class_subjects(subjects(name))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: ClassRow[] | null }>,
     admin
       .from('class_students')
-      .select('class_id')
-      .eq('is_active', true),
+      .select('class_id, profiles!student_id(nickname, full_name)')
+      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; profiles: { nickname: string | null; full_name: string } | null }[] | null }>,
     admin
       .from('sessions')
       .select('class_id, scheduled_at')
       .eq('status', 'completed')
       .order('scheduled_at', { ascending: false })
-      .limit(500),
-    admin
-      .from('sessions')
-      .select('class_id, scheduled_at')
-      .eq('status', 'scheduled')
-      .gte('scheduled_at', now.toISOString())
-      .order('scheduled_at', { ascending: true })
       .limit(500),
     admin
       .from('class_slots')
@@ -65,23 +59,20 @@ export default async function ClassesPage({
 
   const allClasses = classes ?? []
 
-  const countByClass: Record<string, number> = {}
+  const studentNamesByClass = new Map<string, string[]>()
   for (const e of enrollments ?? []) {
-    countByClass[e.class_id] = (countByClass[e.class_id] ?? 0) + 1
+    const label = e.profiles?.nickname || e.profiles?.full_name
+    if (label) {
+      const arr = studentNamesByClass.get(e.class_id) ?? []
+      arr.push(label)
+      studentNamesByClass.set(e.class_id, arr)
+    }
   }
 
-  // Build sesi lookup: last completed + next scheduled per class
+  // Build sesi lookup: last completed per class
   const lastSessionMap = new Map<string, string>()
   for (const s of lastSessionsRaw ?? []) {
     if (!lastSessionMap.has(s.class_id)) lastSessionMap.set(s.class_id, s.scheduled_at)
-  }
-  const nextSessionMap = new Map<string, string>()
-  for (const s of nextSessionsRaw ?? []) {
-    if (!nextSessionMap.has(s.class_id)) nextSessionMap.set(s.class_id, s.scheduled_at)
-  }
-
-  function fmtDate(iso: string) {
-    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
   }
 
   const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
@@ -221,7 +212,7 @@ export default async function ClassesPage({
               <thead>
                 <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <th className="pl-5 pr-4 py-3 text-left">Nama Kelas</th>
-                  <th className="px-4 py-3 text-center">Siswa</th>
+                  <th className="px-4 py-3 text-left">Siswa</th>
                   <th className="px-4 py-3 text-left hidden md:table-cell">Jadwal</th>
                   <th className="px-4 py-3 text-left hidden sm:table-cell">Sesi</th>
                   <th className="px-4 py-3 text-left">Status</th>
@@ -230,8 +221,9 @@ export default async function ClassesPage({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map(cls => {
-                  const siswaCount = countByClass[cls.id] ?? 0
+                  const studentNames = studentNamesByClass.get(cls.id) ?? []
                   const progress = getProgress(cls)
+                  const { prefix, rest } = splitClassPrefix(cls.name)
 
                   return (
                     <tr
@@ -241,17 +233,25 @@ export default async function ClassesPage({
                       {/* Nama */}
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/admin/classes/${cls.id}`} className="block">
-                          <p className="font-medium text-gray-900">{cls.name}</p>
-                          {cls.level && (
-                            <span className="text-sm text-gray-400">{cls.level}</span>
+                          {prefix ? (
+                            <>
+                              <p className="font-semibold text-gray-900">{prefix}</p>
+                              {rest && <p className="text-xs text-gray-400 mt-0.5">{rest}</p>}
+                            </>
+                          ) : (
+                            <p className="font-medium text-gray-900">{cls.name}</p>
                           )}
                         </Link>
                       </td>
 
                       {/* Siswa */}
-                      <td className="px-4 py-3 text-center">
-                        <Link href={`/admin/classes/${cls.id}`} className="block font-semibold text-gray-800">
-                          {siswaCount}
+                      <td className="px-4 py-3">
+                        <Link href={`/admin/classes/${cls.id}`} className="block text-gray-700">
+                          {studentNames.length === 0 ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
+                            studentNames.join(', ')
+                          )}
                         </Link>
                       </td>
 
@@ -278,15 +278,13 @@ export default async function ClassesPage({
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm text-gray-600">{progress.completed}/{progress.target} sesi</span>
                                 <span className={`text-sm font-semibold ${
-                                  progress.pct >= 80 ? 'text-green-600' :
-                                  progress.pct >= 40 ? 'text-yellow-600' : 'text-red-500'
+                                  progress.pct >= 100 ? 'text-green-600' : 'text-blue-600'
                                 }`}>{progress.pct}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${
-                                    progress.pct >= 80 ? 'bg-green-500' :
-                                    progress.pct >= 40 ? 'bg-yellow-400' : 'bg-red-400'
+                                    progress.pct >= 100 ? 'bg-green-500' : 'bg-blue-500'
                                   }`}
                                   style={{ width: `${progress.pct}%` }}
                                 />
@@ -295,9 +293,6 @@ export default async function ClassesPage({
                           ) : (
                             <span className="text-sm text-gray-600">{progress.completed} sesi selesai</span>
                           )}
-                          <span className="block text-sm text-gray-400">
-                            Berikutnya: {nextSessionMap.has(cls.id) ? fmtDate(nextSessionMap.get(cls.id)!) : 'Belum ada'}
-                          </span>
                         </Link>
                       </td>
 
