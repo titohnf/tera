@@ -7,6 +7,7 @@ import StatCard from '@/components/tutor/StatCard'
 import InfoTooltip from '@/components/tutor/InfoTooltip'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { splitClassPrefix } from '@/lib/format-class-name'
+import { KKM, severityOf, SEVERITY_LABEL, SEVERITY_BADGE_CLASS } from '@/lib/academic-status'
 
 type SessionWithClass = SessionRow & { classes: { name: string; level: string | null } | null; subjects: { name: string } | null }
 type SessionWithClassName = SessionRow & { classes: { name: string; class_type: string | null; level: string | null; jenis: string | null } | null }
@@ -118,7 +119,6 @@ export default async function TutorDashboard() {
 
   // Siswa dengan skor asesmen di bawah standar ketuntasan (KKM 80), dihitung
   // dari seluruh sesi completed yang pernah diajar tutor ini (tidak dibatasi bulan berjalan).
-  const KKM = 80
   const { data: allCompletedSessions } = await supabase
     .from('sessions')
     .select('id, class_id')
@@ -158,15 +158,6 @@ export default async function TutorDashboard() {
     const pct = (r.score / meta.max_score) * 100
     if (pct < KKM) entry.below += 1
     studentStats.set(key, entry)
-  }
-
-  // Tingkat keparahan berdasarkan persentase pertemuan di bawah KKM:
-  // darurat >=50% di bawah KKM, waspada 20-49%, aman <20%.
-  type Severity = 'darurat' | 'waspada' | 'aman'
-  function severityOf(pctBelow: number): Severity {
-    if (pctBelow >= 50) return 'darurat'
-    if (pctBelow >= 20) return 'waspada'
-    return 'aman'
   }
 
   const strugglingStats = [...studentStats.values()]
@@ -314,7 +305,7 @@ export default async function TutorDashboard() {
               {strugglingStudents.map(s => (
                 <Link
                   key={`${s.studentId}-${s.classId}`}
-                  href={`/tutor/classes/${s.classId}`}
+                  href={`/tutor/siswa/${s.studentId}`}
                   className="flex items-center gap-3 px-4 py-3.5 hover:bg-orange-50/50 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-slate-100 flex items-center justify-center">
@@ -332,12 +323,8 @@ export default async function TutorDashboard() {
                       {splitClassPrefix(s.className).prefix || s.className}
                     </p>
                   </div>
-                  <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
-                    s.severity === 'darurat' ? 'bg-red-100 text-red-700'
-                    : s.severity === 'waspada' ? 'bg-amber-100 text-amber-700'
-                    : 'bg-green-100 text-green-700'
-                  }`}>
-                    {s.severity === 'darurat' ? 'Darurat' : s.severity === 'waspada' ? 'Waspada' : 'Aman'}
+                  <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${SEVERITY_BADGE_CLASS[s.severity]}`}>
+                    {SEVERITY_LABEL[s.severity]}
                   </span>
                   <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -349,7 +336,10 @@ export default async function TutorDashboard() {
         </div>
 
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Perlu Tindakan</h2>
+          <div className="flex items-center gap-1.5 mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">Perlu Tindakan</h2>
+            <InfoTooltip text="Jurnal belum lengkap: sesi yang jadwalnya sudah lewat tapi presensi, catatan, materi, atau asesmennya belum lengkap. Payroll ditolak: sesi selesai yang perlu diperbaiki dan diajukan ulang untuk perhitungan gaji." />
+          </div>
           {actionItems.length === 0 ? (
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 text-center text-sm text-gray-500">
               Tidak ada yang perlu ditindaklanjuti saat ini.

@@ -142,6 +142,7 @@ export default async function TutorClassDetailPage({
   const enrolledStudents = (enrolled ?? [])
     .map(e => e.profiles)
     .filter((p): p is StudentProfile => p !== null)
+    .map(p => ({ ...p, href: `/tutor/siswa/${p.id}` }))
 
   // The tutor officially assigned to teach each subject, per class_slots —
   // this is the "regular" tutor for that subject, independent of who happens
