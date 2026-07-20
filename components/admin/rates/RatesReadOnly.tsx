@@ -8,12 +8,24 @@ const TYPES = [
     label: 'Kelas Grup',
     subtitle: 'Lebih dari 1 siswa',
     icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    jenjangList: JENJANG,
+    jenisList: JENIS,
   },
   {
     key: 'private' as const,
     label: 'Kelas Privat',
     subtitle: '1 siswa',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+    jenjangList: JENJANG,
+    jenisList: JENIS,
+  },
+  {
+    key: 'yayasan' as const,
+    label: 'Kelas Yayasan',
+    subtitle: 'Tanpa invoice orang tua',
+    icon: 'M12 21v-8m0 0L4.5 9.5 12 5l7.5 4.5L12 13zM4.5 9.5V16L12 20.5 19.5 16V9.5',
+    jenjangList: ['Yayasan'] as const,
+    jenisList: ['Reguler'] as const,
   },
 ]
 
@@ -28,8 +40,8 @@ export default function RatesReadOnly({ rates }: { rates: SessionRate[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-      {TYPES.map(({ key: ct, label, subtitle, icon }) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {TYPES.map(({ key: ct, label, subtitle, icon, jenjangList, jenisList }) => (
         <div key={ct} className="border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
@@ -51,8 +63,8 @@ export default function RatesReadOnly({ rates }: { rates: SessionRate[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {JENJANG.map(jenjang =>
-                JENIS.filter(jenis => !(jenjang === 'Calistung' && jenis === 'Fokus')).map(jenis => {
+              {jenjangList.map(jenjang =>
+                jenisList.filter(jenis => !(jenjang === 'Calistung' && jenis === 'Fokus')).map(jenis => {
                   const rate = rateMap[`${ct}|${jenjang}|${jenis}`] ?? 0
                   return (
                     <tr key={`${jenjang}|${jenis}`} className="hover:bg-slate-50 transition-colors">

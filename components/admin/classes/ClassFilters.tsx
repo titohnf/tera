@@ -77,6 +77,7 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
         <option value="">Semua Tipe</option>
         <option value="group">Reguler</option>
         <option value="private">Privat</option>
+        <option value="yayasan">Yayasan</option>
       </select>
 
       <select value={status} onChange={e => router.push(buildUrl({ status: e.target.value }))} className={selectCls(!!status)}>

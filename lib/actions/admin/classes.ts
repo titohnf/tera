@@ -110,6 +110,11 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       }))
     )
 
+    // Kelas yayasan tidak memerlukan invoice untuk orang tua
+    if (classType === 'yayasan') {
+      redirect(`/admin/classes/${data.id}`)
+    }
+
     // Auto-generate draft invoice for each enrolled student
     const [{ data: profiles }, { data: rates }] = await Promise.all([
       ctx.admin.from('profiles').select('id, full_name, parent_name').in('id', studentIds),

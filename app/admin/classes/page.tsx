@@ -125,6 +125,7 @@ export default async function ClassesPage({
   const activeClassCount = allClasses.filter(c => c.is_active).length
   const regularCount = allClasses.filter(c => c.class_type === 'group').length
   const privateCount = allClasses.filter(c => c.class_type === 'private').length
+  const yayasanCount = allClasses.filter(c => c.class_type === 'yayasan').length
 
   // Filter
   let filtered = allClasses
@@ -138,6 +139,7 @@ export default async function ClassesPage({
   if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter)
   if (typeFilter === 'group') filtered = filtered.filter(c => c.class_type === 'group')
   else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
+  else if (typeFilter === 'yayasan') filtered = filtered.filter(c => c.class_type === 'yayasan')
 
   const availableLevels = LEVEL_ORDER.filter(l => allClasses.some(c => c.level === l))
 
@@ -182,9 +184,10 @@ export default async function ClassesPage({
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <MetricCard label="Grup" value={regularCount} />
         <MetricCard label="Privat" value={privateCount} />
+        <MetricCard label="Yayasan" value={yayasanCount} />
       </div>
 
       {/* Filter */}

@@ -275,6 +275,7 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
 
   if (!student) return { error: 'Siswa tidak ditemukan' }
   if (!cls) return { error: 'Kelas tidak ditemukan' }
+  if ((cls as any).class_type === 'yayasan') return { error: 'Kelas yayasan tidak memerlukan invoice' }
 
   const billingJenis = (cls as any).jenis === 'reguler' ? 'Reguler' : (cls as any).jenis === 'fokus' ? 'Fokus' : null
 
@@ -706,6 +707,9 @@ export async function generateDraftInvoices(
 
     // Skip if already invoiced this month
     if (existingSet.has(key)) { skipped++; continue }
+
+    // Kelas yayasan tidak memerlukan invoice untuk orang tua
+    if (e.classes?.class_type === 'yayasan') { skipped++; continue }
 
     const cls = e.classes
     const isPrivate = cls?.class_type === 'private'

@@ -65,7 +65,7 @@ function parseTimeToMinutes(t: string): number {
 }
 
 function buildClassName(classType: string, jenjang: string, grade: number | null, jenis: string, fokusTypes: string[], namaUnik: string, semester: number | null, academicYear: string) {
-  const tipeLabel = classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : ''
+  const tipeLabel = classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : classType === 'yayasan' ? 'Yayasan' : ''
   const jenjangLabel = [grade, jenjang].filter(Boolean).join(' ')
   const jenisLabel = jenis === 'reguler' ? 'Reguler'
     : jenis === 'fokus' ? (fokusTypes.length > 0 ? `Fokus ${fokusTypes.join('/')}` : 'Fokus')
@@ -448,13 +448,12 @@ export default function ClassForm({
 
   useEffect(() => {
     if (!showStudentPicker) return  // jangan reset nama saat mode edit
-    if (effectiveCount === 1) {
-      setClassType('private')
-      nameManuallyEdited.current = false
-    } else if (effectiveCount > 1) {
-      setClassType('group')
-      nameManuallyEdited.current = false
-    }
+    setClassType(prev => {
+      if (prev === 'yayasan') return prev  // jangan timpa pilihan manual Yayasan
+      const next = effectiveCount === 1 ? 'private' : effectiveCount > 1 ? 'group' : prev
+      if (next !== prev) nameManuallyEdited.current = false
+      return next
+    })
   }, [effectiveCount, showStudentPicker])
 
   // Auto-fill nama unik from selected students (first 3 chars, capitalized)
@@ -610,8 +609,8 @@ export default function ClassForm({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Tipe Kelas</label>
           <div className="flex gap-2">
-            {([{ val: 'group', label: 'Grup' }, { val: 'private', label: 'Privat' }] as const).map(opt => {
-              const disabled = effectiveCount > 0 && (
+            {([{ val: 'group', label: 'Grup' }, { val: 'private', label: 'Privat' }, { val: 'yayasan', label: 'Yayasan' }] as const).map(opt => {
+              const disabled = opt.val !== 'yayasan' && effectiveCount > 0 && (
                 (opt.val === 'group' && effectiveCount === 1) ||
                 (opt.val === 'private' && effectiveCount > 1)
               )
@@ -637,6 +636,9 @@ export default function ClassForm({
           </div>
           {effectiveCount === 1 && (
             <p className="text-xs text-gray-400 mt-1">1 siswa dipilih — hanya tipe Privat yang tersedia</p>
+          )}
+          {classType === 'yayasan' && (
+            <p className="text-xs text-gray-400 mt-1">Kelas Yayasan tidak akan membuat invoice untuk orang tua</p>
           )}
           {effectiveCount > 1 && (
             <p className="text-xs text-gray-400 mt-1">{effectiveCount} siswa dipilih — hanya tipe Grup yang tersedia</p>

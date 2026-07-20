@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 export type SessionRate = {
   id?: string
-  class_type: 'group' | 'private'
+  class_type: 'group' | 'private' | 'yayasan'
   jenjang: string
   jenis: string
   rate_per_session: number

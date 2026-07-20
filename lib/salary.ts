@@ -24,6 +24,9 @@ export function resolveAmounts(params: {
   let baseAmount = 0
   if (scheme && scheme.base_amount > 0) {
     baseAmount = scheme.base_amount
+  } else if (cls?.class_type === 'yayasan') {
+    // Kelas yayasan pakai tarif flat, tidak tergantung jenjang/jenis
+    baseAmount = rateMap['yayasan|Yayasan|Reguler'] ?? 0
   } else if (cls?.class_type && cls?.level && cls?.jenis) {
     const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
     baseAmount = billingJenis ? (rateMap[`${cls.class_type}|${cls.level}|${billingJenis}`] ?? 0) : 0
