@@ -333,8 +333,8 @@ function InvoiceCard({
               <div className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
                 <button
                   onClick={() => { setOpenMenu(null); handleKirimPengingat() }}
-                  disabled={!parentPhone}
-                  title={!parentPhone ? 'Nomor WhatsApp orang tua belum ada' : undefined}
+                  disabled={invoice.status === 'draft' || !parentPhone}
+                  title={invoice.status === 'draft' ? 'Kirim invoice ini dulu' : !parentPhone ? 'Nomor WhatsApp orang tua belum ada' : undefined}
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -344,7 +344,9 @@ function InvoiceCard({
                 </button>
                 <button
                   onClick={() => { setOpenMenu(null); setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+                  disabled={invoice.status === 'draft'}
+                  title={invoice.status === 'draft' ? 'Kirim invoice ini dulu' : undefined}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 01-2.25 2.25h-9A2.25 2.25 0 013 18V6.75A2.25 2.25 0 015.25 4.5h9a2.25 2.25 0 012.25 2.25v.75z" />
