@@ -11,37 +11,28 @@ export type EnrollmentRow = {
   className: string
   classPrice: number
   kekurangan: number
-  status: 'lunas' | 'angsuran' | 'menunggu'
+  status: 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim'
   invoiceId: string | null
   bulanLabel: string
   hasExisting: boolean
-  bulanIni: 'lunas' | 'belum' | null
   lastPaymentMonth: string | null
 }
 
-const BULAN_INI_BADGE: Record<'lunas' | 'belum', string> = {
-  lunas: 'bg-green-100 text-green-700',
-  belum: 'bg-red-100 text-red-600',
-}
-
-const BULAN_INI_LABEL: Record<'lunas' | 'belum', string> = {
-  lunas: 'Sudah Bayar',
-  belum: 'Belum Bayar',
-}
-
 const CLASS_STATUS_BADGE: Record<string, string> = {
-  lunas:    'bg-green-100 text-green-700',
-  angsuran: 'bg-yellow-100 text-yellow-700',
-  menunggu: 'bg-gray-100 text-gray-500',
+  lunas:           'bg-green-100 text-green-700',
+  angsuran:        'bg-yellow-100 text-yellow-700',
+  menunggu:        'bg-blue-100 text-blue-700',
+  belum_terkirim:  'bg-gray-100 text-gray-500',
 }
 
 const CLASS_STATUS_LABEL: Record<string, string> = {
-  lunas:    'Lunas',
-  angsuran: 'Angsuran',
-  menunggu: 'Menunggu',
+  lunas:           'Lunas',
+  angsuran:        'Angsuran',
+  menunggu:        'Menunggu',
+  belum_terkirim:  'Belum Dikirim',
 }
 
-const STATUS_ORDER = { menunggu: 0, angsuran: 1, lunas: 2 }
+const STATUS_ORDER = { belum_terkirim: 0, menunggu: 1, angsuran: 2, lunas: 3 }
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
@@ -136,7 +127,6 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                   <SortIcon active={sortKey === 'status'} dir={sortDir} />
                 </span>
               </th>
-              <th className="px-4 py-3">Bulan Ini</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -178,17 +168,6 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                         ? `Angsuran ${row.lastPaymentMonth}`
                         : CLASS_STATUS_LABEL[row.status]}
                     </span>
-                  </Link>
-                </td>
-                <td className="px-4 py-3">
-                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block">
-                    {row.bulanIni ? (
-                      <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg ${BULAN_INI_BADGE[row.bulanIni]}`}>
-                        {BULAN_INI_LABEL[row.bulanIni]}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-300">—</span>
-                    )}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">

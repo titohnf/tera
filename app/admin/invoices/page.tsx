@@ -2,37 +2,12 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import InvoicePageFilters from '@/components/admin/invoices/InvoicePageFilters'
 import MetricCard from '@/components/dashboard/MetricCard'
 import InvoiceEnrollmentTable from '@/components/admin/invoices/InvoiceEnrollmentTable'
-import { getMonthlyBreakdown } from '@/lib/billing-message'
 
 type EnrollmentRow = {
   student_id: string
   class_id: string
   profiles: { full_name: string } | null
-  classes: { name: string; semester: number | null; academic_year: string | null; start_date: string | null; end_date: string | null } | null
-}
-
-// Whether the payments made so far cover what's due through the current
-// calendar month, per the same flat per-month breakdown used in the
-// invoice/reminder WA messages. null = not determinable (missing class
-// dates) or not applicable (class hasn't started, or has no invoice yet).
-function bulanIniStatus(
-  totalDue: number,
-  totalPaid: number,
-  startDate: string | null,
-  endDate: string | null
-): 'lunas' | 'belum' | null {
-  if (!startDate || !endDate || totalDue <= 0) return null
-  const breakdown = getMonthlyBreakdown(totalDue, startDate, endDate)
-  if (breakdown.length === 0) return null
-
-  const [sy, sm] = startDate.split('-').map(Number)
-  const today = new Date()
-  const monthIndex = (today.getFullYear() - sy) * 12 + (today.getMonth() - (sm - 1))
-  if (monthIndex < 0) return null // class hasn't started yet
-
-  const cumulativeIndex = Math.min(monthIndex, breakdown.length - 1)
-  const cumulativeDue = breakdown.slice(0, cumulativeIndex + 1).reduce((s, m) => s + m.amount, 0)
-  return totalPaid >= cumulativeDue ? 'lunas' : 'belum'
+  classes: { name: string; semester: number | null; academic_year: string | null } | null
 }
 
 type InvoiceRow = {
@@ -49,10 +24,15 @@ function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 }
 
-function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu' {
-  if (invoices.length === 0) return 'menunggu'
+// belum_terkirim: no invoice yet, or one exists but is still a draft
+// (parent hasn't received anything). menunggu: invoice was sent but
+// nothing paid yet — distinct from belum_terkirim so admins can tell
+// "haven't billed them" apart from "billed, waiting on payment".
+function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim' {
+  if (invoices.length === 0) return 'belum_terkirim'
   const classPrice = invoices[invoices.length - 1].total_due
   const latestInv = invoices[0]
+  if (latestInv.status === 'draft') return 'belum_terkirim'
   const latestPaid = latestInv.status === 'paid'
     ? latestInv.total_due
     : latestInv.payments.reduce((s, p) => s + p.amount, 0)
@@ -73,7 +53,7 @@ export default async function InvoicesPage({
   const [enrollmentsRes, invoicesRes] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name, semester, academic_year, start_date, end_date)')
+      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name, semester, academic_year)')
       .eq('is_active', true)
       .order('profiles(full_name)') as unknown as Promise<{ data: EnrollmentRow[] | null }>,
     admin
@@ -110,13 +90,12 @@ export default async function InvoicesPage({
     classPrice: number
     kekurangan: number
     totalPaid: number
-    status: 'lunas' | 'angsuran' | 'menunggu'
+    status: 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim'
     invoiceId: string | null
     bulanLabel: string
     hasExisting: boolean
     semester: number | null
     academicYear: string | null
-    bulanIni: 'lunas' | 'belum' | null
     lastPaymentMonth: string | null
   }
 
@@ -162,7 +141,6 @@ export default async function InvoicesPage({
       hasExisting: invs.length > 0,
       semester: e.classes?.semester ?? null,
       academicYear: e.classes?.academic_year ?? null,
-      bulanIni: bulanIniStatus(classPrice, totalPaid, e.classes?.start_date ?? null, e.classes?.end_date ?? null),
       lastPaymentMonth,
     }
   })

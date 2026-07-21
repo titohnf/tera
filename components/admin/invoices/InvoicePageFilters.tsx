@@ -48,6 +48,7 @@ export default function InvoicePageFilters({
         className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300"
       >
         <option value="">Semua Status</option>
+        <option value="belum_terkirim">Belum Dikirim</option>
         <option value="menunggu">Menunggu</option>
         <option value="angsuran">Angsuran</option>
         <option value="lunas">Lunas</option>
