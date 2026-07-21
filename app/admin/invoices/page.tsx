@@ -2,8 +2,6 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import InvoicePageFilters from '@/components/admin/invoices/InvoicePageFilters'
 import MetricCard from '@/components/dashboard/MetricCard'
 import InvoiceEnrollmentTable from '@/components/admin/invoices/InvoiceEnrollmentTable'
-import GenerateInvoiceButton from '@/components/admin/invoices/GenerateInvoiceButton'
-import CatatPembayaranButton from '@/components/admin/invoices/CatatPembayaranButton'
 
 type EnrollmentRow = {
   student_id: string
@@ -116,15 +114,6 @@ export default async function InvoicesPage({
     }
   })
 
-  // Global action lists
-  const allGeneratable = allRows
-    .filter(r => r.status !== 'lunas')
-    .map(r => ({ classId: r.classId, className: r.className, hasExisting: r.hasExisting, studentId: r.studentId, studentName: r.studentName }))
-
-  const allPayable = allRows
-    .filter(r => r.invoiceId && r.kekurangan > 0)
-    .map(r => ({ classId: r.classId, className: r.className, invoiceId: r.invoiceId!, remaining: r.kekurangan, bulanLabel: r.bulanLabel, studentName: r.studentName }))
-
   // Filters
   let rows = allRows
   if (q) {
@@ -140,10 +129,6 @@ export default async function InvoicesPage({
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-gray-900">Invoice</h1>
-        <div className="flex items-center gap-2">
-          <GenerateInvoiceButton generatableClasses={allGeneratable} />
-          <CatatPembayaranButton payableClasses={allPayable} />
-        </div>
       </div>
 
       {/* Cards */}
