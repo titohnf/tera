@@ -227,12 +227,14 @@ function InvoiceCard({
       {/* Invoice number (dominant, class name as its label) + actions — always visible */}
       <div className="px-5 pt-4 pb-3 flex items-center gap-2">
         <div className="min-w-0 shrink-0">
-          <p className="text-sm font-semibold text-gray-900 font-mono truncate">{invoice.invoice_number}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-900 font-mono truncate">{invoice.invoice_number}</span>
+            <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
+              {INV_STATUS_LABEL[badgeKey]}
+            </span>
+          </div>
           <p className="text-xs text-gray-400 mt-0.5 truncate">{group.className}</p>
         </div>
-        <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
-          {INV_STATUS_LABEL[badgeKey]}
-        </span>
         <span className="flex-1" />
         <a
           href={`/admin/invoices/${invoice.id}/cetak?preview=1`}
