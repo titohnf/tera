@@ -47,6 +47,13 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+  // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
+  // invoices and tutor payroll — without it, invoices/payslips silently
+  // compute a Rp0 rate instead of erroring. Yayasan classes skip parent
+  // invoicing entirely, so they're exempt.
+  if (classType !== 'yayasan' && jenis !== 'reguler' && jenis !== 'fokus') {
+    return { error: 'Jenis kelas (Reguler/Fokus) wajib dipilih' }
+  }
 
   const primaryTutorId = slots[0].tutorId
   const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]
@@ -149,6 +156,13 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+  // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
+  // invoices and tutor payroll — without it, invoices/payslips silently
+  // compute a Rp0 rate instead of erroring. Yayasan classes skip parent
+  // invoicing entirely, so they're exempt.
+  if (classType !== 'yayasan' && jenis !== 'reguler' && jenis !== 'fokus') {
+    return { error: 'Jenis kelas (Reguler/Fokus) wajib dipilih' }
+  }
 
   const primaryTutorId = slots[0].tutorId
   const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]

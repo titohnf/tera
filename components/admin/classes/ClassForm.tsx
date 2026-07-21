@@ -479,6 +479,7 @@ export default function ClassForm({
   })))
 
   const canSubmit = slotCount > 0 && slots.every(s => s.tutorId && s.subjectId) && !!startDate && !!endDate && endDate >= startDate
+    && (classType === 'yayasan' || !!jenis)
 
   return (
     <form action={formAction} className="space-y-6">
@@ -671,7 +672,9 @@ export default function ClassForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Jenis</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Jenis {classType !== 'yayasan' && <span className="text-red-500">*</span>}
+          </label>
           <div className="flex gap-2">
             {[{ val: 'reguler' as const, label: 'Reguler' }, { val: 'fokus' as const, label: 'Fokus' }].map(opt => (
               <button key={opt.val} type="button"
@@ -682,6 +685,9 @@ export default function ClassForm({
               >{opt.label}</button>
             ))}
           </div>
+          {classType !== 'yayasan' && !jenis && (
+            <p className="text-xs text-red-500 mt-1">Wajib pilih Reguler atau Fokus, dipakai untuk hitung tarif invoice &amp; gaji tutor</p>
+          )}
           {jenis === 'fokus' && (
             <div className="flex gap-2 mt-2.5 flex-wrap">
               {FOKUS_OPTIONS.map(f => (
