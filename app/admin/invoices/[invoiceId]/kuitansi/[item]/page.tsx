@@ -43,10 +43,14 @@ const formatDate = (dateStr: string) =>
 
 export default async function KuitansiPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ invoiceId: string; item: string }>
+  searchParams: Promise<{ preview?: string }>
 }) {
   const { invoiceId, item: paymentId } = await params
+  const { preview } = await searchParams
+  const isPreview = preview === '1'
   const admin = createAdminClient()
 
   const [invoiceRes, paymentRes, allPaymentsRes] = await Promise.all([
@@ -91,9 +95,11 @@ export default async function KuitansiPage({
         @page { size: A4; margin: 1.5cm; }
       `}</style>
 
-      <div className="no-print flex justify-end p-4 border-b bg-gray-50">
-        <PrintButton />
-      </div>
+      {!isPreview && (
+        <div className="no-print flex justify-end p-4 border-b bg-gray-50">
+          <PrintButton />
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto p-12">
         {/* Header */}

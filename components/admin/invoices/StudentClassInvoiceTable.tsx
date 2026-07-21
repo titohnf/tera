@@ -163,6 +163,24 @@ function ClassCard({
     })
   }
 
+  function handleKirimKuitansi(payment: Payment & { invoiceId: string }, tahap: number) {
+    if (!parentPhone) return
+    const childName = studentNickname || studentName || ''
+    const cleanClassName = stripUniqueSuffix(group.className, studentNickname, studentName)
+    const kuitansiUrl = `${window.location.origin}/api/invoices/${payment.invoiceId}/kuitansi/${payment.id}/pdf`
+    const lines = [
+      `Assalamu'alaikum Ayah/Bunda.`,
+      '',
+      `Terlampir kuitansi pembayaran les Ananda ${childName} untuk kelas ${cleanClassName}, Tahap ${tahap} sebesar ${formatRupiah(payment.amount)}.`,
+      '',
+      kuitansiUrl,
+      '',
+      `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
+    ].join('\n')
+    const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
+    window.open(waUrl, '_blank')
+  }
+
   function handleDeleteInvoice(invoiceId: string) {
     if (!confirm('Hapus invoice ini?')) return
     startTransition(async () => {
@@ -327,6 +345,21 @@ function ClassCard({
                         <span className="text-xs text-gray-400">{formatDate(p.paid_at)}</span>
                         <span className="flex-1" />
                         <span className="text-sm font-medium text-gray-800 shrink-0">{formatRupiah(p.amount)}</span>
+                        <a
+                          href={`/admin/invoices/${p.invoiceId}/kuitansi/${p.id}?preview=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0"
+                        >
+                          Lihat
+                        </a>
+                        <button
+                          onClick={() => handleKirimKuitansi(p, tahap)}
+                          disabled={isPending}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0"
+                        >
+                          Kirim
+                        </button>
                         <a
                           href={`/admin/invoices/${p.invoiceId}/kuitansi/${p.id}`}
                           target="_blank"
