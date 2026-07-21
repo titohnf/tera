@@ -93,6 +93,7 @@ export default async function KuitansiPage({
           body { margin: 0; }
         }
         @page { size: A4; margin: 1.5cm; }
+        body { background: white; }
       `}</style>
 
       {!isPreview && (
