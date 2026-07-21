@@ -407,7 +407,7 @@ export async function syncPrivateClassDraftInvoices(
   classId: string,
   admin: ReturnType<typeof createAdminClient>
 ) {
-  const { data: cls } = await admin.from('classes').select('class_type').eq('id', classId).single()
+  const { data: cls } = await admin.from('classes').select('class_type, level, jenis').eq('id', classId).single()
   if (!cls || cls.class_type !== 'private') return
 
   const { data: draftInvoices } = await admin
@@ -425,6 +425,24 @@ export async function syncPrivateClassDraftInvoices(
     return countCache.get(key)!
   }
 
+  // The per-pertemuan rate is also a creation-time snapshot — if jenis was
+  // missing/wrong when the invoice was first generated (billing_rates
+  // lookup failed, defaulting to 0) and gets corrected afterward, a draft
+  // invoice should pick up the fixed rate too, not just the session count.
+  const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
+  let currentRate: number | null = null
+  if (billingJenis) {
+    const { data: rates } = await admin
+      .from('billing_rates')
+      .select('amount, billing_rate_periods!inner(is_active)')
+      .eq('class_type', cls.class_type)
+      .eq('jenjang', cls.level)
+      .eq('jenis', billingJenis)
+      .eq('billing_rate_periods.is_active', true)
+      .limit(1) as unknown as { data: { amount: number }[] | null }
+    currentRate = rates?.[0] ? Number(rates[0].amount) : null
+  }
+
   for (const inv of draftInvoices) {
     const items = inv.line_items ?? []
     let changed = false
@@ -435,11 +453,12 @@ export async function syncPrivateClassDraftInvoices(
         continue
       }
       const liveCount = await liveCountFor(item.period)
-      if (item.months === liveCount) {
+      const liveAmount = currentRate ?? item.amount
+      if (item.months === liveCount && item.amount === liveAmount) {
         updatedItems.push(item)
       } else {
         changed = true
-        updatedItems.push({ ...item, months: liveCount })
+        updatedItems.push({ ...item, months: liveCount, amount: liveAmount })
       }
     }
     if (!changed) continue
