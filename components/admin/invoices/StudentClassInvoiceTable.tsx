@@ -256,7 +256,7 @@ function InvoiceCard({
     const lines = [
       `Assalamu'alaikum Ayah/Bunda.`,
       '',
-      `Terlampir kuitansi pembayaran les Ananda ${childName} untuk kelas ${cleanClassName}, Tahap ${tahap} sebesar ${formatRupiah(payment.amount)}.`,
+      `Terlampir kuitansi pembayaran les Ananda ${childName} untuk kelas ${cleanClassName}, Tahap ${tahap}${isPaidOff ? ' (Lunas)' : ''} sebesar ${formatRupiah(payment.amount)}.`,
       '',
       kuitansiUrl,
       '',
