@@ -351,7 +351,7 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
 
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
-              {item.months === 0 ? (
+              {item.is_deduction ? (
                 <>
                   <div className="col-span-6">
                     <input
