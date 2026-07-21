@@ -158,6 +158,21 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
     setLineItems(prev => [...prev, emptyLine()])
   }
 
+  function toggleDeduction(index: number) {
+    setLineItems(prev => {
+      const updated = [...prev]
+      const item = updated[index]
+      const nextIsDeduction = !item.is_deduction
+      updated[index] = {
+        ...item,
+        is_deduction: nextIsDeduction,
+        // Potongan/voucher selalu berupa nominal tetap, tidak terikat jumlah pertemuan/bulan.
+        months: nextIsDeduction ? 0 : 1,
+      }
+      return updated
+    })
+  }
+
   function removeLineItem(index: number) {
     setLineItems(prev => prev.filter((_, i) => i !== index))
   }
@@ -337,15 +352,27 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
               {item.months === 0 ? (
-                <div className="col-span-8">
-                  <input
-                    type="text"
-                    value={item.description}
-                    onChange={e => updateLineItem(index, 'description', e.target.value)}
-                    placeholder="Keterangan"
-                    className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <>
+                  <div className="col-span-6">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={e => updateLineItem(index, 'description', e.target.value)}
+                      placeholder="Keterangan"
+                      className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={item.amount}
+                      onChange={e => updateLineItem(index, 'amount', Number(e.target.value))}
+                      placeholder="Nominal"
+                      className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="col-span-3">
@@ -403,7 +430,7 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
               <div className="col-span-1 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => updateLineItem(index, 'is_deduction', !item.is_deduction)}
+                  onClick={() => toggleDeduction(index)}
                   title={item.is_deduction ? 'Pengurangan' : 'Tagihan'}
                   className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
                     item.is_deduction

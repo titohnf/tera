@@ -55,6 +55,21 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
     })
   }
 
+  function toggleDeduction(index: number) {
+    setLineItems(prev => {
+      const updated = [...prev]
+      const item = updated[index]
+      const nextIsDeduction = !item.is_deduction
+      updated[index] = {
+        ...item,
+        is_deduction: nextIsDeduction,
+        // Potongan/voucher selalu berupa nominal tetap, tidak terikat jumlah pertemuan/bulan.
+        months: nextIsDeduction ? 0 : 1,
+      }
+      return updated
+    })
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -185,15 +200,27 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
               {item.months === 0 ? (
-                <div className="col-span-8">
-                  <input
-                    type="text"
-                    value={item.description}
-                    onChange={e => updateLineItem(index, 'description', e.target.value)}
-                    placeholder="Keterangan"
-                    className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <>
+                  <div className="col-span-6">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={e => updateLineItem(index, 'description', e.target.value)}
+                      placeholder="Keterangan"
+                      className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={item.amount}
+                      onChange={e => updateLineItem(index, 'amount', Number(e.target.value))}
+                      placeholder="Nominal"
+                      className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="col-span-3">
@@ -243,7 +270,7 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
               <div className="col-span-1 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => updateLineItem(index, 'is_deduction', !item.is_deduction)}
+                  onClick={() => toggleDeduction(index)}
                   className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${item.is_deduction ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
                 >
                   {item.is_deduction ? '-' : '+'}
