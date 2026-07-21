@@ -278,6 +278,9 @@ export async function deleteInvoice(id: string) {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
+  const { data: invoice } = await ctx.admin.from('invoices').select('status').eq('id', id).single()
+  if (invoice?.status === 'paid') return { error: 'Invoice yang sudah lunas tidak bisa dihapus' }
+
   const { error } = await ctx.admin.from('invoices').delete().eq('id', id)
 
   if (error) return { error: error.message }
