@@ -84,6 +84,7 @@ export default async function InvoicesPage({
     className: string
     classPrice: number
     kekurangan: number
+    totalPaid: number
     status: 'lunas' | 'angsuran' | 'menunggu'
     invoiceId: string | null
     bulanLabel: string
@@ -101,6 +102,12 @@ export default async function InvoicesPage({
       ? latestInv.total_due
       : (latestInv?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
     const kekurangan = latestInv ? Math.max(0, latestInv.total_due - latestPaid) : 0
+    // Ground truth for "sudah dibayar": sum of every payment actually
+    // recorded across all of this student+class's invoices. Deriving it
+    // instead as classPrice - kekurangan breaks whenever an old/unused
+    // invoice (e.g. a leftover draft) has a different total than the
+    // invoice payments were actually recorded against.
+    const totalPaid = invs.reduce((sum, inv) => sum + inv.payments.reduce((s, p) => s + p.amount, 0), 0)
     const activeInv = invs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
     return {
       studentId: e.student_id,
@@ -109,6 +116,7 @@ export default async function InvoicesPage({
       className: e.classes?.name ?? '—',
       classPrice,
       kekurangan,
+      totalPaid,
       status: computeStatus(invs),
       invoiceId: activeInv?.id ?? null,
       bulanLabel: activeInv ? new Date(activeInv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '',
@@ -151,7 +159,7 @@ export default async function InvoicesPage({
           const invoicedRows = allRows.filter(r => r.hasExisting)
           const totalInvoice = invoicedRows.reduce((sum, r) => sum + r.classPrice, 0)
           const totalKekurangan = invoicedRows.reduce((sum, r) => sum + r.kekurangan, 0)
-          const totalDibayar = totalInvoice - totalKekurangan
+          const totalDibayar = invoicedRows.reduce((sum, r) => sum + r.totalPaid, 0)
           const belumLunasCount = invoicedRows.filter(r => r.kekurangan > 0).length
           return (
             <>
