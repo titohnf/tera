@@ -308,7 +308,7 @@ function InvoiceCard({
       </div>
 
       {isOpen && (
-        <div className="border-t-[0.5px] border-slate-100 px-5 py-4 space-y-4">
+        <div className="border-t border-slate-100 px-5 py-4 space-y-4">
 
           {/* Progress bar */}
           <div>
@@ -320,6 +320,7 @@ function InvoiceCard({
                   'Lunas'
                 )}
               </span>
+              <span className="text-xs font-medium text-gray-500 shrink-0">{progressPct}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
