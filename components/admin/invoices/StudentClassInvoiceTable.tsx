@@ -244,28 +244,6 @@ function InvoiceCard({
         >
           Lihat
         </a>
-        <button
-          onClick={handleKirim}
-          disabled={isPending || isPaidOff}
-          title={isPaidOff ? 'Invoice sudah lunas' : undefined}
-          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-        >
-          {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
-        </button>
-        <a
-          href={isPaidOff ? undefined : `/admin/invoices/${invoice.id}/cetak?print=1`}
-          target={isPaidOff ? undefined : '_blank'}
-          rel="noopener noreferrer"
-          aria-disabled={isPaidOff}
-          title={isPaidOff ? 'Invoice sudah lunas' : undefined}
-          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors shrink-0 ${
-            isPaidOff
-              ? 'text-gray-300 bg-white border border-slate-100 cursor-not-allowed pointer-events-none'
-              : 'text-gray-700 bg-white border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Cetak Invoice
-        </a>
         <div className="relative shrink-0">
           <button
             onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
@@ -276,7 +254,26 @@ function InvoiceCard({
             </svg>
           </button>
           {openMenu === invoice.id && (
-            <div className="absolute right-0 top-8 w-32 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+            <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+              <button
+                onClick={() => { setOpenMenu(null); handleKirim() }}
+                disabled={isPending || isPaidOff}
+                title={isPaidOff ? 'Invoice sudah lunas' : undefined}
+                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
+              </button>
+              {!isPaidOff && (
+                <a
+                  href={`/admin/invoices/${invoice.id}/cetak?print=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpenMenu(null)}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cetak Invoice
+                </a>
+              )}
               <a
                 href={`/admin/invoices/${invoice.id}/edit`}
                 onClick={() => setOpenMenu(null)}
