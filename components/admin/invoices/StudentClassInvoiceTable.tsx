@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteInvoice, deletePayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
+import { deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
 import { getMonthlyBreakdown, formatPeriodLabel } from '@/lib/billing-message'
 
@@ -104,6 +104,10 @@ function InvoiceCard({
   const [editPaidAt, setEditPaidAt] = useState('')
   const [editError, setEditError] = useState('')
   const openMenuRef = useRef<HTMLDivElement>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentDate, setPaymentDate] = useState('')
+  const [paymentError, setPaymentError] = useState('')
 
   useEffect(() => {
     if (!openMenu) return
@@ -187,6 +191,63 @@ function InvoiceCard({
     })
   }
 
+  function handleKirimPengingat() {
+    if (!parentPhone) return
+    const childName = studentNickname || studentName || ''
+    const cleanClassName = stripClassUniqueTag(group.className)
+    const sisa = kekurangan
+    const pengingatUrl = `${window.location.origin}/api/invoices/${invoice!.id}/pengingat/pdf`
+    const breakdown = invoice!.isMonthly ? [] : getMonthlyBreakdown(invoice!.total_due, group.classStartDate, group.classEndDate)
+
+    const billingLines = breakdown.length > 0
+      ? [
+          `Sudah dibayar:`,
+          ...invPayments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
+          '',
+          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+          '',
+          `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
+          ...breakdown.slice(invPayments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
+        ]
+      : [
+          ...invPayments.map((p, i) => `Sudah dibayar Tahap ${i + 1} (${formatDate(p.paid_at)}): ${formatRupiah(p.amount)}`),
+          '',
+          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+        ]
+
+    const lines = [
+      `Assalamu'alaikum Ayah/Bunda.`,
+      '',
+      `Izin mengingatkan untuk sisa tagihan les Ananda ${childName} untuk kelas ${cleanClassName} sebagai berikut:`,
+      '',
+      `Referensi No. Invoice: ${invoice!.invoice_number}`,
+      `Total Tagihan: ${formatRupiah(invoice!.total_due)}`,
+      '',
+      ...billingLines,
+      '',
+      `Terlampir surat pemberitahuan tagihan (${pengingatUrl}).`,
+      '',
+      `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
+    ].join('\n')
+    const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
+    window.open(waUrl, '_blank')
+  }
+
+  function handleRecordPayment() {
+    const parsed = Number(paymentAmount) || 0
+    if (parsed <= 0) { setPaymentError('Masukkan jumlah pembayaran'); return }
+    if (!paymentDate) { setPaymentError('Masukkan tanggal pembayaran'); return }
+    setPaymentError('')
+    startTransition(async () => {
+      const res = await recordPayment(invoice!.id, parsed, paymentDate)
+      if (res && 'error' in res) { setPaymentError(res.error ?? 'Gagal'); return }
+      setShowPaymentModal(false)
+      setPaymentAmount('')
+      setPaymentDate('')
+      router.refresh()
+    })
+  }
+
   function handleKirimKuitansi(payment: Payment, tahap: number) {
     if (!parentPhone) return
     const childName = studentNickname || studentName || ''
@@ -257,6 +318,14 @@ function InvoiceCard({
         >
           Lihat
         </a>
+        {!isPaidOff && (
+          <button
+            onClick={() => { setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
+          >
+            Catat Pembayaran
+          </button>
+        )}
         <div className="relative shrink-0" ref={openMenu === invoice.id ? openMenuRef : null}>
           <button
             onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
@@ -267,15 +336,31 @@ function InvoiceCard({
             </svg>
           </button>
           {openMenu === invoice.id && (
-            <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+            <div className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
               <button
                 onClick={() => { setOpenMenu(null); handleKirim() }}
                 disabled={isPending || isPaidOff}
                 title={isPaidOff ? 'Invoice sudah lunas' : undefined}
                 className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
+                {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang Invoice'}
               </button>
+              <button
+                onClick={() => { setOpenMenu(null); handleKirimPengingat() }}
+                disabled={!parentPhone}
+                title={!parentPhone ? 'Nomor WhatsApp orang tua belum ada' : undefined}
+                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Kirim Pengingat
+              </button>
+              {isPaidOff && (
+                <button
+                  onClick={() => { setOpenMenu(null); setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+                >
+                  Catat Pembayaran
+                </button>
+              )}
               {!isPaidOff && (
                 <a
                   href={`/admin/invoices/${invoice.id}/cetak?print=1`}
@@ -466,6 +551,73 @@ function InvoiceCard({
             </div>
           )}
 
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">Catat Pembayaran</p>
+              <button
+                onClick={() => { setShowPaymentModal(false); setPaymentAmount(''); setPaymentDate(''); setPaymentError('') }}
+                className="w-7 h-7 flex items-center justify-center text-gray-400 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Tanggal Bayar</label>
+                <input
+                  type="date"
+                  value={paymentDate}
+                  onChange={e => setPaymentDate(e.target.value)}
+                  max={today}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Jumlah</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">Rp</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={paymentAmount}
+                    onChange={e => setPaymentAmount(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                </div>
+                {kekurangan > 0 && (
+                  <button
+                    onClick={() => setPaymentAmount(String(kekurangan))}
+                    className="mt-1.5 text-xs text-gray-500 hover:text-gray-700 underline"
+                  >
+                    Isi penuh — {formatRupiah(kekurangan)}
+                  </button>
+                )}
+              </div>
+              {paymentError && <p className="text-xs text-red-600">{paymentError}</p>}
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => { setShowPaymentModal(false); setPaymentAmount(''); setPaymentDate(''); setPaymentError('') }}
+                className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleRecordPayment}
+                disabled={isPending || (Number(paymentAmount) || 0) <= 0}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+              >
+                {isPending ? 'Menyimpan...' : (Number(paymentAmount) || 0) >= kekurangan && kekurangan > 0 ? 'Tandai Lunas' : 'Catat'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
