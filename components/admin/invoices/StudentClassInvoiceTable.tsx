@@ -475,7 +475,7 @@ export default function StudentClassInvoiceTable({ groups, studentName, studentN
   return (
     <div className="space-y-3">
       {cards.map(({ key, group, invoice }) => (
-        <div key={key} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <div key={key} className="bg-white border border-slate-200 rounded-2xl">
           <InvoiceCard group={group} invoice={invoice} studentName={studentName} studentNickname={studentNickname} parentPhone={parentPhone} />
         </div>
       ))}
