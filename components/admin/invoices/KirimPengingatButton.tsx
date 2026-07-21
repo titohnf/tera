@@ -52,13 +52,16 @@ export default function KirimPengingatButton({ studentName, studentNickname, par
 
     const billingLines = breakdown.length > 0
       ? [
-          ...payments.map((p, i) => `Sudah dibayar ${breakdown[i]?.label ?? `Tahap ${i + 1}`}: ${formatRupiah(p.amount)}`),
+          ...payments.map((p, i) => `Sudah dibayar Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
+          '',
           `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+          '',
           `Pembayaran dapat dilakukan bertahap secara bertahap setiap bulannya sebesar:`,
           ...breakdown.slice(payments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
         ]
       : [
           `Sudah dibayar: ${formatRupiah(paidForInvoice)}`,
+          '',
           `Sisa Pembayaran: ${formatRupiah(sisa)}`,
         ]
 
@@ -69,6 +72,7 @@ export default function KirimPengingatButton({ studentName, studentNickname, par
       '',
       `Referensi No. Invoice: ${pc.invoiceNumber}`,
       `Total Tagihan: ${formatRupiah(pc.totalDue)}`,
+      '',
       ...billingLines,
       '',
       `Terlampir surat pemberitahuan tagihan (${pengingatUrl}).`,
