@@ -11,6 +11,7 @@ interface LineItem {
   amount: number
   is_deduction: boolean
   unit?: 'bulan' | 'pertemuan'
+  show_qty?: boolean
 }
 
 interface Props {
@@ -22,7 +23,7 @@ interface Props {
 const formatRupiah = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 
-const emptyLine = (): LineItem => ({ description: '', months: 1, amount: 0, is_deduction: false, unit: 'bulan' })
+const emptyLine = (): LineItem => ({ description: '', months: 1, amount: 0, is_deduction: false, unit: 'bulan', show_qty: true })
 
 export default function InvoiceEditPageForm({ invoice, classes, students }: Props) {
   const router = useRouter()
@@ -65,6 +66,23 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
         is_deduction: nextIsDeduction,
         // Potongan/voucher selalu berupa nominal tetap, tidak terikat jumlah pertemuan/bulan.
         months: nextIsDeduction ? 0 : 1,
+      }
+      return updated
+    })
+  }
+
+  // Lets the admin deliberately hide the qty/satuan fields for a special-case
+  // charge row (e.g. a lump-sum item) — separate from is_deduction, which
+  // always forces flat mode on its own.
+  function toggleShowQty(index: number) {
+    setLineItems(prev => {
+      const updated = [...prev]
+      const item = updated[index]
+      const nextShowQty = !(item.show_qty ?? true)
+      updated[index] = {
+        ...item,
+        show_qty: nextShowQty,
+        months: nextShowQty ? 1 : 0,
       }
       return updated
     })
@@ -199,7 +217,7 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
 
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
-              {item.is_deduction ? (
+              {item.is_deduction || item.show_qty === false ? (
                 <>
                   <div className="col-span-6">
                     <input
@@ -267,7 +285,7 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
               <div className="col-span-2 text-right text-sm text-gray-700 font-medium pr-1">
                 {formatRupiah(lineSubtotal(item))}
               </div>
-              <div className="col-span-1 flex justify-center">
+              <div className="col-span-1 flex flex-col items-center gap-1">
                 <button
                   type="button"
                   onClick={() => toggleDeduction(index)}
@@ -275,6 +293,16 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
                 >
                   {item.is_deduction ? '-' : '+'}
                 </button>
+                {!item.is_deduction && (
+                  <button
+                    type="button"
+                    onClick={() => toggleShowQty(index)}
+                    title={item.show_qty === false ? 'Tampilkan Qty & Satuan' : 'Sembunyikan Qty & Satuan (nominal tetap)'}
+                    className="px-1.5 py-0.5 text-[10px] rounded-full font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                  >
+                    {item.show_qty === false ? 'Rinci' : 'Ringkas'}
+                  </button>
+                )}
               </div>
               <div className="col-span-1 flex justify-center">
                 <button

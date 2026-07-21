@@ -37,6 +37,7 @@ const LineItemSchema = z.object({
   amount: z.number().min(0),
   is_deduction: z.boolean(),
   unit: z.enum(['bulan', 'pertemuan']).optional(),
+  show_qty: z.boolean().optional(),
 })
 
 const InvoiceSchema = z.object({
