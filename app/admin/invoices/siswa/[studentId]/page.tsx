@@ -106,22 +106,15 @@ export default async function StudentInvoiceDetailPage({
     }
   }
 
-  // Compute generatable classes (not lunas, or no invoices yet)
+  // Generate Invoice only applies to classes with no invoice yet — billing
+  // for a class is meant to be a single invoice document; once it exists,
+  // ongoing balance is followed up with "Kirim Pengingat" instead of a new
+  // invoice.
   const generatableClasses: GeneratableClass[] = groups
-    .filter(group => {
-      if (group.invoices.length === 0) return true
-      const classPrice = group.invoices[group.invoices.length - 1]?.total_due ?? 0
-      const latestInvoice = group.invoices[0]
-      const latestPaid = latestInvoice?.status === 'paid'
-        ? latestInvoice.total_due
-        : (latestInvoice?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
-      const kekurangan = latestInvoice ? Math.max(0, latestInvoice.total_due - latestPaid) : 0
-      return !(kekurangan === 0 && classPrice > 0)
-    })
+    .filter(group => group.invoices.length === 0)
     .map(group => ({
       classId: group.classId,
       className: group.className,
-      hasExisting: group.invoices.length > 0,
     }))
 
   // Private classes the student is currently enrolled in — eligible for the

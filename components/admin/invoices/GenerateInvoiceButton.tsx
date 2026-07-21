@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generateFirstInvoice, generateNextInvoice } from '@/lib/actions/admin/invoices'
+import { generateFirstInvoice } from '@/lib/actions/admin/invoices'
 
+// Only classes with no invoice yet — per-class billing is meant to be a
+// single invoice document (see "Kirim Pengingat" for ongoing installment
+// reminders instead of issuing a new invoice each month).
 export type GeneratableClass = {
   classId: string | null
   className: string
-  hasExisting: boolean
   studentId?: string
   studentName?: string
 }
@@ -41,9 +43,7 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
     startTransition(async () => {
       const sid = gc.studentId ?? studentId ?? ''
       const classId = gc.classId ?? ''
-      const res = gc.hasExisting
-        ? await generateNextInvoice(sid, classId, 0)
-        : await generateFirstInvoice(sid, classId)
+      const res = await generateFirstInvoice(sid, classId)
       if (res && 'error' in res) { setError(res.error ?? 'Gagal'); return }
       handleClose()
       router.refresh()
@@ -92,7 +92,6 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
                     {gc.studentName && <p className="text-xs text-gray-400">{gc.studentName}</p>}
                     <p className="text-sm font-medium text-gray-800">{gc.className}</p>
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0">{gc.hasExisting ? 'Invoice berikutnya' : 'Invoice pertama'}</span>
                 </button>
               ))}
               {error && <p className="text-xs text-red-600 pt-1">{error}</p>}

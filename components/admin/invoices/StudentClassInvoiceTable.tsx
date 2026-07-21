@@ -151,6 +151,28 @@ function ClassCard({
     })
   }
 
+  function handleKirimPengingat(inv: InvoiceItem) {
+    if (!parentPhone) return
+    const childName = studentNickname || studentName || ''
+    const cleanClassName = stripClassUniqueTag(group.className)
+    const paidForInvoice = inv.payments.reduce((s, p) => s + p.amount, 0)
+    const sisa = Math.max(0, inv.total_due - paidForInvoice)
+    const pengingatUrl = `${window.location.origin}/api/invoices/${inv.id}/pengingat/pdf`
+    const lines = [
+      `Assalamu'alaikum Ayah/Bunda.`,
+      '',
+      `Mengingatkan kembali sisa tagihan les Ananda ${childName} untuk kelas ${cleanClassName} (Referensi Invoice ${inv.invoice_number}):`,
+      '',
+      `Sisa Tagihan: ${formatRupiah(sisa)}`,
+      '',
+      `Terlampir surat pemberitahuan tagihan (${pengingatUrl}).`,
+      '',
+      `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
+    ].join('\n')
+    const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
+    window.open(waUrl, '_blank')
+  }
+
   function handleKirimKuitansi(payment: Payment & { invoiceId: string }, tahap: number) {
     if (!parentPhone) return
     const childName = studentNickname || studentName || ''
@@ -271,6 +293,15 @@ function ClassCard({
                   >
                     {inv.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
                   </button>
+                  {inv.status !== 'draft' && inv.total_due - inv.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
+                    <button
+                      onClick={() => handleKirimPengingat(inv)}
+                      disabled={isPending}
+                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors shrink-0 whitespace-nowrap"
+                    >
+                      Kirim Pengingat
+                    </button>
+                  )}
                   <a
                     href={`/admin/invoices/${inv.id}/cetak?print=1`}
                     target="_blank"
