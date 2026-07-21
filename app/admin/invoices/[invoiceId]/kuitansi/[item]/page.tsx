@@ -1,10 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/invoices/PrintButton'
+import { getKuitansiNumber } from '@/lib/kuitansi-number'
 
 type InvoiceRow = {
   id: string
-  invoice_number: string
   student_name: string
   parent_name: string
   line_items: { description: string; is_deduction: boolean }[]
@@ -15,6 +15,7 @@ type PaymentRow = {
   id: string
   amount: number
   paid_at: string
+  created_at: string
 }
 
 function terbilang(n: number): string {
@@ -56,12 +57,12 @@ export default async function KuitansiPage({
   const [invoiceRes, paymentRes, allPaymentsRes] = await Promise.all([
     admin
       .from('invoices')
-      .select('id, invoice_number, student_name, parent_name, line_items, issued_at')
+      .select('id, student_name, parent_name, line_items, issued_at')
       .eq('id', invoiceId)
       .single() as unknown as Promise<{ data: InvoiceRow | null }>,
     admin
       .from('invoice_payments')
-      .select('id, amount, paid_at')
+      .select('id, amount, paid_at, created_at')
       .eq('id', paymentId)
       .single() as unknown as Promise<{ data: PaymentRow | null }>,
     admin
@@ -81,9 +82,7 @@ export default async function KuitansiPage({
   const chargeItems = invoice.line_items.filter(i => !i.is_deduction)
   const chargeDescription = chargeItems[0]?.description ?? ''
 
-  const kuitansiNumber = invoice.invoice_number
-    .replace(/INVOICE/gi, 'KUITANSI')
-    .replace(/(\d+)\s*\/\s*(\d+)\s*\//, `${String(tahapNumber).padStart(2, '0')} / $2 /`)
+  const kuitansiNumber = await getKuitansiNumber(admin, payment.id, payment.created_at)
 
   return (
     <>
