@@ -252,6 +252,14 @@ function ClassCard({
                     {inv.status === 'draft' ? INV_STATUS_LABEL.draft : INV_STATUS_LABEL.sent}
                   </span>
                   <span className="flex-1" />
+                  <a
+                    href={`/admin/invoices/${inv.id}/cetak?preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
+                  >
+                    Lihat
+                  </a>
                   {inv.status === 'draft' && (
                     <button
                       onClick={() => handleKirim(inv.id)}
