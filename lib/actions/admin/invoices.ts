@@ -567,14 +567,18 @@ async function syncNextInvoice(
   const draftInvoice = [...allInvoices].reverse().find(inv => inv.status === 'draft')
   if (!draftInvoice) return
 
-  // Charge items always from the first invoice
-  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean; period?: string }>
-
   // Monthly-billed invoices (generateMonthlyInvoiceForStudent) are each
   // independent per month, not a cumulative multi-invoice chain — bail out
-  // instead of overwriting the draft's own line items with an older month's.
-  if (firstLineItems.some(i => i.period)) return
+  // instead of overwriting the draft's own line items with another month's.
+  // Checked on the draft itself (not allInvoices[0]) so this still holds
+  // even if an older lump-sum invoice exists earlier in the same
+  // student+class history (e.g. billing was switched from lump-sum to
+  // monthly partway through).
+  const draftLineItems = (draftInvoice.line_items ?? []) as Array<{ period?: string }>
+  if (draftLineItems.some(i => i.period)) return
 
+  // Charge items always from the first invoice
+  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean; period?: string }>
   const chargeItems = firstLineItems.filter(i => !i.is_deduction)
 
   // Collect ALL payments across every invoice EXCEPT the draft itself
@@ -693,16 +697,20 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
 
   if (!allInvoices?.length) return { error: 'Invoice sebelumnya tidak ditemukan' }
 
+  // Monthly-billed invoices aren't a cumulative chain — each month gets its
+  // own invoice via generateMonthlyInvoiceForStudent instead. Checked on the
+  // most recent invoice (not the first) so this still applies even if
+  // billing was switched from lump-sum to monthly partway through the
+  // student+class history.
+  const mostRecentLineItems = (allInvoices[allInvoices.length - 1].line_items ?? []) as Array<{ period?: string }>
+  if (mostRecentLineItems.some(i => i.period)) {
+    return { error: 'Kelas ini memakai invoice bulanan. Gunakan tombol "Invoice Bulanan" untuk membuat invoice bulan berikutnya.' }
+  }
+
   // Charge items always come from the first invoice (canonical class fee, never changes)
   const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{
     description: string; months: number; amount: number; is_deduction: boolean; period?: string
   }>
-
-  // Monthly-billed invoices aren't a cumulative chain — each month gets its
-  // own invoice via generateMonthlyInvoiceForStudent instead.
-  if (firstLineItems.some(i => i.period)) {
-    return { error: 'Kelas ini memakai invoice bulanan. Gunakan tombol "Invoice Bulanan" untuk membuat invoice bulan berikutnya.' }
-  }
 
   const chargeItems = firstLineItems.filter((item: any) => !item.is_deduction)
 
