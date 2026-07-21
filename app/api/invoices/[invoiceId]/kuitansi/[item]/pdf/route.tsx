@@ -1,8 +1,12 @@
 export const runtime = 'nodejs'
 
+import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { renderToBuffer, Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
+
+const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
+const signaturePath = path.join(process.cwd(), 'public', 'ttd-stempel.png')
 
 type InvoiceRow = {
   id: string
@@ -63,8 +67,7 @@ const s = StyleSheet.create({
   col2: { width: 60, textAlign: 'center' },
   col3: { width: 100, textAlign: 'right' },
   terbilangBox: { borderWidth: 0.75, borderTopWidth: 0, borderColor: '#333', padding: 6, textAlign: 'right', marginBottom: 30 },
-  signBlock: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  signCol: { width: '45%', textAlign: 'center' },
+  signBox: { alignItems: 'center', marginTop: 16 },
 })
 
 function KuitansiPDF({ invoice, payment, kuitansiNumber, tahapNumber, chargeDescription }: {
@@ -79,15 +82,11 @@ function KuitansiPDF({ invoice, payment, kuitansiNumber, tahapNumber, chargeDesc
       <Page size="A4" style={s.page}>
         <View style={s.headerRow}>
           <View>
-            <Text style={[s.bold, { fontSize: 11 }]}>Tera Learning Center</Text>
-            <Text style={{ color: '#555', marginTop: 2 }}>Ruko Depok Bersih Jl. Rawageni No. 9k</Text>
-            <Text style={{ color: '#555', marginTop: 2 }}>Kel. Ratujaya, Kec. Cipayung, Kota Depok</Text>
-            <Text style={{ color: '#555', marginTop: 2 }}>Telepon: 0813 1550 2949 &mdash; Email: teralearningcenter.id@gmail.com</Text>
+            <Text style={[s.bold, { fontSize: 11 }]}>Bimbel Tera</Text>
+            <Text style={{ color: '#555', marginTop: 2 }}>Jl. Rawageni No. 9k, Kel. Ratujaya, Kec. Cipayung, Kota Depok</Text>
+            <Text style={{ color: '#555', marginTop: 2 }}>Telp: 0813 1550 2949  &middot;  teralearningcenter.id@gmail.com</Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 18, fontFamily: 'Helvetica-Bold', letterSpacing: 2, color: '#0d9488' }}>TLC</Text>
-            <Text style={{ color: '#888' }}>Tera Learning Center</Text>
-          </View>
+          <Image src={logoPath} style={{ width: 60, height: 26 }} />
         </View>
 
         <View style={s.divider} />
@@ -133,18 +132,12 @@ function KuitansiPDF({ invoice, payment, kuitansiNumber, tahapNumber, chargeDesc
           </Text>
         </View>
 
-        <View style={s.signBlock}>
-          <View style={s.signCol}>
-            <Text style={{ color: '#555', marginBottom: 4 }}>Mengetahui,</Text>
-            <Text style={s.bold}>Orang Tua Siswa</Text>
-            <Text style={{ height: 40 }} />
-            <Text>{invoice.parent_name}</Text>
-          </View>
-          <View style={s.signCol}>
-            <Text style={{ color: '#555', marginBottom: 4 }}>Depok, {formatDate(payment.paid_at)}</Text>
-            <Text style={s.bold}>Pimpinan Tera Learning Center</Text>
-            <Text style={{ height: 40 }} />
-            <Text>Suci Purnama Sari, M.Si.</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <View style={s.signBox}>
+            <Text>Depok, {formatDate(payment.paid_at)}</Text>
+            <Text style={[s.bold, { marginTop: 4 }]}>Pimpinan Bimbel Tera</Text>
+            <Image src={signaturePath} style={{ width: 116, height: 48, marginTop: 4 }} />
+            <Text style={s.bold}>Suci Purnama Sari, M.Si.</Text>
           </View>
         </View>
       </Page>

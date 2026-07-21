@@ -103,26 +103,23 @@ export default async function KuitansiPage({
 
       <div className="max-w-2xl mx-auto p-12">
         {/* Header */}
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-base font-bold text-gray-900">Tera Learning Center</p>
-            <p className="text-xs text-gray-600 mt-0.5">Ruko Depok Bersih Jl. Rawageni No. 9k</p>
-            <p className="text-xs text-gray-600">Kel. Ratujaya, Kec. Cipayung, Kota Depok</p>
+            <p className="text-lg font-bold text-gray-900">Bimbel Tera</p>
+            <p className="text-xs text-gray-600 mt-0.5">Jl. Rawageni No. 9k, Kel. Ratujaya, Kec. Cipayung, Kota Depok</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              Telepon: 0813 1550 2949 &mdash; Email: teralearningcenter.id@gmail.com
+              Telepon: 0813 1550 2949 &middot; Email: teralearningcenter.id@gmail.com
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-black tracking-widest text-teal-600">TLC</p>
-            <p className="text-xs text-gray-500">Tera Learning Center</p>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-tera.png" alt="Tera Bimbel" className="h-10 w-auto" />
         </div>
 
-        <hr className="border-gray-800 border-t-2 mb-6" />
+        <hr className="border-gray-300 mb-4" />
 
         <div className="text-center mb-8">
-          <p className="text-lg font-bold text-gray-900 tracking-widest">KUITANSI</p>
-          <p className="text-sm text-gray-600 mt-1 font-mono">{kuitansiNumber}</p>
+          <p className="text-xl font-bold text-gray-900 tracking-widest">KUITANSI</p>
+          <p className="text-xs text-gray-600 mt-1 font-mono">{kuitansiNumber}</p>
         </div>
 
         <table className="w-full text-sm mb-8">
@@ -177,18 +174,15 @@ export default async function KuitansiPage({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-8">
+        <div className="flex justify-end mt-8">
           <div className="text-sm text-center">
-            <p className="text-gray-600 mb-1">Mengetahui,</p>
-            <p className="font-semibold text-gray-900">Orang Tua Siswa</p>
-            <div className="h-16"></div>
-            <p className="text-gray-900">{invoice.parent_name}</p>
-          </div>
-          <div className="text-sm text-center">
-            <p className="text-gray-600 mb-1">Depok, {formatDate(payment.paid_at)}</p>
-            <p className="font-semibold text-gray-900">Pimpinan Tera Learning Center</p>
-            <div className="h-16"></div>
-            <p className="text-gray-900">Suci Purnama Sari, M.Si.</p>
+            <p className="text-gray-600 mb-1">
+              Depok, {formatDate(payment.paid_at)}
+            </p>
+            <p className="font-semibold text-gray-900">Pimpinan Bimbel Tera</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ttd-stempel.png" alt="Tanda tangan dan stempel" className="h-24 w-auto mx-auto" />
+            <p className="font-semibold text-gray-900">Suci Purnama Sari, M.Si.</p>
           </div>
         </div>
       </div>
