@@ -301,7 +301,7 @@ function InvoiceCard({
       <button
         type="button"
         onClick={() => setIsOpen(v => !v)}
-        className={`w-full px-5 py-4 text-left border-t border-slate-100/70 hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
+        className={`w-full px-5 py-4 text-left border-t-[0.5px] border-slate-100 hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
       >
         <div className="flex items-center justify-between gap-3 mb-2">
           <span className="text-xs text-gray-400">
