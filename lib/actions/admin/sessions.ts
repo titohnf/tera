@@ -7,6 +7,14 @@ import { redirect } from 'next/navigation'
 
 export type ActionState = { error: string } | null
 
+// date/time are entered in WIB (Asia/Jakarta, UTC+7, no DST); convert
+// explicitly instead of relying on the server process's local timezone.
+function wibToUtcDate(date: string, time: string): Date {
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, min] = time.split(':').map(Number)
+  return new Date(Date.UTC(y, m - 1, d, h - 7, min, 0, 0))
+}
+
 async function verifyAdmin() {
   const user = await getUser()
   if (!user) return null
@@ -37,15 +45,15 @@ export async function createSession(prevState: ActionState, formData: FormData):
   if (!tutorId) return { error: 'Tutor wajib dipilih' }
   if (!date || !time) return { error: 'Tanggal dan waktu wajib diisi' }
 
-  const baseDate = new Date(`${date}T${time}:00`)
+  const baseDate = wibToUtcDate(date, time)
   const count = recurrencePattern === 'none' ? 1 : recurrenceCount
 
   const sessionsToInsert = Array.from({ length: count }, (_, i) => {
     const d = new Date(baseDate)
     if (i > 0) {
-      if (recurrencePattern === 'weekly') d.setDate(d.getDate() + i * 7)
-      else if (recurrencePattern === 'biweekly') d.setDate(d.getDate() + i * 14)
-      else if (recurrencePattern === 'monthly') d.setMonth(d.getMonth() + i)
+      if (recurrencePattern === 'weekly') d.setUTCDate(d.getUTCDate() + i * 7)
+      else if (recurrencePattern === 'biweekly') d.setUTCDate(d.getUTCDate() + i * 14)
+      else if (recurrencePattern === 'monthly') d.setUTCMonth(d.getUTCMonth() + i)
     }
     return {
       class_id: classId,
@@ -95,7 +103,7 @@ export async function updateSession(sessionId: string, prevState: ActionState, f
   if (!date || !time) return { error: 'Tanggal dan waktu wajib diisi' }
   if (!tutorId) return { error: 'Tutor wajib dipilih' }
 
-  const scheduledAt = new Date(`${date}T${time}:00`).toISOString()
+  const scheduledAt = wibToUtcDate(date, time).toISOString()
 
   const { error } = await ctx.admin
     .from('sessions')
@@ -194,7 +202,7 @@ export async function rescheduleSession(sessionId: string, prevState: ActionStat
   const time = formData.get('time') as string
   if (!date || !time) return { error: 'Tanggal dan waktu wajib diisi.' }
 
-  const scheduledAt = new Date(`${date}T${time}:00`).toISOString()
+  const scheduledAt = wibToUtcDate(date, time).toISOString()
   if (new Date(scheduledAt) < new Date()) return { error: 'Jadwal baru harus di masa depan.' }
 
   const { data: session } = await ctx.admin.from('sessions').select('status').eq('id', sessionId).single()

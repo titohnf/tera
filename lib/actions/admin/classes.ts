@@ -288,10 +288,9 @@ export async function updateClass(classId: string, prevState: ActionState, formD
     }
   }
 
-  const localDateKey = (iso: string) => {
-    const d = new Date(iso)
-    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-  }
+  // Compare dates in WIB regardless of the server's local timezone.
+  const localDateKey = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   const idsToDelete = scheduledSessions.filter(s => !filledSessionIds.has(s.id)).map(s => s.id)
   const preservedDateKeys = new Set(
@@ -382,23 +381,28 @@ function generateSessionsFromSlots(
   const [sy, sm, sd] = startDate.split('-').map(Number)
   const [ey, em, ed] = endDate.split('-').map(Number)
 
-  // Use local midnight so getDay() returns correct weekday
-  const end = new Date(ey, em - 1, ed)
-  const current = new Date(sy, sm - 1, sd)
+  // Use UTC midnight so getUTCDay() returns the correct weekday regardless
+  // of the server process's local timezone (e.g. Netlify functions run in
+  // UTC, not WIB, so relying on the local Date constructor here would shift
+  // weekday matching by up to a day depending on where the code executes).
+  const end = new Date(Date.UTC(ey, em - 1, ed))
+  const current = new Date(Date.UTC(sy, sm - 1, sd))
 
   while (current <= end) {
-    const dow = current.getDay() // 0=Sun..6=Sat
+    const dow = current.getUTCDay() // 0=Sun..6=Sat
     for (const slot of slots) {
       if (slot.day === null || slot.day !== dow) continue
       const [hStr, mStr] = (slot.time || '00:00').split(':')
       const h = Number(hStr)
       const m = Number(mStr ?? 0)
-      const scheduled = new Date(
-        current.getFullYear(),
-        current.getMonth(),
-        current.getDate(),
-        h, m, 0, 0,
-      )
+      // Slot times are entered in WIB (Asia/Jakarta, UTC+7, no DST); convert
+      // explicitly instead of using the server's local timezone.
+      const scheduled = new Date(Date.UTC(
+        current.getUTCFullYear(),
+        current.getUTCMonth(),
+        current.getUTCDate(),
+        h - 7, m, 0, 0,
+      ))
       sessions.push({
         class_id: classId,
         tutor_id: slot.tutorId,
@@ -410,7 +414,7 @@ function generateSessionsFromSlots(
         topic: null,
       })
     }
-    current.setDate(current.getDate() + 1)
+    current.setUTCDate(current.getUTCDate() + 1)
   }
 
   return sessions
