@@ -103,22 +103,16 @@ export default async function InvoicesPage({
   const allRows: Row[] = enrollments.map(e => {
     const key = `${e.student_id}__${e.class_id}`
     const invs = invoiceMap.get(key) ?? []
-    const latestInv = invs[0]
-    // "Nilai Invoice" shows the most recent invoice's total — with
-    // independent invoices per period now possible (e.g. monthly
-    // billing), the oldest invoice's total is no longer necessarily the
-    // relevant "current" figure.
-    const classPrice = latestInv?.total_due ?? 0
-    const latestPaid = latestInv?.status === 'paid'
-      ? latestInv.total_due
-      : (latestInv?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
-    const kekurangan = latestInv ? Math.max(0, latestInv.total_due - latestPaid) : 0
-    // Ground truth for "sudah dibayar": sum of every payment actually
-    // recorded across all of this student+class's invoices. Deriving it
-    // instead as classPrice - kekurangan breaks whenever an old/unused
-    // invoice (e.g. a leftover draft) has a different total than the
-    // invoice payments were actually recorded against.
-    const totalPaid = invs.reduce((sum, inv) => sum + inv.payments.reduce((s, p) => s + p.amount, 0), 0)
+    // Total Invoice / Dibayar / Belum Dibayar must stay internally
+    // consistent (Total Invoice − Belum Dibayar = Dibayar), so all three
+    // are derived from the SAME set of invoices (every non-cancelled
+    // invoice for this student+class, not just the latest) — otherwise
+    // deleting a payment on an older invoice moves "Dibayar" without
+    // moving "Belum Dibayar", which looks like the totals are out of sync.
+    const billedInvs = invs.filter(inv => inv.status !== 'cancelled')
+    const classPrice = billedInvs.reduce((sum, inv) => sum + inv.total_due, 0)
+    const totalPaid = billedInvs.reduce((sum, inv) => sum + inv.payments.reduce((s, p) => s + p.amount, 0), 0)
+    const kekurangan = Math.max(0, classPrice - totalPaid)
     const activeInv = invs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
 
     // Month of the most recent payment actually recorded, for the
