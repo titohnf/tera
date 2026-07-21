@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
@@ -103,6 +103,18 @@ function InvoiceCard({
   const [editAmount, setEditAmount] = useState('')
   const [editPaidAt, setEditPaidAt] = useState('')
   const [editError, setEditError] = useState('')
+  const openMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!openMenu) return
+    function handleClickOutside(e: MouseEvent) {
+      if (openMenuRef.current && !openMenuRef.current.contains(e.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openMenu])
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -245,7 +257,7 @@ function InvoiceCard({
         >
           Lihat
         </a>
-        <div className="relative shrink-0">
+        <div className="relative shrink-0" ref={openMenu === invoice.id ? openMenuRef : null}>
           <button
             onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
             className="flex items-center justify-center w-7 h-7 text-gray-400 rounded-lg hover:bg-slate-100 transition-colors"
@@ -372,7 +384,7 @@ function InvoiceCard({
                         >
                           Cetak Kuitansi
                         </a>
-                        <div className="relative shrink-0">
+                        <div className="relative shrink-0" ref={openMenu === p.id ? openMenuRef : null}>
                           <button
                             onClick={() => setOpenMenu(openMenu === p.id ? null : p.id)}
                             className="flex items-center justify-center w-7 h-7 text-gray-400 rounded-lg hover:bg-slate-100 transition-colors"
