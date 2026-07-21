@@ -49,7 +49,7 @@ export default function InvoicePageFilters({
       >
         <option value="">Semua Status</option>
         <option value="belum_terkirim">Belum Dikirim</option>
-        <option value="menunggu">Menunggu</option>
+        <option value="menunggu">Terkirim</option>
         <option value="angsuran">Angsuran</option>
         <option value="lunas">Lunas</option>
       </select>

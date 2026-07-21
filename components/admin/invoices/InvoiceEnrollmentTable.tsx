@@ -28,7 +28,7 @@ const CLASS_STATUS_BADGE: Record<string, string> = {
 const CLASS_STATUS_LABEL: Record<string, string> = {
   lunas:           'Lunas',
   angsuran:        'Angsuran',
-  menunggu:        'Menunggu',
+  menunggu:        'Terkirim',
   belum_terkirim:  'Belum Dikirim',
 }
 
