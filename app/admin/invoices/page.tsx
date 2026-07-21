@@ -22,12 +22,6 @@ type InvoiceRow = {
   payments: { amount: number }[]
 }
 
-const CLASS_STATUS_LABEL: Record<string, string> = {
-  lunas:    'Lunas',
-  angsuran: 'Angsuran',
-  menunggu: 'Menunggu',
-}
-
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 }
@@ -154,21 +148,20 @@ export default async function InvoicesPage({
 
       {/* Cards */}
       <div className="grid grid-cols-3 gap-3">
-        {(['menunggu', 'angsuran', 'lunas'] as const).map(s => {
-          const filtered = allRows.filter(r => r.status === s)
-          const count = filtered.length
-          const total = s === 'angsuran'
-            ? filtered.reduce((sum, r) => sum + r.kekurangan, 0)
-            : filtered.reduce((sum, r) => sum + r.classPrice, 0)
+        {(() => {
+          const invoicedRows = allRows.filter(r => r.hasExisting)
+          const totalInvoice = invoicedRows.reduce((sum, r) => sum + r.classPrice, 0)
+          const totalKekurangan = invoicedRows.reduce((sum, r) => sum + r.kekurangan, 0)
+          const totalDibayar = totalInvoice - totalKekurangan
+          const belumLunasCount = invoicedRows.filter(r => r.kekurangan > 0).length
           return (
-            <MetricCard
-              key={s}
-              label={CLASS_STATUS_LABEL[s]}
-              value={formatRupiah(total)}
-              sub={`${count} siswa`}
-            />
+            <>
+              <MetricCard label="Total Invoice" value={formatRupiah(totalInvoice)} sub={`${invoicedRows.length} siswa`} />
+              <MetricCard label="Dibayar" value={formatRupiah(totalDibayar)} valueColor="text-green-600" />
+              <MetricCard label="Belum Dibayar" value={formatRupiah(totalKekurangan)} valueColor="text-red-600" sub={`${belumLunasCount} siswa`} />
+            </>
           )
-        })}
+        })()}
       </div>
 
       {/* Search + filter */}
