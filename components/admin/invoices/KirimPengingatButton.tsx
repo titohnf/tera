@@ -15,6 +15,7 @@ export type PengingatClass = {
   classEndDate: string | null
   remaining: number
   studentName?: string
+  isMonthly: boolean
 }
 
 interface Props {
@@ -26,6 +27,10 @@ interface Props {
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function formatWaPhone(raw: string): string {
@@ -48,23 +53,35 @@ export default function KirimPengingatButton({ studentName, studentNickname, par
     const paidForInvoice = payments.reduce((s, p) => s + p.amount, 0)
     const sisa = Math.max(0, pc.totalDue - paidForInvoice)
     const pengingatUrl = `${window.location.origin}/api/invoices/${pc.invoiceId}/pengingat/pdf`
-    const breakdown = getMonthlyBreakdown(pc.totalDue, pc.classStartDate, pc.classEndDate)
 
-    const billingLines = breakdown.length > 0
-      ? [
-          `Sudah dibayar:`,
-          ...payments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
-          '',
-          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
-          '',
-          `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
-          ...breakdown.slice(payments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
-        ]
-      : [
-          `Sudah dibayar: ${formatRupiah(paidForInvoice)}`,
-          '',
-          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
-        ]
+    let billingLines: string[]
+    if (pc.isMonthly) {
+      // Monthly invoices are self-contained for that one month — no
+      // semester-wide breakdown, that would misrepresent this month's
+      // total as spread across the whole enrollment.
+      billingLines = [
+        ...payments.map((p, i) => `Sudah dibayar Tahap ${i + 1} (${formatDate(p.paid_at)}): ${formatRupiah(p.amount)}`),
+        '',
+        `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+      ]
+    } else {
+      const breakdown = getMonthlyBreakdown(pc.totalDue, pc.classStartDate, pc.classEndDate)
+      billingLines = breakdown.length > 0
+        ? [
+            `Sudah dibayar:`,
+            ...payments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
+            '',
+            `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+            '',
+            `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
+            ...breakdown.slice(payments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
+          ]
+        : [
+            `Sudah dibayar: ${formatRupiah(paidForInvoice)}`,
+            '',
+            `Sisa Pembayaran: ${formatRupiah(sisa)}`,
+          ]
+    }
 
     const lines = [
       `Assalamu'alaikum Ayah/Bunda.`,

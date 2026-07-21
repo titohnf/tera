@@ -103,6 +103,7 @@ export default async function StudentInvoiceDetailPage({
       status: inv.status,
       eff_status: effectiveStatus(inv, today),
       payments: paymentsByInvoice.get(inv.id) ?? [],
+      isMonthly: inv.line_items.some(i => i.period),
     })
   }
 
@@ -189,6 +190,7 @@ export default async function StudentInvoiceDetailPage({
       classStartDate: group.classStartDate ?? null,
       classEndDate: group.classEndDate ?? null,
       remaining,
+      isMonthly: active.isMonthly,
     })
   }
 
