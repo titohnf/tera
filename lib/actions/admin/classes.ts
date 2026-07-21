@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { syncPrivateClassDraftInvoices } from './invoices'
 
 export type ActionState = { error: string } | null
 
@@ -311,6 +312,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       await ctx.admin.from('sessions').insert(newSessions)
     }
   }
+
+  await syncPrivateClassDraftInvoices(classId, ctx.admin)
 
   revalidatePath(`/admin/classes/${classId}`)
   redirect(`/admin/classes/${classId}`)

@@ -345,6 +345,64 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
   return { id: inserted.id }
 }
 
+// ─── Sync draft invoices after a private class's session count changes ────────
+
+type SyncableLineItem = { description: string; months: number; amount: number; is_deduction: boolean; unit?: 'bulan' | 'pertemuan' }
+
+const lineSubtotal = (item: { months: number; amount: number }) =>
+  item.months === 0 ? item.amount : item.months * item.amount
+
+// Private classes are billed per pertemuan, with the session count baked
+// into the invoice's line_items as a plain number at creation time. When
+// sessions are added or removed afterward (deleteSession, createSession, or
+// a class edit that regenerates sessions), any invoice still in 'draft'
+// hasn't been sent to the parent yet, so it's safe to update its pertemuan
+// count and total to match — sent/paid invoices are left untouched since
+// those have already been communicated or settled.
+export async function syncPrivateClassDraftInvoices(
+  classId: string,
+  admin: ReturnType<typeof createAdminClient>
+) {
+  const { data: cls } = await admin.from('classes').select('class_type').eq('id', classId).single()
+  if (!cls || cls.class_type !== 'private') return
+
+  const { count } = await admin
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('class_id', classId)
+    .neq('status', 'cancelled')
+  const liveCount = count ?? 0
+
+  const { data: draftInvoices } = await admin
+    .from('invoices')
+    .select('id, line_items')
+    .eq('class_id', classId)
+    .eq('status', 'draft') as { data: { id: string; line_items: SyncableLineItem[] }[] | null }
+
+  for (const inv of draftInvoices ?? []) {
+    const items = inv.line_items ?? []
+    let changed = false
+    const updatedItems = items.map(item => {
+      if (!item.is_deduction && item.unit === 'pertemuan' && item.months !== liveCount) {
+        changed = true
+        return { ...item, months: liveCount }
+      }
+      return item
+    })
+    if (!changed) continue
+
+    const newTotal = Math.max(0, updatedItems.reduce((sum, item) =>
+      item.is_deduction ? sum - lineSubtotal(item) : sum + lineSubtotal(item), 0))
+
+    await admin
+      .from('invoices')
+      .update({ line_items: updatedItems, total_due: newTotal, updated_at: new Date().toISOString() })
+      .eq('id', inv.id)
+  }
+
+  revalidatePath('/admin/invoices')
+}
+
 // ─── Sync next invoice after payment change ────────────────────────────────────
 
 async function syncNextInvoice(
@@ -543,9 +601,6 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
   const lineItems = [...chargeItems, ...deductionItems]
 
   // Total = sum of charges - sum of all deductions (months=0 items use amount directly)
-  const lineSubtotal = (item: { months: number; amount: number }) =>
-    item.months === 0 ? item.amount : item.months * item.amount
-
   const newTotal = lineItems.reduce((sum, item) =>
     item.is_deduction ? sum - lineSubtotal(item) : sum + lineSubtotal(item), 0)
 

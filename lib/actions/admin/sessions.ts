@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { syncPrivateClassDraftInvoices } from './invoices'
 
 export type ActionState = { error: string } | null
 
@@ -76,12 +77,14 @@ export async function createSession(prevState: ActionState, formData: FormData):
       .single()
 
     if (error) return { error: error.message }
+    await syncPrivateClassDraftInvoices(classId, ctx.admin)
     revalidatePath('/admin/sessions')
     revalidatePath(`/admin/classes/${classId}`)
     redirect(redirectTo || `/admin/sessions/${data.id}`)
   } else {
     const { error } = await ctx.admin.from('sessions').insert(sessionsToInsert)
     if (error) return { error: error.message }
+    await syncPrivateClassDraftInvoices(classId, ctx.admin)
     revalidatePath('/admin/sessions')
     revalidatePath(`/admin/classes/${classId}`)
     redirect(redirectTo || `/admin/classes/${classId}`)
@@ -230,7 +233,7 @@ export async function deleteSession(sessionId: string): Promise<ActionState> {
 
   const { data: session } = await ctx.admin
     .from('sessions')
-    .select('status')
+    .select('status, class_id')
     .eq('id', sessionId)
     .single()
 
@@ -239,6 +242,8 @@ export async function deleteSession(sessionId: string): Promise<ActionState> {
 
   const { error } = await ctx.admin.from('sessions').delete().eq('id', sessionId)
   if (error) return { error: error.message }
+
+  await syncPrivateClassDraftInvoices(session.class_id, ctx.admin)
 
   revalidatePath('/admin/sessions')
   return null
