@@ -224,9 +224,12 @@ function InvoiceCard({
 
   return (
     <div>
-      {/* Invoice number (dominant) + actions — always visible */}
+      {/* Invoice number (dominant, class name as its label) + actions — always visible */}
       <div className="px-5 pt-4 pb-3 flex items-center gap-2">
-        <span className="text-sm font-semibold text-gray-900 font-mono truncate">{invoice.invoice_number}</span>
+        <div className="min-w-0 shrink-0">
+          <p className="text-sm font-semibold text-gray-900 font-mono truncate">{invoice.invoice_number}</p>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{group.className}</p>
+        </div>
         <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
           {INV_STATUS_LABEL[badgeKey]}
         </span>
@@ -292,21 +295,20 @@ function InvoiceCard({
         </div>
       </div>
 
-      {/* Class name (subtitle) + progress bar — toggles payment history */}
+      {/* Progress segment — its own block, toggles payment history */}
       <button
         type="button"
         onClick={() => setIsOpen(v => !v)}
-        className={`w-full px-5 pb-3 text-left hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
+        className={`w-full px-5 py-3 text-left border-t border-slate-100 hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
       >
         <div className="flex items-center justify-between gap-3 mb-2">
-          <div className="min-w-0">
-            <p className="text-xs text-gray-400 truncate">{group.className}</p>
-            {kekurangan > 0 && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span>
-              </p>
+          <span className="text-xs text-gray-400">
+            {kekurangan > 0 ? (
+              <>Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span></>
+            ) : (
+              'Lunas'
             )}
-          </div>
+          </span>
           <div className="flex items-center gap-2.5 shrink-0">
             <span className="text-sm font-semibold text-gray-700">{formatRupiah(invoice.total_due)}</span>
             <svg
