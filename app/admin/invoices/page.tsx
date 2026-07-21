@@ -7,7 +7,7 @@ type EnrollmentRow = {
   student_id: string
   class_id: string
   profiles: { full_name: string } | null
-  classes: { name: string } | null
+  classes: { name: string; semester: number | null; academic_year: string | null } | null
 }
 
 type InvoiceRow = {
@@ -40,15 +40,15 @@ function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>
+  searchParams: Promise<{ q?: string; status?: string; semester?: string; tahunAjaran?: string }>
 }) {
-  const { q = '', status: statusFilter = '' } = await searchParams
+  const { q = '', status: statusFilter = '', semester: semesterFilter = '', tahunAjaran: tahunAjaranFilter = '' } = await searchParams
   const admin = createAdminClient()
 
   const [enrollmentsRes, invoicesRes] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name)')
+      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name, semester, academic_year)')
       .eq('is_active', true)
       .order('profiles(full_name)') as unknown as Promise<{ data: EnrollmentRow[] | null }>,
     admin
@@ -88,6 +88,8 @@ export default async function InvoicesPage({
     invoiceId: string | null
     bulanLabel: string
     hasExisting: boolean
+    semester: number | null
+    academicYear: string | null
   }
 
   const allRows: Row[] = enrollments.map(e => {
@@ -111,8 +113,14 @@ export default async function InvoicesPage({
       invoiceId: activeInv?.id ?? null,
       bulanLabel: activeInv ? new Date(activeInv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '',
       hasExisting: invs.length > 0,
+      semester: e.classes?.semester ?? null,
+      academicYear: e.classes?.academic_year ?? null,
     }
   })
+
+  // Distinct filter options, sorted
+  const semesterOptions = [...new Set(allRows.map(r => r.semester).filter((s): s is number => s !== null))].sort((a, b) => a - b)
+  const tahunAjaranOptions = [...new Set(allRows.map(r => r.academicYear).filter((y): y is string => !!y))].sort()
 
   // Filters
   let rows = allRows
@@ -122,6 +130,12 @@ export default async function InvoicesPage({
   }
   if (statusFilter) {
     rows = rows.filter(r => r.status === statusFilter)
+  }
+  if (semesterFilter) {
+    rows = rows.filter(r => String(r.semester ?? '') === semesterFilter)
+  }
+  if (tahunAjaranFilter) {
+    rows = rows.filter(r => r.academicYear === tahunAjaranFilter)
   }
 
   return (
@@ -150,7 +164,14 @@ export default async function InvoicesPage({
       </div>
 
       {/* Search + filter */}
-      <InvoicePageFilters q={q} statusFilter={statusFilter} />
+      <InvoicePageFilters
+        q={q}
+        statusFilter={statusFilter}
+        semesterFilter={semesterFilter}
+        tahunAjaranFilter={tahunAjaranFilter}
+        semesterOptions={semesterOptions}
+        tahunAjaranOptions={tahunAjaranOptions}
+      />
 
       {/* Table */}
       <InvoiceEnrollmentTable rows={rows} />
