@@ -318,14 +318,6 @@ function InvoiceCard({
         >
           Lihat
         </a>
-        {!isPaidOff && (
-          <button
-            onClick={() => { setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
-          >
-            Catat Pembayaran
-          </button>
-        )}
         <div className="relative shrink-0" ref={openMenu === invoice.id ? openMenuRef : null}>
           <button
             onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
@@ -345,14 +337,12 @@ function InvoiceCard({
               >
                 Kirim Pengingat
               </button>
-              {isPaidOff && (
-                <button
-                  onClick={() => { setOpenMenu(null); setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
-                >
-                  Catat Pembayaran
-                </button>
-              )}
+              <button
+                onClick={() => { setOpenMenu(null); setPaymentAmount(''); setPaymentDate(today); setPaymentError(''); setShowPaymentModal(true) }}
+                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+              >
+                Catat Pembayaran
+              </button>
               <div className="border-t border-slate-100 my-0.5" />
               <button
                 onClick={() => { setOpenMenu(null); handleKirim() }}
