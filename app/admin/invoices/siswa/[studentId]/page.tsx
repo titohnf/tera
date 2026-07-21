@@ -15,6 +15,7 @@ type InvoiceRow = {
   issued_at: string
   due_date: string | null
   status: string
+  line_items: { period?: string }[]
   classes: { name: string; start_date: string | null; end_date: string | null } | null
 }
 
@@ -46,7 +47,7 @@ export default async function StudentInvoiceDetailPage({
     admin.from('profiles').select('id, full_name, nickname, parent_name, parent_phone').eq('id', studentId).single(),
     admin
       .from('invoices')
-      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, classes!class_id(name, start_date, end_date)')
+      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, line_items, classes!class_id(name, start_date, end_date)')
       .eq('student_id', studentId)
       .order('issued_at', { ascending: false })
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
@@ -115,12 +116,18 @@ export default async function StudentInvoiceDetailPage({
     }
   }
 
-  // Generate Invoice only applies to classes with no invoice yet — billing
-  // for a class is meant to be a single invoice document; once it exists,
-  // ongoing balance is followed up with "Kirim Pengingat" instead of a new
-  // invoice.
+  // A class already has monthly-billed invoices once any of its line_items
+  // carry a `period` (see generateMonthlyInvoiceForStudent).
+  const monthlyClassIds = new Set(
+    invoices.filter(inv => inv.line_items.some(i => i.period)).map(inv => inv.class_id).filter((id): id is string => !!id)
+  )
+
+  // Invoice Persemester (lump-sum, one document for the whole enrollment)
+  // and Invoice Bulanan are mutually exclusive per class — once a class has
+  // gone one way, the other option is hidden so admins can't accidentally
+  // start a second, conflicting billing thread for the same class.
   const generatableClasses: GeneratableClass[] = groups
-    .filter(group => group.invoices.length === 0)
+    .filter(group => group.invoices.length === 0 && !(group.classId && monthlyClassIds.has(group.classId)))
     .map(group => ({
       classId: group.classId,
       className: group.className,
@@ -133,7 +140,11 @@ export default async function StudentInvoiceDetailPage({
     enrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
   )
   const monthlyEligibleClasses: MonthlyInvoiceClass[] = groups
-    .filter((group): group is ClassGroup & { classId: string } => !!group.classId && privateClassIds.has(group.classId))
+    .filter((group): group is ClassGroup & { classId: string } =>
+      !!group.classId
+      && privateClassIds.has(group.classId)
+      && !(group.invoices.length > 0 && !monthlyClassIds.has(group.classId)) // no existing lump-sum invoice
+    )
     .map(group => ({ classId: group.classId, className: group.className }))
 
   // Compute payable classes for the global button

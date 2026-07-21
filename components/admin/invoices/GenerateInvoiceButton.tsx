@@ -62,7 +62,7 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        {isPending ? 'Membuat...' : 'Generate Invoice'}
+        {isPending ? 'Membuat...' : 'Invoice Persemester'}
       </button>
 
       {open && (
@@ -72,7 +72,7 @@ export default function GenerateInvoiceButton({ studentId, generatableClasses }:
         >
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <p className="text-sm font-semibold text-gray-800">Generate Invoice</p>
+              <p className="text-sm font-semibold text-gray-800">Invoice Persemester</p>
               <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
