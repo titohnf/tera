@@ -233,12 +233,10 @@ function InvoiceCard({
               {INV_STATUS_LABEL[badgeKey]}
             </span>
           </div>
-          <p className="text-xs text-gray-400 mt-0.5 truncate">
-            {group.className} <span className="text-gray-300">&middot;</span>{' '}
-            <span className="font-medium text-gray-600">{formatRupiah(invoice.total_due)}</span>
-          </p>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{group.className}</p>
         </div>
         <span className="flex-1" />
+        <span className="text-sm font-semibold text-gray-700 shrink-0">{formatRupiah(invoice.total_due)}</span>
         <a
           href={`/admin/invoices/${invoice.id}/cetak?preview=1`}
           target="_blank"
