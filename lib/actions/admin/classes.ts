@@ -35,7 +35,6 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const durationMinutes = Number(formData.get('duration_minutes') ?? 90)
   const semester = Number(formData.get('semester')) || null
   const academicYear = (formData.get('academic_year') as string)?.trim() || null
-  const nameBase = (formData.get('name_base') as string)?.trim() || null
 
   let slots: SlotInput[] = []
   try { slots = JSON.parse(slotsJson) } catch { return { error: 'Data slot tidak valid' } }
@@ -110,73 +109,12 @@ export async function createClass(prevState: ActionState, formData: FormData): P
         is_active: true,
       }))
     )
-
-    // Kelas yayasan tidak memerlukan invoice untuk orang tua
-    if (classType === 'yayasan') {
-      redirect(`/admin/classes/${data.id}`)
-    }
-
-    // Auto-generate draft invoice for each enrolled student
-    const [{ data: profiles }, { data: rates }] = await Promise.all([
-      ctx.admin.from('profiles').select('id, full_name, parent_name').in('id', studentIds),
-      ctx.admin
-        .from('billing_rates')
-        .select('amount, class_type, jenjang, jenis, billing_rate_periods!inner(is_active)')
-        .eq('billing_rate_periods.is_active', true) as unknown as Promise<{ data: { amount: number; class_type: string; jenjang: string; jenis: string }[] | null }>,
-    ])
-
-    const rateMap = new Map<string, number>()
-    for (const r of rates ?? []) rateMap.set(`${r.class_type}|${r.jenjang}|${r.jenis}`, r.amount)
-    const billingJenis = jenis === 'reguler' ? 'Reguler' : jenis === 'fokus' ? 'Fokus' : null
-    const rateAmount = billingJenis ? (rateMap.get(`${classType}|${level}|${billingJenis}`) ?? 0) : 0
-
-    const isPrivate = classType === 'private'
-    const quantity = isPrivate ? generatedSessions.length : classMonthsBetween(startDate!, endDate!)
-    const unit: 'bulan' | 'pertemuan' = isPrivate ? 'pertemuan' : 'bulan'
-    const description = nameBase || name || 'Biaya Kelas'
-    const lineItems = [{ description, months: quantity, amount: rateAmount, is_deduction: false, unit }]
-    const totalDue = quantity * rateAmount
-
-    const issuedAt = new Date().toISOString().slice(0, 10)
-    const due = new Date(); due.setDate(due.getDate() + 7)
-    const dueDate = due.toISOString().slice(0, 10)
-
-    for (const studentId of quantity > 0 ? studentIds : []) {
-      const profile = profiles?.find(p => p.id === studentId)
-      if (!profile) continue
-
-      const now = new Date()
-      const mon = now.getMonth() + 1
-      const yr = now.getFullYear()
-      const { count } = await ctx.admin
-        .from('invoices')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(yr, mon - 1, 1).toISOString())
-        .lt('created_at', new Date(yr, mon, 1).toISOString())
-      const seq = String((count ?? 0) + 1).padStart(2, '0')
-      const invoiceNumber = `${seq} / ${String(mon).padStart(2, '0')} / INVOICE / TLC / ${yr}`
-
-      await ctx.admin.from('invoices').insert({
-        invoice_number: invoiceNumber,
-        class_id: data.id,
-        student_id: studentId,
-        student_name: (profile as { full_name: string }).full_name,
-        parent_name: (profile as { parent_name: string | null }).parent_name ?? '',
-        line_items: lineItems,
-        total_due: totalDue,
-        payment_method: 'Transfer Bank',
-        bank_account: 'BSI - 7296753275 a.n. Suci Purnama Sari',
-        due_date: dueDate,
-        issued_at: issuedAt,
-        status: 'draft',
-        created_by: ctx.user.id,
-        updated_at: new Date().toISOString(),
-      })
-    }
-
-    revalidatePath('/admin/invoices')
   }
 
+  // Invoices are generated on demand from the student's invoice page
+  // (lump-sum or monthly, whichever the parent wants) instead of
+  // auto-created here, so a class isn't forced onto the lump-sum model
+  // before that decision is made.
   redirect(`/admin/classes/${data.id}`)
 }
 
@@ -354,12 +292,6 @@ export async function enrollStudent(classId: string, studentId: string): Promise
   if (error) return { error: error.message }
   revalidatePath(`/admin/classes/${classId}`)
   return null
-}
-
-function classMonthsBetween(startStr: string, endStr: string): number {
-  const s = new Date(startStr)
-  const e = new Date(endStr)
-  return Math.max(1, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1)
 }
 
 function generateSessionsFromSlots(
