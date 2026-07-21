@@ -29,7 +29,7 @@ export default async function ClassesPage({
 
   const now = new Date()
 
-  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }] = await Promise.all([
+  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }, { data: allSessionsRaw }] = await Promise.all([
     admin
       .from('classes')
       .select('id, name, level, is_active, class_type, status, start_date, end_date, profiles!tutor_id(full_name), class_subjects(subjects(name))')
@@ -55,6 +55,9 @@ export default async function ClassesPage({
       .from('sessions')
       .select('class_id')
       .eq('status', 'completed'),
+    admin
+      .from('sessions')
+      .select('class_id'),
   ])
 
   const allClasses = classes ?? []
@@ -100,24 +103,20 @@ export default async function ClassesPage({
     completedCountMap.set(s.class_id, (completedCountMap.get(s.class_id) ?? 0) + 1)
   }
 
-  // Slots per class (count of scheduled days per week)
-  const slotsPerWeekMap = new Map<string, number>()
-  for (const slot of slotsRaw ?? []) {
-    if (slot.day_of_week != null) {
-      slotsPerWeekMap.set(slot.class_id, (slotsPerWeekMap.get(slot.class_id) ?? 0) + 1)
-    }
+  // Total generated sessions per class (all statuses) — this is the actual
+  // denominator shown on the class detail page, so use it here too instead
+  // of estimating from slotsPerWeek × weeks (which can drift from the real
+  // generated count due to rounding).
+  const totalSessionCountMap = new Map<string, number>()
+  for (const s of allSessionsRaw ?? []) {
+    totalSessionCountMap.set(s.class_id, (totalSessionCountMap.get(s.class_id) ?? 0) + 1)
   }
 
   // Progress: completed / target × 100
-  // target = slotsPerWeek × totalWeeks(start_date → end_date)
   function getProgress(cls: ClassRow): { completed: number; target: number | null; pct: number | null } {
     const completed = completedCountMap.get(cls.id) ?? 0
-    const slotsPerWeek = slotsPerWeekMap.get(cls.id) ?? 0
-    if (!cls.end_date || slotsPerWeek === 0) return { completed, target: null, pct: null }
-    const start = new Date(cls.start_date ?? cls.end_date)
-    const end = new Date(cls.end_date)
-    const totalWeeks = Math.max(1, Math.round((end.getTime() - start.getTime()) / (7 * 86400000)))
-    const target = slotsPerWeek * totalWeeks
+    const target = totalSessionCountMap.get(cls.id) ?? 0
+    if (target === 0) return { completed, target: null, pct: null }
     const pct = Math.min(100, Math.round((completed / target) * 100))
     return { completed, target, pct }
   }
