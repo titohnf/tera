@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
+import { stripClassUniqueTag } from '@/lib/format-class-name'
 
 export type Payment = {
   id: string
@@ -78,19 +79,6 @@ function formatWaPhone(raw: string): string {
   return '62' + digits
 }
 
-// Class names carry a trailing per-student suffix (e.g. "Privat 2 SD ... Jagad")
-// used to keep otherwise-identical class names unique; strip it for messaging.
-function stripUniqueSuffix(className: string, ...names: (string | undefined)[]): string {
-  for (const name of names) {
-    const trimmed = name?.trim()
-    if (!trimmed) continue
-    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const re = new RegExp(`\\s+${escaped}$`, 'i')
-    if (re.test(className)) return className.replace(re, '').trim()
-  }
-  return className
-}
-
 function ClassCard({
   group,
   studentName,
@@ -139,7 +127,7 @@ function ClassCard({
 
       if (parentPhone && inv) {
         const childName = studentNickname || studentName || ''
-        const cleanClassName = stripUniqueSuffix(group.className, studentNickname, studentName)
+        const cleanClassName = stripClassUniqueTag(group.className)
         const pdfUrl = `${window.location.origin}/api/invoices/${inv.id}/pdf`
         const lines = [
           `Assalamu'alaikum Ayah/Bunda.`,
@@ -166,7 +154,7 @@ function ClassCard({
   function handleKirimKuitansi(payment: Payment & { invoiceId: string }, tahap: number) {
     if (!parentPhone) return
     const childName = studentNickname || studentName || ''
-    const cleanClassName = stripUniqueSuffix(group.className, studentNickname, studentName)
+    const cleanClassName = stripClassUniqueTag(group.className)
     const kuitansiUrl = `${window.location.origin}/api/invoices/${payment.invoiceId}/kuitansi/${payment.id}/pdf`
     const lines = [
       `Assalamu'alaikum Ayah/Bunda.`,
