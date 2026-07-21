@@ -14,7 +14,7 @@ type InvoiceRow = {
   issued_at: string
   due_date: string | null
   status: string
-  classes: { name: string } | null
+  classes: { name: string; start_date: string | null; end_date: string | null } | null
 }
 
 type PaymentRow = {
@@ -45,7 +45,7 @@ export default async function StudentInvoiceDetailPage({
     admin.from('profiles').select('id, full_name, nickname, parent_name, parent_phone').eq('id', studentId).single(),
     admin
       .from('invoices')
-      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, classes!class_id(name)')
+      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, classes!class_id(name, start_date, end_date)')
       .eq('student_id', studentId)
       .order('issued_at', { ascending: false })
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
@@ -83,7 +83,15 @@ export default async function StudentInvoiceDetailPage({
   for (const inv of invoices) {
     const key = inv.class_id ?? '__no_class__'
     const className = inv.classes?.name ?? 'Tanpa Kelas'
-    if (!classMap.has(key)) classMap.set(key, { classId: inv.class_id, className, invoices: [] })
+    if (!classMap.has(key)) {
+      classMap.set(key, {
+        classId: inv.class_id,
+        className,
+        invoices: [],
+        classStartDate: inv.classes?.start_date ?? null,
+        classEndDate: inv.classes?.end_date ?? null,
+      })
+    }
     classMap.get(key)!.invoices.push({
       id: inv.id,
       invoice_number: inv.invoice_number,
