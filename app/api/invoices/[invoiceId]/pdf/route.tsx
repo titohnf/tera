@@ -97,16 +97,6 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
             <Text style={{ color: '#888', fontSize: 8, marginTop: 4 }}>Nama Orang Tua :</Text>
             <Text style={s.bold}>{invoice.parent_name}</Text>
           </View>
-          <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            <Text style={[s.label, s.bold]}>Tanggal</Text>
-            <Text>{formatDate(invoice.issued_at)}</Text>
-            {invoice.due_date && (
-              <>
-                <Text style={[s.label, s.bold, { marginTop: 8 }]}>Jatuh Tempo</Text>
-                <Text>{formatDate(invoice.due_date)}</Text>
-              </>
-            )}
-          </View>
         </View>
 
         {/* Table */}
@@ -114,21 +104,18 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
           <Text style={[s.col1, s.bold]}>Rincian Pembayaran</Text>
           <Text style={[s.col2, s.bold]}>Qty</Text>
           <Text style={[s.col3, s.bold]}>Biaya/Satuan</Text>
-          <Text style={[s.col4, s.bold]}>Total</Text>
+          <Text style={[s.col4, s.bold]}>Total Harga</Text>
         </View>
         {invoice.line_items.map((item, i) => {
           const subtotal = item.months === 0 ? item.amount : item.months * item.amount
           const subtotalFmt = item.is_deduction ? `-${formatRupiah(subtotal)}` : formatRupiah(subtotal)
           return (
             <View key={i} style={s.tableRow}>
-              <Text style={s.col1}>{item.description}</Text>
               {item.months === 0 ? (
-                <>
-                  <Text style={s.col2} />
-                  <Text style={s.col3} />
-                </>
+                <Text style={{ flex: 1 }}>{item.description}</Text>
               ) : (
                 <>
+                  <Text style={s.col1}>{item.description}</Text>
                   <Text style={s.col2}>{item.months} {item.unit === 'pertemuan' ? 'pertm' : 'bln'}</Text>
                   <Text style={s.col3}>{formatRupiah(item.amount)}</Text>
                 </>
@@ -154,6 +141,12 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
             <Text style={s.paymentLabel}>Rekening</Text>
             <Text>: {invoice.bank_account}</Text>
           </View>
+          {invoice.due_date && (
+            <View style={[s.paymentRow, { marginTop: 4 }]}>
+              <Text style={s.paymentLabel}>Batas Pembayaran</Text>
+              <Text>: {formatDate(invoice.due_date)}</Text>
+            </View>
+          )}
         </View>
 
         {/* Signature */}
