@@ -52,11 +52,12 @@ export default function KirimPengingatButton({ studentName, studentNickname, par
 
     const billingLines = breakdown.length > 0
       ? [
-          ...payments.map((p, i) => `Sudah dibayar Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
+          `Sudah dibayar:`,
+          ...payments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
           '',
           `Sisa Pembayaran: ${formatRupiah(sisa)}`,
           '',
-          `Pembayaran dapat dilakukan bertahap secara bertahap setiap bulannya sebesar:`,
+          `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
           ...breakdown.slice(payments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
         ]
       : [
