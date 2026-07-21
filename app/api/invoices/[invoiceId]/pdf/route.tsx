@@ -35,7 +35,7 @@ Font.register({
 })
 
 const s = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', fontSize: 9, color: '#111', padding: '1cm' },
+  page: { fontFamily: 'Helvetica', fontSize: 9, color: '#111', padding: '2.9cm' },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   bold: { fontFamily: 'Helvetica-Bold' },
   label: { fontSize: 7, color: '#888', textTransform: 'uppercase', marginBottom: 3 },
