@@ -2,10 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/invoices/StudentClassInvoiceTable'
-import CatatPembayaranButton, { type PayableClass } from '@/components/admin/invoices/CatatPembayaranButton'
-import GenerateInvoiceButton, { type GeneratableClass } from '@/components/admin/invoices/GenerateInvoiceButton'
-import GenerateMonthlyInvoiceButton, { type MonthlyInvoiceClass } from '@/components/admin/invoices/GenerateMonthlyInvoiceButton'
-import KirimPengingatButton, { type PengingatClass } from '@/components/admin/invoices/KirimPengingatButton'
+import CreateInvoiceButton, { type GeneratableClass, type MonthlyInvoiceClass } from '@/components/admin/invoices/CreateInvoiceButton'
 
 type InvoiceRow = {
   id: string
@@ -123,23 +120,24 @@ export default async function StudentInvoiceDetailPage({
     invoices.filter(inv => inv.line_items.some(i => i.period)).map(inv => inv.class_id).filter((id): id is string => !!id)
   )
 
-  // Invoice Persemester (lump-sum, one document for the whole enrollment)
-  // and Invoice Bulanan are mutually exclusive per class — once a class has
-  // gone one way, the other option is hidden so admins can't accidentally
-  // start a second, conflicting billing thread for the same class.
+  // Private classes the student is currently enrolled in bill monthly;
+  // everything else (group/reguler classes) bills lump-sum per semester.
+  // The billing model is derived from class_type, not chosen by the admin.
+  const privateClassIds = new Set(
+    enrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
+  )
+
+  // Invoice Persemester — only non-private classes with no invoice yet.
   const generatableClasses: GeneratableClass[] = groups
-    .filter(group => group.invoices.length === 0 && !(group.classId && monthlyClassIds.has(group.classId)))
+    .filter(group =>
+      group.invoices.length === 0
+      && !(group.classId && monthlyClassIds.has(group.classId))
+      && !(group.classId && privateClassIds.has(group.classId))
+    )
     .map(group => ({
       classId: group.classId,
       className: group.className,
     }))
-
-  // Private classes the student is currently enrolled in — eligible for the
-  // monthly (per-bulan) billing flow, as an alternative to the whole-class
-  // lump-sum invoice from generatableClasses above.
-  const privateClassIds = new Set(
-    enrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
-  )
   const monthlyEligibleClasses: MonthlyInvoiceClass[] = groups
     .filter((group): group is ClassGroup & { classId: string } =>
       !!group.classId
@@ -147,43 +145,6 @@ export default async function StudentInvoiceDetailPage({
       && !(group.invoices.length > 0 && !monthlyClassIds.has(group.classId)) // no existing lump-sum invoice
     )
     .map(group => ({ classId: group.classId, className: group.className }))
-
-  // Compute payable invoices for the global button — per invoice, not
-  // aggregated per class. A class can now have several independent
-  // invoices (e.g. one per month), so an older invoice being fully paid
-  // must not hide a newer, unrelated invoice that's still outstanding.
-  const payableClasses: PayableClass[] = []
-  const pengingatClasses: PengingatClass[] = []
-  for (const group of groups) {
-    for (const inv of group.invoices) {
-      const isActionable = inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
-      if (!isActionable) continue
-      const paid = inv.payments.reduce((s, p) => s + p.amount, 0)
-      const remaining = Math.max(0, inv.total_due - paid)
-      if (remaining <= 0) continue
-
-      payableClasses.push({
-        classId: group.classId,
-        className: group.className,
-        invoiceId: inv.id,
-        remaining,
-        bulanLabel: new Date(inv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-      })
-
-      pengingatClasses.push({
-        classId: group.classId,
-        className: group.className,
-        invoiceId: inv.id,
-        invoiceNumber: inv.invoice_number,
-        totalDue: inv.total_due,
-        payments: inv.payments,
-        classStartDate: group.classStartDate ?? null,
-        classEndDate: group.classEndDate ?? null,
-        remaining,
-        isMonthly: inv.isMonthly,
-      })
-    }
-  }
 
   return (
     <div className="space-y-5">
@@ -204,15 +165,7 @@ export default async function StudentInvoiceDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <GenerateInvoiceButton studentId={studentId} generatableClasses={generatableClasses} />
-          <GenerateMonthlyInvoiceButton studentId={studentId} classes={monthlyEligibleClasses} />
-          <CatatPembayaranButton payableClasses={payableClasses} />
-          <KirimPengingatButton
-            studentName={profile.full_name}
-            studentNickname={(profile as { nickname?: string | null }).nickname ?? ''}
-            parentPhone={(profile as { parent_phone?: string | null }).parent_phone ?? ''}
-            pengingatClasses={pengingatClasses}
-          />
+          <CreateInvoiceButton studentId={studentId} generatableClasses={generatableClasses} monthlyClasses={monthlyEligibleClasses} />
         </div>
       </div>
 
