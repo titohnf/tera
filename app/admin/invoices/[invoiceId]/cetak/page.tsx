@@ -140,7 +140,7 @@ export default async function PrintInvoicePage({
                     </>
                   )}
                   <td className="px-3 py-2 text-right text-gray-800">
-                    {item.is_deduction ? `(${formatRupiah(subtotal)})` : formatRupiah(subtotal)}
+                    {item.is_deduction ? `-${formatRupiah(subtotal)}` : formatRupiah(subtotal)}
                   </td>
                 </tr>
               )

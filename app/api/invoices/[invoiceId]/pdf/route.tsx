@@ -118,7 +118,7 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
         </View>
         {invoice.line_items.map((item, i) => {
           const subtotal = item.months === 0 ? item.amount : item.months * item.amount
-          const subtotalFmt = item.is_deduction ? `(${formatRupiah(subtotal)})` : formatRupiah(subtotal)
+          const subtotalFmt = item.is_deduction ? `-${formatRupiah(subtotal)}` : formatRupiah(subtotal)
           return (
             <View key={i} style={s.tableRow}>
               <Text style={s.col1}>{item.description}</Text>
