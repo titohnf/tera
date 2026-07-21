@@ -234,7 +234,6 @@ function InvoiceCard({
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900">{group.className}</p>
-              <p className="text-xs text-gray-400 mt-0.5 font-mono">{invoice.invoice_number}</p>
               {kekurangan > 0 && (
                 <p className="text-xs text-gray-400 mt-0.5">
                   Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span>
@@ -267,8 +266,12 @@ function InvoiceCard({
       {isOpen && (
         <div className="border-t border-slate-100 px-5 py-4 space-y-4">
 
-          {/* Actions */}
+          {/* Invoice number + actions */}
           <div className="flex items-center gap-2">
+            <span className="font-mono text-sm text-gray-900 truncate">{invoice.invoice_number}</span>
+            <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
+              {INV_STATUS_LABEL[badgeKey]}
+            </span>
             <span className="flex-1" />
             <a
               href={`/admin/invoices/${invoice.id}/cetak?preview=1`}
