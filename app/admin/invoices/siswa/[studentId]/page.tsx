@@ -148,50 +148,41 @@ export default async function StudentInvoiceDetailPage({
     )
     .map(group => ({ classId: group.classId, className: group.className }))
 
-  // Compute payable classes for the global button
+  // Compute payable invoices for the global button — per invoice, not
+  // aggregated per class. A class can now have several independent
+  // invoices (e.g. one per month), so an older invoice being fully paid
+  // must not hide a newer, unrelated invoice that's still outstanding.
   const payableClasses: PayableClass[] = []
-  for (const group of groups) {
-    const classPrice = group.invoices[group.invoices.length - 1]?.total_due ?? 0
-    const totalPaid = group.invoices.flatMap(inv => inv.payments).reduce((s, p) => s + p.amount, 0)
-    const remaining = Math.max(0, classPrice - totalPaid)
-    if (remaining <= 0) continue
-
-    const active = group.invoices.find(inv =>
-      inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
-    )
-    if (!active) continue
-    payableClasses.push({
-      classId: group.classId,
-      className: group.className,
-      invoiceId: active.id,
-      remaining,
-      bulanLabel: new Date(active.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-    })
-  }
-
-  // Classes with an active (sent/partially_paid/overdue) invoice and a
-  // remaining balance — eligible for "Kirim Pengingat".
   const pengingatClasses: PengingatClass[] = []
   for (const group of groups) {
-    const active = group.invoices.find(inv =>
-      inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
-    )
-    if (!active) continue
-    const paid = active.payments.reduce((s, p) => s + p.amount, 0)
-    const remaining = Math.max(0, active.total_due - paid)
-    if (remaining <= 0) continue
-    pengingatClasses.push({
-      classId: group.classId,
-      className: group.className,
-      invoiceId: active.id,
-      invoiceNumber: active.invoice_number,
-      totalDue: active.total_due,
-      payments: active.payments,
-      classStartDate: group.classStartDate ?? null,
-      classEndDate: group.classEndDate ?? null,
-      remaining,
-      isMonthly: active.isMonthly,
-    })
+    for (const inv of group.invoices) {
+      const isActionable = inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
+      if (!isActionable) continue
+      const paid = inv.payments.reduce((s, p) => s + p.amount, 0)
+      const remaining = Math.max(0, inv.total_due - paid)
+      if (remaining <= 0) continue
+
+      payableClasses.push({
+        classId: group.classId,
+        className: group.className,
+        invoiceId: inv.id,
+        remaining,
+        bulanLabel: new Date(inv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+      })
+
+      pengingatClasses.push({
+        classId: group.classId,
+        className: group.className,
+        invoiceId: inv.id,
+        invoiceNumber: inv.invoice_number,
+        totalDue: inv.total_due,
+        payments: inv.payments,
+        classStartDate: group.classStartDate ?? null,
+        classEndDate: group.classEndDate ?? null,
+        remaining,
+        isMonthly: inv.isMonthly,
+      })
+    }
   }
 
   return (
