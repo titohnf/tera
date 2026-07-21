@@ -126,24 +126,24 @@ export default async function KuitansiPage({
         <table className="w-full text-sm mb-8">
           <tbody>
             <tr>
-              <td className="py-1.5 text-gray-600 w-44">Telah Terima Dari</td>
-              <td className="py-1.5 text-gray-600 w-4">:</td>
-              <td className="py-1.5 font-medium text-gray-900">{invoice.parent_name}</td>
+              <td className="py-0.5 text-gray-600 w-44">Telah Terima Dari</td>
+              <td className="py-0.5 text-gray-600 w-4">:</td>
+              <td className="py-0.5 font-medium text-gray-900">{invoice.parent_name}</td>
             </tr>
             <tr>
-              <td className="py-1.5 text-gray-600">Orang Tua Dari</td>
-              <td className="py-1.5 text-gray-600">:</td>
-              <td className="py-1.5 font-medium text-gray-900">{invoice.student_name}</td>
+              <td className="py-0.5 text-gray-600">Orang Tua Dari</td>
+              <td className="py-0.5 text-gray-600">:</td>
+              <td className="py-0.5 font-medium text-gray-900">{invoice.student_name}</td>
             </tr>
             <tr>
-              <td className="py-1.5 text-gray-600">Untuk Pembayaran</td>
-              <td className="py-1.5 text-gray-600">:</td>
-              <td className="py-1.5 font-medium text-gray-900">{chargeDescription}</td>
+              <td className="py-0.5 text-gray-600">Untuk Pembayaran</td>
+              <td className="py-0.5 text-gray-600">:</td>
+              <td className="py-0.5 font-medium text-gray-900">{chargeDescription}</td>
             </tr>
           </tbody>
         </table>
 
-        <table className="w-full border-collapse text-sm mb-2">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border border-gray-800">
               <th className="text-left px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 bg-gray-50">

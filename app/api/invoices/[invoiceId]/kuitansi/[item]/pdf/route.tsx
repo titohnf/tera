@@ -57,7 +57,7 @@ const s = StyleSheet.create({
   divider: { borderBottomWidth: 1.5, borderBottomColor: '#333', marginBottom: 20, marginTop: 6 },
   titleBlock: { alignItems: 'center', marginBottom: 24 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-  infoRow: { flexDirection: 'row', marginBottom: 5 },
+  infoRow: { flexDirection: 'row', marginBottom: 2 },
   infoLabel: { width: 130, color: '#555' },
   infoColon: { width: 10, color: '#555' },
   infoValue: { flex: 1, fontFamily: 'Helvetica-Bold' },
