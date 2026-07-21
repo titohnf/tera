@@ -224,115 +224,109 @@ function InvoiceCard({
 
   return (
     <div>
-      {/* Invoice header */}
-      <div className={`hover:bg-slate-50 transition-colors overflow-hidden ${isOpen ? 'rounded-t-2xl' : 'rounded-2xl'}`}>
-        <button
-          type="button"
-          onClick={() => setIsOpen(v => !v)}
-          className="w-full px-5 pt-4 pb-3 text-left"
+      {/* Invoice number (dominant) + actions — always visible */}
+      <div className="px-5 pt-4 pb-3 flex items-center gap-2">
+        <span className="text-sm font-semibold text-gray-900 font-mono truncate">{invoice.invoice_number}</span>
+        <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
+          {INV_STATUS_LABEL[badgeKey]}
+        </span>
+        <span className="flex-1" />
+        <a
+          href={`/admin/invoices/${invoice.id}/cetak?preview=1`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
         >
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900">{group.className}</p>
-              {kekurangan > 0 && (
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span>
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span className="text-sm font-semibold text-gray-700">{formatRupiah(invoice.total_due)}</span>
-              <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${INV_STATUS_BADGE[badgeKey]}`}>
-                {INV_STATUS_LABEL[badgeKey]}
-              </span>
-              <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          {/* Progress bar */}
-          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${PROGRESS_BAR_COLOR[badgeKey]}`}
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
+          Lihat
+        </a>
+        <button
+          onClick={handleKirim}
+          disabled={isPending || isPaidOff}
+          title={isPaidOff ? 'Invoice sudah lunas' : undefined}
+          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+        >
+          {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
         </button>
+        <a
+          href={isPaidOff ? undefined : `/admin/invoices/${invoice.id}/cetak?print=1`}
+          target={isPaidOff ? undefined : '_blank'}
+          rel="noopener noreferrer"
+          aria-disabled={isPaidOff}
+          title={isPaidOff ? 'Invoice sudah lunas' : undefined}
+          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors shrink-0 ${
+            isPaidOff
+              ? 'text-gray-300 bg-white border border-slate-100 cursor-not-allowed pointer-events-none'
+              : 'text-gray-700 bg-white border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          Cetak Invoice
+        </a>
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
+            className="flex items-center justify-center w-7 h-7 text-gray-400 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+            </svg>
+          </button>
+          {openMenu === invoice.id && (
+            <div className="absolute right-0 top-8 w-32 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+              <a
+                href={`/admin/invoices/${invoice.id}/edit`}
+                onClick={() => setOpenMenu(null)}
+                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+              >
+                Edit
+              </a>
+              <div className="border-t border-slate-100 my-0.5" />
+              <button
+                onClick={() => { setOpenMenu(null); handleDeleteInvoice() }}
+                disabled={isPending}
+                className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 transition-colors"
+              >
+                Hapus
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Class name (subtitle) + progress bar — toggles payment history */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(v => !v)}
+        className={`w-full px-5 pb-3 text-left hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
+      >
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400 truncate">{group.className}</p>
+            {kekurangan > 0 && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span>
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-sm font-semibold text-gray-700">{formatRupiah(invoice.total_due)}</span>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${PROGRESS_BAR_COLOR[badgeKey]}`}
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </button>
 
       {isOpen && (
         <div className="border-t border-slate-100 px-5 py-4 space-y-4">
-
-          {/* Invoice number + actions */}
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-sm text-gray-900 truncate">{invoice.invoice_number}</span>
-            <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${INV_STATUS_BADGE[badgeKey]}`}>
-              {INV_STATUS_LABEL[badgeKey]}
-            </span>
-            <span className="flex-1" />
-            <a
-              href={`/admin/invoices/${invoice.id}/cetak?preview=1`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
-            >
-              Lihat
-            </a>
-            <button
-              onClick={handleKirim}
-              disabled={isPending || isPaidOff}
-              title={isPaidOff ? 'Invoice sudah lunas' : undefined}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-            >
-              {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
-            </button>
-            <a
-              href={isPaidOff ? undefined : `/admin/invoices/${invoice.id}/cetak?print=1`}
-              target={isPaidOff ? undefined : '_blank'}
-              rel="noopener noreferrer"
-              aria-disabled={isPaidOff}
-              title={isPaidOff ? 'Invoice sudah lunas' : undefined}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors shrink-0 ${
-                isPaidOff
-                  ? 'text-gray-300 bg-white border border-slate-100 cursor-not-allowed pointer-events-none'
-                  : 'text-gray-700 bg-white border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              Cetak Invoice
-            </a>
-            <div className="relative shrink-0">
-              <button
-                onClick={() => setOpenMenu(openMenu === invoice.id ? null : invoice.id)}
-                className="flex items-center justify-center w-7 h-7 text-gray-400 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-                </svg>
-              </button>
-              {openMenu === invoice.id && (
-                <div className="absolute right-0 top-8 w-32 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
-                  <a
-                    href={`/admin/invoices/${invoice.id}/edit`}
-                    onClick={() => setOpenMenu(null)}
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
-                  >
-                    Edit
-                  </a>
-                  <div className="border-t border-slate-100 my-0.5" />
-                  <button
-                    onClick={() => { setOpenMenu(null); handleDeleteInvoice() }}
-                    disabled={isPending}
-                    className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 transition-colors"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Payment history */}
           {invPayments.length > 0 && (
