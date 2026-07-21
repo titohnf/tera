@@ -447,21 +447,6 @@ function InvoiceCard({
                         >
                           Lihat
                         </a>
-                        <button
-                          onClick={() => handleKirimKuitansi(p, tahap)}
-                          disabled={isPending}
-                          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0"
-                        >
-                          Kirim
-                        </button>
-                        <a
-                          href={`/admin/invoices/${invoice.id}/kuitansi/${p.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0"
-                        >
-                          Cetak Kuitansi
-                        </a>
                         <div className="relative shrink-0" ref={openMenu === p.id ? openMenuRef : null}>
                           <button
                             onClick={() => setOpenMenu(openMenu === p.id ? null : p.id)}
@@ -472,7 +457,24 @@ function InvoiceCard({
                             </svg>
                           </button>
                           {openMenu === p.id && (
-                            <div className="absolute right-0 top-8 w-28 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+                            <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
+                              <button
+                                onClick={() => { setOpenMenu(null); handleKirimKuitansi(p, tahap) }}
+                                disabled={isPending}
+                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                              >
+                                Kirim
+                              </button>
+                              <a
+                                href={`/admin/invoices/${invoice.id}/kuitansi/${p.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setOpenMenu(null)}
+                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Cetak Kuitansi
+                              </a>
+                              <div className="border-t border-slate-100 my-0.5" />
                               <button
                                 onClick={() => {
                                   setOpenMenu(null)
