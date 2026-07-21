@@ -42,7 +42,7 @@ type InvoiceRow = {
   total_due: number
   issued_at: string
   status: string
-  payments: { amount: number }[]
+  payments: { amount: number; paid_at: string }[]
 }
 
 function formatRupiah(n: number) {
@@ -78,10 +78,10 @@ export default async function InvoicesPage({
       .order('profiles(full_name)') as unknown as Promise<{ data: EnrollmentRow[] | null }>,
     admin
       .from('invoices')
-      .select('id, student_id, class_id, total_due, issued_at, status, invoice_payments(amount)')
+      .select('id, student_id, class_id, total_due, issued_at, status, invoice_payments(amount, paid_at)')
       .not('student_id', 'is', null)
       .order('issued_at', { ascending: false })
-      .order('created_at', { ascending: false }) as unknown as Promise<{ data: (InvoiceRow & { invoice_payments: { amount: number }[] })[] | null }>,
+      .order('created_at', { ascending: false }) as unknown as Promise<{ data: (InvoiceRow & { invoice_payments: { amount: number; paid_at: string }[] })[] | null }>,
   ])
 
   const enrollments = enrollmentsRes.data ?? []
@@ -117,6 +117,7 @@ export default async function InvoicesPage({
     semester: number | null
     academicYear: string | null
     bulanIni: 'lunas' | 'belum' | null
+    lastPaymentMonth: string | null
   }
 
   const allRows: Row[] = enrollments.map(e => {
@@ -135,6 +136,18 @@ export default async function InvoicesPage({
     // invoice payments were actually recorded against.
     const totalPaid = invs.reduce((sum, inv) => sum + inv.payments.reduce((s, p) => s + p.amount, 0), 0)
     const activeInv = invs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
+
+    // Month of the most recent payment actually recorded, for the
+    // "Angsuran {bulan}" label — ground truth from paid_at, not a
+    // theoretical mapping onto the per-month breakdown.
+    const allRowPayments = invs.flatMap(inv => inv.payments)
+    const lastPayment = allRowPayments.length > 0
+      ? allRowPayments.reduce((latest, p) => new Date(p.paid_at) > new Date(latest.paid_at) ? p : latest)
+      : null
+    const lastPaymentMonth = lastPayment
+      ? new Date(lastPayment.paid_at).toLocaleDateString('id-ID', { month: 'long' })
+      : null
+
     return {
       studentId: e.student_id,
       studentName: e.profiles?.full_name ?? '—',
@@ -150,6 +163,7 @@ export default async function InvoicesPage({
       semester: e.classes?.semester ?? null,
       academicYear: e.classes?.academic_year ?? null,
       bulanIni: bulanIniStatus(classPrice, totalPaid, e.classes?.start_date ?? null, e.classes?.end_date ?? null),
+      lastPaymentMonth,
     }
   })
 

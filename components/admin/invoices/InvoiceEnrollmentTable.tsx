@@ -16,6 +16,7 @@ export type EnrollmentRow = {
   bulanLabel: string
   hasExisting: boolean
   bulanIni: 'lunas' | 'belum' | null
+  lastPaymentMonth: string | null
 }
 
 const BULAN_INI_BADGE: Record<'lunas' | 'belum', string> = {
@@ -173,7 +174,9 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                 <td className="px-4 py-3">
                   <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block">
                     <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg ${CLASS_STATUS_BADGE[row.status]}`}>
-                      {CLASS_STATUS_LABEL[row.status]}
+                      {row.status === 'angsuran' && row.lastPaymentMonth
+                        ? `Angsuran ${row.lastPaymentMonth}`
+                        : CLASS_STATUS_LABEL[row.status]}
                     </span>
                   </Link>
                 </td>
