@@ -260,15 +260,13 @@ function ClassCard({
                   >
                     Lihat
                   </a>
-                  {inv.status === 'draft' && (
-                    <button
-                      onClick={() => handleKirim(inv.id)}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors shrink-0"
-                    >
-                      Kirim
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleKirim(inv.id)}
+                    disabled={isPending}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors shrink-0"
+                  >
+                    {inv.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
+                  </button>
                   <a
                     href={`/admin/invoices/${inv.id}/cetak?print=1`}
                     target="_blank"
