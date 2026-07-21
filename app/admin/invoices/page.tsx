@@ -28,17 +28,18 @@ function formatRupiah(n: number) {
 // (parent hasn't received anything). menunggu: invoice was sent but
 // nothing paid yet — distinct from belum_terkirim so admins can tell
 // "haven't billed them" apart from "billed, waiting on payment".
+//
+// Driven entirely by the most recent invoice's own status (set
+// authoritatively by recordPayment/deletePayment) rather than comparing
+// against an older invoice's total — a class can now have several
+// genuinely independent invoices (e.g. one per month), so an older
+// invoice's total is no longer a meaningful "canonical class price".
 function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim' {
   if (invoices.length === 0) return 'belum_terkirim'
-  const classPrice = invoices[invoices.length - 1].total_due
   const latestInv = invoices[0]
   if (latestInv.status === 'draft') return 'belum_terkirim'
-  const latestPaid = latestInv.status === 'paid'
-    ? latestInv.total_due
-    : latestInv.payments.reduce((s, p) => s + p.amount, 0)
-  const kekurangan = Math.max(0, latestInv.total_due - latestPaid)
-  if (kekurangan === 0 && classPrice > 0) return 'lunas'
-  if (latestPaid > 0 || kekurangan < classPrice) return 'angsuran'
+  if (latestInv.status === 'paid') return 'lunas'
+  if (latestInv.status === 'partially_paid') return 'angsuran'
   return 'menunggu'
 }
 
@@ -102,8 +103,12 @@ export default async function InvoicesPage({
   const allRows: Row[] = enrollments.map(e => {
     const key = `${e.student_id}__${e.class_id}`
     const invs = invoiceMap.get(key) ?? []
-    const classPrice = invs.length > 0 ? invs[invs.length - 1].total_due : 0
     const latestInv = invs[0]
+    // "Nilai Invoice" shows the most recent invoice's total — with
+    // independent invoices per period now possible (e.g. monthly
+    // billing), the oldest invoice's total is no longer necessarily the
+    // relevant "current" figure.
+    const classPrice = latestInv?.total_due ?? 0
     const latestPaid = latestInv?.status === 'paid'
       ? latestInv.total_due
       : (latestInv?.payments.reduce((s, p) => s + p.amount, 0) ?? 0)
