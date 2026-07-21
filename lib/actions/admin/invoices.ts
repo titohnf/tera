@@ -22,6 +22,34 @@ function firstOfCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 }
 
+// month is "YYYY-MM". Returns [firstOfMonth, firstOfNextMonth) as date strings.
+function monthRange(month: string): [string, string] {
+  const [year, mon] = month.split('-').map(Number)
+  const start = `${month}-01`
+  const end = mon === 12 ? `${year + 1}-01-01` : `${year}-${String(mon + 1).padStart(2, '0')}-01`
+  return [start, end]
+}
+
+async function countSessionsForClass(
+  admin: ReturnType<typeof createAdminClient>,
+  classId: string,
+  period?: string
+): Promise<number> {
+  let query = admin
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('class_id', classId)
+    .neq('status', 'cancelled')
+
+  if (period) {
+    const [start, end] = monthRange(period)
+    query = query.gte('scheduled_at', start).lt('scheduled_at', end)
+  }
+
+  const { count } = await query
+  return count ?? 0
+}
+
 async function verifyAdmin() {
   const user = await getUser()
   if (!user) return null
@@ -38,6 +66,9 @@ const LineItemSchema = z.object({
   is_deduction: z.boolean(),
   unit: z.enum(['bulan', 'pertemuan']).optional(),
   show_qty: z.boolean().optional(),
+  // "YYYY-MM" — set on monthly-billed private-class invoices so the pertemuan
+  // count is scoped to that month instead of the whole class enrollment.
+  period: z.string().optional(),
 })
 
 const InvoiceSchema = z.object({
@@ -348,7 +379,14 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
 
 // ─── Sync draft invoices after a private class's session count changes ────────
 
-type SyncableLineItem = { description: string; months: number; amount: number; is_deduction: boolean; unit?: 'bulan' | 'pertemuan' }
+type SyncableLineItem = {
+  description: string
+  months: number
+  amount: number
+  is_deduction: boolean
+  unit?: 'bulan' | 'pertemuan'
+  period?: string
+}
 
 const lineSubtotal = (item: { months: number; amount: number }) =>
   item.months === 0 ? item.amount : item.months * item.amount
@@ -360,6 +398,11 @@ const lineSubtotal = (item: { months: number; amount: number }) =>
 // hasn't been sent to the parent yet, so it's safe to update its pertemuan
 // count and total to match — sent/paid invoices are left untouched since
 // those have already been communicated or settled.
+//
+// Line items with a `period` (monthly-billed invoices, see
+// generateMonthlyInvoiceForStudent) are re-counted against sessions in just
+// that month; items without one are re-counted against the whole class, as
+// with the one-off lump-sum invoice from generateFirstInvoice.
 export async function syncPrivateClassDraftInvoices(
   classId: string,
   admin: ReturnType<typeof createAdminClient>
@@ -367,29 +410,38 @@ export async function syncPrivateClassDraftInvoices(
   const { data: cls } = await admin.from('classes').select('class_type').eq('id', classId).single()
   if (!cls || cls.class_type !== 'private') return
 
-  const { count } = await admin
-    .from('sessions')
-    .select('*', { count: 'exact', head: true })
-    .eq('class_id', classId)
-    .neq('status', 'cancelled')
-  const liveCount = count ?? 0
-
   const { data: draftInvoices } = await admin
     .from('invoices')
     .select('id, line_items')
     .eq('class_id', classId)
     .eq('status', 'draft') as { data: { id: string; line_items: SyncableLineItem[] }[] | null }
 
-  for (const inv of draftInvoices ?? []) {
+  if (!draftInvoices || draftInvoices.length === 0) return
+
+  const countCache = new Map<string, number>()
+  async function liveCountFor(period?: string): Promise<number> {
+    const key = period ?? '__whole_class__'
+    if (!countCache.has(key)) countCache.set(key, await countSessionsForClass(admin, classId, period))
+    return countCache.get(key)!
+  }
+
+  for (const inv of draftInvoices) {
     const items = inv.line_items ?? []
     let changed = false
-    const updatedItems = items.map(item => {
-      if (!item.is_deduction && item.unit === 'pertemuan' && item.months !== liveCount) {
-        changed = true
-        return { ...item, months: liveCount }
+    const updatedItems: SyncableLineItem[] = []
+    for (const item of items) {
+      if (item.is_deduction || item.unit !== 'pertemuan') {
+        updatedItems.push(item)
+        continue
       }
-      return item
-    })
+      const liveCount = await liveCountFor(item.period)
+      if (item.months === liveCount) {
+        updatedItems.push(item)
+      } else {
+        changed = true
+        updatedItems.push({ ...item, months: liveCount })
+      }
+    }
     if (!changed) continue
 
     const newTotal = Math.max(0, updatedItems.reduce((sum, item) =>
@@ -402,6 +454,87 @@ export async function syncPrivateClassDraftInvoices(
   }
 
   revalidatePath('/admin/invoices')
+}
+
+export async function generateMonthlyInvoiceForStudent(studentId: string, classId: string, month: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'Bulan tidak valid' }
+  const [issuedAt, nextMonthStr] = monthRange(month)
+
+  const { data: existing } = await ctx.admin
+    .from('invoices')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('class_id', classId)
+    .gte('issued_at', issuedAt)
+    .lt('issued_at', nextMonthStr)
+    .limit(1)
+    .maybeSingle()
+  if (existing) return { error: 'Invoice untuk bulan ini sudah ada' }
+
+  const [{ data: student }, { data: cls }] = await Promise.all([
+    ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
+    ctx.admin.from('classes').select('name, level, class_type, jenis').eq('id', classId).single(),
+  ])
+
+  if (!student) return { error: 'Siswa tidak ditemukan' }
+  if (!cls) return { error: 'Kelas tidak ditemukan' }
+  if ((cls as { class_type: string | null }).class_type !== 'private') {
+    return { error: 'Invoice bulanan hanya berlaku untuk kelas privat' }
+  }
+
+  const sessionCount = await countSessionsForClass(ctx.admin, classId, month)
+  if (sessionCount === 0) return { error: 'Belum ada sesi terjadwal di bulan ini' }
+
+  const clsData = cls as { name: string; level: string | null; class_type: string; jenis: string | null }
+  const billingJenis = clsData.jenis === 'reguler' ? 'Reguler' : clsData.jenis === 'fokus' ? 'Fokus' : null
+
+  const { data: rates } = billingJenis ? await ctx.admin
+    .from('billing_rates')
+    .select('amount, jenis, billing_rate_periods!inner(is_active)')
+    .eq('class_type', clsData.class_type)
+    .eq('jenjang', clsData.level)
+    .eq('jenis', billingJenis)
+    .eq('billing_rate_periods.is_active', true)
+    .limit(1) as unknown as { data: { amount: number; jenis: string }[] | null } : { data: [] }
+
+  const rate = rates?.[0]
+  const amount = rate ? Number(rate.amount) : 0
+
+  const monthLabel = new Date(`${month}-01T00:00:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+  const description = `Privat${clsData.level ? ` ${clsData.level}` : ''} — ${monthLabel} (${sessionCount} pertemuan)`
+  const lineItems = [{ description, months: sessionCount, amount, is_deduction: false, unit: 'pertemuan' as const, period: month }]
+  const totalDue = sessionCount * amount
+
+  const invoiceNumber = await generateInvoiceNumber(ctx.admin)
+  const studentData = student as { full_name: string; parent_name: string | null }
+
+  const { data: inserted, error } = await ctx.admin
+    .from('invoices')
+    .insert({
+      invoice_number: invoiceNumber,
+      class_id: classId,
+      student_id: studentId,
+      student_name: studentData.full_name,
+      parent_name: studentData.parent_name ?? '',
+      line_items: lineItems,
+      total_due: totalDue,
+      payment_method: 'Transfer Bank',
+      bank_account: 'BSI - 7296753275 a.n. Suci Purnama Sari',
+      due_date: addDays(issuedAt, 7),
+      issued_at: issuedAt,
+      status: 'draft',
+      created_by: ctx.user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/invoices')
+  return { id: inserted.id }
 }
 
 // ─── Sync next invoice after payment change ────────────────────────────────────
@@ -435,7 +568,13 @@ async function syncNextInvoice(
   if (!draftInvoice) return
 
   // Charge items always from the first invoice
-  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean }>
+  const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean; period?: string }>
+
+  // Monthly-billed invoices (generateMonthlyInvoiceForStudent) are each
+  // independent per month, not a cumulative multi-invoice chain — bail out
+  // instead of overwriting the draft's own line items with an older month's.
+  if (firstLineItems.some(i => i.period)) return
+
   const chargeItems = firstLineItems.filter(i => !i.is_deduction)
 
   // Collect ALL payments across every invoice EXCEPT the draft itself
@@ -556,8 +695,15 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
 
   // Charge items always come from the first invoice (canonical class fee, never changes)
   const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{
-    description: string; months: number; amount: number; is_deduction: boolean
+    description: string; months: number; amount: number; is_deduction: boolean; period?: string
   }>
+
+  // Monthly-billed invoices aren't a cumulative chain — each month gets its
+  // own invoice via generateMonthlyInvoiceForStudent instead.
+  if (firstLineItems.some(i => i.period)) {
+    return { error: 'Kelas ini memakai invoice bulanan. Gunakan tombol "Invoice Bulanan" untuk membuat invoice bulan berikutnya.' }
+  }
+
   const chargeItems = firstLineItems.filter((item: any) => !item.is_deduction)
 
   const latestInvoice = allInvoices[allInvoices.length - 1]

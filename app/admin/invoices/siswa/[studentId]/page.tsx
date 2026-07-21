@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/invoices/StudentClassInvoiceTable'
 import CatatPembayaranButton, { type PayableClass } from '@/components/admin/invoices/CatatPembayaranButton'
 import GenerateInvoiceButton, { type GeneratableClass } from '@/components/admin/invoices/GenerateInvoiceButton'
+import GenerateMonthlyInvoiceButton, { type MonthlyInvoiceClass } from '@/components/admin/invoices/GenerateMonthlyInvoiceButton'
 
 type InvoiceRow = {
   id: string
@@ -50,9 +51,9 @@ export default async function StudentInvoiceDetailPage({
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
     admin
       .from('class_students')
-      .select('class_id, classes!class_id(name)')
+      .select('class_id, classes!class_id(name, class_type)')
       .eq('student_id', studentId)
-      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; classes: { name: string } | null }[] | null }>,
+      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; classes: { name: string; class_type: string | null } | null }[] | null }>,
   ])
 
   if (!profileRes.data) notFound()
@@ -123,6 +124,16 @@ export default async function StudentInvoiceDetailPage({
       hasExisting: group.invoices.length > 0,
     }))
 
+  // Private classes the student is currently enrolled in — eligible for the
+  // monthly (per-bulan) billing flow, as an alternative to the whole-class
+  // lump-sum invoice from generatableClasses above.
+  const privateClassIds = new Set(
+    enrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
+  )
+  const monthlyEligibleClasses: MonthlyInvoiceClass[] = groups
+    .filter((group): group is ClassGroup & { classId: string } => !!group.classId && privateClassIds.has(group.classId))
+    .map(group => ({ classId: group.classId, className: group.className }))
+
   // Compute payable classes for the global button
   const payableClasses: PayableClass[] = []
   for (const group of groups) {
@@ -164,6 +175,7 @@ export default async function StudentInvoiceDetailPage({
         </div>
         <div className="flex items-center gap-2">
           <GenerateInvoiceButton studentId={studentId} generatableClasses={generatableClasses} />
+          <GenerateMonthlyInvoiceButton studentId={studentId} classes={monthlyEligibleClasses} />
           <CatatPembayaranButton payableClasses={payableClasses} />
         </div>
       </div>
