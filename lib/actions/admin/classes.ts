@@ -258,25 +258,56 @@ export async function updateClass(classId: string, prevState: ActionState, formD
     }))
   )
 
-  // Delete future scheduled sessions (past/completed sessions are preserved)
-  const now = new Date().toISOString()
-  await ctx.admin
+  // Completed/cancelled sessions are always preserved. Among the remaining
+  // "scheduled" sessions, also preserve any the tutor has already started
+  // filling in (topic, attendance, notes, materials, or assessments) even
+  // though they aren't marked complete yet — only untouched ones get wiped
+  // and regenerated, and generation is now allowed to reach into the past.
+  const { data: existingSessions } = await ctx.admin
     .from('sessions')
-    .delete()
+    .select('id, scheduled_at, status, topic')
     .eq('class_id', classId)
     .eq('status', 'scheduled')
-    .gt('scheduled_at', now)
 
-  // Re-generate sessions from tomorrow (or start_date, whichever is later) to end_date
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(0, 0, 0, 0)
-  const [sy, sm, sd] = startDate!.split('-').map(Number)
-  const startLocal = new Date(sy, sm - 1, sd)
-  const generateFrom = startLocal > tomorrow ? startDate! : tomorrow.toISOString().slice(0, 10)
+  const scheduledSessions = existingSessions ?? []
+  const scheduledIds = scheduledSessions.map(s => s.id)
 
-  if (generateFrom <= endDate!) {
-    const newSessions = generateSessionsFromSlots(slots, generateFrom, endDate!, classId, durationMinutes)
+  const filledSessionIds = new Set<string>()
+  for (const s of scheduledSessions) {
+    if (s.topic?.trim()) filledSessionIds.add(s.id)
+  }
+  if (scheduledIds.length > 0) {
+    const [{ data: attendanceRows }, { data: materialRows }, { data: assessmentRows }, { data: noteRows }] = await Promise.all([
+      ctx.admin.from('attendances').select('session_id').in('session_id', scheduledIds),
+      ctx.admin.from('materials').select('session_id').in('session_id', scheduledIds),
+      ctx.admin.from('assessments').select('session_id').in('session_id', scheduledIds),
+      ctx.admin.from('performance_notes').select('session_id').in('session_id', scheduledIds),
+    ])
+    for (const rows of [attendanceRows, materialRows, assessmentRows, noteRows]) {
+      for (const r of rows ?? []) filledSessionIds.add(r.session_id)
+    }
+  }
+
+  const localDateKey = (iso: string) => {
+    const d = new Date(iso)
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  }
+
+  const idsToDelete = scheduledSessions.filter(s => !filledSessionIds.has(s.id)).map(s => s.id)
+  const preservedDateKeys = new Set(
+    scheduledSessions.filter(s => filledSessionIds.has(s.id)).map(s => localDateKey(s.scheduled_at))
+  )
+
+  if (idsToDelete.length > 0) {
+    await ctx.admin.from('sessions').delete().in('id', idsToDelete)
+  }
+
+  // Re-generate sessions across the full new date range (including dates in
+  // the past), skipping any date that still has a preserved session so we
+  // don't double-book it.
+  if (startDate! <= endDate!) {
+    const newSessions = generateSessionsFromSlots(slots, startDate!, endDate!, classId, durationMinutes)
+      .filter(s => !preservedDateKeys.has(localDateKey(s.scheduled_at)))
     if (newSessions.length > 0) {
       await ctx.admin.from('sessions').insert(newSessions)
     }
