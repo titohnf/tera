@@ -31,7 +31,7 @@ export type ClassGroup = {
 interface Props {
   groups: ClassGroup[]
   studentName?: string
-  parentName?: string
+  studentNickname?: string
   parentPhone?: string
 }
 
@@ -78,15 +78,28 @@ function formatWaPhone(raw: string): string {
   return '62' + digits
 }
 
+// Class names carry a trailing per-student suffix (e.g. "Privat 2 SD ... Jagad")
+// used to keep otherwise-identical class names unique; strip it for messaging.
+function stripUniqueSuffix(className: string, ...names: (string | undefined)[]): string {
+  for (const name of names) {
+    const trimmed = name?.trim()
+    if (!trimmed) continue
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const re = new RegExp(`\\s+${escaped}$`, 'i')
+    if (re.test(className)) return className.replace(re, '').trim()
+  }
+  return className
+}
+
 function ClassCard({
   group,
   studentName,
-  parentName,
+  studentNickname,
   parentPhone,
 }: {
   group: ClassGroup
   studentName?: string
-  parentName?: string
+  studentNickname?: string
   parentPhone?: string
 }) {
   const router = useRouter()
@@ -124,41 +137,26 @@ function ClassCard({
       await updateInvoiceStatus(invoiceId, 'sent')
       router.refresh()
 
-      // Download PDF to admin's device
-      try {
-        const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
-        if (res.ok) {
-          const blob = await res.blob()
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `Invoice-${inv?.invoice_number ?? invoiceId}.pdf`
-          a.click()
-          URL.revokeObjectURL(url)
-        }
-      } catch {
-        // PDF download failed silently — WhatsApp still opens
-      }
-
       if (parentPhone && inv) {
-        const totalFmt = formatRupiah(inv.total_due)
-        const dueDateFmt = inv.due_date
-          ? new Date(inv.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-          : null
-        const sapaan = parentName ? `Bapak/Ibu ${parentName}` : 'Bapak/Ibu'
+        const childName = studentNickname || studentName || ''
+        const cleanClassName = stripUniqueSuffix(group.className, studentNickname, studentName)
+        const pdfUrl = `${window.location.origin}/api/invoices/${inv.id}/pdf`
         const lines = [
-          `Assalamu'alaikum ${sapaan},`,
+          `Assalamu'alaikum Ayah/Bunda.`,
+          `Semoga sehat selalu dan diberikan kelancaran dalam aktivitasnya.`,
           '',
-          `Berikut kami sampaikan tagihan les *${studentName ?? ''}* untuk kelas *${group.className}*:`,
+          `Berikut kami sampaikan tagihan les Ananda ${childName} untuk kelas ${cleanClassName}:`,
           '',
-          `🔖 No. Invoice: *${inv.invoice_number}*`,
-          `💰 Total Tagihan: *${totalFmt}*`,
-          dueDateFmt ? `📅 Jatuh Tempo: *${dueDateFmt}*` : null,
+          `No. Invoice: ${inv.invoice_number}`,
+          `Total Tagihan: ${formatRupiah(classPrice)}`,
+          `Sudah bayar: ${formatRupiah(totalActuallyPaid)}`,
+          `Sisa Tagihan: ${formatRupiah(kekurangan)}`,
           '',
-          'Terlampir file PDF invoice.',
-          'Terima kasih 🙏',
-          'Tera Learning Center',
-        ].filter(l => l !== null).join('\n')
+          `Terlampir file PDF invoice (${pdfUrl}).`,
+          '',
+          `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
+          `Semoga ilmu yang didapat memberikan manfaat dan kebaikan pada Ananda.`,
+        ].join('\n')
         const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
         window.open(waUrl, '_blank')
       }
@@ -425,7 +423,7 @@ function ClassCard({
   )
 }
 
-export default function StudentClassInvoiceTable({ groups, studentName, parentName, parentPhone }: Props) {
+export default function StudentClassInvoiceTable({ groups, studentName, studentNickname, parentPhone }: Props) {
   if (groups.length === 0) {
     return <p className="text-sm text-gray-400 text-center py-10">Belum ada invoice untuk siswa ini.</p>
   }
@@ -434,7 +432,7 @@ export default function StudentClassInvoiceTable({ groups, studentName, parentNa
     <div className="space-y-3">
       {groups.map(group => (
         <div key={group.classId ?? '__no_class__'} className="bg-white border border-slate-200 rounded-2xl">
-          <ClassCard group={group} studentName={studentName} parentName={parentName} parentPhone={parentPhone} />
+          <ClassCard group={group} studentName={studentName} studentNickname={studentNickname} parentPhone={parentPhone} />
         </div>
       ))}
     </div>

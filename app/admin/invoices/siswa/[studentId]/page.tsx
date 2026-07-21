@@ -41,7 +41,7 @@ export default async function StudentInvoiceDetailPage({
   const today = new Date().toISOString().slice(0, 10)
 
   const [profileRes, invoicesRes, enrollmentsRes] = await Promise.all([
-    admin.from('profiles').select('id, full_name, parent_name, parent_phone').eq('id', studentId).single(),
+    admin.from('profiles').select('id, full_name, nickname, parent_name, parent_phone').eq('id', studentId).single(),
     admin
       .from('invoices')
       .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, classes!class_id(name)')
@@ -171,7 +171,7 @@ export default async function StudentInvoiceDetailPage({
       <StudentClassInvoiceTable
         groups={groups}
         studentName={profile.full_name}
-        parentName={(profile as { full_name: string; parent_name?: string | null; parent_phone?: string | null }).parent_name ?? ''}
+        studentNickname={(profile as { nickname?: string | null }).nickname ?? ''}
         parentPhone={(profile as { full_name: string; parent_name?: string | null; parent_phone?: string | null }).parent_phone ?? ''}
       />
     </div>
