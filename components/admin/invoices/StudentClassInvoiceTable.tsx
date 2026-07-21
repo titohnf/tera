@@ -338,14 +338,6 @@ function InvoiceCard({
           {openMenu === invoice.id && (
             <div className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg ring-1 ring-gray-900/10 py-1 z-20">
               <button
-                onClick={() => { setOpenMenu(null); handleKirim() }}
-                disabled={isPending || isPaidOff}
-                title={isPaidOff ? 'Invoice sudah lunas' : undefined}
-                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang Invoice'}
-              </button>
-              <button
                 onClick={() => { setOpenMenu(null); handleKirimPengingat() }}
                 disabled={!parentPhone}
                 title={!parentPhone ? 'Nomor WhatsApp orang tua belum ada' : undefined}
@@ -361,6 +353,15 @@ function InvoiceCard({
                   Catat Pembayaran
                 </button>
               )}
+              <div className="border-t border-slate-100 my-0.5" />
+              <button
+                onClick={() => { setOpenMenu(null); handleKirim() }}
+                disabled={isPending || isPaidOff}
+                title={isPaidOff ? 'Invoice sudah lunas' : undefined}
+                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {invoice.status === 'draft' ? 'Kirim' : 'Kirim Ulang Invoice'}
+              </button>
               {!isPaidOff && (
                 <a
                   href={`/admin/invoices/${invoice.id}/cetak?print=1`}
@@ -372,6 +373,7 @@ function InvoiceCard({
                   Cetak Invoice
                 </a>
               )}
+              <div className="border-t border-slate-100 my-0.5" />
               <a
                 href={`/admin/invoices/${invoice.id}/edit`}
                 onClick={() => setOpenMenu(null)}
@@ -379,7 +381,6 @@ function InvoiceCard({
               >
                 Edit
               </a>
-              <div className="border-t border-slate-100 my-0.5" />
               <button
                 onClick={() => { setOpenMenu(null); handleDeleteInvoice() }}
                 disabled={isPending}
