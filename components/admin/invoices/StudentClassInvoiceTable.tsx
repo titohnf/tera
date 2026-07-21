@@ -233,7 +233,10 @@ function InvoiceCard({
               {INV_STATUS_LABEL[badgeKey]}
             </span>
           </div>
-          <p className="text-xs text-gray-400 mt-0.5 truncate">{group.className}</p>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">
+            {group.className} <span className="text-gray-300">&middot;</span>{' '}
+            <span className="font-medium text-gray-600">{formatRupiah(invoice.total_due)}</span>
+          </p>
         </div>
         <span className="flex-1" />
         <a
@@ -292,44 +295,41 @@ function InvoiceCard({
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(v => !v)}
+          className="w-7 h-7 flex items-center justify-center text-gray-400 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
       </div>
 
-      {/* Progress segment — its own block, toggles payment history */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(v => !v)}
-        className={`w-full px-5 py-4 text-left border-t-[0.5px] border-slate-100 hover:bg-slate-50 transition-colors ${isOpen ? '' : 'rounded-b-2xl'}`}
-      >
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <span className="text-xs text-gray-400">
-            {kekurangan > 0 ? (
-              <>Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span></>
-            ) : (
-              'Lunas'
-            )}
-          </span>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <span className="text-sm font-semibold text-gray-700">{formatRupiah(invoice.total_due)}</span>
-            <span className="w-7 h-7 flex items-center justify-center shrink-0">
-              <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </span>
-          </div>
-        </div>
-        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${PROGRESS_BAR_COLOR[badgeKey]}`}
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </button>
-
       {isOpen && (
-        <div className="border-t border-slate-100 px-5 py-4 space-y-4">
+        <div className="border-t-[0.5px] border-slate-100 px-5 py-4 space-y-4">
+
+          {/* Progress bar */}
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <span className="text-xs text-gray-400">
+                {kekurangan > 0 ? (
+                  <>Kurang <span className="font-medium text-gray-600">{formatRupiah(kekurangan)}</span></>
+                ) : (
+                  'Lunas'
+                )}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${PROGRESS_BAR_COLOR[badgeKey]}`}
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
 
           {/* Payment history */}
           {invPayments.length > 0 && (
