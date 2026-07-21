@@ -15,6 +15,17 @@ export type EnrollmentRow = {
   invoiceId: string | null
   bulanLabel: string
   hasExisting: boolean
+  bulanIni: 'lunas' | 'belum' | null
+}
+
+const BULAN_INI_BADGE: Record<'lunas' | 'belum', string> = {
+  lunas: 'bg-green-100 text-green-700',
+  belum: 'bg-red-100 text-red-600',
+}
+
+const BULAN_INI_LABEL: Record<'lunas' | 'belum', string> = {
+  lunas: 'Sudah Bayar',
+  belum: 'Belum Bayar',
 }
 
 const CLASS_STATUS_BADGE: Record<string, string> = {
@@ -124,6 +135,7 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                   <SortIcon active={sortKey === 'status'} dir={sortDir} />
                 </span>
               </th>
+              <th className="px-4 py-3">Bulan Ini</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -163,6 +175,17 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                     <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg ${CLASS_STATUS_BADGE[row.status]}`}>
                       {CLASS_STATUS_LABEL[row.status]}
                     </span>
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block">
+                    {row.bulanIni ? (
+                      <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-lg ${BULAN_INI_BADGE[row.bulanIni]}`}>
+                        {BULAN_INI_LABEL[row.bulanIni]}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
