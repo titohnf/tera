@@ -5,6 +5,7 @@ import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/in
 import CatatPembayaranButton, { type PayableClass } from '@/components/admin/invoices/CatatPembayaranButton'
 import GenerateInvoiceButton, { type GeneratableClass } from '@/components/admin/invoices/GenerateInvoiceButton'
 import GenerateMonthlyInvoiceButton, { type MonthlyInvoiceClass } from '@/components/admin/invoices/GenerateMonthlyInvoiceButton'
+import KirimPengingatButton, { type PengingatClass } from '@/components/admin/invoices/KirimPengingatButton'
 
 type InvoiceRow = {
   id: string
@@ -156,6 +157,30 @@ export default async function StudentInvoiceDetailPage({
     })
   }
 
+  // Classes with an active (sent/partially_paid/overdue) invoice and a
+  // remaining balance — eligible for "Kirim Pengingat".
+  const pengingatClasses: PengingatClass[] = []
+  for (const group of groups) {
+    const active = group.invoices.find(inv =>
+      inv.status === 'sent' || inv.status === 'partially_paid' || inv.eff_status === 'overdue'
+    )
+    if (!active) continue
+    const paid = active.payments.reduce((s, p) => s + p.amount, 0)
+    const remaining = Math.max(0, active.total_due - paid)
+    if (remaining <= 0) continue
+    pengingatClasses.push({
+      classId: group.classId,
+      className: group.className,
+      invoiceId: active.id,
+      invoiceNumber: active.invoice_number,
+      totalDue: active.total_due,
+      payments: active.payments,
+      classStartDate: group.classStartDate ?? null,
+      classEndDate: group.classEndDate ?? null,
+      remaining,
+    })
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -178,6 +203,12 @@ export default async function StudentInvoiceDetailPage({
           <GenerateInvoiceButton studentId={studentId} generatableClasses={generatableClasses} />
           <GenerateMonthlyInvoiceButton studentId={studentId} classes={monthlyEligibleClasses} />
           <CatatPembayaranButton payableClasses={payableClasses} />
+          <KirimPengingatButton
+            studentName={profile.full_name}
+            studentNickname={(profile as { nickname?: string | null }).nickname ?? ''}
+            parentPhone={(profile as { parent_phone?: string | null }).parent_phone ?? ''}
+            pengingatClasses={pengingatClasses}
+          />
         </div>
       </div>
 

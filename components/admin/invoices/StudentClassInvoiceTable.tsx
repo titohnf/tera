@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
+import { getMonthlyBreakdown, formatPeriodLabel } from '@/lib/billing-message'
 
 export type Payment = {
   id: string
@@ -79,45 +80,6 @@ function formatWaPhone(raw: string): string {
   if (digits.startsWith('62')) return digits
   if (digits.startsWith('0')) return '62' + digits.slice(1)
   return '62' + digits
-}
-
-const MONTH_NAMES = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
-
-type MonthlyInstallment = { label: string; amount: number }
-
-// Splits a total evenly across the calendar months a class spans (so
-// parents always know a flat "bayar segini per bulan" figure instead of
-// having to think in pertemuan or ask what this month's amount is). Any
-// rounding remainder is absorbed into the last month so the sum stays exact.
-function getMonthlyBreakdown(totalDue: number, startDate?: string | null, endDate?: string | null): MonthlyInstallment[] {
-  if (!startDate || !endDate) return []
-  const [sy, sm] = startDate.split('-').map(Number)
-  const [ey, em] = endDate.split('-').map(Number)
-  const n = Math.max(1, (ey - sy) * 12 + (em - sm) + 1)
-  const base = Math.floor(totalDue / n / 1000) * 1000
-  const result: MonthlyInstallment[] = []
-  for (let i = 0; i < n; i++) {
-    const absoluteMonth = (sm - 1) + i
-    const monthIndex = absoluteMonth % 12
-    const year = sy + Math.floor(absoluteMonth / 12)
-    const amount = i === n - 1 ? totalDue - base * (n - 1) : base
-    // Only disambiguate with the year when the span crosses a year boundary.
-    const label = ey !== sy ? `${MONTH_NAMES[monthIndex]} ${year}` : MONTH_NAMES[monthIndex]
-    result.push({ label, amount })
-  }
-  return result
-}
-
-function formatPeriodLabel(startDate?: string | null, endDate?: string | null): string {
-  if (!startDate || !endDate) return ''
-  const [sy, sm] = startDate.split('-').map(Number)
-  const [ey, em] = endDate.split('-').map(Number)
-  const start = `${MONTH_NAMES[sm - 1]}${sy !== ey ? ` ${sy}` : ''}`
-  const end = `${MONTH_NAMES[em - 1]} ${ey}`
-  return `${start}-${end}`
 }
 
 function ClassCard({
@@ -198,45 +160,6 @@ function ClassCard({
         window.open(waUrl, '_blank')
       }
     })
-  }
-
-  function handleKirimPengingat(inv: InvoiceItem) {
-    if (!parentPhone) return
-    const childName = studentNickname || studentName || ''
-    const cleanClassName = stripClassUniqueTag(group.className)
-    const payments = [...inv.payments].sort((a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime())
-    const paidForInvoice = payments.reduce((s, p) => s + p.amount, 0)
-    const sisa = Math.max(0, inv.total_due - paidForInvoice)
-    const pengingatUrl = `${window.location.origin}/api/invoices/${inv.id}/pengingat/pdf`
-    const breakdown = getMonthlyBreakdown(inv.total_due, group.classStartDate, group.classEndDate)
-
-    const billingLines = breakdown.length > 0
-      ? [
-          ...payments.map((p, i) => `Sudah dibayar ${breakdown[i]?.label ?? `Tahap ${i + 1}`}: ${formatRupiah(p.amount)}`),
-          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
-          `Pembayaran dapat dilakukan bertahap secara bertahap setiap bulannya sebesar:`,
-          ...breakdown.slice(payments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
-        ]
-      : [
-          `Sudah dibayar: ${formatRupiah(paidForInvoice)}`,
-          `Sisa Pembayaran: ${formatRupiah(sisa)}`,
-        ]
-
-    const lines = [
-      `Assalamu'alaikum Ayah/Bunda.`,
-      '',
-      `Izin mengingatkan untuk sisa tagihan les Ananda ${childName} untuk kelas ${cleanClassName} sebagai berikut:`,
-      '',
-      `Referensi No. Invoice: ${inv.invoice_number}`,
-      `Total Tagihan: ${formatRupiah(inv.total_due)}`,
-      ...billingLines,
-      '',
-      `Terlampir surat pemberitahuan tagihan (${pengingatUrl}).`,
-      '',
-      `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
-    ].join('\n')
-    const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
-    window.open(waUrl, '_blank')
   }
 
   function handleKirimKuitansi(payment: Payment & { invoiceId: string }, tahap: number) {
@@ -359,15 +282,6 @@ function ClassCard({
                   >
                     {inv.status === 'draft' ? 'Kirim' : 'Kirim Ulang'}
                   </button>
-                  {inv.status !== 'draft' && inv.total_due - inv.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
-                    <button
-                      onClick={() => handleKirimPengingat(inv)}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors shrink-0 whitespace-nowrap"
-                    >
-                      Kirim Pengingat
-                    </button>
-                  )}
                   <a
                     href={`/admin/invoices/${inv.id}/cetak?print=1`}
                     target="_blank"
