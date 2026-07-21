@@ -167,16 +167,19 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
       updated[index] = {
         ...item,
         is_deduction: nextIsDeduction,
-        // Potongan/voucher selalu berupa nominal tetap, tidak terikat jumlah pertemuan/bulan.
+        // Potongan/voucher defaults to a flat nominal (not tied to jumlah
+        // pertemuan/bulan) unless the admin explicitly opts into qty via
+        // the Ringkas/Rinci toggle below.
+        show_qty: !nextIsDeduction,
         months: nextIsDeduction ? 0 : 1,
       }
       return updated
     })
   }
 
-  // Lets the admin deliberately hide the qty/satuan fields for a special-case
-  // charge row (e.g. a lump-sum item) — separate from is_deduction, which
-  // always forces flat mode on its own.
+  // Lets the admin deliberately show/hide the qty/satuan fields for a row —
+  // e.g. a special-case lump-sum charge, or a potongan that should scale
+  // with jumlah pertemuan/bulan instead of the flat-amount default.
   function toggleShowQty(index: number) {
     setLineItems(prev => {
       const updated = [...prev]
@@ -367,9 +370,14 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
             <div className="col-span-1"></div>
           </div>
 
-          {lineItems.map((item, index) => (
+          {lineItems.map((item, index) => {
+            // Rows saved before the Ringkas/Rinci toggle existed have no
+            // show_qty value — fall back to the old default (deduction =
+            // flat, charge = qty shown) so they render the same as before.
+            const showQty = item.show_qty ?? !item.is_deduction
+            return (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
-              {item.is_deduction || item.show_qty === false ? (
+              {!showQty ? (
                 <>
                   <div className="col-span-6">
                     <input
@@ -458,16 +466,14 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                 >
                   {item.is_deduction ? '-' : '+'}
                 </button>
-                {!item.is_deduction && (
-                  <button
-                    type="button"
-                    onClick={() => toggleShowQty(index)}
-                    title={item.show_qty === false ? 'Tampilkan Qty & Satuan' : 'Sembunyikan Qty & Satuan (nominal tetap)'}
-                    className="px-1.5 py-0.5 text-[10px] rounded-full font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
-                  >
-                    {item.show_qty === false ? 'Rinci' : 'Ringkas'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => toggleShowQty(index)}
+                  title={showQty ? 'Sembunyikan Qty & Satuan (nominal tetap)' : 'Tampilkan Qty & Satuan'}
+                  className="px-1.5 py-0.5 text-[10px] rounded-full font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                >
+                  {showQty ? 'Ringkas' : 'Rinci'}
+                </button>
               </div>
               <div className="col-span-1 flex justify-center">
                 <button
@@ -482,7 +488,7 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         <div className="mt-5 pt-4 border-t flex justify-end">
