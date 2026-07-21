@@ -577,9 +577,11 @@ async function syncNextInvoice(
   const draftLineItems = (draftInvoice.line_items ?? []) as Array<{ period?: string }>
   if (draftLineItems.some(i => i.period)) return
 
-  // Charge items always from the first invoice
+  // The first invoice's own line items (charges AND any embedded vouchers/
+  // discounts) are carried forward as-is — only "Pembayaran Tahap N" items
+  // are rebuilt fresh from actual payments below. Filtering out every
+  // is_deduction item here would silently drop vouchers from the chain.
   const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{ description: string; months: number; amount: number; is_deduction: boolean; period?: string }>
-  const chargeItems = firstLineItems.filter(i => !i.is_deduction)
 
   // Collect ALL payments across every invoice EXCEPT the draft itself
   const precedingIds = allInvoices
@@ -605,9 +607,10 @@ async function syncNextInvoice(
     is_deduction: true,
   }))
 
-  const chargeTotal = chargeItems.reduce((s, i) => s + (i.months === 0 ? i.amount : i.months * i.amount), 0)
+  const chargeTotal = firstLineItems.reduce((sum, item) =>
+    item.is_deduction ? sum - lineSubtotal(item) : sum + lineSubtotal(item), 0)
   const newTotalDue = Math.max(0, chargeTotal - totalPaid)
-  const newLineItems = [...chargeItems, ...deductionItems]
+  const newLineItems = [...firstLineItems, ...deductionItems]
 
   if (newTotalDue <= 0) {
     await admin.from('invoice_payments').delete().eq('invoice_id', draftInvoice.id)
@@ -707,12 +710,13 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
     return { error: 'Kelas ini memakai invoice bulanan. Gunakan tombol "Invoice Bulanan" untuk membuat invoice bulan berikutnya.' }
   }
 
-  // Charge items always come from the first invoice (canonical class fee, never changes)
+  // The first invoice's own line items (charges AND any embedded vouchers/
+  // discounts) are carried forward as-is — only "Pembayaran Tahap N" items
+  // are rebuilt fresh from actual payments below. Filtering out every
+  // is_deduction item here would silently drop vouchers from the chain.
   const firstLineItems = (allInvoices[0].line_items ?? []) as Array<{
     description: string; months: number; amount: number; is_deduction: boolean; period?: string
   }>
-
-  const chargeItems = firstLineItems.filter((item: any) => !item.is_deduction)
 
   const latestInvoice = allInvoices[allInvoices.length - 1]
 
@@ -752,8 +756,8 @@ export async function generateNextInvoice(studentId: string, classId: string, pa
     })
   }
 
-  const newDeductionIndex = paymentAmount > 0 ? chargeItems.length + deductionItems.length - 1 : null
-  const lineItems = [...chargeItems, ...deductionItems]
+  const newDeductionIndex = paymentAmount > 0 ? firstLineItems.length + deductionItems.length - 1 : null
+  const lineItems = [...firstLineItems, ...deductionItems]
 
   // Total = sum of charges - sum of all deductions (months=0 items use amount directly)
   const newTotal = lineItems.reduce((sum, item) =>
@@ -948,14 +952,17 @@ export async function generateDraftInvoices(
         const remaining = prev.total_due - totalPaid
         if (remaining <= 0) { skipped++; continue } // fully paid, skip
 
-        const chargeItems = (prev.line_items as Array<{ is_deduction?: boolean }>).filter(i => !i.is_deduction)
+        // Carry the original charges AND any embedded vouchers/discounts
+        // forward as-is; only "Pembayaran Tahap N" is rebuilt from actual
+        // payments, so a voucher applied on the first invoice isn't lost.
+        const prevLineItems = prev.line_items as Array<{ description: string; months: number; amount: number; is_deduction?: boolean }>
         const deductionItems = payments.map((p, idx) => ({
           description: `Pembayaran Tahap ${idx + 1} (${new Date(p.paid_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`,
           months: 0,
           amount: p.amount,
           is_deduction: true,
         }))
-        lineItems = [...chargeItems, ...deductionItems]
+        lineItems = [...prevLineItems, ...deductionItems]
         totalDue = remaining
       } else {
         // First invoice: total for full enrollment period
