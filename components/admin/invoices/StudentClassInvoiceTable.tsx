@@ -137,7 +137,10 @@ function ClassCard({
 
         const billingLines = breakdown.length > 0
           ? [
-              `Total Tagihan 1 Semester${periodLabel ? ` (${periodLabel})` : ''} sebesar ${formatRupiah(inv.total_due)}. Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
+              `Total Tagihan 1 Semester${periodLabel ? ` (${periodLabel})` : ''} sebesar ${formatRupiah(inv.total_due)}.`,
+              '',
+              '',
+              `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
               ...breakdown.map(m => `${m.label} : ${formatRupiah(m.amount)}`),
             ]
           : [`Total Tagihan: ${formatRupiah(inv.total_due)}`]
