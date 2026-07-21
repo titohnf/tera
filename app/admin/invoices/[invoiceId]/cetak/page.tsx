@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import PrintButton from '@/components/admin/invoices/PrintButton'
 import AutoPrint from '@/components/admin/invoices/AutoPrint'
 
@@ -30,6 +31,22 @@ const formatRupiah = (amount: number) =>
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ invoiceId: string }>
+}): Promise<Metadata> {
+  const { invoiceId } = await params
+  const admin = createAdminClient()
+  const { data: invoice } = await admin
+    .from('invoices')
+    .select('invoice_number')
+    .eq('id', invoiceId)
+    .single() as unknown as { data: { invoice_number: string } | null }
+
+  return { title: invoice?.invoice_number ?? 'Invoice' }
+}
 
 export default async function PrintInvoicePage({
   params,
