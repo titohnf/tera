@@ -142,7 +142,7 @@ export default async function TutorClassesPage({
     admin
       .from('class_slots')
       .select('class_id')
-      .eq('tutor_id', user.id) as unknown as Promise<{ data: { class_id: string }[] | null }>,
+      .contains('tutor_ids', [user.id]) as unknown as Promise<{ data: { class_id: string }[] | null }>,
   ])
 
   const ownedClasses = ownedClassesRaw ?? []
@@ -254,7 +254,7 @@ export default async function TutorClassesPage({
           .from('class_slots')
           .select('class_id, day_of_week, subject_ids')
           .in('class_id', classIds)
-          .eq('tutor_id', user.id) as unknown as Promise<{ data: SlotRow[] | null }>
+          .contains('tutor_ids', [user.id]) as unknown as Promise<{ data: SlotRow[] | null }>
       : Promise.resolve({ data: [] as SlotRow[] }),
     classIds.length > 0
       ? admin

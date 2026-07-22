@@ -24,12 +24,12 @@ type Subject = { id: string; name: string }
 
 type SlotState = {
   subjectIds: (string | null)[]
+  tutorIds: (string | null)[]
   day: number | null
   time: string
-  tutorId: string
 }
 
-type SlotDefault = { subjectIds: (string | null)[]; day: number | null; time: string; tutorId: string }
+type SlotDefault = { subjectIds: (string | null)[]; tutorIds: (string | null)[]; day: number | null; time: string }
 
 type DefaultValues = {
   name?: string
@@ -76,7 +76,7 @@ function buildClassName(classType: string, jenjang: string, grade: number | null
 }
 
 function emptySlot(): SlotState {
-  return { subjectIds: [null], day: null, time: '', tutorId: '' }
+  return { subjectIds: [null], tutorIds: [null], day: null, time: '' }
 }
 
 // Returns true if tutor can teach the given subject at the given jenjang
@@ -185,6 +185,95 @@ function SubjectPicker({
 
 const MAX_ROTATING_SUBJECTS = 4
 
+// ── One rotation row: a mapel paired with its own tutor picker ──
+function RotationRow({
+  rowKey, subjectId, tutorId, subjects, tutors, jenjang, day, time, label, onSubjectChange, onTutorChange, onRemove,
+}: {
+  rowKey: string
+  subjectId: string | null
+  tutorId: string | null
+  subjects: Subject[]
+  tutors: TutorWithMeta[]
+  jenjang: string
+  day: number | null
+  time: string
+  label: string
+  onSubjectChange: (id: string | null) => void
+  onTutorChange: (id: string | null) => void
+  onRemove?: () => void
+}) {
+  const availableTutors = useMemo(() => {
+    return tutors.filter(t => {
+      if (subjectId && !tutorMatchesSubjectLevel(t.subjects, subjectId, jenjang)) return false
+      if (day !== null) {
+        const avail = t.availability.find(a => a.day_of_week === day)
+        if (!avail) return false
+        if (time) {
+          const req = parseTimeToMinutes(time)
+          if (req < parseTimeToMinutes(avail.start_time.slice(0, 5)) ||
+              req >= parseTimeToMinutes(avail.end_time.slice(0, 5))) return false
+        }
+      }
+      return true
+    })
+  }, [tutors, subjectId, day, time, jenjang])
+
+  return (
+    <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+      <SubjectPicker subjects={subjects} value={subjectId} label={label} onChange={onSubjectChange} onRemove={onRemove} />
+      {!subjectId && <p className="text-xs text-red-500">Wajib pilih mata pelajaran</p>}
+
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+          Tutor
+          {(subjectId || day !== null) && (
+            <span className="ml-1 normal-case font-normal text-gray-400">
+              — {availableTutors.length} tersedia
+            </span>
+          )}
+        </label>
+        {availableTutors.length === 0 ? (
+          <div className="border border-slate-300 rounded-lg px-4 py-3 text-sm text-gray-400 bg-gray-50">
+            {!subjectId && day === null
+              ? 'Pilih mata pelajaran dan jadwal terlebih dahulu'
+              : 'Tidak ada tutor yang tersedia untuk pilihan ini'}
+          </div>
+        ) : (
+          <div className="border border-slate-300 rounded-lg divide-y divide-slate-300 max-h-44 overflow-y-auto">
+            {availableTutors.map(t => {
+              const isSelected = tutorId === t.id
+              return (
+                <label key={t.id}
+                  className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                    isSelected ? 'bg-blue-50' : 'bg-white hover:bg-blue-50/50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`tutor-${rowKey}`}
+                    checked={isSelected}
+                    onChange={() => onTutorChange(t.id)}
+                    className="shrink-0"
+                  />
+                  <p className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                    {t.full_name}
+                  </p>
+                </label>
+              )
+            })}
+          </div>
+        )}
+        {tutorId && !availableTutors.find(t => t.id === tutorId) && (
+          <p className="text-xs text-amber-600 mt-1">Tutor sebelumnya tidak lagi tersedia, pilih ulang</p>
+        )}
+        {!tutorId && availableTutors.length > 0 && (
+          <p className="text-xs text-red-500 mt-1">Wajib pilih tutor untuk mapel ini</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Slot sub-component ──
 function SlotSegment({
   index, slot, subjects, tutors, jenjang, onChange,
@@ -210,32 +299,26 @@ function SlotSegment({
   function setSubjectAt(i: number, id: string | null) {
     const next = [...slot.subjectIds]
     next[i] = id
-    onChange({ ...slot, subjectIds: next, tutorId: '' })
+    onChange({ ...slot, subjectIds: next })
   }
 
-  function removeSubjectAt(i: number) {
-    onChange({ ...slot, subjectIds: slot.subjectIds.filter((_, idx) => idx !== i), tutorId: '' })
+  function setTutorAt(i: number, id: string | null) {
+    const next = [...slot.tutorIds]
+    next[i] = id
+    onChange({ ...slot, tutorIds: next })
+  }
+
+  function removeAt(i: number) {
+    onChange({
+      ...slot,
+      subjectIds: slot.subjectIds.filter((_, idx) => idx !== i),
+      tutorIds: slot.tutorIds.filter((_, idx) => idx !== i),
+    })
   }
 
   function addRotatingSubject() {
-    onChange({ ...slot, subjectIds: [...slot.subjectIds, null] })
+    onChange({ ...slot, subjectIds: [...slot.subjectIds, null], tutorIds: [...slot.tutorIds, null] })
   }
-
-  const availableTutors = useMemo(() => {
-    return tutors.filter(t => {
-      if (slot.subjectIds.some(sid => sid && !tutorMatchesSubjectLevel(t.subjects, sid, jenjang))) return false
-      if (slot.day !== null) {
-        const avail = t.availability.find(a => a.day_of_week === slot.day)
-        if (!avail) return false
-        if (slot.time) {
-          const req = parseTimeToMinutes(slot.time)
-          if (req < parseTimeToMinutes(avail.start_time.slice(0, 5)) ||
-              req >= parseTimeToMinutes(avail.end_time.slice(0, 5))) return false
-        }
-      }
-      return true
-    })
-  }, [tutors, slot.subjectIds, slot.day, slot.time, jenjang])
 
   const selectedSubjectNames = slot.subjectIds
     .map(id => subjects.find(s => s.id === id)?.name)
@@ -257,31 +340,7 @@ function SlotSegment({
       </div>
 
       <div className="p-4 space-y-4 bg-white rounded-b-xl">
-        {/* Subject(s) — first is the fixed mapel, extras rotate week to week */}
-        <div className="space-y-3">
-          {slot.subjectIds.map((sid, si) => (
-            <SubjectPicker key={si}
-              subjects={subjects}
-              value={sid}
-              label={si === 0
-                ? 'Mata Pelajaran *'
-                : `Mapel Bergantian — Minggu ke-${si + 1}, ke-${si + 1 + slot.subjectIds.length}, ...`
-              }
-              onChange={id => setSubjectAt(si, id)}
-              onRemove={si > 0 ? () => removeSubjectAt(si) : undefined}
-            />
-          ))}
-          {!slot.subjectIds[0] && <p className="text-xs text-red-500">Wajib pilih mata pelajaran</p>}
-          {slot.subjectIds.length < MAX_ROTATING_SUBJECTS && (
-            <button type="button" onClick={addRotatingSubject}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-            >
-              + Tambah mapel bergantian (mis. hari ini gantian 2 mapel tiap minggu)
-            </button>
-          )}
-        </div>
-
-        {/* Day + Time */}
+        {/* Day + Time — shared by every rotating mapel in this slot */}
         <div className="flex gap-3">
           {/* Hari dropdown */}
           <div ref={dayRef} className="relative flex-1">
@@ -302,7 +361,7 @@ function SlotSegment({
                 <div className="divide-y divide-slate-300">
                   {DAYS.map(day => (
                     <div key={day}
-                      onClick={() => { onChange({ ...slot, day: slot.day === day ? null : day, tutorId: '' }); setDayOpen(false) }}
+                      onClick={() => { onChange({ ...slot, day: slot.day === day ? null : day }); setDayOpen(false) }}
                       className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${slot.day === day ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
                     >
                       <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${slot.day === day ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
@@ -321,57 +380,39 @@ function SlotSegment({
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Jam</label>
             <TimePicker
               value={slot.time}
-              onChange={t => onChange({ ...slot, time: t, tutorId: '' })}
+              onChange={t => onChange({ ...slot, time: t })}
             />
           </div>
         </div>
 
-        {/* Tutor — filtered list */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-            Tutor
-            {(slot.subjectIds.some(Boolean) || slot.day !== null) && (
-              <span className="ml-1 normal-case font-normal text-gray-400">
-                — {availableTutors.length} tersedia
-              </span>
-            )}
-          </label>
-          {availableTutors.length === 0 ? (
-            <div className="border border-slate-300 rounded-lg px-4 py-3 text-sm text-gray-400 bg-gray-50">
-              {!slot.subjectIds.some(Boolean) && slot.day === null
-                ? 'Pilih mata pelajaran dan jadwal terlebih dahulu'
-                : 'Tidak ada tutor yang tersedia untuk pilihan ini'}
-            </div>
-          ) : (
-            <div className="border border-slate-300 rounded-lg divide-y divide-slate-300 max-h-44 overflow-y-auto">
-              {availableTutors.map(t => {
-                const isSelected = slot.tutorId === t.id
-                return (
-                  <label key={t.id}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50' : 'bg-white hover:bg-blue-50/50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={`tutor-slot-${index}`}
-                      checked={isSelected}
-                      onChange={() => onChange({ ...slot, tutorId: t.id })}
-                      className="shrink-0"
-                    />
-                    <p className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                      {t.full_name}
-                    </p>
-                  </label>
-                )
-              })}
-            </div>
-          )}
-          {slot.tutorId && !availableTutors.find(t => t.id === slot.tutorId) && (
-            <p className="text-xs text-amber-600 mt-1">Tutor sebelumnya tidak lagi tersedia, pilih ulang</p>
-          )}
-          {!slot.tutorId && availableTutors.length > 0 && (
-            <p className="text-xs text-red-500 mt-1">Wajib pilih tutor untuk sesi ini</p>
+        {/* Mapel + tutor pairs — first is the fixed mapel, extras rotate week
+            to week and each can have its own tutor */}
+        <div className="space-y-3">
+          {slot.subjectIds.map((sid, si) => (
+            <RotationRow key={si}
+              rowKey={`${index}-${si}`}
+              subjectId={sid}
+              tutorId={slot.tutorIds[si] ?? null}
+              subjects={subjects}
+              tutors={tutors}
+              jenjang={jenjang}
+              day={slot.day}
+              time={slot.time}
+              label={si === 0
+                ? 'Mata Pelajaran *'
+                : `Mapel Bergantian — Minggu ke-${si + 1}, ke-${si + 1 + slot.subjectIds.length}, ...`
+              }
+              onSubjectChange={id => setSubjectAt(si, id)}
+              onTutorChange={id => setTutorAt(si, id)}
+              onRemove={si > 0 ? () => removeAt(si) : undefined}
+            />
+          ))}
+          {slot.subjectIds.length < MAX_ROTATING_SUBJECTS && (
+            <button type="button" onClick={addRotatingSubject}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Tambah mapel bergantian (mis. hari ini gantian 2 mapel tiap minggu, bisa beda tutor)
+            </button>
           )}
         </div>
       </div>
@@ -429,9 +470,9 @@ export default function ClassForm({
   // Slots
   const defaultSlots: SlotState[] = (defaultValues?.slots ?? []).map(s => ({
     subjectIds: s.subjectIds.length > 0 ? s.subjectIds : [null],
+    tutorIds: s.tutorIds.length > 0 ? s.tutorIds : [null],
     day: s.day,
     time: s.time,
-    tutorId: s.tutorId,
   }))
   const [slotCount, setSlotCount] = useState(defaultSlots.length)
   const [slots, setSlots] = useState<SlotState[]>(defaultSlots)
@@ -539,14 +580,21 @@ export default function ClassForm({
     nameManuallyEdited.current = false
   }, [selectedStudentIds, students, showStudentPicker])
 
-  const slotsJson = JSON.stringify(slots.map(s => ({
-    subjectIds: s.subjectIds.filter((id): id is string => !!id),
-    day: s.day,
-    time: s.time,
-    tutorId: s.tutorId,
-  })))
+  const slotsJson = JSON.stringify(slots.map(s => {
+    const pairs = s.subjectIds
+      .map((subjectId, i) => ({ subjectId, tutorId: s.tutorIds[i] ?? null }))
+      .filter((p): p is { subjectId: string; tutorId: string | null } => !!p.subjectId)
+    return {
+      subjectIds: pairs.map(p => p.subjectId),
+      tutorIds: pairs.map(p => p.tutorId ?? ''),
+      day: s.day,
+      time: s.time,
+    }
+  }))
 
-  const canSubmit = slotCount > 0 && slots.every(s => s.tutorId && s.subjectIds.some(Boolean)) && !!startDate && !!endDate && endDate >= startDate
+  const canSubmit = slotCount > 0 && slots.every(s =>
+    s.subjectIds.some(Boolean) && s.subjectIds.every((sid, i) => !sid || !!s.tutorIds[i])
+  ) && !!startDate && !!endDate && endDate >= startDate
     && (classType === 'yayasan' || !!jenis)
 
   return (

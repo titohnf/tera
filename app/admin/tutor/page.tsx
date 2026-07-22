@@ -84,18 +84,22 @@ export default async function TutorPage({
       .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; student_id: string }[] | null }>,
     admin
       .from('class_slots')
-      .select('class_id, tutor_id') as unknown as Promise<{ data: { class_id: string; tutor_id: string }[] | null }>,
+      .select('class_id, tutor_id, tutor_ids') as unknown as Promise<{ data: { class_id: string; tutor_id: string; tutor_ids: string[] }[] | null }>,
   ])
 
   const allTutors = tutors ?? []
   const activeClassIds = new Set((activeClassesRaw ?? []).map(c => c.id))
 
-  // Map class_id -> Set of tutorIds (from all slots, only active classes)
+  // Map class_id -> Set of tutorIds (from all slots, only active classes) —
+  // tutor_ids covers every rotating mapel's tutor, not just the primary one,
+  // so a tutor who only teaches every other week still counts as active here.
   const classToTutors = new Map<string, Set<string>>()
   for (const slot of classSlotsRaw ?? []) {
-    if (!activeClassIds.has(slot.class_id) || !slot.tutor_id) continue
+    if (!activeClassIds.has(slot.class_id)) continue
+    const slotTutorIds = slot.tutor_ids?.length ? slot.tutor_ids : (slot.tutor_id ? [slot.tutor_id] : [])
+    if (slotTutorIds.length === 0) continue
     if (!classToTutors.has(slot.class_id)) classToTutors.set(slot.class_id, new Set())
-    classToTutors.get(slot.class_id)!.add(slot.tutor_id)
+    for (const tutorId of slotTutorIds) classToTutors.get(slot.class_id)!.add(tutorId)
   }
 
   // Count active classes per tutor (across all slots)

@@ -81,13 +81,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       .order('name') as unknown as Promise<{ data: { id: string; name: string }[] | null }>,
     admin
       .from('class_slots')
-      .select('slot_index, day_of_week, start_time, tutor_id, subject_ids, profiles!tutor_id(full_name)')
+      .select('slot_index, day_of_week, start_time, tutor_id, tutor_ids, subject_ids')
       .eq('class_id', classId)
       .order('slot_index') as unknown as Promise<{
         data: {
           slot_index: number; day_of_week: number | null; start_time: string | null
-          tutor_id: string | null; subject_ids: string[]
-          profiles: { full_name: string } | null
+          tutor_id: string | null; tutor_ids: string[]; subject_ids: string[]
         }[] | null
       }>,
     admin
@@ -166,6 +165,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
 
   // Subject map for slots
   const subjectMap = new Map((subjects ?? []).map(s => [s.id, s.name]))
+  // tutor_ids[i] pairs with subject_ids[i] (rotating mapel can each have a
+  // different tutor) — resolve names from the tutors list already fetched
+  // for the tutor-assignment dropdown above.
+  const tutorNameMap = new Map((tutors ?? []).map(t => [t.id, t.full_name]))
 
   // The tutor officially assigned to teach each subject, per class_slots —
   // this is the "regular" tutor for that subject, independent of who happens
@@ -173,10 +176,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
   // when the class was created, not a meaningful "owner" across subjects).
   const assignedTutorBySubject = new Map<string, string>()
   for (const slot of classSlots ?? []) {
-    if (!slot.tutor_id) continue
-    for (const subjectId of slot.subject_ids ?? []) {
-      if (!assignedTutorBySubject.has(subjectId)) assignedTutorBySubject.set(subjectId, slot.tutor_id)
-    }
+    slot.subject_ids?.forEach((subjectId, i) => {
+      const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
+      if (subjectId && tutorId && !assignedTutorBySubject.has(subjectId)) assignedTutorBySubject.set(subjectId, tutorId)
+    })
   }
 
   // One row per distinct (subject, tutor) pair — seeded from this class's
@@ -198,9 +201,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
     })
   }
   for (const slot of classSlots ?? []) {
-    for (const subjectId of slot.subject_ids ?? []) {
-      addTutorSubject(subjectId, slot.tutor_id, slot.profiles?.full_name ?? null)
-    }
+    slot.subject_ids?.forEach((subjectId, i) => {
+      const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
+      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null)
+    })
   }
   for (const s of sessions ?? []) {
     addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null)
@@ -266,7 +270,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
           pendingSessionIds={pendingSessionIds}
           tutors={tutors ?? []}
           subjects={subjects ?? []}
-          defaultTutorId={classSlots?.[0]?.tutor_id ?? cls.tutor_id}
+          defaultTutorId={classSlots?.[0]?.tutor_ids?.[0] ?? classSlots?.[0]?.tutor_id ?? cls.tutor_id}
           defaultSubjectId={classSlots?.[0]?.subject_ids?.[0] ?? cls.class_subjects?.[0]?.subject_id ?? undefined}
           curriculumTopics={curriculumTopics ?? []}
           studentGrade={studentGrade}

@@ -21,7 +21,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectIds: string[]; day: number | null; time: string; tutorId: string }
+  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -43,8 +43,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
 
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
-  if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
   if (slots.some(s => !s.subjectIds || s.subjectIds.length === 0)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (slots.some(s => s.subjectIds.some((_, i) => !s.tutorIds[i]))) return { error: 'Setiap mata pelajaran harus memiliki tutor' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
@@ -55,7 +55,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
     return { error: 'Jenis kelas (Reguler/Fokus) wajib dipilih' }
   }
 
-  const primaryTutorId = slots[0].tutorId
+  const primaryTutorId = slots[0].tutorIds[0]
   const allSubjectIds = [...new Set(slots.flatMap(s => s.subjectIds))]
   const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
 
@@ -95,7 +95,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       slot_index: i,
       day_of_week: s.day,
       start_time: s.time || null,
-      tutor_id: s.tutorId,
+      tutor_id: s.tutorIds[0] ?? null,
+      tutor_ids: s.tutorIds,
       subject_ids: s.subjectIds,
     }))
   )
@@ -129,7 +130,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectIds: string[]; day: number | null; time: string; tutorId: string }
+  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -152,8 +153,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
 
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
-  if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
   if (slots.some(s => !s.subjectIds || s.subjectIds.length === 0)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (slots.some(s => s.subjectIds.some((_, i) => !s.tutorIds[i]))) return { error: 'Setiap mata pelajaran harus memiliki tutor' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
@@ -164,7 +165,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
     return { error: 'Jenis kelas (Reguler/Fokus) wajib dipilih' }
   }
 
-  const primaryTutorId = slots[0].tutorId
+  const primaryTutorId = slots[0].tutorIds[0]
   const allSubjectIds = [...new Set(slots.flatMap(s => s.subjectIds))]
   const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
 
@@ -206,7 +207,8 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       slot_index: i,
       day_of_week: s.day,
       start_time: s.time || null,
-      tutor_id: s.tutorId,
+      tutor_id: s.tutorIds[0] ?? null,
+      tutor_ids: s.tutorIds,
       subject_ids: s.subjectIds,
     }))
   )
@@ -309,7 +311,7 @@ export async function enrollStudent(classId: string, studentId: string): Promise
 }
 
 function generateSessionsFromSlots(
-  slots: { subjectIds: string[]; day: number | null; time: string; tutorId: string }[],
+  slots: { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }[],
   startDate: string,
   endDate: string,
   classId: string,
@@ -338,10 +340,11 @@ function generateSessionsFromSlots(
   const current = new Date(Date.UTC(sy, sm - 1, sd))
 
   // Counts how many times each slot's weekday has occurred since startDate,
-  // so a slot with multiple subjectIds rotates through them in order
-  // (occurrence 1 -> subjectIds[0], occurrence 2 -> subjectIds[1], occurrence
-  // 3 -> subjectIds[0] again, etc.) — e.g. Selasa alternating Bahasa
-  // Inggris/IPAS week to week while Senin stays fixed on Matematika.
+  // so a slot with multiple subjectIds rotates through them (and their
+  // paired tutorIds at the same index) in order — occurrence 1 -> index 0,
+  // occurrence 2 -> index 1, occurrence 3 -> index 0 again, etc. — e.g.
+  // Selasa alternating Bahasa Inggris (Tutor A) / IPAS (Tutor B) week to
+  // week while Senin stays fixed on Matematika.
   const occurrenceCounts = new Map<number, number>()
 
   while (current <= end) {
@@ -350,7 +353,9 @@ function generateSessionsFromSlots(
       if (slot.day === null || slot.day !== dow) return
       const occurrence = occurrenceCounts.get(slotIndex) ?? 0
       occurrenceCounts.set(slotIndex, occurrence + 1)
-      const subjectId = slot.subjectIds.length > 0 ? slot.subjectIds[occurrence % slot.subjectIds.length] : null
+      const rotationIndex = slot.subjectIds.length > 0 ? occurrence % slot.subjectIds.length : 0
+      const subjectId = slot.subjectIds.length > 0 ? slot.subjectIds[rotationIndex] : null
+      const tutorId = slot.tutorIds[rotationIndex] ?? slot.tutorIds[0]
 
       const [hStr, mStr] = (slot.time || '00:00').split(':')
       const h = Number(hStr)
@@ -365,7 +370,7 @@ function generateSessionsFromSlots(
       ))
       sessions.push({
         class_id: classId,
-        tutor_id: slot.tutorId,
+        tutor_id: tutorId,
         subject_id: subjectId,
         scheduled_at: scheduled.toISOString(),
         duration_minutes: durationMinutes,

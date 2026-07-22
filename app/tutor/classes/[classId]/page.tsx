@@ -98,12 +98,12 @@ export default async function TutorClassDetailPage({
   const [{ data: classSlots }, { data: enrolled }, { data: subjects }, { data: ownSlots }] = await Promise.all([
     admin
       .from('class_slots')
-      .select('slot_index, day_of_week, start_time, subject_ids, tutor_id, profiles!tutor_id(full_name)')
+      .select('slot_index, day_of_week, start_time, subject_ids, tutor_id, tutor_ids')
       .eq('class_id', classId)
       .order('slot_index') as unknown as Promise<{
         data: {
           slot_index: number; day_of_week: number | null; start_time: string | null; subject_ids: string[]
-          tutor_id: string | null; profiles: { full_name: string } | null
+          tutor_id: string | null; tutor_ids: string[]
         }[] | null
       }>,
     admin
@@ -122,8 +122,17 @@ export default async function TutorClassDetailPage({
       .from('class_slots')
       .select('subject_ids')
       .eq('class_id', classId)
-      .eq('tutor_id', user.id) as unknown as Promise<{ data: { subject_ids: string[] }[] | null }>,
+      .contains('tutor_ids', [user.id]) as unknown as Promise<{ data: { subject_ids: string[] }[] | null }>,
   ])
+
+  // tutor_ids[i] pairs with subject_ids[i] (rotating mapel can each have a
+  // different tutor) — resolve names separately since a join can't follow an
+  // array FK column the way `profiles!tutor_id(...)` follows the scalar one.
+  const slotTutorIds = [...new Set((classSlots ?? []).flatMap(s => s.tutor_ids?.length ? s.tutor_ids : (s.tutor_id ? [s.tutor_id] : [])))]
+  const { data: slotTutorProfiles } = slotTutorIds.length > 0
+    ? await admin.from('profiles').select('id, full_name').in('id', slotTutorIds) as unknown as { data: { id: string; full_name: string }[] | null }
+    : { data: [] as { id: string; full_name: string }[] }
+  const tutorNameMap = new Map((slotTutorProfiles ?? []).map(t => [t.id, t.full_name]))
 
   // Empty means no explicit slot assignment was found (e.g. an older class
   // predating per-slot tutor assignment) — fall back to not filtering rather
@@ -150,10 +159,10 @@ export default async function TutorClassDetailPage({
   // when the class was created, not a meaningful "owner" across subjects).
   const assignedTutorBySubject = new Map<string, string>()
   for (const slot of classSlots ?? []) {
-    if (!slot.tutor_id) continue
-    for (const subjectId of slot.subject_ids ?? []) {
-      if (!assignedTutorBySubject.has(subjectId)) assignedTutorBySubject.set(subjectId, slot.tutor_id)
-    }
+    slot.subject_ids?.forEach((subjectId, i) => {
+      const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
+      if (subjectId && tutorId && !assignedTutorBySubject.has(subjectId)) assignedTutorBySubject.set(subjectId, tutorId)
+    })
   }
 
   // One row per distinct (subject, tutor) pair — seeded from this class's
@@ -176,9 +185,10 @@ export default async function TutorClassDetailPage({
     })
   }
   for (const slot of classSlots ?? []) {
-    for (const subjectId of slot.subject_ids ?? []) {
-      addTutorSubject(subjectId, slot.tutor_id, slot.profiles?.full_name ?? null)
-    }
+    slot.subject_ids?.forEach((subjectId, i) => {
+      const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
+      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null)
+    })
   }
 
   function fmtDate(iso: string) {
