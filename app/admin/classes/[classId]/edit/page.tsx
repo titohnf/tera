@@ -117,7 +117,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
               semester: (cls as any).semester ?? null,
               academic_year: (cls as any).academic_year ?? null,
               slots: (classSlotRows ?? []).map((r: any) => ({
-                subjectId: r.subject_ids?.[0] ?? null,
+                subjectIds: r.subject_ids?.length ? r.subject_ids : [null],
                 day: r.day_of_week ?? null,
                 time: r.start_time ? r.start_time.slice(0, 5) : '',
                 tutorId: r.tutor_id ?? '',

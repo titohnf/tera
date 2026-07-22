@@ -21,7 +21,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectId: string | null; day: number | null; time: string; tutorId: string }
+  type SlotInput = { subjectIds: string[]; day: number | null; time: string; tutorId: string }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -44,7 +44,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
   if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
-  if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (slots.some(s => !s.subjectIds || s.subjectIds.length === 0)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
@@ -56,7 +56,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   }
 
   const primaryTutorId = slots[0].tutorId
-  const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]
+  const allSubjectIds = [...new Set(slots.flatMap(s => s.subjectIds))]
   const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
 
   const { data, error } = await ctx.admin
@@ -96,7 +96,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       day_of_week: s.day,
       start_time: s.time || null,
       tutor_id: s.tutorId,
-      subject_ids: s.subjectId ? [s.subjectId] : [],
+      subject_ids: s.subjectIds,
     }))
   )
 
@@ -129,7 +129,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectId: string | null; day: number | null; time: string; tutorId: string }
+  type SlotInput = { subjectIds: string[]; day: number | null; time: string; tutorId: string }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -153,7 +153,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   if (!name) return { error: 'Nama kelas wajib diisi' }
   if (slots.length === 0) return { error: 'Minimal 1 pertemuan per minggu harus diisi' }
   if (slots.some(s => !s.tutorId)) return { error: 'Setiap sesi harus memiliki tutor' }
-  if (slots.some(s => !s.subjectId)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
+  if (slots.some(s => !s.subjectIds || s.subjectIds.length === 0)) return { error: 'Setiap sesi harus memiliki mata pelajaran' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
@@ -165,7 +165,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   }
 
   const primaryTutorId = slots[0].tutorId
-  const allSubjectIds = [...new Set(slots.map(s => s.subjectId).filter((id): id is string => id !== null))]
+  const allSubjectIds = [...new Set(slots.flatMap(s => s.subjectIds))]
   const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
 
   const { error } = await ctx.admin
@@ -207,7 +207,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       day_of_week: s.day,
       start_time: s.time || null,
       tutor_id: s.tutorId,
-      subject_ids: s.subjectId ? [s.subjectId] : [],
+      subject_ids: s.subjectIds,
     }))
   )
 
@@ -309,7 +309,7 @@ export async function enrollStudent(classId: string, studentId: string): Promise
 }
 
 function generateSessionsFromSlots(
-  slots: { subjectId: string | null; day: number | null; time: string; tutorId: string }[],
+  slots: { subjectIds: string[]; day: number | null; time: string; tutorId: string }[],
   startDate: string,
   endDate: string,
   classId: string,
@@ -337,10 +337,21 @@ function generateSessionsFromSlots(
   const end = new Date(Date.UTC(ey, em - 1, ed))
   const current = new Date(Date.UTC(sy, sm - 1, sd))
 
+  // Counts how many times each slot's weekday has occurred since startDate,
+  // so a slot with multiple subjectIds rotates through them in order
+  // (occurrence 1 -> subjectIds[0], occurrence 2 -> subjectIds[1], occurrence
+  // 3 -> subjectIds[0] again, etc.) — e.g. Selasa alternating Bahasa
+  // Inggris/IPAS week to week while Senin stays fixed on Matematika.
+  const occurrenceCounts = new Map<number, number>()
+
   while (current <= end) {
     const dow = current.getUTCDay() // 0=Sun..6=Sat
-    for (const slot of slots) {
-      if (slot.day === null || slot.day !== dow) continue
+    slots.forEach((slot, slotIndex) => {
+      if (slot.day === null || slot.day !== dow) return
+      const occurrence = occurrenceCounts.get(slotIndex) ?? 0
+      occurrenceCounts.set(slotIndex, occurrence + 1)
+      const subjectId = slot.subjectIds.length > 0 ? slot.subjectIds[occurrence % slot.subjectIds.length] : null
+
       const [hStr, mStr] = (slot.time || '00:00').split(':')
       const h = Number(hStr)
       const m = Number(mStr ?? 0)
@@ -355,14 +366,14 @@ function generateSessionsFromSlots(
       sessions.push({
         class_id: classId,
         tutor_id: slot.tutorId,
-        subject_id: slot.subjectId,
+        subject_id: subjectId,
         scheduled_at: scheduled.toISOString(),
         duration_minutes: durationMinutes,
         status: 'scheduled',
         location: null,
         topic: null,
       })
-    }
+    })
     current.setUTCDate(current.getUTCDate() + 1)
   }
 

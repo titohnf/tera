@@ -23,13 +23,13 @@ type Student = { id: string; full_name: string; level: string | null; grade: num
 type Subject = { id: string; name: string }
 
 type SlotState = {
-  subjectId: string | null
+  subjectIds: (string | null)[]
   day: number | null
   time: string
   tutorId: string
 }
 
-type SlotDefault = { subjectId: string | null; day: number | null; time: string; tutorId: string }
+type SlotDefault = { subjectIds: (string | null)[]; day: number | null; time: string; tutorId: string }
 
 type DefaultValues = {
   name?: string
@@ -76,7 +76,7 @@ function buildClassName(classType: string, jenjang: string, grade: number | null
 }
 
 function emptySlot(): SlotState {
-  return { subjectId: null, day: null, time: '', tutorId: '' }
+  return { subjectIds: [null], day: null, time: '', tutorId: '' }
 }
 
 // Returns true if tutor can teach the given subject at the given jenjang
@@ -96,6 +96,95 @@ function tutorMatchesSubjectLevel(
   )
 }
 
+// ── Reusable subject dropdown (one instance per rotating mapel slot) ──
+function SubjectPicker({
+  subjects, value, label, onChange, onRemove,
+}: {
+  subjects: Subject[]
+  value: string | null
+  label: string
+  onChange: (id: string | null) => void
+  onRemove?: () => void
+}) {
+  const [search, setSearch] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!search) return subjects
+    const q = search.toLowerCase()
+    return subjects.filter(s => s.name.toLowerCase().includes(q))
+  }, [subjects, search])
+
+  const selectedName = subjects.find(s => s.id === value)?.name
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
+        {onRemove && (
+          <button type="button" onClick={onRemove} className="text-xs text-red-500 hover:text-red-700 font-medium">
+            Hapus
+          </button>
+        )}
+      </div>
+      <button type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 text-left"
+      >
+        <span className={selectedName ? 'text-gray-900' : 'text-gray-400'}>
+          {selectedName ?? 'Pilih mata pelajaran...'}
+        </span>
+        <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-slate-300">
+            <input type="text" autoFocus
+              placeholder="Cari mata pelajaran..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full px-3 py-1.5 bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div className="divide-y divide-slate-300 max-h-40 overflow-y-auto">
+            {filtered.length === 0
+              ? <p className="px-3 py-3 text-sm text-gray-400">Tidak ditemukan</p>
+              : filtered.map(s => {
+                const selected = value === s.id
+                return (
+                  <div key={s.id}
+                    onClick={() => { onChange(selected ? null : s.id); setOpen(false); setSearch('') }}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
+                  >
+                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
+                      {selected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </span>
+                    <span className={`text-sm ${selected ? 'text-blue-700 font-medium' : 'text-gray-800'}`}>{s.name}</span>
+                  </div>
+                )
+              })
+            }
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const MAX_ROTATING_SUBJECTS = 4
+
 // ── Slot sub-component ──
 function SlotSegment({
   index, slot, subjects, tutors, jenjang, onChange,
@@ -107,30 +196,34 @@ function SlotSegment({
   jenjang: string
   onChange: (s: SlotState) => void
 }) {
-  const [subjectSearch, setSubjectSearch] = useState('')
-  const [subjectOpen, setSubjectOpen] = useState(false)
-  const subjectRef = useRef<HTMLDivElement>(null)
   const [dayOpen, setDayOpen] = useState(false)
   const dayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (subjectRef.current && !subjectRef.current.contains(e.target as Node)) setSubjectOpen(false)
       if (dayRef.current && !dayRef.current.contains(e.target as Node)) setDayOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const filteredSubjects = useMemo(() => {
-    if (!subjectSearch) return subjects
-    const q = subjectSearch.toLowerCase()
-    return subjects.filter(s => s.name.toLowerCase().includes(q))
-  }, [subjects, subjectSearch])
+  function setSubjectAt(i: number, id: string | null) {
+    const next = [...slot.subjectIds]
+    next[i] = id
+    onChange({ ...slot, subjectIds: next, tutorId: '' })
+  }
+
+  function removeSubjectAt(i: number) {
+    onChange({ ...slot, subjectIds: slot.subjectIds.filter((_, idx) => idx !== i), tutorId: '' })
+  }
+
+  function addRotatingSubject() {
+    onChange({ ...slot, subjectIds: [...slot.subjectIds, null] })
+  }
 
   const availableTutors = useMemo(() => {
     return tutors.filter(t => {
-      if (slot.subjectId && !tutorMatchesSubjectLevel(t.subjects, slot.subjectId, jenjang)) return false
+      if (slot.subjectIds.some(sid => sid && !tutorMatchesSubjectLevel(t.subjects, sid, jenjang))) return false
       if (slot.day !== null) {
         const avail = t.availability.find(a => a.day_of_week === slot.day)
         if (!avail) return false
@@ -142,9 +235,11 @@ function SlotSegment({
       }
       return true
     })
-  }, [tutors, slot.subjectId, slot.day, slot.time, jenjang])
+  }, [tutors, slot.subjectIds, slot.day, slot.time, jenjang])
 
-  const selectedSubjectName = subjects.find(s => s.id === slot.subjectId)?.name
+  const selectedSubjectNames = slot.subjectIds
+    .map(id => subjects.find(s => s.id === id)?.name)
+    .filter((n): n is string => !!n)
 
   return (
     <div className="rounded-xl shadow ring-1 ring-gray-900/5">
@@ -154,63 +249,36 @@ function SlotSegment({
           {index + 1}
         </span>
         <span className="text-sm font-semibold text-blue-800">Sesi {index + 1}</span>
-        {selectedSubjectName && (
+        {selectedSubjectNames.length > 0 && (
           <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-            {selectedSubjectName}
+            {selectedSubjectNames.join(' / ')}
           </span>
         )}
       </div>
 
       <div className="p-4 space-y-4 bg-white rounded-b-xl">
-        {/* Subject — single select */}
-        <div ref={subjectRef} className="relative">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-            Mata Pelajaran <span className="text-red-500">*</span>
-          </label>
-          <button type="button"
-            onClick={() => setSubjectOpen(o => !o)}
-            className="w-full flex items-center justify-between px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 text-left"
-          >
-            <span className={selectedSubjectName ? 'text-gray-900' : 'text-gray-400'}>
-              {selectedSubjectName ?? 'Pilih mata pelajaran...'}
-            </span>
-            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-
-          {subjectOpen && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg overflow-hidden">
-              <div className="p-2 border-b border-slate-300">
-                <input type="text" autoFocus
-                  placeholder="Cari mata pelajaran..."
-                  value={subjectSearch}
-                  onChange={e => setSubjectSearch(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-              <div className="divide-y divide-slate-300 max-h-40 overflow-y-auto">
-                {filteredSubjects.length === 0
-                  ? <p className="px-3 py-3 text-sm text-gray-400">Tidak ditemukan</p>
-                  : filteredSubjects.map(s => {
-                    const selected = slot.subjectId === s.id
-                    return (
-                      <div key={s.id}
-                        onClick={() => { onChange({ ...slot, subjectId: selected ? null : s.id, tutorId: '' }); setSubjectOpen(false); setSubjectSearch('') }}
-                        className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
-                      >
-                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
-                          {selected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </span>
-                        <span className={`text-sm ${selected ? 'text-blue-700 font-medium' : 'text-gray-800'}`}>{s.name}</span>
-                      </div>
-                    )
-                  })
-                }
-              </div>
-            </div>
+        {/* Subject(s) — first is the fixed mapel, extras rotate week to week */}
+        <div className="space-y-3">
+          {slot.subjectIds.map((sid, si) => (
+            <SubjectPicker key={si}
+              subjects={subjects}
+              value={sid}
+              label={si === 0
+                ? 'Mata Pelajaran *'
+                : `Mapel Bergantian — Minggu ke-${si + 1}, ke-${si + 1 + slot.subjectIds.length}, ...`
+              }
+              onChange={id => setSubjectAt(si, id)}
+              onRemove={si > 0 ? () => removeSubjectAt(si) : undefined}
+            />
+          ))}
+          {!slot.subjectIds[0] && <p className="text-xs text-red-500">Wajib pilih mata pelajaran</p>}
+          {slot.subjectIds.length < MAX_ROTATING_SUBJECTS && (
+            <button type="button" onClick={addRotatingSubject}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Tambah mapel bergantian (mis. hari ini gantian 2 mapel tiap minggu)
+            </button>
           )}
-          {!slot.subjectId && !subjectOpen && <p className="text-xs text-red-500 mt-1">Wajib pilih mata pelajaran</p>}
         </div>
 
         {/* Day + Time */}
@@ -262,7 +330,7 @@ function SlotSegment({
         <div>
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
             Tutor
-            {(slot.subjectId || slot.day !== null) && (
+            {(slot.subjectIds.some(Boolean) || slot.day !== null) && (
               <span className="ml-1 normal-case font-normal text-gray-400">
                 — {availableTutors.length} tersedia
               </span>
@@ -270,7 +338,7 @@ function SlotSegment({
           </label>
           {availableTutors.length === 0 ? (
             <div className="border border-slate-300 rounded-lg px-4 py-3 text-sm text-gray-400 bg-gray-50">
-              {!slot.subjectId && slot.day === null
+              {!slot.subjectIds.some(Boolean) && slot.day === null
                 ? 'Pilih mata pelajaran dan jadwal terlebih dahulu'
                 : 'Tidak ada tutor yang tersedia untuk pilihan ini'}
             </div>
@@ -360,7 +428,7 @@ export default function ClassForm({
 
   // Slots
   const defaultSlots: SlotState[] = (defaultValues?.slots ?? []).map(s => ({
-    subjectId: s.subjectId,
+    subjectIds: s.subjectIds.length > 0 ? s.subjectIds : [null],
     day: s.day,
     time: s.time,
     tutorId: s.tutorId,
@@ -472,13 +540,13 @@ export default function ClassForm({
   }, [selectedStudentIds, students, showStudentPicker])
 
   const slotsJson = JSON.stringify(slots.map(s => ({
-    subjectId: s.subjectId,
+    subjectIds: s.subjectIds.filter((id): id is string => !!id),
     day: s.day,
     time: s.time,
     tutorId: s.tutorId,
   })))
 
-  const canSubmit = slotCount > 0 && slots.every(s => s.tutorId && s.subjectId) && !!startDate && !!endDate && endDate >= startDate
+  const canSubmit = slotCount > 0 && slots.every(s => s.tutorId && s.subjectIds.some(Boolean)) && !!startDate && !!endDate && endDate >= startDate
     && (classType === 'yayasan' || !!jenis)
 
   return (
