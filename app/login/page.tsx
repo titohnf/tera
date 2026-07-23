@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -28,7 +29,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50/30">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-gray-200/80 p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Tera Bimbel</h1>
+          <div className="flex items-center gap-2">
+            <Image src="/logo-icon.png" alt="Bimbel Tera" width={32} height={32} />
+            <h1 className="text-2xl font-bold text-gray-900">Bimbel Tera</h1>
+          </div>
           <p className="text-sm text-gray-500 mt-1">Masuk ke akun kamu</p>
         </div>
 

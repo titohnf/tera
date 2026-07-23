@@ -47,7 +47,7 @@ export default function TutorScheduleTable({ tutors }: { tutors: TutorScheduleRo
       <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
         <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-base font-semibold text-gray-700">Jadwal Mingguan Tutor</p>
+            <p className="text-base font-semibold text-gray-700">Cek Jadwal Tutor</p>
             <p className="text-xs text-gray-400 mt-0.5">Berdasarkan jadwal yang dideklarasikan tutor di profil mereka</p>
           </div>
           <input

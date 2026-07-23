@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -59,7 +60,10 @@ export default function TutorSidebar() {
   return (
     <aside className="w-60 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-sm">
       <div className="p-5 border-b border-gray-100">
-        <span className="text-lg font-bold text-blue-600">Tera Bimbel</span>
+        <div className="flex items-center gap-2">
+          <Image src="/logo-icon.png" alt="Bimbel Tera" width={28} height={28} />
+          <span className="text-lg font-bold text-gray-900">Bimbel Tera</span>
+        </div>
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
