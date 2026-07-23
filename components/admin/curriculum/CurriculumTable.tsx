@@ -565,7 +565,7 @@ function RenameForm({ label, defaultValue, onSave, onCancel }: {
         <button
           type="submit"
           disabled={pending || !value.trim()}
-          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           {pending ? 'Menyimpan...' : 'Simpan'}
         </button>

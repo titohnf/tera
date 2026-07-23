@@ -105,7 +105,7 @@ export default function GeneratePayslipForm({ tutors, monthOptions, defaultMonth
       <button
         type="submit"
         disabled={isPending || !tutorId || !month}
-        className="w-full bg-blue-600 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-blue-600 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
       >
         {isPending ? 'Memproses...' : 'Buat Slip Gaji'}
       </button>

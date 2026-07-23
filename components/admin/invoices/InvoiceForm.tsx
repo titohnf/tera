@@ -515,7 +515,7 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
         <button
           type="submit"
           disabled={isPending}
-          className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+          className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           {isPending ? 'Menyimpan...' : 'Simpan Invoice'}
         </button>

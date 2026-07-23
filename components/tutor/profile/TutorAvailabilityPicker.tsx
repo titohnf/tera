@@ -136,7 +136,7 @@ export default function TutorAvailabilityPicker({
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           {isPending ? 'Menyimpan...' : 'Simpan Jadwal'}
         </button>

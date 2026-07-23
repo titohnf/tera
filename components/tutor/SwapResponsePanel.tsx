@@ -49,7 +49,7 @@ export default function SwapResponsePanel({
           type="button"
           disabled={pending}
           onClick={() => respond(true)}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           Bersedia
         </button>

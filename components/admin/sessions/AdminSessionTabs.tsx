@@ -219,7 +219,7 @@ export default function AdminSessionTabs({
                     type="button"
                     onClick={saveCpUrls}
                     disabled={!cpUrlsDirty || isSavingUrls}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                   >
                     {isSavingUrls ? 'Menyimpan...' : 'Simpan Bank Soal'}
                   </button>

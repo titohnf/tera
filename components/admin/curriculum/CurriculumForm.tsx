@@ -129,7 +129,7 @@ function AddThemesForm({
       <button
         type="submit"
         disabled={isPending || themes.every(t => !t.trim())}
-        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
       >
         {isPending ? 'Menyimpan...' : `Simpan ${themes.filter(t => t.trim()).length > 1 ? `${themes.filter(t => t.trim()).length} Tema` : 'Tema'}`}
       </button>
@@ -224,7 +224,7 @@ function AddTopicsForm({ topicsAction, defaultValues, subjects, onSuccess }: {
 
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
 
-      <button type="submit" disabled={isPending || topics.every(t => !t.trim())} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
+      <button type="submit" disabled={isPending || topics.every(t => !t.trim())} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300">
         {isPending ? 'Menyimpan...' : `Simpan ${topics.filter(t => t.trim()).length > 1 ? `${topics.filter(t => t.trim()).length} Topik` : 'Topik'}`}
       </button>
     </form>
@@ -328,7 +328,7 @@ function AddCPsForm({ cpsAction, defaultValues, subjects, onSuccess }: {
 
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
 
-      <button type="submit" disabled={isPending || cps.every(c => !c.trim())} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
+      <button type="submit" disabled={isPending || cps.every(c => !c.trim())} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300">
         {isPending ? 'Menyimpan...' : `Simpan ${cps.filter(c => c.trim()).length > 1 ? `${cps.filter(c => c.trim()).length} CP` : 'CP'}`}
       </button>
     </form>
@@ -548,7 +548,7 @@ export default function CurriculumForm({ subjects, action, themesAction, topicsA
       <button
         type="submit"
         disabled={isPending}
-        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
       >
         {isPending ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan'}
       </button>

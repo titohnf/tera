@@ -103,7 +103,7 @@ export default function SalarySchemeForm({ classId, tutorId, existing }: SalaryS
       <button
         type="submit"
         disabled={pending}
-        className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+        className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
       >
         {pending ? 'Menyimpan...' : existing ? 'Perbarui Skema Gaji' : 'Buat Skema Gaji'}
       </button>

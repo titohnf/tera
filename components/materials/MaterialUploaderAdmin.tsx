@@ -54,7 +54,7 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
         <button
           onClick={handleSaveLink}
           disabled={isPending || !linkTitle.trim() || !linkUrl.trim()}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           {isPending ? 'Menyimpan...' : 'Simpan Link'}
         </button>

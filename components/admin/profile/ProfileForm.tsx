@@ -62,7 +62,7 @@ export default function ProfileForm({ fullName, phone, email, avatarUrl }: {
           <button
             type="submit"
             disabled={profilePending}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
           >
             {profilePending ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
@@ -103,7 +103,7 @@ export default function ProfileForm({ fullName, phone, email, avatarUrl }: {
           <button
             type="submit"
             disabled={pwPending}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
           >
             {pwPending ? 'Mengubah...' : 'Ubah Password'}
           </button>

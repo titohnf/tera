@@ -156,7 +156,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             disabled={isPending}
-            className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
           >
             {isPending ? 'Menambahkan...' : 'Tambah Mata Pelajaran'}
           </button>
@@ -219,7 +219,7 @@ function EditModal({ subject, onClose, onDelete, deleteDisabled, deleteTitle }: 
             <button
               type="submit"
               disabled={pending}
-              className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+              className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
             >
               {pending ? 'Menyimpan...' : 'Simpan'}
             </button>

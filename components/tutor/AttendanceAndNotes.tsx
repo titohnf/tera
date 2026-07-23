@@ -331,7 +331,7 @@ export default function AttendanceAndNotes({
         <button
           onClick={handleSave}
           disabled={isPending || isDisabled}
-          className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
         >
           {isPending ? 'Menyimpan...' : 'Simpan Presensi dan Catatan'}
         </button>

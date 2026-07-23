@@ -293,7 +293,7 @@ export default function AssessmentList({
                         <button
                           onClick={() => handleSaveEdit(assessment)}
                           disabled={isPending || !editTitle.trim()}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                         >
                           {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </button>
@@ -445,7 +445,7 @@ export default function AssessmentList({
                     <button
                       onClick={() => handleSubmitGrades(assessment.id, assessment.max_score)}
                       disabled={isPending}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                     >
                       {isPending ? 'Menyimpan...' : 'Simpan Nilai'}
                     </button>
@@ -508,7 +508,7 @@ export default function AssessmentList({
               <button
                 onClick={handleCreateAssessment}
                 disabled={isPending || !newTitle.trim()}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               >
                 {isPending ? 'Menyimpan...' : 'Simpan'}
               </button>

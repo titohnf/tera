@@ -56,7 +56,7 @@ export default function SessionStatusButtons({
           <button
             onClick={() => handleTransition('completed')}
             disabled={isPending}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
           >
             {isPending ? '...' : 'Tandai Selesai'}
           </button>

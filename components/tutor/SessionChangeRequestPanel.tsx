@@ -228,7 +228,7 @@ export default function SessionChangeRequestPanel({
               type="button"
               disabled={pending}
               onClick={submit}
-              className="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
             >
               {pending ? 'Mengirim...' : 'Kirim Pengajuan'}
             </button>
