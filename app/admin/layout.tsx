@@ -13,13 +13,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
-    .select('full_name, role')
+    .select('full_name, role, avatar_url')
     .eq('id', user.id)
     .single()
 
   if (profile?.role !== 'admin') redirect('/unauthorized')
 
-  const userData = { email: user.email ?? '', fullName: profile?.full_name ?? '' }
+  const userData = { email: user.email ?? '', fullName: profile?.full_name ?? '', avatarUrl: profile?.avatar_url ?? null }
   const notifications = await getAdminNotifications()
 
   return (

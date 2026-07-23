@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import Image from 'next/image'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import TutorSearchFilter from '@/components/admin/tutor/TutorSearchFilter'
@@ -11,12 +12,25 @@ type Tutor = {
   phone: string | null
   created_at: string
   is_active: boolean
+  avatar_url: string | null
 }
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/)
   if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?'
   return ((parts[0][0] ?? '') + (parts[parts.length - 1][0] ?? '')).toUpperCase()
+}
+
+function TutorAvatar({ name, avatarUrl, dimmed = false }: { name: string; avatarUrl: string | null; dimmed?: boolean }) {
+  return (
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${dimmed ? 'bg-gray-100' : 'bg-blue-100'}`}>
+      {avatarUrl ? (
+        <Image src={avatarUrl} alt={name} width={40} height={40} className="w-full h-full object-cover" />
+      ) : (
+        <span className={`text-sm font-semibold ${dimmed ? 'text-gray-500' : 'text-blue-700'}`}>{getInitials(name)}</span>
+      )}
+    </div>
+  )
 }
 
 function getRatioColor(ratio: number): string {
@@ -66,7 +80,7 @@ export default async function TutorPage({
   ] = await Promise.all([
     admin
       .from('profiles')
-      .select('id, full_name, email, phone, created_at, is_active')
+      .select('id, full_name, email, phone, created_at, is_active, avatar_url')
       .eq('role', 'tutor')
       .order('full_name') as unknown as Promise<{ data: Tutor[] | null }>,
     admin
@@ -283,9 +297,7 @@ export default async function TutorPage({
                     <tr key={tutor.id} className="hover:bg-slate-50 transition-colors cursor-pointer">
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/admin/users/${tutor.id}`} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-semibold text-blue-700">{getInitials(tutor.full_name)}</span>
-                          </div>
+                          <TutorAvatar name={tutor.full_name} avatarUrl={tutor.avatar_url} />
                           <p className="font-medium text-gray-900">{tutor.full_name}</p>
                         </Link>
                       </td>
@@ -348,9 +360,7 @@ export default async function TutorPage({
                     <tr key={tutor.id} className="hover:bg-slate-50 transition-colors cursor-pointer opacity-60">
                       <td className="pl-5 pr-4 py-3">
                         <Link href={`/admin/users/${tutor.id}`} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-semibold text-gray-500">{getInitials(tutor.full_name)}</span>
-                          </div>
+                          <TutorAvatar name={tutor.full_name} avatarUrl={tutor.avatar_url} dimmed />
                           <p className="font-medium text-gray-900">{tutor.full_name}</p>
                         </Link>
                       </td>

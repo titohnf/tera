@@ -1,12 +1,13 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 
 interface HeaderUserProps {
-  user: { email: string; fullName: string }
+  user: { email: string; fullName: string; avatarUrl?: string | null }
   profileHref: string
 }
 
@@ -36,8 +37,12 @@ export default function HeaderUser({ user, profileHref }: HeaderUserProps) {
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
       >
-        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">
-          {user.fullName.charAt(0).toUpperCase()}
+        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+          {user.avatarUrl ? (
+            <Image src={user.avatarUrl} alt={user.fullName} width={32} height={32} className="w-full h-full object-cover" />
+          ) : (
+            user.fullName.charAt(0).toUpperCase()
+          )}
         </div>
         <span className="text-sm font-medium text-gray-800">{user.fullName}</span>
         <svg className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

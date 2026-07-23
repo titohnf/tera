@@ -49,7 +49,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       .select(`
         id, scheduled_at, duration_minutes, status, payroll_status, location, topic, subject_id, tutor_id,
         subjects(name),
-        profiles!tutor_id(full_name),
+        profiles!tutor_id(full_name, avatar_url),
         materials(count),
         assessments(count),
         attendances(count),
@@ -63,7 +63,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
           status: string; payroll_status: string; location: string | null; topic: string | null
           subject_id: string | null; tutor_id: string | null
           subjects: { name: string } | null
-          profiles: { full_name: string } | null
+          profiles: { full_name: string; avatar_url: string | null } | null
           materials: CountRow
           assessments: CountRow
           attendances: CountRow
@@ -72,9 +72,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }>,
     admin
       .from('profiles')
-      .select('id, full_name')
+      .select('id, full_name, avatar_url')
       .eq('role', 'tutor')
-      .order('full_name') as unknown as Promise<{ data: { id: string; full_name: string }[] | null }>,
+      .order('full_name') as unknown as Promise<{ data: { id: string; full_name: string; avatar_url: string | null }[] | null }>,
     admin
       .from('subjects')
       .select('id, name')
@@ -169,6 +169,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
   // different tutor) — resolve names from the tutors list already fetched
   // for the tutor-assignment dropdown above.
   const tutorNameMap = new Map((tutors ?? []).map(t => [t.id, t.full_name]))
+  const tutorAvatarMap = new Map((tutors ?? []).map(t => [t.id, t.avatar_url]))
 
   // The tutor officially assigned to teach each subject, per class_slots —
   // this is the "regular" tutor for that subject, independent of who happens
@@ -187,8 +188,8 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
   // taught a session, since ad-hoc swaps never update class_slots.
   const classOwnerTutorId = cls.tutor_id
   const tutorSubjectSeen = new Set<string>()
-  const tutorsBySubject: { subjectName: string; tutorName: string; isMainTutor: boolean }[] = []
-  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null) {
+  const tutorsBySubject: { subjectName: string; tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean }[] = []
+  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null, tutorAvatarUrl: string | null) {
     if (!subjectId || !tutorId) return
     const key = `${subjectId}:${tutorId}`
     if (tutorSubjectSeen.has(key)) return
@@ -197,17 +198,18 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
     tutorsBySubject.push({
       subjectName: subjectMap.get(subjectId) ?? 'Mapel',
       tutorName: tutorName ?? 'Tutor',
+      tutorAvatarUrl,
       isMainTutor: assignedTutorId ? tutorId === assignedTutorId : tutorId === classOwnerTutorId,
     })
   }
   for (const slot of classSlots ?? []) {
     slot.subject_ids?.forEach((subjectId, i) => {
       const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
-      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null)
+      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null, tutorId ? tutorAvatarMap.get(tutorId) ?? null : null)
     })
   }
   for (const s of sessions ?? []) {
-    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null)
+    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null)
   }
 
   const breadcrumb = (

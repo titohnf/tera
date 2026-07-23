@@ -12,7 +12,7 @@ type SlotInfo = {
   subject_ids: string[]
 }
 
-type TutorSubjectRow = { subjectName: string; tutorName: string; isMainTutor: boolean }
+type TutorSubjectRow = { subjectName: string; tutorName: string; tutorAvatarUrl?: string | null; isMainTutor: boolean }
 
 type StudentInfo = {
   id: string
@@ -75,14 +75,14 @@ export default function ClassDetailLayout({
   // Group by subject so a substitute covering the same subject as the main
   // tutor shows up alongside them under one heading, instead of a duplicate
   // subject block of its own.
-  const tutorsBySubjectGrouped = tutorsBySubject.reduce<{ subjectName: string; tutors: { tutorName: string; isMainTutor: boolean }[] }[]>(
+  const tutorsBySubjectGrouped = tutorsBySubject.reduce<{ subjectName: string; tutors: { tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean }[] }[]>(
     (groups, row) => {
       let group = groups.find(g => g.subjectName === row.subjectName)
       if (!group) {
         group = { subjectName: row.subjectName, tutors: [] }
         groups.push(group)
       }
-      group.tutors.push({ tutorName: row.tutorName, isMainTutor: row.isMainTutor })
+      group.tutors.push({ tutorName: row.tutorName, tutorAvatarUrl: row.tutorAvatarUrl ?? null, isMainTutor: row.isMainTutor })
       return groups
     },
     []
@@ -206,9 +206,18 @@ export default function ClassDetailLayout({
                   <div key={group.subjectName} className="py-2 first:pt-0 last:pb-0 space-y-0.5">
                     <p className="text-sm font-medium text-gray-800">{group.subjectName}</p>
                     {group.tutors.map(t => (
-                      <div key={t.tutorName} className="flex items-center justify-between mt-0.5">
+                      <div key={t.tutorName} className="flex items-center justify-between mt-0.5 gap-2">
                         <span className="text-sm text-gray-400">{t.isMainTutor ? 'Utama' : 'Pengganti'}</span>
-                        <span className="text-sm text-gray-700 text-right">{t.tutorName}</span>
+                        <span className="flex items-center gap-1.5">
+                          {t.tutorAvatarUrl ? (
+                            <img src={t.tutorAvatarUrl} alt={t.tutorName} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                              <span className="text-[9px] font-semibold text-blue-700">{getInitials(t.tutorName)}</span>
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-700">{t.tutorName}</span>
+                        </span>
                       </div>
                     ))}
                   </div>

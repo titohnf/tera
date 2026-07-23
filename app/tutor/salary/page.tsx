@@ -276,8 +276,15 @@ function groupByMonth(breakdown: SalaryBreakdownItem[]): RekapMonthBreakdown[] {
 async function SkemaGajiTab({ userId }: { userId: string }) {
   const supabase = createAdminClient()
 
+  type SalaryClassRow = { id: string; name: string; class_type: string | null; level: string | null; jenis: string | null; is_active: boolean }
+  const classFields = 'id, name, class_type, level, jenis, is_active'
+
   const [
-    { data: classes },
+    { data: ownedClasses },
+    // Classes where this tutor teaches a subject via class_slots but isn't
+    // classes.tutor_id (co-tutors on multi-subject/rotating classes — see
+    // the same union pattern in app/tutor/classes/page.tsx)
+    { data: assignedSlots },
     { data: schemes },
     { data: activePeriod },
     { data: billingPeriods },
@@ -285,11 +292,13 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
   ] = await Promise.all([
     supabase
       .from('classes')
-      .select('id, name, class_type, level, jenis, is_active')
+      .select(classFields)
       .eq('tutor_id', userId)
-      .order('name') as unknown as Promise<{
-        data: { id: string; name: string; class_type: string | null; level: string | null; jenis: string | null; is_active: boolean }[] | null
-      }>,
+      .order('name') as unknown as Promise<{ data: SalaryClassRow[] | null }>,
+    supabase
+      .from('class_slots')
+      .select('class_id')
+      .contains('tutor_ids', [userId]) as unknown as Promise<{ data: { class_id: string }[] | null }>,
     supabase
       .from('salary_schemes')
       .select('*')
@@ -306,6 +315,16 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
         data: (BillingRate & { period_id: string })[] | null
       }>,
   ])
+
+  const ownedClassIds = new Set((ownedClasses ?? []).map(c => c.id))
+  const assignedClassIds = [...new Set((assignedSlots ?? []).map(s => s.class_id))]
+    .filter(id => !ownedClassIds.has(id))
+
+  const { data: assignedClassesRaw } = assignedClassIds.length > 0
+    ? await supabase.from('classes').select(classFields).in('id', assignedClassIds) as unknown as { data: SalaryClassRow[] | null }
+    : { data: [] as SalaryClassRow[] }
+
+  const classes: SalaryClassRow[] = [...(ownedClasses ?? []), ...(assignedClassesRaw ?? [])]
 
   const activeBillingPeriod = billingPeriods?.[0] ?? null
   const activeBillingRates = activeBillingPeriod
@@ -344,7 +363,7 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
         </div>
         {rows.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-10 px-5">
-            Kamu belum ditugaskan sebagai tutor utama di kelas manapun.
+            Kamu belum ditugaskan di kelas manapun.
           </p>
         ) : (
           <div className="divide-y divide-gray-100">

@@ -182,13 +182,11 @@ export default async function UserDetailPage({
   let classMonthSessionMap: Map<string, number> = new Map()
 
   if (user.role === 'tutor') {
-    const [classesRes, subjectsRes, payslipsRes, availabilityRes] = await Promise.all([
-      admin
-        .from('classes')
-        .select('id, name, level, is_active, schedule_days, schedule_time, class_subjects(subjects(name))')
-        .eq('tutor_id', userId)
-        .order('is_active', { ascending: false })
-        .order('created_at', { ascending: false }) as unknown as Promise<{ data: ClassRow[] | null }>,
+    const [primaryClassesRes, slotRowsRes, subjectsRes, payslipsRes, availabilityRes] = await Promise.all([
+      admin.from('classes').select('id').eq('tutor_id', userId) as unknown as Promise<{ data: { id: string }[] | null }>,
+      // class_slots: a tutor can also be assigned to a class via a rotating/secondary
+      // slot without being classes.tutor_id (which only stores the first slot's tutor)
+      admin.from('class_slots').select('class_id, tutor_id, tutor_ids') as unknown as Promise<{ data: { class_id: string; tutor_id: string | null; tutor_ids: string[] | null }[] | null }>,
       admin
         .from('tutor_subjects')
         .select('level, subjects(id, name)')
@@ -205,10 +203,24 @@ export default async function UserDetailPage({
         .order('day_of_week') as unknown as Promise<{ data: AvailabilityRow[] | null }>,
     ])
 
-    taughtClasses = classesRes.data ?? []
     tutorSubjects = subjectsRes.data ?? []
     tutorPayslips = payslipsRes.data ?? []
     tutorAvailability = availabilityRes.data ?? []
+
+    const slotClassIds = (slotRowsRes.data ?? [])
+      .filter(s => s.tutor_id === userId || (s.tutor_ids ?? []).includes(userId))
+      .map(s => s.class_id)
+    const taughtClassIds = [...new Set([...(primaryClassesRes.data ?? []).map(c => c.id), ...slotClassIds])]
+
+    if (taughtClassIds.length > 0) {
+      const { data } = await admin
+        .from('classes')
+        .select('id, name, level, is_active, schedule_days, schedule_time, class_subjects(subjects(name))')
+        .in('id', taughtClassIds)
+        .order('is_active', { ascending: false })
+        .order('created_at', { ascending: false }) as unknown as { data: ClassRow[] | null }
+      taughtClasses = data ?? []
+    }
 
     const classIds = taughtClasses.map(c => c.id)
 

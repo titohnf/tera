@@ -23,7 +23,7 @@ export default async function TutorLayout({ children }: { children: React.ReactN
     redirect('/unauthorized')
   }
 
-  const userData = { email: user.email ?? '', fullName: profile?.full_name ?? '' }
+  const userData = { email: user.email ?? '', fullName: profile?.full_name ?? '', avatarUrl: profile?.avatar_url ?? null }
   const notifications = await getTutorNotifications(user.id)
 
   return (
