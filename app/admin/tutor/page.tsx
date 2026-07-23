@@ -4,6 +4,7 @@ import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import TutorSearchFilter from '@/components/admin/tutor/TutorSearchFilter'
 import { getWorkloadLevel, WORKLOAD_CONFIG } from '@/lib/tutorWorkload'
+import { getAvatarColor } from '@/lib/avatarColor'
 
 type Tutor = {
   id: string
@@ -22,12 +23,13 @@ function getInitials(name: string) {
 }
 
 function TutorAvatar({ name, avatarUrl, dimmed = false }: { name: string; avatarUrl: string | null; dimmed?: boolean }) {
+  const fallbackColor = dimmed ? 'bg-gray-100' : getAvatarColor(name)
   return (
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${dimmed ? 'bg-gray-100' : 'bg-blue-100'}`}>
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${avatarUrl ? '' : fallbackColor}`}>
       {avatarUrl ? (
         <Image src={avatarUrl} alt={name} width={40} height={40} className="w-full h-full object-cover" />
       ) : (
-        <span className={`text-sm font-semibold ${dimmed ? 'text-gray-500' : 'text-blue-700'}`}>{getInitials(name)}</span>
+        <span className={`text-sm font-semibold ${dimmed ? 'text-gray-500' : 'text-white'}`}>{getInitials(name)}</span>
       )}
     </div>
   )

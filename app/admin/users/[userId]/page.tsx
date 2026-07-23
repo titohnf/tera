@@ -65,7 +65,7 @@ type ClassRow = {
   is_active: boolean
   schedule_days?: number[]
   schedule_time?: string | null
-  class_subjects?: { subjects: { name: string } | null }[]
+  class_subjects?: { subject_id: string; subjects: { name: string } | null }[]
 }
 
 type SessionRow = {
@@ -180,13 +180,19 @@ export default async function UserDetailPage({
   let historicalSessionStats: Map<string, { count: number; firstDate: string; lastDate: string }> = new Map()
   let classStudentCountMap: Map<string, number> = new Map()
   let classMonthSessionMap: Map<string, number> = new Map()
+  // This tutor's own class_slots rows only (day/time/subject actually assigned
+  // to them) — used to render the weekly schedule chart without leaking a
+  // co-tutor's day/subject/time onto this tutor's row.
+  let mySlots: { class_id: string; day_of_week: number | null; start_time: string | null; subject_ids: string[]; tutor_ids: string[] | null; tutor_id: string | null }[] = []
 
   if (user.role === 'tutor') {
     const [primaryClassesRes, slotRowsRes, subjectsRes, payslipsRes, availabilityRes] = await Promise.all([
       admin.from('classes').select('id').eq('tutor_id', userId) as unknown as Promise<{ data: { id: string }[] | null }>,
       // class_slots: a tutor can also be assigned to a class via a rotating/secondary
       // slot without being classes.tutor_id (which only stores the first slot's tutor)
-      admin.from('class_slots').select('class_id, tutor_id, tutor_ids') as unknown as Promise<{ data: { class_id: string; tutor_id: string | null; tutor_ids: string[] | null }[] | null }>,
+      admin.from('class_slots').select('class_id, tutor_id, tutor_ids, day_of_week, start_time, subject_ids') as unknown as Promise<{
+        data: { class_id: string; tutor_id: string | null; tutor_ids: string[] | null; day_of_week: number | null; start_time: string | null; subject_ids: string[] }[] | null
+      }>,
       admin
         .from('tutor_subjects')
         .select('level, subjects(id, name)')
@@ -207,15 +213,14 @@ export default async function UserDetailPage({
     tutorPayslips = payslipsRes.data ?? []
     tutorAvailability = availabilityRes.data ?? []
 
-    const slotClassIds = (slotRowsRes.data ?? [])
-      .filter(s => s.tutor_id === userId || (s.tutor_ids ?? []).includes(userId))
-      .map(s => s.class_id)
+    mySlots = (slotRowsRes.data ?? []).filter(s => s.tutor_id === userId || (s.tutor_ids ?? []).includes(userId))
+    const slotClassIds = mySlots.map(s => s.class_id)
     const taughtClassIds = [...new Set([...(primaryClassesRes.data ?? []).map(c => c.id), ...slotClassIds])]
 
     if (taughtClassIds.length > 0) {
       const { data } = await admin
         .from('classes')
-        .select('id, name, level, is_active, schedule_days, schedule_time, class_subjects(subjects(name))')
+        .select('id, name, level, is_active, schedule_days, schedule_time, class_subjects(subject_id, subjects(name))')
         .in('id', taughtClassIds)
         .order('is_active', { ascending: false })
         .order('created_at', { ascending: false }) as unknown as { data: ClassRow[] | null }
@@ -453,14 +458,30 @@ export default async function UserDetailPage({
     classColorMap.set(cls.id, CLASS_PALETTE[i % CLASS_PALETTE.length])
   })
 
-  const schedClassByDay = new Map<number, { classId: string; subjectName: string; startMin: number | null }[]>()
-  for (const cls of taughtClasses.filter(c => c.is_active)) {
-    for (const day of cls.schedule_days ?? []) {
-      if (!schedClassByDay.has(day)) schedClassByDay.set(day, [])
-      const startMin = cls.schedule_time ? timeToMinutes(cls.schedule_time) : null
-      const subjectName = cls.class_subjects?.[0]?.subjects?.name ?? cls.name
-      schedClassByDay.get(day)!.push({ classId: cls.id, subjectName, startMin })
+  // Subject names, keyed by subject_id, pooled from every taught class's
+  // class_subjects — used to resolve mySlots.subject_ids (a slot only stores
+  // ids, not names).
+  const subjectNameById = new Map<string, string>()
+  for (const cls of taughtClasses) {
+    for (const cs of cls.class_subjects ?? []) {
+      if (cs.subjects?.name) subjectNameById.set(cs.subject_id, cs.subjects.name)
     }
+  }
+
+  const activeClassIdSet = new Set(taughtClasses.filter(c => c.is_active).map(c => c.id))
+  const schedClassByDay = new Map<number, { classId: string; subjectName: string; startMin: number | null }[]>()
+  for (const slot of mySlots) {
+    if (slot.day_of_week === null || !activeClassIdSet.has(slot.class_id)) continue
+    // tutor_ids[i] pairs with subject_ids[i] — pick this tutor's own subject
+    // rather than defaulting to the slot's first subject, so a co-tutor's
+    // rotating mapel never bleeds onto this tutor's row.
+    const tutorIds = (slot.tutor_ids ?? []).length > 0 ? slot.tutor_ids! : [slot.tutor_id]
+    const myIndex = tutorIds.indexOf(userId)
+    const subjectId = myIndex >= 0 ? slot.subject_ids?.[myIndex] ?? slot.subject_ids?.[0] : slot.subject_ids?.[0]
+    const subjectName = (subjectId && subjectNameById.get(subjectId)) ?? 'Kelas'
+    const startMin = slot.start_time ? timeToMinutes(slot.start_time) : null
+    if (!schedClassByDay.has(slot.day_of_week)) schedClassByDay.set(slot.day_of_week, [])
+    schedClassByDay.get(slot.day_of_week)!.push({ classId: slot.class_id, subjectName, startMin })
   }
 
   const schedDays = [0, 1, 2, 3, 4, 5, 6].filter(

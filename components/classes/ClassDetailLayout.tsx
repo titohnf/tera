@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { getAvatarColor } from '@/lib/avatarColor'
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu', 0: 'Minggu',
@@ -212,8 +213,8 @@ export default function ClassDetailLayout({
                           {t.tutorAvatarUrl ? (
                             <img src={t.tutorAvatarUrl} alt={t.tutorName} className="w-5 h-5 rounded-full object-cover shrink-0" />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                              <span className="text-[9px] font-semibold text-blue-700">{getInitials(t.tutorName)}</span>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${getAvatarColor(t.tutorName)}`}>
+                              <span className="text-[9px] font-semibold text-white">{getInitials(t.tutorName)}</span>
                             </div>
                           )}
                           <span className="text-sm text-gray-700">{t.tutorName}</span>

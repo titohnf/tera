@@ -1,33 +1,12 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import AvailabilityFilter from '@/components/admin/availability/AvailabilityFilter'
+import TutorScheduleTable from '@/components/admin/availability/TutorScheduleTable'
+import Avatar from '@/components/admin/availability/Avatar'
 
 const DAY_NAMES: Record<string, string> = {
   '0': 'Minggu', '1': 'Senin', '2': 'Selasa', '3': 'Rabu',
   '4': 'Kamis', '5': 'Jumat', '6': 'Sabtu',
-}
-
-function getInitials(name: string | null): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?'
-  return ((parts[0][0] ?? '') + (parts[parts.length - 1][0] ?? '')).toUpperCase()
-}
-
-function Avatar({ name, avatarUrl, size = 40 }: { name: string | null; avatarUrl: string | null; size?: number }) {
-  return (
-    <div
-      className="rounded-full bg-blue-100 flex items-center justify-center shrink-0 overflow-hidden"
-      style={{ width: size, height: size }}
-    >
-      {avatarUrl ? (
-        <Image src={avatarUrl} alt={name ?? ''} width={size} height={size} className="w-full h-full object-cover" />
-      ) : (
-        <span className="text-sm font-semibold text-blue-700">{getInitials(name)}</span>
-      )}
-    </div>
-  )
 }
 
 type TutorResult = {
@@ -35,7 +14,7 @@ type TutorResult = {
   full_name: string
   avatar_url: string | null
   classSummary: string[]
-  declared: string[]
+  declared: { name: string; levels: string }[]
   availableSchedule: { day: string; time: string; startMin: number; endMin: number }[]
   outcome: 'match' | 'time_mismatch' | 'excluded'
 }
@@ -73,11 +52,19 @@ export default async function AvailabilityPage({
   // so eligibility must be scoped to the specific subject(s) a tutor actually teaches in that class
   const { data: classSlotRows } = await admin
     .from('class_slots')
-    .select('class_id, tutor_id, tutor_ids, subject_ids')
+    .select('class_id, tutor_id, tutor_ids, subject_ids, day_of_week, start_time')
 
   const subjectsById = new Map((subjects ?? []).map(s => [s.id, s]))
   const classIdsByTutor = new Map<string, Set<string>>()
   const subjectIdsByTutor = new Map<string, Set<string>>()
+  const activeClassesById = new Map((activeClasses ?? []).map((c: any) => [c.id, c]))
+  // Classes a tutor teaches on a given weekday — used to show a per-day class
+  // count/tooltip on the declared weekly-availability chips.
+  const classesByDayByTutor = new Map<string, Map<string, Map<string, string>>>()
+  // Per-tutor chart blocks (day + this tutor's own subject + start time) for
+  // the full weekly-schedule popup — index-paired so a co-tutor's rotating
+  // mapel/time never bleeds onto this tutor's block.
+  const chartBlocksByTutor = new Map<string, { day: number; classId: string; subjectName: string; startMin: number | null }[]>()
 
   function addTaughtClass(tutorId: string | null | undefined, classId: string) {
     if (!tutorId) return
@@ -89,6 +76,16 @@ export default async function AvailabilityPage({
     if (!subjectIdsByTutor.has(tutorId)) subjectIdsByTutor.set(tutorId, new Set())
     for (const sid of subjectIds) subjectIdsByTutor.get(tutorId)!.add(sid)
   }
+  function addTaughtClassOnDay(tutorId: string | null | undefined, day: number | null | undefined, classId: string) {
+    if (!tutorId || day === null || day === undefined) return
+    if (!activeClassesById.has(classId)) return
+    const className = activeClassesById.get(classId)?.name ?? 'Kelas'
+    if (!classesByDayByTutor.has(tutorId)) classesByDayByTutor.set(tutorId, new Map())
+    const dayMap = classesByDayByTutor.get(tutorId)!
+    const dayKey = String(day)
+    if (!dayMap.has(dayKey)) dayMap.set(dayKey, new Map())
+    dayMap.get(dayKey)!.set(classId, className)
+  }
 
   const classIdsWithSlots = new Set((classSlotRows ?? []).map((s: any) => s.class_id))
   for (const c of activeClasses ?? []) {
@@ -99,18 +96,27 @@ export default async function AvailabilityPage({
     }
   }
   for (const slot of classSlotRows ?? []) {
+    if (!activeClassesById.has((slot as any).class_id)) continue
     // tutor_ids[i] teaches subject_ids[i] — index-paired, not a cross product
     const tutorIds: (string | null)[] = ((slot as any).tutor_ids ?? []).length > 0
       ? (slot as any).tutor_ids
       : [(slot as any).tutor_id]
     const subjectIds: string[] = (slot as any).subject_ids ?? []
+    const day: number | null = (slot as any).day_of_week
+    const startMin = (slot as any).start_time ? parseTimeToMinutes((slot as any).start_time.slice(0, 5)) : null
     tutorIds.forEach((tid, i) => {
       if (!tid) return
       addTaughtClass(tid, (slot as any).class_id)
       addTaughtSubjects(tid, subjectIds[i] ? [subjectIds[i]] : subjectIds)
+      addTaughtClassOnDay(tid, day, (slot as any).class_id)
+      if (day !== null) {
+        const subjectId = subjectIds[i] ?? subjectIds[0]
+        const subjectName = (subjectId && subjectsById.get(subjectId)?.name) ?? 'Kelas'
+        if (!chartBlocksByTutor.has(tid)) chartBlocksByTutor.set(tid, [])
+        chartBlocksByTutor.get(tid)!.push({ day, classId: (slot as any).class_id, subjectName, startMin })
+      }
     })
   }
-  const activeClassesById = new Map((activeClasses ?? []).map((c: any) => [c.id, c]))
 
   // tutor_subjects: what tutors have declared they can teach (subject + level combos)
   const { data: tutorSubjectRows } = await admin
@@ -187,15 +193,29 @@ export default async function AvailabilityPage({
     classesByTutor.set(tutorId, [...classIds].map(id => activeClassesById.get(id)).filter(Boolean))
   }
 
-  // Map tutor declared subjects for display (e.g. "Matematika (SMP)")
-  const declaredSubjectsByTutor = new Map<string, string[]>()
+  // Map tutor declared subjects for display, grouped by subject with all its
+  // levels combined (e.g. "Matematika (SD, SMP, SMA, Umum)") instead of one
+  // entry per subject+level pair.
+  const LEVEL_ORDER = ['SD', 'SMP', 'SMA', 'Umum']
+  const declaredLevelsByTutorSubject = new Map<string, Map<string, Set<string>>>()
   for (const ts of tutorSubjectRows ?? []) {
     const tid = (ts as any).tutor_id
     const name = (ts as any).subjects?.name
     if (!name) continue
-    if (!declaredSubjectsByTutor.has(tid)) declaredSubjectsByTutor.set(tid, [])
-    const label = (ts as any).level ? `${name} (${(ts as any).level})` : name
-    declaredSubjectsByTutor.get(tid)!.push(label)
+    if (!declaredLevelsByTutorSubject.has(tid)) declaredLevelsByTutorSubject.set(tid, new Map())
+    const subjectLevels = declaredLevelsByTutorSubject.get(tid)!
+    if (!subjectLevels.has(name)) subjectLevels.set(name, new Set())
+    if ((ts as any).level) subjectLevels.get(name)!.add((ts as any).level)
+  }
+  const declaredSubjectsByTutor = new Map<string, { name: string; levels: string }[]>()
+  for (const [tid, subjectLevels] of declaredLevelsByTutorSubject) {
+    const entries = [...subjectLevels.entries()].map(([name, levels]) => ({
+      name,
+      levels: levels.size > 0
+        ? [...levels].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b)).join(', ')
+        : '',
+    }))
+    declaredSubjectsByTutor.set(tid, entries)
   }
 
   // Map tutor declared availability per day
@@ -276,13 +296,44 @@ export default async function AvailabilityPage({
   const subjectName = subject_id ? (subjects ?? []).find(s => s.id === subject_id)?.name ?? null : null
 
   // Build full schedule overview for all tutors (used when no filter)
-  const allTutorSchedules = (allTutors ?? []).map(t => ({
-    id: t.id,
-    full_name: t.full_name,
-    avatar_url: t.avatar_url ?? null,
-    declared: declaredSubjectsByTutor.get(t.id) ?? [],
-    schedule: availabilityByTutor.get(t.id) ?? [],
-  }))
+  const allTutorSchedules = (allTutors ?? []).map(t => {
+    const declaredEntries = (availabilityByTutor.get(t.id) ?? []).map(s => {
+      const classesOnDay = classesByDayByTutor.get(t.id)?.get(s.day)
+      return {
+        day: s.day,
+        time: s.time as string | null,
+        classCount: classesOnDay?.size ?? 0,
+        classNames: classesOnDay ? [...classesOnDay.values()] : [],
+        outsideSchedule: false,
+      }
+    })
+    const declaredDaySet = new Set(declaredEntries.map(e => e.day))
+    // A tutor can be assigned to teach a class on a day they never declared as
+    // available (class_slots is set independently of tutor_availability) —
+    // surface those too instead of silently omitting them.
+    const extraEntries = [...(classesByDayByTutor.get(t.id) ?? new Map())]
+      .filter(([day]) => !declaredDaySet.has(day))
+      .map(([day, classes]) => ({
+        day,
+        time: null,
+        classCount: classes.size,
+        classNames: [...classes.values()],
+        outsideSchedule: true,
+      }))
+
+    return {
+      id: t.id,
+      full_name: t.full_name,
+      avatar_url: t.avatar_url ?? null,
+      activeClassCount: classIdsByTutor.get(t.id)?.size ?? 0,
+      declared: declaredSubjectsByTutor.get(t.id) ?? [],
+      schedule: [...declaredEntries, ...extraEntries],
+      availability: (availabilityByTutor.get(t.id) ?? []).map(s => ({
+        day: Number(s.day), startTime: minutesToTimeStr(s.startMin), endTime: minutesToTimeStr(s.endMin),
+      })),
+      chartClasses: chartBlocksByTutor.get(t.id) ?? [],
+    }
+  })
 
   return (
     <div>
@@ -391,100 +442,8 @@ function parseTimeToMinutes(time: string): number {
   return h * 60 + (m ?? 0)
 }
 
-const WEEK_DAYS = [
-  { value: '1', label: 'Sen' },
-  { value: '2', label: 'Sel' },
-  { value: '3', label: 'Rab' },
-  { value: '4', label: 'Kam' },
-  { value: '5', label: 'Jum' },
-  { value: '6', label: 'Sab' },
-  { value: '0', label: 'Min' },
-]
-
-type TutorScheduleRow = {
-  id: string
-  full_name: string
-  avatar_url: string | null
-  declared: string[]
-  schedule: { day: string; time: string }[]
-}
-
-function TutorScheduleTable({ tutors }: { tutors: TutorScheduleRow[] }) {
-  const withSchedule = tutors.filter(t => t.schedule.length > 0)
-  const withoutSchedule = tutors.filter(t => t.schedule.length === 0)
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50">
-          <p className="text-base font-semibold text-gray-700">Jadwal Mingguan Tutor</p>
-          <p className="text-xs text-gray-400 mt-0.5">Berdasarkan jadwal yang dideklarasikan tutor di profil mereka</p>
-        </div>
-
-        {withSchedule.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-400">
-            Belum ada tutor yang mengisi jadwal ketersediaan.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left px-5 py-2.5 font-medium text-gray-500 w-48">Tutor</th>
-                  {WEEK_DAYS.map(d => (
-                    <th key={d.value} className="px-2 py-2.5 font-medium text-gray-500 text-center w-20">{d.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {withSchedule.map(tutor => {
-                  const schedMap = new Map(tutor.schedule.map(s => [s.day, s.time]))
-                  return (
-                    <tr key={tutor.id} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-3 align-top">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar name={tutor.full_name} avatarUrl={tutor.avatar_url} size={36} />
-                          <div>
-                            <p className="font-medium text-gray-800">{tutor.full_name}</p>
-                            {tutor.declared.length > 0 && (
-                              <p className="text-gray-400 mt-0.5 leading-relaxed">{tutor.declared.join(', ')}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      {WEEK_DAYS.map(d => {
-                        const time = schedMap.get(d.value)
-                        return (
-                          <td key={d.value} className="px-2 py-3 text-center align-top">
-                            {time ? (
-                              <span className="inline-block bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 leading-tight whitespace-nowrap">
-                                {time}
-                              </span>
-                            ) : (
-                              <span className="text-gray-200">—</span>
-                            )}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {withoutSchedule.length > 0 && (
-        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-5 py-4">
-          <p className="text-xs font-medium text-gray-500 mb-2">Belum mengisi jadwal ({withoutSchedule.length})</p>
-          <div className="flex flex-wrap gap-2">
-            {withoutSchedule.map(t => (
-              <span key={t.id} className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded px-2 py-1">{t.full_name}</span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+function minutesToTimeStr(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
 }
