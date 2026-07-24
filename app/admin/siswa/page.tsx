@@ -547,7 +547,7 @@ export default async function SiswaPage({
                   </th>
                   <th className="px-4 py-3 text-left hidden md:table-cell">
                     <a href={sortUrl('kelas')} className="inline-flex items-center hover:text-gray-700">
-                      Kelompok<SortIcon col="kelas" />
+                      Kelas<SortIcon col="kelas" />
                     </a>
                   </th>
                   <th className="px-4 py-3 text-left hidden lg:table-cell">
