@@ -93,7 +93,7 @@ export default function ClassDetailLayout({
   }
 
   const infoRows = [
-    { label: 'Tipe', value: classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : '—' },
+    { label: 'Tipe', value: classType === 'group' ? 'Grup' : classType === 'private' ? 'Privat' : classType === 'yayasan' ? 'Yayasan' : '—' },
     { label: 'Jenjang', value: level ?? '—' },
     { label: 'Jenis', value: jenisLabel },
     { label: 'Semester', value: semesterLabel },

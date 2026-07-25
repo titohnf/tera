@@ -331,7 +331,7 @@ export default async function SessionPage({
     : { data: [] }
 
   const date = new Date(session.scheduled_at)
-  const isPrivateClass = session.classes?.class_type === 'private'
+  const allowCustomTopic = session.classes?.class_type === 'private' || session.classes?.class_type === 'yayasan'
 
   return (
     <div>
@@ -401,7 +401,7 @@ export default async function SessionPage({
               }
               saveTopicAction={updateSessionTopicTutor}
               saveCpUrlsAction={saveSessionCpUrlsTutor}
-              isPrivateClass={isPrivateClass}
+              isPrivateClass={allowCustomTopic}
               saveCustomTopicAction={saveCustomTopicTutor}
               customTheme={session.custom_theme}
               customLearningOutcomes={session.custom_learning_outcomes ?? []}
