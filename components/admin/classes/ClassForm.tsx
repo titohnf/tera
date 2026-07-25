@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState, useMemo, useEffect, useRef } from 'react'
-import type { ActionState } from '@/lib/actions/admin/classes'
+import { getTutorsWithMeta, type ActionState, type TutorWithMeta } from '@/lib/actions/admin/classes'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
 
@@ -12,12 +12,7 @@ const DAYS = [1, 2, 3, 4, 5, 6, 0]
 const JENJANG_OPTIONS = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum'] as const
 const FOKUS_OPTIONS = ['TKA/US', 'UTBK', 'OSN'] as const
 
-export type TutorWithMeta = {
-  id: string
-  full_name: string
-  subjects: { subjectId: string; level: string }[]
-  availability: { day_of_week: number; start_time: string; end_time: string }[]
-}
+export type { TutorWithMeta }
 
 type Student = { id: string; full_name: string; level: string | null; grade: number | null }
 type Subject = { id: string; name: string }
@@ -188,6 +183,7 @@ const MAX_ROTATING_SUBJECTS = 4
 // ── One rotation row: a mapel paired with its own tutor picker ──
 function RotationRow({
   rowKey, subjectId, tutorId, subjects, tutors, jenjang, day, time, label, onSubjectChange, onTutorChange, onRemove,
+  onRefreshTutors, refreshingTutors,
 }: {
   rowKey: string
   subjectId: string | null
@@ -201,6 +197,8 @@ function RotationRow({
   onSubjectChange: (id: string | null) => void
   onTutorChange: (id: string | null) => void
   onRemove?: () => void
+  onRefreshTutors: () => void
+  refreshingTutors: boolean
 }) {
   const availableTutors = useMemo(() => {
     return tutors.filter(t => {
@@ -224,14 +222,25 @@ function RotationRow({
       {!subjectId && <p className="text-xs text-red-500">Wajib pilih mata pelajaran</p>}
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-          Tutor
-          {(subjectId || day !== null) && (
-            <span className="ml-1 normal-case font-normal text-gray-400">
-              — {availableTutors.length} tersedia
-            </span>
-          )}
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Tutor
+            {(subjectId || day !== null) && (
+              <span className="ml-1 normal-case font-normal text-gray-400">
+                — {availableTutors.length} tersedia
+              </span>
+            )}
+          </label>
+          <button type="button" onClick={onRefreshTutors} disabled={refreshingTutors}
+            title="Muat ulang data tutor (jadwal/ketersediaan terbaru)"
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-wait"
+          >
+            <svg className={`w-3.5 h-3.5 ${refreshingTutors ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {refreshingTutors ? 'Memuat...' : 'Refresh'}
+          </button>
+        </div>
         {availableTutors.length === 0 ? (
           <div className="border border-slate-300 rounded-lg px-4 py-3 text-sm text-gray-400 bg-gray-50">
             {!subjectId && day === null
@@ -276,7 +285,7 @@ function RotationRow({
 
 // ── Slot sub-component ──
 function SlotSegment({
-  index, slot, subjects, tutors, jenjang, onChange,
+  index, slot, subjects, tutors, jenjang, onChange, onRefreshTutors, refreshingTutors,
 }: {
   index: number
   slot: SlotState
@@ -284,6 +293,8 @@ function SlotSegment({
   tutors: TutorWithMeta[]
   jenjang: string
   onChange: (s: SlotState) => void
+  onRefreshTutors: () => void
+  refreshingTutors: boolean
 }) {
   const [dayOpen, setDayOpen] = useState(false)
   const dayRef = useRef<HTMLDivElement>(null)
@@ -405,6 +416,8 @@ function SlotSegment({
               onSubjectChange={id => setSubjectAt(si, id)}
               onTutorChange={id => setTutorAt(si, id)}
               onRemove={si > 0 ? () => removeAt(si) : undefined}
+              onRefreshTutors={onRefreshTutors}
+              refreshingTutors={refreshingTutors}
             />
           ))}
           {slot.subjectIds.length < MAX_ROTATING_SUBJECTS && (
@@ -425,6 +438,19 @@ export default function ClassForm({
   action, tutors, subjects, students, defaultValues, showActiveToggle, showStudentPicker, enrolledCount, enrolledLevels,
 }: ClassFormProps) {
   const [state, formAction, pending] = useActionState(action, null)
+
+  // Tutor list — refreshable so admins can pull in tutor updates (e.g. new
+  // availability) mid-form without losing their progress on the wizard
+  const [tutorsList, setTutorsList] = useState(tutors)
+  const [refreshingTutors, setRefreshingTutors] = useState(false)
+  async function refreshTutors() {
+    setRefreshingTutors(true)
+    try {
+      setTutorsList(await getTutorsWithMeta())
+    } finally {
+      setRefreshingTutors(false)
+    }
+  }
 
   // Dates, semester & duration
   const today = new Date().toISOString().split('T')[0]
@@ -878,9 +904,11 @@ export default function ClassForm({
       {slots.length > 0 && (
         <div className="space-y-4">
           {slots.map((slot, i) => (
-            <SlotSegment key={i} index={i} slot={slot} subjects={subjects} tutors={tutors}
+            <SlotSegment key={i} index={i} slot={slot} subjects={subjects} tutors={tutorsList}
               jenjang={jenjang}
               onChange={s => updateSlot(i, s)}
+              onRefreshTutors={refreshTutors}
+              refreshingTutors={refreshingTutors}
             />
           ))}
         </div>

@@ -8,6 +8,13 @@ import { syncPrivateClassDraftInvoices } from './invoices'
 
 export type ActionState = { error: string } | null
 
+export type TutorWithMeta = {
+  id: string
+  full_name: string
+  subjects: { subjectId: string; level: string }[]
+  availability: { day_of_week: number; start_time: string; end_time: string }[]
+}
+
 async function verifyAdmin() {
   const user = await getUser()
   if (!user) return null
@@ -15,6 +22,42 @@ async function verifyAdmin() {
   const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return null
   return { user, admin }
+}
+
+export async function getTutorsWithMeta(): Promise<TutorWithMeta[]> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return []
+
+  const [
+    { data: tutorRows },
+    { data: tutorSubjectRows },
+    { data: availabilityRows },
+  ] = await Promise.all([
+    ctx.admin.from('profiles').select('id, full_name').eq('role', 'tutor').order('full_name'),
+    ctx.admin.from('tutor_subjects').select('tutor_id, subject_id, level'),
+    ctx.admin.from('tutor_availability').select('tutor_id, day_of_week, start_time, end_time'),
+  ])
+
+  const subjectsByTutor = new Map<string, { subjectId: string; level: string }[]>()
+  for (const ts of tutorSubjectRows ?? []) {
+    const tid = (ts as any).tutor_id
+    if (!subjectsByTutor.has(tid)) subjectsByTutor.set(tid, [])
+    subjectsByTutor.get(tid)!.push({ subjectId: (ts as any).subject_id, level: (ts as any).level ?? '' })
+  }
+
+  const availByTutor = new Map<string, { day_of_week: number; start_time: string; end_time: string }[]>()
+  for (const a of availabilityRows ?? []) {
+    const tid = (a as any).tutor_id
+    if (!availByTutor.has(tid)) availByTutor.set(tid, [])
+    availByTutor.get(tid)!.push({ day_of_week: (a as any).day_of_week, start_time: (a as any).start_time, end_time: (a as any).end_time })
+  }
+
+  return (tutorRows ?? []).map(t => ({
+    id: t.id,
+    full_name: t.full_name,
+    subjects: subjectsByTutor.get(t.id) ?? [],
+    availability: availByTutor.get(t.id) ?? [],
+  }))
 }
 
 export async function createClass(prevState: ActionState, formData: FormData): Promise<ActionState> {
