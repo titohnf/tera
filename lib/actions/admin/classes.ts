@@ -102,6 +102,39 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const allSubjectIds = [...new Set(slots.flatMap(s => s.subjectIds))]
   const scheduleDays = [...new Set(slots.map(s => s.day).filter((d): d is number => d !== null))]
 
+  // Catch the class-creation duplicate the availability page kept surfacing:
+  // same student(s), same subject, an active class, and an overlapping date
+  // range already exists — almost always means the admin meant to edit that
+  // class (e.g. change its schedule time) but created a brand new one
+  // instead. Block it up front rather than silently double-booking the tutor
+  // and student with two near-identical classes.
+  if (studentIds.length > 0) {
+    const { data: existingEnrollments } = await ctx.admin
+      .from('class_students')
+      .select('class_id, classes!inner(id, name, is_active, start_date, end_date, class_subjects(subject_id))')
+      .in('student_id', studentIds)
+      .eq('is_active', true)
+      .eq('classes.is_active', true) as unknown as {
+        data: {
+          class_id: string
+          classes: { id: string; name: string; is_active: boolean; start_date: string | null; end_date: string | null; class_subjects: { subject_id: string }[] } | null
+        }[] | null
+      }
+
+    const conflict = (existingEnrollments ?? []).find(e => {
+      const c = e.classes
+      if (!c) return false
+      const subjectOverlap = (c.class_subjects ?? []).some(cs => allSubjectIds.includes(cs.subject_id))
+      if (!subjectOverlap) return false
+      const dateOverlap = (!c.start_date || !endDate || c.start_date <= endDate) && (!c.end_date || !startDate || c.end_date >= startDate)
+      return dateOverlap
+    })
+
+    if (conflict?.classes) {
+      return { error: `Siswa ini sudah terdaftar di kelas aktif "${conflict.classes.name}" dengan mata pelajaran dan periode yang tumpang tindih. Edit kelas itu kalau maksudnya ubah jadwal, atau sesuaikan tanggal/mapel kalau memang kelas baru.` }
+    }
+  }
+
   const { data, error } = await ctx.admin
     .from('classes')
     .insert({
