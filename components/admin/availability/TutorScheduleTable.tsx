@@ -107,8 +107,8 @@ export default function TutorScheduleTable({ tutors }: { tutors: TutorScheduleRo
                             <div className="hidden group-hover:block absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-900 text-white text-xs rounded-md px-2.5 py-1.5 whitespace-nowrap w-max max-w-[320px] shadow-lg">
                               {entry.outsideSchedule && <p className="text-gray-300 mb-0.5">Di luar jadwal ketersediaan</p>}
                               <ul className="space-y-0.5">
-                                {entry.classNames.map(name => (
-                                  <li key={name} className="flex gap-1.5">
+                                {entry.classNames.map((name, i) => (
+                                  <li key={i} className="flex gap-1.5">
                                     <span>·</span>
                                     <span>{simplifyClassName(name)}</span>
                                   </li>
