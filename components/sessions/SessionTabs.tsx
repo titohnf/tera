@@ -269,6 +269,7 @@ export default function SessionTabs({
               sessionId={sessionId}
               selectedCpIds={selectedCpIds ?? []}
               cpRows={curriculumTopics}
+              customLearningOutcomes={customLearningOutcomes}
               initialCpUrls={cpUrls ?? {}}
               readOnly={!!readOnlyReason}
               saveAction={saveCpUrlsAction}

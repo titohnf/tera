@@ -14,13 +14,18 @@ interface Props {
   sessionId: string
   selectedCpIds: string[]
   cpRows: CpRow[]
+  customLearningOutcomes?: string[]
   initialCpUrls: Record<string, string>
   readOnly?: boolean
   saveAction?: (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
 }
 
-export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, initialCpUrls, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
-  const selectedCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
+export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, customLearningOutcomes = [], initialCpUrls, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
+  const curriculumCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
+  const customCps = customLearningOutcomes
+    .map((text, i) => ({ id: `custom-${i}`, learning_outcomes: text }))
+    .filter(c => c.learning_outcomes?.trim())
+  const selectedCps = [...curriculumCps, ...customCps]
   const [urls, setUrls] = useState<Record<string, string>>(initialCpUrls)
   const [savedUrls, setSavedUrls] = useState<Record<string, string>>(initialCpUrls)
   const [isPending, startTransition] = useTransition()

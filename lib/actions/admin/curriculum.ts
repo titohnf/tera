@@ -235,6 +235,34 @@ export async function updateSessionTopic(
       curriculum_topic_id: curriculumTopicId,
       topic: topicText,
       selected_cp_ids: selectedCpIds,
+      custom_theme: null,
+      custom_learning_outcomes: [],
+    })
+    .eq('id', sessionId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/sessions/${sessionId}`)
+  return {}
+}
+
+export async function saveCustomTopicAdmin(
+  sessionId: string,
+  theme: string,
+  topicText: string,
+  learningOutcomes: string[] = [],
+): Promise<{ error?: string }> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { error } = await ctx.admin
+    .from('sessions')
+    .update({
+      custom_theme: theme || null,
+      topic: topicText,
+      custom_learning_outcomes: learningOutcomes.filter(Boolean),
+      curriculum_topic_id: null,
+      selected_cp_ids: [],
+      updated_at: new Date().toISOString(),
     })
     .eq('id', sessionId)
 

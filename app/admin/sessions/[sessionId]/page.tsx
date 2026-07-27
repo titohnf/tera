@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { updateSession } from '@/lib/actions/admin/sessions'
-import { updateSessionTopic } from '@/lib/actions/admin/curriculum'
+import { updateSessionTopic, saveCustomTopicAdmin } from '@/lib/actions/admin/curriculum'
 import { checkAndCompleteSession, getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { savePerformanceNoteAdmin } from '@/lib/actions/admin/notes'
@@ -27,7 +27,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   ] = await Promise.all([
     admin
       .from('sessions')
-      .select('*, classes(id, name, level), profiles!tutor_id(full_name, email), subjects(name)')
+      .select('*, classes(id, name, level, class_type), profiles!tutor_id(full_name, email), subjects(name)')
       .eq('id', sessionId)
       .single() as unknown as Promise<{
         data: {
@@ -36,13 +36,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           curriculum_topic_id: string | null
           selected_cp_ids: string[]
           cp_urls: Record<string, string>
+          custom_theme: string | null
+          custom_learning_outcomes: string[] | null
           class_id: string; tutor_id: string; subject_id: string | null
           payroll_status: string
           payroll_rejection_reason: string | null
           payroll_reviewed_at: string | null
           payroll_tutor_note: string | null
           payroll_tutor_note_at: string | null
-          classes: { id: string; name: string; level: string | null } | null
+          classes: { id: string; name: string; level: string | null; class_type: string | null } | null
           profiles: { full_name: string; email: string } | null
           subjects: { name: string } | null
         } | null
@@ -150,6 +152,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const timeStr = date.toTimeString().slice(0, 5)
   const updateWithId = updateSession.bind(null, sessionId)
   const displayStatus = getSessionDisplayStatus(session.status, !!pendingRequest)
+  const allowCustomTopic = session.classes?.class_type === 'private' || session.classes?.class_type === 'yayasan'
 
   const attendanceMap = Object.fromEntries((attendances ?? []).map(a => [a.student_id, a]))
   const notesByStudent: Record<string, Record<string, { body: string; template_id: string | null }>> = {}
@@ -242,6 +245,10 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             grade={sessionGrade}
             materialUploader={<MaterialUploaderAdmin sessionId={sessionId} />}
             isAdmin
+            isPrivateClass={allowCustomTopic}
+            saveCustomTopicAction={saveCustomTopicAdmin}
+            customTheme={session.custom_theme}
+            customLearningOutcomes={session.custom_learning_outcomes ?? []}
             saveTopicAction={updateSessionTopic}
             submitAttendanceAction={submitAttendanceAdmin}
             saveNoteAction={savePerformanceNoteAdmin}
