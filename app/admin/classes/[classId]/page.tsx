@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ClassSessions from '@/components/admin/classes/ClassSessions'
 import DeleteClassButton from '@/components/admin/classes/DeleteClassButton'
 import CompleteClassButton from '@/components/admin/classes/CompleteClassButton'
+import ReplaceMainTutorButton from '@/components/admin/classes/ReplaceMainTutorButton'
 import ClassDetailLayout from '@/components/classes/ClassDetailLayout'
 
 type Profile = { id: string; full_name: string; email: string; avatar_url?: string | null }
@@ -72,9 +73,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }>,
     admin
       .from('profiles')
-      .select('id, full_name, avatar_url')
+      .select('id, full_name, avatar_url, is_active')
       .eq('role', 'tutor')
-      .order('full_name') as unknown as Promise<{ data: { id: string; full_name: string; avatar_url: string | null }[] | null }>,
+      .order('full_name') as unknown as Promise<{ data: { id: string; full_name: string; avatar_url: string | null; is_active: boolean }[] | null }>,
     admin
       .from('subjects')
       .select('id, name')
@@ -170,6 +171,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
   // for the tutor-assignment dropdown above.
   const tutorNameMap = new Map((tutors ?? []).map(t => [t.id, t.full_name]))
   const tutorAvatarMap = new Map((tutors ?? []).map(t => [t.id, t.avatar_url]))
+  const tutorActiveMap = new Map((tutors ?? []).map(t => [t.id, t.is_active]))
 
   // The tutor officially assigned to teach each subject, per class_slots —
   // this is the "regular" tutor for that subject, independent of who happens
@@ -183,33 +185,49 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
     })
   }
 
+  // How many sessions each tutor has actually taught per subject — used
+  // below to keep a former main tutor labeled "Utama" (not "Pengganti")
+  // after a tutor swap moves class_slots to someone else. A one-off
+  // substitute covering a single session is still "Pengganti"; someone who
+  // taught the bulk of a subject's sessions keeps the "Utama" label even
+  // once class_slots no longer points at them.
+  const sessionCountBySubjectTutor = new Map<string, number>()
+  for (const s of sessions ?? []) {
+    if (!s.subject_id || !s.tutor_id) continue
+    const key = `${s.subject_id}:${s.tutor_id}`
+    sessionCountBySubjectTutor.set(key, (sessionCountBySubjectTutor.get(key) ?? 0) + 1)
+  }
+
   // One row per distinct (subject, tutor) pair — seeded from this class's
   // official slot assignments, then supplemented with whoever has actually
   // taught a session, since ad-hoc swaps never update class_slots.
   const classOwnerTutorId = cls.tutor_id
   const tutorSubjectSeen = new Set<string>()
-  const tutorsBySubject: { subjectName: string; tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean }[] = []
-  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null, tutorAvatarUrl: string | null) {
+  const tutorsBySubject: { subjectName: string; tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean; tutorIsActive: boolean }[] = []
+  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null, tutorAvatarUrl: string | null, tutorIsActive: boolean) {
     if (!subjectId || !tutorId) return
     const key = `${subjectId}:${tutorId}`
     if (tutorSubjectSeen.has(key)) return
     tutorSubjectSeen.add(key)
     const assignedTutorId = assignedTutorBySubject.get(subjectId)
+    const isCurrentlyAssigned = assignedTutorId ? tutorId === assignedTutorId : tutorId === classOwnerTutorId
+    const taughtSubstantially = (sessionCountBySubjectTutor.get(key) ?? 0) > 1
     tutorsBySubject.push({
       subjectName: subjectMap.get(subjectId) ?? 'Mapel',
       tutorName: tutorName ?? 'Tutor',
       tutorAvatarUrl,
-      isMainTutor: assignedTutorId ? tutorId === assignedTutorId : tutorId === classOwnerTutorId,
+      isMainTutor: isCurrentlyAssigned || taughtSubstantially,
+      tutorIsActive,
     })
   }
   for (const slot of classSlots ?? []) {
     slot.subject_ids?.forEach((subjectId, i) => {
       const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
-      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null, tutorId ? tutorAvatarMap.get(tutorId) ?? null : null)
+      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null, tutorId ? tutorAvatarMap.get(tutorId) ?? null : null, tutorId ? tutorActiveMap.get(tutorId) ?? true : true)
     })
   }
   for (const s of sessions ?? []) {
-    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null)
+    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null, s.tutor_id ? tutorActiveMap.get(s.tutor_id) ?? true : true)
   }
 
   const breadcrumb = (
@@ -219,6 +237,19 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       <span className="text-gray-900 font-medium">{cls.name}</span>
     </div>
   )
+
+  // Everyone currently assigned to teach this class (class_slots, plus the
+  // class's own tutor_id as a fallback for classes without slots), deduped —
+  // these are the selectable "tutor yang diganti" options.
+  const currentTutorIds = new Set<string>()
+  for (const slot of classSlots ?? []) {
+    if (slot.tutor_id) currentTutorIds.add(slot.tutor_id)
+    for (const t of slot.tutor_ids ?? []) currentTutorIds.add(t)
+  }
+  if (currentTutorIds.size === 0 && cls.tutor_id) currentTutorIds.add(cls.tutor_id)
+  const currentTutors = [...currentTutorIds]
+    .map(id => ({ id, full_name: tutorNameMap.get(id) ?? 'Tutor' }))
+  const activeTutors = (tutors ?? []).filter(t => t.is_active).map(t => ({ id: t.id, full_name: t.full_name }))
 
   const actions = (
     <div className="space-y-2">
@@ -231,6 +262,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
         </svg>
         Edit
       </Link>
+      <ReplaceMainTutorButton
+        classId={classId}
+        className={cls.name}
+        currentTutors={currentTutors}
+        allTutors={activeTutors}
+      />
       <CompleteClassButton
         classId={classId}
         pendingSessions={pendingSessionCount ?? 0}

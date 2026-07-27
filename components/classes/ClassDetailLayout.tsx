@@ -13,7 +13,7 @@ type SlotInfo = {
   subject_ids: string[]
 }
 
-type TutorSubjectRow = { subjectName: string; tutorName: string; tutorAvatarUrl?: string | null; isMainTutor: boolean }
+type TutorSubjectRow = { subjectName: string; tutorName: string; tutorAvatarUrl?: string | null; isMainTutor: boolean; tutorIsActive?: boolean }
 
 type StudentInfo = {
   id: string
@@ -76,14 +76,14 @@ export default function ClassDetailLayout({
   // Group by subject so a substitute covering the same subject as the main
   // tutor shows up alongside them under one heading, instead of a duplicate
   // subject block of its own.
-  const tutorsBySubjectGrouped = tutorsBySubject.reduce<{ subjectName: string; tutors: { tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean }[] }[]>(
+  const tutorsBySubjectGrouped = tutorsBySubject.reduce<{ subjectName: string; tutors: { tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean; tutorIsActive: boolean }[] }[]>(
     (groups, row) => {
       let group = groups.find(g => g.subjectName === row.subjectName)
       if (!group) {
         group = { subjectName: row.subjectName, tutors: [] }
         groups.push(group)
       }
-      group.tutors.push({ tutorName: row.tutorName, tutorAvatarUrl: row.tutorAvatarUrl ?? null, isMainTutor: row.isMainTutor })
+      group.tutors.push({ tutorName: row.tutorName, tutorAvatarUrl: row.tutorAvatarUrl ?? null, isMainTutor: row.isMainTutor, tutorIsActive: row.tutorIsActive ?? true })
       return groups
     },
     []
@@ -218,6 +218,11 @@ export default function ClassDetailLayout({
                             </div>
                           )}
                           <span className="text-sm text-gray-700">{t.tutorName}</span>
+                          {!t.tutorIsActive && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">
+                              Nonaktif
+                            </span>
+                          )}
                         </span>
                       </div>
                     ))}

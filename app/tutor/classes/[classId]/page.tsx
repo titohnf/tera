@@ -44,7 +44,7 @@ type SessionRow = {
   assessments: CountRow
   attendances: CountRow
   performance_notes: CountRow
-  profiles?: { full_name: string; avatar_url: string | null } | null
+  profiles?: { full_name: string; avatar_url: string | null; is_active?: boolean } | null
 }
 
 export default async function TutorClassDetailPage({
@@ -130,10 +130,11 @@ export default async function TutorClassDetailPage({
   // array FK column the way `profiles!tutor_id(...)` follows the scalar one.
   const slotTutorIds = [...new Set((classSlots ?? []).flatMap(s => s.tutor_ids?.length ? s.tutor_ids : (s.tutor_id ? [s.tutor_id] : [])))]
   const { data: slotTutorProfiles } = slotTutorIds.length > 0
-    ? await admin.from('profiles').select('id, full_name, avatar_url').in('id', slotTutorIds) as unknown as { data: { id: string; full_name: string; avatar_url: string | null }[] | null }
-    : { data: [] as { id: string; full_name: string; avatar_url: string | null }[] }
+    ? await admin.from('profiles').select('id, full_name, avatar_url, is_active').in('id', slotTutorIds) as unknown as { data: { id: string; full_name: string; avatar_url: string | null; is_active: boolean }[] | null }
+    : { data: [] as { id: string; full_name: string; avatar_url: string | null; is_active: boolean }[] }
   const tutorNameMap = new Map((slotTutorProfiles ?? []).map(t => [t.id, t.full_name]))
   const tutorAvatarMap = new Map((slotTutorProfiles ?? []).map(t => [t.id, t.avatar_url]))
+  const tutorActiveMap = new Map((slotTutorProfiles ?? []).map(t => [t.id, t.is_active]))
 
   // Empty means no explicit slot assignment was found (e.g. an older class
   // predating per-slot tutor assignment) — fall back to not filtering rather
@@ -172,24 +173,41 @@ export default async function TutorClassDetailPage({
   // class_slots and would otherwise be invisible here.
   const classOwnerTutorId = cls.tutor_id
   const tutorSubjectSeen = new Set<string>()
-  const tutorsBySubject: { subjectName: string; tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean }[] = []
-  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null, tutorAvatarUrl: string | null) {
+  // How many sessions each tutor has actually taught per subject — populated
+  // by each POV branch below from its own sessions list before it calls
+  // addTutorSubject for session-sourced rows. Keeps a former main tutor
+  // labeled "Utama" (not "Pengganti") after a tutor swap moves class_slots
+  // to someone else; a one-off substitute covering a single session still
+  // shows as "Pengganti".
+  const sessionCountBySubjectTutor = new Map<string, number>()
+  function tallySessionCounts(rows: { subject_id: string | null; tutor_id: string }[]) {
+    for (const s of rows) {
+      if (!s.subject_id || !s.tutor_id) continue
+      const key = `${s.subject_id}:${s.tutor_id}`
+      sessionCountBySubjectTutor.set(key, (sessionCountBySubjectTutor.get(key) ?? 0) + 1)
+    }
+  }
+  const tutorsBySubject: { subjectName: string; tutorName: string; tutorAvatarUrl: string | null; isMainTutor: boolean; tutorIsActive: boolean }[] = []
+  function addTutorSubject(subjectId: string | null, tutorId: string | null, tutorName: string | null, tutorAvatarUrl: string | null, tutorIsActive: boolean) {
     if (!subjectId || !tutorId) return
     const key = `${subjectId}:${tutorId}`
     if (tutorSubjectSeen.has(key)) return
     tutorSubjectSeen.add(key)
     const assignedTutorId = assignedTutorBySubject.get(subjectId)
+    const isCurrentlyAssigned = assignedTutorId ? tutorId === assignedTutorId : tutorId === classOwnerTutorId
+    const taughtSubstantially = (sessionCountBySubjectTutor.get(key) ?? 0) > 1
     tutorsBySubject.push({
       subjectName: subjectMap.get(subjectId) ?? 'Mapel',
       tutorName: tutorName ?? 'Tutor',
       tutorAvatarUrl,
-      isMainTutor: assignedTutorId ? tutorId === assignedTutorId : tutorId === classOwnerTutorId,
+      isMainTutor: isCurrentlyAssigned || taughtSubstantially,
+      tutorIsActive,
     })
   }
   for (const slot of classSlots ?? []) {
     slot.subject_ids?.forEach((subjectId, i) => {
       const tutorId = slot.tutor_ids?.[i] ?? slot.tutor_id
-      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null, tutorId ? tutorAvatarMap.get(tutorId) ?? null : null)
+      addTutorSubject(subjectId, tutorId, tutorId ? tutorNameMap.get(tutorId) ?? null : null, tutorId ? tutorAvatarMap.get(tutorId) ?? null : null, tutorId ? tutorActiveMap.get(tutorId) ?? true : true)
     })
   }
 
@@ -235,7 +253,7 @@ export default async function TutorClassDetailPage({
     if (previewSubjectId) {
       const { data: previewSessions } = await admin
         .from('sessions')
-        .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url)`)
+        .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url, is_active)`)
         .eq('class_id', classId)
         .eq('subject_id', previewSubjectId)
         .eq('status', 'completed')
@@ -340,7 +358,7 @@ export default async function TutorClassDetailPage({
 
     let sessionsQuery = admin
       .from('sessions')
-      .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url)`)
+      .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url, is_active)`)
       .eq('class_id', classId)
       .order('scheduled_at', { ascending: teachingRange !== 'past' })
     if (rangeStart) sessionsQuery = sessionsQuery.gte('scheduled_at', rangeStart.toISOString())
@@ -349,8 +367,9 @@ export default async function TutorClassDetailPage({
     const { data: sessionsRaw } = await (sessionsQuery.limit(500) as unknown as Promise<{ data: SessionRow[] | null }>)
     // Supplement the slot-based tutor list with whoever has actually taught
     // a session — catches ad-hoc swaps that never touched class_slots.
+    tallySessionCounts(sessionsRaw ?? [])
     for (const s of sessionsRaw ?? []) {
-      addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null)
+      addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null, s.profiles?.is_active ?? true)
     }
     const sessions = ownSubjectIds.size > 0
       ? (sessionsRaw ?? []).filter(s => s.subject_id && ownSubjectIds.has(s.subject_id))
@@ -672,7 +691,7 @@ export default async function TutorClassDetailPage({
   ] = await Promise.all([
     admin
       .from('sessions')
-      .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url)`)
+      .select(`${sessionSelect}, profiles!tutor_id(full_name, avatar_url, is_active)`)
       .eq('class_id', classId)
       .lt('scheduled_at', now)
       .eq('status', 'completed')
@@ -719,8 +738,9 @@ export default async function TutorClassDetailPage({
 
   // Supplement the slot-based tutor list with whoever has actually taught a
   // session — catches ad-hoc swaps that never touched class_slots.
+  tallySessionCounts(allHistorySessions ?? [])
   for (const s of allHistorySessions ?? []) {
-    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null)
+    addTutorSubject(s.subject_id, s.tutor_id, s.profiles?.full_name ?? null, s.profiles?.avatar_url ?? null, s.profiles?.is_active ?? true)
   }
 
   const sessions = substituteSubjectIds.size > 0
