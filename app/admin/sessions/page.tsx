@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import SessionCalendar from '@/components/sessions/SessionCalendar'
+import { getTutorGroupsForDate, buildDailyMessageText, buildWhatsappShareUrl, formatDateLabel, todayWib } from '@/lib/daily-message'
 
 export default async function SessionsPage({
   searchParams,
@@ -41,6 +42,11 @@ export default async function SessionsPage({
     : { data: [] as { session_id: string }[] }
   const pendingSessionIds = new Set((pendingRequests ?? []).map(r => r.session_id))
 
+  const today = todayWib()
+  const todayGroups = await getTutorGroupsForDate(admin, today)
+  const todayMessage = buildDailyMessageText(formatDateLabel(today), todayGroups)
+  const whatsappHref = buildWhatsappShareUrl(todayMessage)
+
   const events = (sessions ?? []).map(s => ({
     id: s.id,
     scheduled_at: s.scheduled_at,
@@ -61,15 +67,28 @@ export default async function SessionsPage({
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Kalender Sesi</h1>
-        <Link
-          href="/admin/sessions/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Buat Sesi
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z" />
+            </svg>
+            Pesan Jadwal Harian
+          </a>
+          <Link
+            href="/admin/sessions/new"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Buat Sesi
+          </Link>
+        </div>
       </div>
 
       <SessionCalendar sessions={events} year={year} month={month} />

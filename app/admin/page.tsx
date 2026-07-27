@@ -8,6 +8,7 @@ import { getDateRange, formatPeriodLabel, VALID_PERIODS, PERIODS, type Period } 
 import { MetricGridSkeleton } from '@/components/dashboard/MetricSkeleton'
 import OverviewChart, { type OverviewMetricDef, type OverviewSeries, type OverviewSeriesConfig } from '@/components/admin/dashboard/OverviewChart'
 import SessionCalendar from '@/components/sessions/SessionCalendar'
+import { getTutorGroupsForDate, buildDailyMessageText, buildWhatsappShareUrl, formatDateLabel, todayWib } from '@/lib/daily-message'
 
 type RecentSession = {
   id: string
@@ -57,6 +58,11 @@ export default async function AdminDashboard({
   const calMonth = rawMonth ? parseInt(rawMonth, 10) : now.getMonth()
   const calFrom = new Date(calYear, calMonth, 1).toISOString()
   const calTo = new Date(calYear, calMonth + 1, 0, 23, 59, 59).toISOString()
+
+  const today = todayWib()
+  const todayGroups = await getTutorGroupsForDate(admin, today)
+  const todayMessage = buildDailyMessageText(formatDateLabel(today), todayGroups)
+  const whatsappHref = buildWhatsappShareUrl(todayMessage)
 
   const dateRange = getDateRange(period, now)
   const fromISO = dateRange.from.toISOString()
@@ -497,7 +503,25 @@ export default async function AdminDashboard({
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Kalender Sesi</h2>
-          <Link href="/admin/sessions" className="text-sm text-blue-600 hover:underline">Kelola sesi</Link>
+          <div className="flex items-center gap-2">
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z" />
+              </svg>
+              Pesan Jadwal Harian
+            </a>
+            <Link
+              href="/admin/sessions"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Kelola sesi
+            </Link>
+          </div>
         </div>
         <div className="p-5 pt-3">
           <SessionCalendar

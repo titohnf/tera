@@ -190,7 +190,7 @@ export default function InsightBanner({ metrics }: { metrics: InsightMetrics }) 
       </div>
 
       {/* Insight cards */}
-      <div className="space-y-2">
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
         {shownFinal.map(insight => (
           <InsightCard key={insight.id} insight={insight} onDismiss={() => dismiss(insight.id)} />
         ))}
