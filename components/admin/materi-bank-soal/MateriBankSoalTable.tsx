@@ -284,25 +284,33 @@ function AddResourceForm({ subjects, allTopics, onSubmit, onCancel }: {
 
 type TopicGroup = {
   key: string
+  topicKey: string
   subjectName: string
   gradeLevel: string | null
   semester: number | null
   theme: string
   topic: string
   topicSource: 'kurikulum' | 'tutor'
+  tutorLabel: string
   materi: DisplayRow[]
   bankSoal: DisplayRow[]
   asesmen: DisplayRow[]
 }
 
+// One row per (topic, contributor) pair — a topic can be touched by several
+// tutors (and/or admin) with different materi/bank soal/asesmen each, so
+// splitting rows this way keeps the "Tutor" column unambiguous instead of
+// having to merge unrelated contributors' items into one cell.
 function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
   for (const r of rows) {
-    const key = `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`
+    const topicKey = `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`
+    const tutorLabel = r.source === 'admin' ? 'Admin' : (r.tutorName ?? 'Tutor')
+    const key = `${topicKey}__${tutorLabel}`
     if (!groups.has(key)) {
       groups.set(key, {
-        key, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
-        theme: r.theme, topic: r.topic, topicSource: r.topicSource, materi: [], bankSoal: [], asesmen: [],
+        key, topicKey, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
+        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], bankSoal: [], asesmen: [],
       })
     }
     const g = groups.get(key)!
@@ -311,7 +319,74 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
     else g.asesmen.push(r)
   }
   return Array.from(groups.values()).sort((a, b) =>
-    a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic)
+    a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic) ||
+    (a.tutorLabel === 'Admin' ? -1 : b.tutorLabel === 'Admin' ? 1 : a.tutorLabel.localeCompare(b.tutorLabel))
+  )
+}
+
+type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'bankSoal'
+type SortDir = 'asc' | 'desc'
+
+// "Kelas 10" should sort after "Kelas 2" — compare the numeric grade, not
+// the raw string (which would put "10" before "2").
+function gradeLevelValue(g: string | null): number {
+  if (!g) return -1
+  const n = parseInt(g.replace('Kelas ', ''), 10)
+  return Number.isNaN(n) ? -1 : n
+}
+
+function compareGroups(a: TopicGroup, b: TopicGroup, key: SortKey): number {
+  switch (key) {
+    case 'subjectName': return a.subjectName.localeCompare(b.subjectName)
+    case 'gradeSemester': return gradeLevelValue(a.gradeLevel) - gradeLevelValue(b.gradeLevel) || (a.semester ?? -1) - (b.semester ?? -1)
+    case 'theme': return a.theme.localeCompare(b.theme)
+    case 'topic': return a.topic.localeCompare(b.topic)
+    case 'topicSource': return a.topicSource.localeCompare(b.topicSource)
+    case 'tutorLabel': return a.tutorLabel.localeCompare(b.tutorLabel)
+    case 'materi': return a.materi.length - b.materi.length
+    case 'asesmen': return a.asesmen.length - b.asesmen.length
+    case 'bankSoal': return a.bankSoal.length - b.bankSoal.length
+  }
+}
+
+// Default (subject/tema/topik/tutor) order kept as tie-breaker so sorting by
+// a column with lots of repeated values (e.g. SM) doesn't scramble the rest.
+function sortGroups(groups: TopicGroup[], key: SortKey, dir: SortDir): TopicGroup[] {
+  return [...groups].sort((a, b) => {
+    const primary = compareGroups(a, b, key)
+    const result = primary !== 0
+      ? primary
+      : a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic) ||
+        (a.tutorLabel === 'Admin' ? -1 : b.tutorLabel === 'Admin' ? 1 : a.tutorLabel.localeCompare(b.tutorLabel))
+    return dir === 'asc' ? result : -result
+  })
+}
+
+function SortableHeader({ label, sortKey, activeKey, dir, onSort, first }: {
+  label: string
+  sortKey: SortKey
+  activeKey: SortKey
+  dir: SortDir
+  onSort: (key: SortKey) => void
+  first?: boolean
+}) {
+  const isActive = sortKey === activeKey
+  return (
+    <th className={`text-left py-2.5 ${first ? 'px-5' : 'px-4'}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`flex items-center gap-1 hover:text-gray-700 transition-colors ${isActive ? 'text-gray-700' : ''}`}
+      >
+        {label}
+        <svg
+          className={`w-3 h-3 shrink-0 transition-transform ${isActive ? 'opacity-100' : 'opacity-30'} ${isActive && dir === 'desc' ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
+    </th>
   )
 }
 
@@ -319,12 +394,18 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
   if (items.length === 0) return <span className="text-gray-300">—</span>
   return (
     <ul className="space-y-1">
-      {items.map(r => (
+      {items.map((r, i) => {
+        // Masked label instead of the (often long) real title — "Materi"
+        // when it's the only one for this topic/tutor, "Materi 1"/"Materi 2"
+        // when there are several. Full title still available on hover.
+        const label = items.length > 1 ? `${RESOURCE_LABEL[r.kind]} ${i + 1}` : RESOURCE_LABEL[r.kind]
+        return (
         <li key={r.id} className="group flex items-center gap-1.5">
           <a
             href={r.href}
             target="_blank"
             rel="noopener noreferrer"
+            title={r.title}
             className="flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0"
           >
             {r.isDuplicated ? (
@@ -338,7 +419,7 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m5.656-5.656l1.5-1.5a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656 0" />
               </svg>
             )}
-            <span className="truncate">{r.title}</span>
+            <span className="truncate">{label}</span>
           </a>
           {r.sessionId && (
             <a
@@ -353,11 +434,7 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
               </svg>
             </a>
           )}
-          {r.source === 'tutor' ? (
-            <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0" title={r.tutorName ? `Diinput oleh ${r.tutorName}` : 'Diinput oleh tutor'}>
-              {r.tutorName ?? 'Tutor'}
-            </span>
-          ) : (
+          {r.source === 'admin' && (
             <button
               onClick={() => onDelete(r.id)}
               className="p-0.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 shrink-0"
@@ -369,26 +446,55 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
             </button>
           )}
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 }
 
+const PAGE_SIZE = 10
+
 export default function MateriBankSoalTable({ rows, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
+  const [page, setPage] = useState(1)
+  const [sortKey, setSortKey] = useState<SortKey>('subjectName')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [prevRows, setPrevRows] = useState(rows)
   const [, startTransition] = useTransition()
+
+  // Reset to page 1 whenever the filtered row set changes (filters/search
+  // in the parent only re-render this component with a new `rows` array
+  // when something actually changed) — adjusted during render per React's
+  // guidance instead of in a useEffect, to avoid an extra render pass.
+  if (rows !== prevRows) {
+    setPrevRows(rows)
+    setPage(1)
+  }
 
   function handleDelete(id: string) {
     if (!confirm('Hapus ini?')) return
     startTransition(async () => { await deleteResourceAction(id) })
   }
 
-  const groups = groupByTopic(rows)
+  function handleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const groups = sortGroups(groupByTopic(rows), sortKey, sortDir)
+  const topicCount = new Set(groups.map(g => g.topicKey)).size
+  const totalPages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pagedGroups = groups.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
-    <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
+    <>
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-        <p className="text-sm font-semibold text-gray-700">{groups.length} topik</p>
+        <p className="text-sm font-semibold text-gray-700">{topicCount} topik</p>
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -409,49 +515,74 @@ export default function MateriBankSoalTable({ rows, allTopics, allSubjects, crea
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <th className="text-left px-5 py-2.5">Mapel</th>
-                <th className="text-left px-4 py-2.5">Kelas</th>
-                <th className="text-left px-4 py-2.5">Semester</th>
-                <th className="text-left px-4 py-2.5">Tema</th>
-                <th className="text-left px-4 py-2.5">Topik</th>
-                <th className="text-left px-4 py-2.5">Asal Topik</th>
-                <th className="text-left px-4 py-2.5">Materi</th>
-                <th className="text-left px-4 py-2.5">Bank Soal</th>
-                <th className="text-left px-4 py-2.5">Asesmen</th>
+                <SortableHeader label="Mapel" sortKey="subjectName" activeKey={sortKey} dir={sortDir} onSort={handleSort} first />
+                <SortableHeader label="Kelas.SM" sortKey="gradeSemester" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Tema" sortKey="theme" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Topik" sortKey="topic" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Tutor" sortKey="tutorLabel" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Materi" sortKey="materi" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Asesmen" sortKey="asesmen" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Bank Soal" sortKey="bankSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {groups.map(g => (
+              {pagedGroups.map(g => (
                 <tr key={g.key} className="hover:bg-slate-50/60 transition-colors align-top">
                   <td className="px-5 py-2.5 text-gray-700 font-medium whitespace-nowrap">{g.subjectName}</td>
                   <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
-                    {g.gradeLevel ? g.gradeLevel.replace('Kelas ', '') : <span className="text-gray-300">—</span>}
+                    {g.gradeLevel || g.semester
+                      ? `${g.gradeLevel ? g.gradeLevel.replace('Kelas ', '') : '—'}.${g.semester ?? '—'}`
+                      : <span className="text-gray-300">—</span>}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
-                    {g.semester ?? <span className="text-gray-300">—</span>}
+                  <td className="px-4 py-2.5 text-gray-600 max-w-[12rem]">
+                    <span className="line-clamp-2" title={g.theme}>{g.theme}</span>
                   </td>
-                  <td className="px-4 py-2.5 text-gray-600">{g.theme}</td>
-                  <td className="px-4 py-2.5 text-gray-600">{g.topic}</td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    {g.topicSource === 'kurikulum' ? (
-                      <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Kurikulum</span>
-                    ) : (
-                      <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Buatan Tutor</span>
-                    )}
+                  <td className="px-4 py-2.5 text-gray-600 max-w-[12rem]">
+                    <span className="flex items-start gap-1.5" title={g.topicSource === 'kurikulum' ? `${g.topic} (dari Kurikulum)` : `${g.topic} (Buatan Tutor)`}>
+                      <span
+                        className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${g.topicSource === 'kurikulum' ? 'bg-blue-500' : 'bg-amber-400'}`}
+                      />
+                      <span className="line-clamp-2">{g.topic}</span>
+                    </span>
                   </td>
+                  <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{g.tutorLabel}</td>
                   <td className="px-4 py-2.5 max-w-xs">
                     <ResourceCell items={g.materi} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
+                    <ResourceCell items={g.asesmen} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.asesmen} onDelete={handleDelete} />
+                    <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+          <p className="text-sm text-gray-500">Halaman {currentPage} dari {totalPages}</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors border-gray-200 text-gray-700 hover:bg-gray-50 disabled:border-gray-100 disabled:text-gray-300 disabled:pointer-events-none"
+            >
+              Sebelumnya
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors border-gray-200 text-gray-700 hover:bg-gray-50 disabled:border-gray-100 disabled:text-gray-300 disabled:pointer-events-none"
+            >
+              Berikutnya
+            </button>
+          </div>
         </div>
       )}
 
@@ -475,6 +606,6 @@ export default function MateriBankSoalTable({ rows, allTopics, allSubjects, crea
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

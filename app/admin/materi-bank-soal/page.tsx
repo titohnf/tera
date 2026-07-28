@@ -5,6 +5,16 @@ import { collectAllResourceLinks } from '@/lib/curriculum-resource-links'
 import MateriBankSoalClient from '@/components/admin/materi-bank-soal/MateriBankSoalClient'
 import DuplicationStatusPanel from '@/components/admin/materi-bank-soal/DuplicationStatusPanel'
 
+type TutorRef = { full_name: string; nickname: string | null } | null
+
+// Prefer the tutor's nickname; fall back to just their first name (not the
+// full name) to keep the Tutor column compact.
+function shortTutorName(tutor: TutorRef): string | null {
+  if (!tutor) return null
+  if (tutor.nickname?.trim()) return tutor.nickname.trim()
+  return tutor.full_name.trim().split(/\s+/)[0] ?? null
+}
+
 type MaterialSourceRow = {
   id: string
   title: string
@@ -18,7 +28,7 @@ type MaterialSourceRow = {
     curriculum_topic_id: string | null
     custom_theme: string | null
     topic: string | null
-    tutor: { full_name: string } | null
+    tutor: TutorRef
   } | null
 }
 
@@ -35,7 +45,7 @@ type SessionCpUrlRow = {
   selected_cp_ids: string[] | null
   cp_urls: Record<string, string> | null
   custom_learning_outcomes: string[] | null
-  tutor: { full_name: string } | null
+  tutor: TutorRef
 }
 
 export type TutorResourceRow = {
@@ -77,7 +87,7 @@ function toTutorResources(
         curriculumTopicId: r.sessions!.curriculum_topic_id,
         customTheme: r.sessions!.custom_theme,
         topicText: r.sessions!.topic,
-        tutorName: r.sessions!.tutor?.full_name ?? null,
+        tutorName: shortTutorName(r.sessions!.tutor),
         classGradeLevel: classInfo?.gradeLevel ?? null,
         classSemester: classInfo?.semester ?? null,
       }
@@ -110,7 +120,7 @@ function toBankSoalResources(
         curriculumTopicId: isCustom ? null : cpId,
         customTheme: isCustom ? s.custom_theme : null,
         topicText: isCustom ? s.topic : null,
-        tutorName: s.tutor?.full_name ?? null,
+        tutorName: shortTutorName(s.tutor),
         classGradeLevel: classInfo?.gradeLevel ?? null,
         classSemester: classInfo?.semester ?? null,
       })
@@ -215,15 +225,15 @@ export default async function MateriBankSoalPage() {
       }>,
     admin
       .from('materials')
-      .select('id, title, link_url, file_path, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name))')
+      .select('id, title, link_url, file_path, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('assessments')
-      .select('id, title, link_url, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name))')
+      .select('id, title, link_url, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('sessions')
-      .select('id, class_id, subject_id, custom_theme, topic, selected_cp_ids, cp_urls, custom_learning_outcomes, tutor:profiles!tutor_id(full_name)')
+      .select('id, class_id, subject_id, custom_theme, topic, selected_cp_ids, cp_urls, custom_learning_outcomes, tutor:profiles!tutor_id(full_name, nickname)')
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{ data: SessionCpUrlRow[] | null }>,
     admin
       .from('curriculum_resource_duplications')
