@@ -155,8 +155,11 @@ export default function SessionChangeRequestPanel({
           type="button"
           disabled={pending}
           onClick={withdraw}
-          className="mt-3 text-xs text-red-600 hover:underline disabled:opacity-50"
+          className="flex items-center gap-1 mt-3 text-xs text-red-600 hover:underline disabled:opacity-50"
         >
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           {pending ? 'Membatalkan...' : 'Batalkan pengajuan ini'}
         </button>
       </div>
@@ -178,31 +181,43 @@ export default function SessionChangeRequestPanel({
           <button
             type="button"
             onClick={() => setMode('reschedule')}
-            className="text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
           >
+            <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0" />
+            </svg>
             Ajukan Reschedule
           </button>
           <button
             type="button"
             onClick={() => setMode('change_tutor')}
-            className="text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
           >
+            <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
+            </svg>
             Ajukan Ganti Tutor
           </button>
           {allowSubjectChange && (
             <button
               type="button"
               onClick={() => setMode('change_subject')}
-              className="text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
             >
+              <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
               Ajukan Ganti Mapel
             </button>
           )}
           <button
             type="button"
             onClick={() => setMode('cancel')}
-            className="text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-700 transition-colors"
+            className="flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-700 transition-colors"
           >
+            <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 9l-6 6m0-6l6 6M21 12a9 9 0 11-18 0 9 9 0 0118 0" />
+            </svg>
             Ajukan Pembatalan Sesi
           </button>
         </div>
@@ -268,16 +283,22 @@ export default function SessionChangeRequestPanel({
               type="button"
               disabled={pending}
               onClick={submit}
-              className="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
             >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
               {pending ? 'Mengirim...' : 'Kirim Pengajuan'}
             </button>
             <button
               type="button"
               disabled={pending}
               onClick={reset}
-              className="px-4 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Batal
             </button>
           </div>
