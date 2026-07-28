@@ -35,13 +35,12 @@ type SessionRow = {
   status: string
   classes: { name: string } | null
   subjects: { name: string } | null
-  tutor: { id: string; full_name: string; phone: string | null } | null
+  tutor: { id: string; full_name: string } | null
 }
 
 export type TutorGroup = {
   tutorId: string
   tutorName: string
-  tutorPhone: string | null
   items: { time: string; className: string; subjectName: string | null }[]
 }
 
@@ -54,7 +53,7 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
       id, scheduled_at, status,
       classes(name),
       subjects(name),
-      tutor:profiles!tutor_id(id, full_name, phone)
+      tutor:profiles!tutor_id(id, full_name)
     `)
     .neq('status', 'cancelled')
     .gte('scheduled_at', start.toISOString())
@@ -68,7 +67,7 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
       hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta',
     })
     const className = stripClassUniqueTag(s.classes?.name ?? 'Kelas')
-    const group = groups.get(s.tutor.id) ?? { tutorId: s.tutor.id, tutorName: s.tutor.full_name, tutorPhone: s.tutor.phone, items: [] }
+    const group = groups.get(s.tutor.id) ?? { tutorId: s.tutor.id, tutorName: s.tutor.full_name, items: [] }
     group.items.push({ time, className, subjectName: s.subjects?.name ?? null })
     groups.set(s.tutor.id, group)
   }
@@ -78,18 +77,6 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
     .map(g => ({ ...g, items: g.items.sort((a, b) => a.time.localeCompare(b.time)) }))
 }
 
-// WhatsApp only renders "@<number>" as a real (notifying) mention when the
-// message is sent inside a group the number is a participant of — but that
-// requires the number in full international form, digits only, no leading
-// 0/+. Numbers we can't confidently normalize fall back to a plain name so
-// we never emit a mention that silently fails to resolve.
-function normalizePhoneForMention(phone: string): string | null {
-  const digits = phone.replace(/[^\d]/g, '')
-  if (digits.startsWith('62')) return digits
-  if (digits.startsWith('0')) return `62${digits.slice(1)}`
-  return null
-}
-
 export function buildDailyMessageText(dateLabel: string, tutorGroups: TutorGroup[]): string {
   const lines = [`*Jadwal Mengajar - ${dateLabel}*`, '']
 
@@ -97,9 +84,7 @@ export function buildDailyMessageText(dateLabel: string, tutorGroups: TutorGroup
     lines.push('Tidak ada kelas terjadwal hari ini.')
   } else {
     for (const group of tutorGroups) {
-      const normalizedPhone = group.tutorPhone ? normalizePhoneForMention(group.tutorPhone) : null
-      const tutorLabel = normalizedPhone ? `@${normalizedPhone}` : group.tutorName
-      lines.push(`*${tutorLabel}*`)
+      lines.push(`*${group.tutorName}*`)
       for (const item of group.items) {
         const subjectSuffix = item.subjectName ? ` (${item.subjectName})` : ''
         lines.push(`- ${item.time} ${item.className}${subjectSuffix}`)
