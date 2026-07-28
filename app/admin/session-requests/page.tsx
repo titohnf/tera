@@ -5,11 +5,12 @@ import { getTutorGroupsForDate, buildWhatsappShareUrl, buildDailyMessageText, fo
 
 type RequestRow = {
   id: string
-  request_type: 'cancel' | 'reschedule' | 'change_tutor'
+  request_type: 'cancel' | 'reschedule' | 'change_tutor' | 'change_subject'
   reason: string
   new_scheduled_at: string | null
   new_tutor_id: string | null
   new_tutor_confirmed: boolean | null
+  new_subject_id: string | null
   status: 'pending' | 'approved' | 'rejected'
   admin_note: string | null
   created_at: string
@@ -17,12 +18,14 @@ type RequestRow = {
   sessions: { scheduled_at: string; classes: { name: string } | null } | null
   requester: { full_name: string } | null
   new_tutor: { full_name: string } | null
+  new_subject: { name: string } | null
 }
 
 const REQUEST_LABEL: Record<string, string> = {
   cancel: 'Pembatalan Sesi',
   reschedule: 'Reschedule',
   change_tutor: 'Ganti Tutor',
+  change_subject: 'Ganti Mapel',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -71,10 +74,11 @@ async function renderPengajuanSegment(
   let query = admin
     .from('session_change_requests')
     .select(`
-      id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status, admin_note, created_at, session_id,
+      id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, new_subject_id, status, admin_note, created_at, session_id,
       sessions(scheduled_at, classes(name)),
       requester:profiles!requested_by(full_name),
-      new_tutor:profiles!new_tutor_id(full_name)
+      new_tutor:profiles!new_tutor_id(full_name),
+      new_subject:subjects!new_subject_id(name)
     `)
     .order('created_at', { ascending: false })
 
@@ -148,6 +152,9 @@ async function renderPengajuanSegment(
                             : <span className="text-amber-600"> · menunggu konfirmasi tutor pengganti</span>
                         )}
                       </p>
+                    )}
+                    {req.request_type === 'change_subject' && req.new_subject && (
+                      <p className="text-xs text-gray-500">Ke: {req.new_subject.name}</p>
                     )}
                     <p className="text-xs text-gray-600 mt-2 bg-white rounded-lg px-3 py-2">{req.reason}</p>
                     {req.admin_note && (

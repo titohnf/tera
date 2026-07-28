@@ -16,12 +16,15 @@ type PendingRequest = {
   new_tutor_id: string | null
   new_tutor_name: string | null
   new_tutor_confirmed: boolean | null
+  new_subject_id: string | null
+  new_subject_name: string | null
 }
 
 const REQUEST_LABEL: Record<SessionRequestType, string> = {
   cancel: 'Pembatalan Sesi',
   reschedule: 'Reschedule Sesi',
   change_tutor: 'Ganti Tutor',
+  change_subject: 'Ganti Mapel',
 }
 
 export default function SessionChangeRequestPanel({
@@ -29,20 +32,27 @@ export default function SessionChangeRequestPanel({
   classId,
   existingRequest,
   tutors,
+  subjects = [],
   currentTutorName,
+  currentSubjectName,
+  allowSubjectChange = false,
   isPast = false,
 }: {
   sessionId: string
   classId: string
   existingRequest: PendingRequest | null
   tutors: { id: string; full_name: string }[]
+  subjects?: { id: string; name: string }[]
   currentTutorName: string | null
+  currentSubjectName?: string | null
+  allowSubjectChange?: boolean
   isPast?: boolean
 }) {
   const [mode, setMode] = useState<SessionRequestType | null>(null)
   const [reason, setReason] = useState('')
   const [newScheduledAt, setNewScheduledAt] = useState('')
   const [newTutorId, setNewTutorId] = useState('')
+  const [newSubjectId, setNewSubjectId] = useState('')
   const [error, setError] = useState('')
   const [pending, startTransition] = useTransition()
 
@@ -53,6 +63,7 @@ export default function SessionChangeRequestPanel({
     setReason('')
     setNewScheduledAt('')
     setNewTutorId('')
+    setNewSubjectId('')
     setError('')
   }
 
@@ -63,6 +74,7 @@ export default function SessionChangeRequestPanel({
       const result = await createSessionChangeRequest(sessionId, mode, reason, {
         newScheduledAt: newScheduledAt ? new Date(newScheduledAt).toISOString() : undefined,
         newTutorId: newTutorId || undefined,
+        newSubjectId: newSubjectId || undefined,
       })
       if (result.error) setError(result.error)
       else reset()
@@ -132,6 +144,11 @@ export default function SessionChangeRequestPanel({
               Dari: {currentTutorName ?? '—'} → Ke: {existingRequest.new_tutor_name}
             </p>
           )}
+          {existingRequest.request_type === 'change_subject' && existingRequest.new_subject_name && (
+            <p className="text-xs text-gray-600">
+              Dari: {currentSubjectName ?? '—'} → Ke: {existingRequest.new_subject_name}
+            </p>
+          )}
           <p className="text-xs text-gray-600">Alasan: {existingRequest.reason}</p>
         </div>
         <button
@@ -172,6 +189,15 @@ export default function SessionChangeRequestPanel({
           >
             Ajukan Ganti Tutor
           </button>
+          {allowSubjectChange && (
+            <button
+              type="button"
+              onClick={() => setMode('change_subject')}
+              className="text-left text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              Ajukan Ganti Mapel
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setMode('cancel')}
@@ -206,6 +232,20 @@ export default function SessionChangeRequestPanel({
               >
                 <option value="">Pilih tutor...</option>
                 {tutors.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+              </select>
+            </div>
+          )}
+
+          {mode === 'change_subject' && (
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Mapel baru</label>
+              <select
+                value={newSubjectId}
+                onChange={e => setNewSubjectId(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Pilih mapel...</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
           )}

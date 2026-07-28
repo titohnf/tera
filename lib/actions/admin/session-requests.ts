@@ -20,7 +20,7 @@ export async function approveSessionChangeRequest(requestId: string): Promise<{ 
 
   const { data: request } = await admin
     .from('session_change_requests')
-    .select('id, session_id, request_type, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status')
+    .select('id, session_id, request_type, new_scheduled_at, new_tutor_id, new_tutor_confirmed, new_subject_id, status')
     .eq('id', requestId)
     .single()
   if (!request) return { error: 'Pengajuan tidak ditemukan' }
@@ -35,6 +35,8 @@ export async function approveSessionChangeRequest(requestId: string): Promise<{ 
     await admin.from('sessions').update({ scheduled_at: request.new_scheduled_at }).eq('id', request.session_id)
   } else if (request.request_type === 'change_tutor') {
     await admin.from('sessions').update({ tutor_id: request.new_tutor_id }).eq('id', request.session_id)
+  } else if (request.request_type === 'change_subject') {
+    await admin.from('sessions').update({ subject_id: request.new_subject_id }).eq('id', request.session_id)
   }
 
   const { error } = await admin

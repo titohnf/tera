@@ -7,6 +7,7 @@ const REQUEST_LABEL: Record<SessionRequestType, string> = {
   cancel: 'Pembatalan Sesi',
   reschedule: 'Reschedule Sesi',
   change_tutor: 'Ganti Tutor',
+  change_subject: 'Ganti Mapel',
 }
 
 export default function ResolvedNoticeBanner({

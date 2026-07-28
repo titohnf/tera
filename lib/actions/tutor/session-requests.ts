@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 
-export type SessionRequestType = 'cancel' | 'reschedule' | 'change_tutor'
+export type SessionRequestType = 'cancel' | 'reschedule' | 'change_tutor' | 'change_subject'
 
 async function verifyTutorSession(sessionId: string) {
   const user = await getUser()
@@ -24,7 +24,7 @@ export async function createSessionChangeRequest(
   sessionId: string,
   requestType: SessionRequestType,
   reason: string,
-  options: { newScheduledAt?: string; newTutorId?: string } = {}
+  options: { newScheduledAt?: string; newTutorId?: string; newSubjectId?: string } = {}
 ): Promise<{ error?: string }> {
   const ctx = await verifyTutorSession(sessionId)
   if (!ctx) return { error: 'Sesi tidak ditemukan' }
@@ -39,6 +39,9 @@ export async function createSessionChangeRequest(
   }
   if (requestType === 'change_tutor' && !options.newTutorId) {
     return { error: 'Tutor pengganti wajib dipilih' }
+  }
+  if (requestType === 'change_subject' && !options.newSubjectId) {
+    return { error: 'Mapel baru wajib dipilih' }
   }
 
   const { data: existing } = await admin
@@ -56,6 +59,7 @@ export async function createSessionChangeRequest(
     reason: reason.trim(),
     new_scheduled_at: requestType === 'reschedule' ? options.newScheduledAt : null,
     new_tutor_id: requestType === 'change_tutor' ? options.newTutorId : null,
+    new_subject_id: requestType === 'change_subject' ? options.newSubjectId : null,
   })
   if (error) return { error: error.message }
 

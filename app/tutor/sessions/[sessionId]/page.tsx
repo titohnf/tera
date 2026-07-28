@@ -237,10 +237,12 @@ export default async function SessionPage({
       : Promise.resolve({ data: [] }),
   ])
 
-  const [{ data: latestRequest }, { data: otherTutors }] = await Promise.all([
+  const isPrivateClass = session.classes?.class_type === 'private'
+
+  const [{ data: latestRequest }, { data: otherTutors }, { data: subjects }] = await Promise.all([
     supabase
       .from('session_change_requests')
-      .select('id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, status, admin_note, profiles!new_tutor_id(full_name)')
+      .select('id, request_type, reason, new_scheduled_at, new_tutor_id, new_tutor_confirmed, new_subject_id, status, admin_note, profiles!new_tutor_id(full_name), subjects!new_subject_id(name)')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -252,6 +254,9 @@ export default async function SessionPage({
       .eq('is_active', true)
       .neq('id', user.id)
       .order('full_name'),
+    isPrivateClass
+      ? supabase.from('subjects').select('id, name').order('name')
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
   ])
 
   const sessionChangeRequest = latestRequest && latestRequest.status === 'pending'
@@ -263,6 +268,8 @@ export default async function SessionPage({
         new_tutor_id: latestRequest.new_tutor_id,
         new_tutor_name: (latestRequest.profiles as unknown as { full_name: string } | null)?.full_name ?? null,
         new_tutor_confirmed: latestRequest.new_tutor_confirmed,
+        new_subject_id: latestRequest.new_subject_id,
+        new_subject_name: (latestRequest.subjects as unknown as { name: string } | null)?.name ?? null,
       }
     : null
 
@@ -473,7 +480,10 @@ export default async function SessionPage({
               classId={session.class_id}
               existingRequest={sessionChangeRequest}
               tutors={otherTutors ?? []}
+              subjects={subjects ?? []}
               currentTutorName={tutorName}
+              currentSubjectName={session.subjects?.name ?? null}
+              allowSubjectChange={isPrivateClass}
               isPast={Date.now() > date.getTime() + session.duration_minutes * 60_000}
             />
           )}
