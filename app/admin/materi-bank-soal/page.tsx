@@ -1,6 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { createCurriculumResource, deleteCurriculumResource } from '@/lib/actions/admin/curriculum-resources'
+import { runResourceDuplication } from '@/lib/actions/admin/curriculum-resource-duplication'
+import { collectAllResourceLinks } from '@/lib/curriculum-resource-links'
 import MateriBankSoalClient from '@/components/admin/materi-bank-soal/MateriBankSoalClient'
+import DuplicationStatusPanel from '@/components/admin/materi-bank-soal/DuplicationStatusPanel'
 
 type MaterialSourceRow = {
   id: string
@@ -168,7 +171,7 @@ async function buildClassInfoMap(
 export default async function MateriBankSoalPage() {
   const admin = createAdminClient()
 
-  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }] = await Promise.all([
+  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
       .select('id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
@@ -222,6 +225,11 @@ export default async function MateriBankSoalPage() {
       .from('sessions')
       .select('id, class_id, subject_id, custom_theme, topic, selected_cp_ids, cp_urls, custom_learning_outcomes, tutor:profiles!tutor_id(full_name)')
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{ data: SessionCpUrlRow[] | null }>,
+    admin
+      .from('curriculum_resource_duplications')
+      .select('drive_file_id, duplicated_at') as unknown as Promise<{
+        data: { drive_file_id: string; duplicated_at: string }[] | null
+      }>,
   ])
 
   const allClassIds = [...new Set([
@@ -238,6 +246,14 @@ export default async function MateriBankSoalPage() {
     ...toBankSoalResources(sessionCpUrlRows ?? [], topicsById, classInfoById),
   ]
 
+  const doneFileIds = new Set((duplicationRows ?? []).map(r => r.drive_file_id))
+  const allResourceLinks = await collectAllResourceLinks(admin)
+  const pendingCount = [...allResourceLinks.keys()].filter(fileId => !doneFileIds.has(fileId)).length
+  const lastDuplicatedAt = (duplicationRows ?? []).reduce<string | null>((latest, r) => {
+    if (!latest || r.duplicated_at > latest) return r.duplicated_at
+    return latest
+  }, null)
+
   return (
     <div className="space-y-6">
       <div>
@@ -245,11 +261,18 @@ export default async function MateriBankSoalPage() {
         <p className="text-sm text-gray-500 mt-0.5">Kumpulan materi, bank soal, dan asesmen per topik, mengikuti struktur Kurikulum</p>
       </div>
 
+      <DuplicationStatusPanel
+        lastDuplicatedAt={lastDuplicatedAt}
+        pendingCount={pendingCount}
+        runAction={runResourceDuplication}
+      />
+
       <MateriBankSoalClient
         topics={topics ?? []}
         subjects={(subjects ?? []).map(s => ({ ...s, curriculum: s.curriculum ?? [], level: s.level ?? [] }))}
         resources={resources ?? []}
         tutorResources={tutorResources}
+        duplicatedFileIds={(duplicationRows ?? []).map(r => r.drive_file_id)}
         createResourceAction={createCurriculumResource}
         deleteResourceAction={deleteCurriculumResource}
       />
