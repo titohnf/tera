@@ -129,7 +129,7 @@ function KuitansiPDF({ invoice, payment, kuitansiNumber, tahapNumber, chargeDesc
         <View style={s.terbilangBox}>
           <Text>
             <Text style={{ color: '#555' }}>Terbilang: </Text>
-            <Text style={[s.bold, { fontStyle: 'italic' }]}>{capitalize(terbilang(payment.amount))} Rupiah</Text>
+            <Text style={s.bold}>{capitalize(terbilang(payment.amount))} Rupiah</Text>
           </Text>
         </View>
 
