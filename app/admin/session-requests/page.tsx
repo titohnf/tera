@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import RequestActions from '@/components/admin/session-requests/RequestActions'
+import ScheduleDateNav from '@/components/admin/session-requests/ScheduleDateNav'
 import { getTutorGroupsForDate, buildWhatsappShareUrl, buildDailyMessageText, formatDateLabel, todayWib } from '@/lib/daily-message'
 
 type RequestRow = {
@@ -45,11 +46,13 @@ const DEFAULT_PENGAJUAN_LIMIT = 3
 export default async function SessionRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; all?: string }>
+  searchParams: Promise<{ status?: string; all?: string; date?: string }>
 }) {
-  const { status: statusFilter = 'pending', all } = await searchParams
+  const { status: statusFilter = 'pending', all, date: dateParam } = await searchParams
   const admin = createAdminClient()
   const showAll = all === '1'
+  const today = todayWib()
+  const date = dateParam ?? today
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -60,7 +63,7 @@ export default async function SessionRequestsPage({
       <h1 className="text-xl font-semibold text-gray-900">Jadwal</h1>
 
       {await renderPengajuanSegment(admin, statusFilter, showAll, fmtDate)}
-      {await renderTodaySegment(admin)}
+      {await renderScheduleSegment(admin, date, today)}
     </div>
   )
 }
@@ -188,33 +191,38 @@ async function renderPengajuanSegment(
   )
 }
 
-async function renderTodaySegment(admin: ReturnType<typeof createAdminClient>) {
-  const today = todayWib()
-  const dateLabel = formatDateLabel(today)
-  const tutorGroups = await getTutorGroupsForDate(admin, today)
+async function renderScheduleSegment(admin: ReturnType<typeof createAdminClient>, date: string, today: string) {
+  const isToday = date === today
+  const dateLabel = formatDateLabel(date)
+  const tutorGroups = await getTutorGroupsForDate(admin, date)
   const message = buildDailyMessageText(dateLabel, tutorGroups)
   const totalSessions = tutorGroups.reduce((sum, g) => sum + g.items.length, 0)
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-5 pb-0">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Jadwal Hari Ini</h2>
-        <a
-          href={buildWhatsappShareUrl(message)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Bagikan ke WhatsApp
-        </a>
+      <div className="flex items-center justify-between px-5 pt-5 pb-0 flex-wrap gap-3">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+          {isToday ? 'Jadwal Hari Ini' : 'Jadwal'}
+        </h2>
+        <div className="flex items-center gap-2">
+          <ScheduleDateNav date={date} today={today} />
+          <a
+            href={buildWhatsappShareUrl(message)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Bagikan ke WhatsApp
+          </a>
+        </div>
       </div>
 
       <div className="p-5 pt-3">
         <p className="text-sm font-semibold text-gray-900">{dateLabel}</p>
-        <p className="text-xs text-gray-500 mb-4">{totalSessions} sesi terjadwal hari ini</p>
+        <p className="text-xs text-gray-500 mb-4">{totalSessions} sesi terjadwal</p>
 
         {tutorGroups.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-6">Tidak ada sesi terjadwal hari ini.</p>
+          <p className="text-sm text-gray-500 text-center py-6">Tidak ada sesi terjadwal pada tanggal ini.</p>
         ) : (
           <div className="space-y-4">
             {tutorGroups.map(group => (
