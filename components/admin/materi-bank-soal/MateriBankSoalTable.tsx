@@ -47,6 +47,9 @@ export type DisplayRow = {
   // journal-completeness checklist and reject it if the tema/topik was
   // never filled in properly. Admin-added curriculum_resources have none.
   sessionId: string | null
+  // Whether this link's underlying Google Drive file has already been
+  // copied into the shared "Materi dan Bank Soal" Drive folder.
+  isDuplicated: boolean
 }
 
 interface Props {
@@ -324,9 +327,17 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0"
           >
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m5.656-5.656l1.5-1.5a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656 0" />
-            </svg>
+            {r.isDuplicated ? (
+              <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <title>Sudah di-duplicate ke Drive</title>
+                <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.5 12.5l2.5 2.5 4.5-5" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m5.656-5.656l1.5-1.5a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656 0" />
+              </svg>
+            )}
             <span className="truncate">{r.title}</span>
           </a>
           {r.sessionId && (

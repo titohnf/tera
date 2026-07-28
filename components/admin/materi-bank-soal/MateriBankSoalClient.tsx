@@ -51,6 +51,7 @@ interface Props {
   subjects: { id: string; name: string; curriculum: string[]; level: string[] }[]
   resources: Resource[]
   tutorResources: TutorResourceRow[]
+  duplicatedFileIds: string[]
   createResourceAction: (ctx: TopicContext, kind: ResourceKind, prevState: ActionState, formData: FormData) => Promise<ActionState>
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
@@ -59,7 +60,23 @@ const GRADES = Array.from({ length: 12 }, (_, i) => `Kelas ${i + 1}`)
 const SEMESTERS = [1, 2]
 const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge']
 
-export default function MateriBankSoalClient({ topics, subjects, resources, tutorResources, createResourceAction, deleteResourceAction }: Props) {
+// Extracts a Google Drive file id from a docs.google.com/drive.google.com
+// link (e.g. .../document/d/FILE_ID/edit, .../file/d/FILE_ID/view). Used to
+// check a link against curriculum_resource_duplications regardless of which
+// query params/URL shape a particular row happens to use.
+function extractDriveFileId(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (!['docs.google.com', 'drive.google.com'].includes(u.hostname)) return null
+    if (u.pathname.includes('/forms/d/e/')) return null
+    const m = u.pathname.match(/\/d\/([a-zA-Z0-9_-]{15,})/)
+    return m ? m[1] : null
+  } catch {
+    return null
+  }
+}
+
+export default function MateriBankSoalClient({ topics, subjects, resources, tutorResources, duplicatedFileIds, createResourceAction, deleteResourceAction }: Props) {
   const [curriculumFilter, setCurriculumFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [semesterFilter, setSemesterFilter] = useState<number | ''>('')
@@ -69,6 +86,11 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
 
   const subjectNameById = new Map(subjects.map(s => [s.id, s.name]))
   const topicsById = new Map(topics.map(t => [t.id, t]))
+  const duplicatedFileIdSet = new Set(duplicatedFileIds)
+  const isHrefDuplicated = (href: string) => {
+    const fileId = extractDriveFileId(href)
+    return fileId ? duplicatedFileIdSet.has(fileId) : false
+  }
 
   // Mapel dropdown offers every subject that has at least one curriculum
   // topic — Kelas/Semester/Kurikulum are optional filters now (not a forced
@@ -85,7 +107,7 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
       id: r.id, subjectId: r.subject_id, subjectName: subjectNameById.get(r.subject_id) ?? '—',
       gradeLevel: r.grade_level, semester: r.semester,
       theme: r.theme, topic: r.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.link_url,
-      source: 'admin', tutorName: null, sessionId: null,
+      source: 'admin', tutorName: null, sessionId: null, isDuplicated: isHrefDuplicated(r.link_url),
     })
   }
 
@@ -100,7 +122,7 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
         id: r.id, subjectId: t.subject_id, subjectName: subjectNameById.get(t.subject_id) ?? '—',
         gradeLevel: t.grade_level, semester: t.semester,
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
+        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a
@@ -117,7 +139,7 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
         theme: r.customTheme ?? 'Tanpa Tema', topic: r.topicText, topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
+        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     } else {
       // Session never had a topic set at all — still surface the entry
@@ -130,7 +152,7 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
         theme: 'Tanpa Tema', topic: 'Tanpa Topik', topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
+        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     }
   }
