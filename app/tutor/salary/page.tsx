@@ -1,14 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
-import { computeSalary, buildRateMap } from '@/lib/salary'
+import { computeSalary, buildRateMap, resolveAmounts } from '@/lib/salary'
 import type { SalaryBreakdownItem } from '@/lib/salary'
 import Link from 'next/link'
 import RekapDetailTable, { type RekapClassBreakdown } from '@/components/tutor/RekapDetailTable'
 import MonthlyDetailTable, { type RekapMonthBreakdown } from '@/components/tutor/MonthlyDetailTable'
 import MonthSelect from '@/components/tutor/MonthSelect'
 import MetricCard from '@/components/dashboard/MetricCard'
-import BillingRatesReadOnly from '@/components/admin/billing-rates/BillingRatesReadOnly'
-import type { BillingRate, BillingRatePeriod } from '@/lib/actions/admin/billing-rates'
 import type { SalarySchemeRow, SessionPaymentRow, AttendanceRow, SessionRow, PayslipRow } from '@/lib/types/database'
 import { summarizePayrollStatus } from '@/lib/session-status'
 
@@ -287,8 +285,6 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
     { data: assignedSlots },
     { data: schemes },
     { data: activePeriod },
-    { data: billingPeriods },
-    { data: billingRates },
   ] = await Promise.all([
     supabase
       .from('classes')
@@ -304,16 +300,6 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
       .select('*')
       .eq('tutor_id', userId) as unknown as Promise<{ data: SalarySchemeRow[] | null }>,
     supabase.from('rate_periods').select('id').eq('is_active', true).limit(1).single(),
-    supabase
-      .from('billing_rate_periods')
-      .select('id, name, start_date, end_date, is_active, created_at')
-      .eq('is_active', true)
-      .limit(1) as unknown as Promise<{ data: BillingRatePeriod[] | null }>,
-    supabase
-      .from('billing_rates')
-      .select('class_type, jenjang, jenis, amount, period_id') as unknown as Promise<{
-        data: (BillingRate & { period_id: string })[] | null
-      }>,
   ])
 
   const ownedClassIds = new Set((ownedClasses ?? []).map(c => c.id))
@@ -325,11 +311,6 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
     : { data: [] as SalaryClassRow[] }
 
   const classes: SalaryClassRow[] = [...(ownedClasses ?? []), ...(assignedClassesRaw ?? [])]
-
-  const activeBillingPeriod = billingPeriods?.[0] ?? null
-  const activeBillingRates = activeBillingPeriod
-    ? (billingRates ?? []).filter(r => r.period_id === activeBillingPeriod.id)
-    : []
 
   const { data: activeRates } = activePeriod?.id
     ? await (supabase
@@ -343,13 +324,7 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
 
   const rows = (classes ?? []).map(cls => {
     const scheme = schemeByClassId.get(cls.id)
-    let baseAmount = 0
-    if (scheme && scheme.base_amount > 0) {
-      baseAmount = scheme.base_amount
-    } else if (cls.class_type && cls.level && cls.jenis) {
-      const billingJenis = cls.jenis === 'reguler' ? 'Reguler' : cls.jenis === 'fokus' ? 'Fokus' : null
-      baseAmount = billingJenis ? (rateMap[`${cls.class_type}|${cls.level}|${billingJenis}`] ?? 0) : 0
-    }
+    const { baseAmount } = resolveAmounts({ scheme, cls, studentsPresent: 0, rateMap })
     return { cls, scheme, baseAmount }
   })
 
@@ -393,20 +368,6 @@ async function SkemaGajiTab({ userId }: { userId: string }) {
           </div>
         )}
       </div>
-
-      {activeBillingPeriod && (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <div className="px-5 pt-5 pb-3 flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Tarif Bimbel</h2>
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Berlaku</span>
-            <span className="text-xs text-gray-400">
-              {activeBillingPeriod.name} · {formatDate(activeBillingPeriod.start_date)}
-              {activeBillingPeriod.end_date ? ` – ${formatDate(activeBillingPeriod.end_date)}` : ' · Tanpa batas'}
-            </span>
-          </div>
-          <BillingRatesReadOnly rates={activeBillingRates} />
-        </div>
-      )}
     </div>
   )
 }
