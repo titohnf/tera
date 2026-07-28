@@ -7,7 +7,7 @@ type EnrollmentRow = {
   student_id: string
   class_id: string
   profiles: { full_name: string } | null
-  classes: { name: string; semester: number | null; academic_year: string | null } | null
+  classes: { name: string; class_type: string | null; semester: number | null; academic_year: string | null } | null
 }
 
 type InvoiceRow = {
@@ -54,7 +54,7 @@ export default async function InvoicesPage({
   const [enrollmentsRes, invoicesRes] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name, semester, academic_year)')
+      .select('student_id, class_id, profiles!student_id(full_name), classes!class_id(name, class_type, semester, academic_year)')
       .eq('is_active', true)
       .order('profiles(full_name)') as unknown as Promise<{ data: EnrollmentRow[] | null }>,
     admin
@@ -65,7 +65,9 @@ export default async function InvoicesPage({
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: (InvoiceRow & { invoice_payments: { amount: number; paid_at: string }[] })[] | null }>,
   ])
 
-  const enrollments = enrollmentsRes.data ?? []
+  // Yayasan classes never get invoiced (see generateInvoice's rejection in
+  // lib/actions/admin/invoices.ts) — keep their students off this list too.
+  const enrollments = (enrollmentsRes.data ?? []).filter(e => e.classes?.class_type !== 'yayasan')
 
   // Normalize invoices: attach payments
   const invoices: InvoiceRow[] = (invoicesRes.data ?? []).map(inv => ({
