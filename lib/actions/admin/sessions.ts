@@ -101,6 +101,7 @@ export async function updateSession(sessionId: string, prevState: ActionState, f
   const time = formData.get('time') as string
   const duration = Number(formData.get('duration_minutes') ?? 90)
   const location = (formData.get('location') as string)?.trim() || null
+  const hasTopicField = formData.has('topic')
   const topic = (formData.get('topic') as string)?.trim() || null
 
   if (!date || !time) return { error: 'Tanggal dan waktu wajib diisi' }
@@ -108,17 +109,22 @@ export async function updateSession(sessionId: string, prevState: ActionState, f
 
   const scheduledAt = wibToUtcDate(date, time).toISOString()
 
+  const updatePayload: Record<string, unknown> = {
+    tutor_id: tutorId,
+    subject_id: subjectId,
+    scheduled_at: scheduledAt,
+    duration_minutes: duration,
+    location,
+    updated_at: new Date().toISOString(),
+  }
+  if (hasTopicField) {
+    updatePayload.topic = topic
+    updatePayload.curriculum_topic_id = (formData.get('curriculum_topic_id') as string) || null
+  }
+
   const { error } = await ctx.admin
     .from('sessions')
-    .update({
-      tutor_id: tutorId,
-      subject_id: subjectId,
-      scheduled_at: scheduledAt,
-      duration_minutes: duration,
-      location,
-      topic,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', sessionId)
 
   if (error) return { error: error.message }
