@@ -931,6 +931,12 @@ export default async function SiswaDetailPage({
               >
                 + Jadwalkan Sesi
               </Link>
+              <Link
+                href={`/admin/laporan-bulanan?student_id=${studentId}`}
+                className="flex items-center justify-center w-full px-4 py-2.5 border border-slate-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Laporan Bulanan
+              </Link>
               <StudentStatusButton
                 userId={studentId}
                 isActive={profile.is_active ?? true}
