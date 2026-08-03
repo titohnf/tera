@@ -36,14 +36,12 @@ type SessionRow = {
   class_id: string
   classes: { name: string; class_type: string | null; level: string | null } | null
   subjects: { name: string } | null
-  tutor: { id: string; full_name: string; nickname: string | null } | null
+  tutor: { id: string; full_name: string } | null
 }
 
 export type TutorGroup = {
   tutorId: string
   tutorName: string
-  /** WhatsApp mention handle, e.g. "Tutor_Jannah" (no leading "@"). */
-  tutorMention: string
   items: {
     time: string
     /** Full class name minus the internal uniqueness tag (used by the admin UI). */
@@ -71,15 +69,6 @@ function shortName(profile: { full_name: string; nickname: string | null }): str
   return profile.nickname?.trim() || firstName(profile.full_name)
 }
 
-/**
- * WhatsApp mentions are typed by hand in the group, so the handle has to be
- * predictable: the tutor's nickname when set, otherwise the first word of
- * their full name (e.g. "Rifka Fauziah Azis" -> "Tutor_Rifka").
- */
-function tutorMentionHandle(tutor: { full_name: string; nickname: string | null }): string {
-  return `Tutor_${shortName(tutor).replace(/\s+/g, '_')}`
-}
-
 /** "16:00" in WIB — toLocaleTimeString('id-ID') renders "16.00", which the message format doesn't use. */
 function wibTimeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-GB', {
@@ -96,7 +85,7 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
       id, scheduled_at, status, class_id,
       classes(name, class_type, level),
       subjects(name),
-      tutor:profiles!tutor_id(id, full_name, nickname)
+      tutor:profiles!tutor_id(id, full_name)
     `)
     .neq('status', 'cancelled')
     .gte('scheduled_at', start.toISOString())
@@ -142,7 +131,6 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
     const group = groups.get(s.tutor.id) ?? {
       tutorId: s.tutor.id,
       tutorName: s.tutor.full_name,
-      tutorMention: tutorMentionHandle(s.tutor),
       items: [],
     }
     group.items.push({
@@ -167,7 +155,7 @@ export function buildDailyMessageText(dateLabel: string, tutorGroups: TutorGroup
     lines.push('Tidak ada kelas terjadwal hari ini.')
   } else {
     for (const group of tutorGroups) {
-      lines.push(`*${group.tutorName}* @${group.tutorMention}`)
+      lines.push(`*${group.tutorName}*`)
       for (const item of group.items) {
         const parts = [item.classLabel, item.gradeLevel, item.subjectName, `${item.time} WIB`]
         lines.push(`• ${parts.filter(Boolean).join(', ')}`)
