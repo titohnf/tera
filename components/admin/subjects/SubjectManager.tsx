@@ -2,9 +2,9 @@
 
 import { useActionState, useState, useTransition } from 'react'
 import { createSubject, updateSubject, deleteSubject } from '@/lib/actions/admin/subjects'
+import { CURRICULA } from '@/lib/curriculum-config'
 
 const LEVELS = ['SD', 'SMP', 'SMA', 'Umum']
-const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge']
 
 type Subject = { id: string; name: string; level: string[] | null; curriculum: string[] | null; classCount: number }
 

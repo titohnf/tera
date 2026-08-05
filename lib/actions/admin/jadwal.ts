@@ -5,7 +5,11 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 export type JadwalSessionDetail = {
   tema: string | null
   topik: string | null
-  cp_list: { id: string; label: string; bank_soal_url: string | null }[]
+  cp_list: { id: string; label: string }[]
+  // Terpisah dari `cp_list` sejak migrasi 080: latihan soal satu per TOPIK,
+  // sementara satu topik bisa punya beberapa CP. Menempelkannya ke cp_list
+  // berarti URL yang sama muncul sebagai beberapa chip identik.
+  latihan_soal_list: { key: string; label: string; url: string }[]
   materials: { id: string; title: string; link_url: string | null; file_path: string | null }[]
   assessments: { id: string; title: string; score: number | null; max_score: number; link_url: string | null; level: string | null }[]
   catatan: string | null
@@ -87,13 +91,14 @@ export async function getJadwalSessionDetail(
   let tema: string | null = null
   let topik: string | null = null
   let cp_list: JadwalSessionDetail['cp_list'] = []
+  const latihan_soal_list: JadwalSessionDetail['latihan_soal_list'] = []
 
   if (allCurriculumIds.length > 0) {
     const { data: ctRows } = await admin
       .from('curriculum_topics')
-      .select('id, theme, topic, learning_outcomes')
+      .select('id, group_id, theme, topic, learning_outcomes')
       .in('id', allCurriculumIds) as unknown as {
-        data: { id: string; theme: string | null; topic: string; learning_outcomes: string | null }[] | null
+        data: { id: string; group_id: string | null; theme: string | null; topic: string; learning_outcomes: string | null }[] | null
       }
 
     const ctMap = new Map((ctRows ?? []).map(r => [r.id, r]))
@@ -108,12 +113,21 @@ export async function getJadwalSessionDetail(
 
     cp_list = selectedIds.map(id => {
       const row = ctMap.get(id)
-      return {
-        id,
-        label: row?.learning_outcomes ?? row?.topic ?? id,
-        bank_soal_url: cp_urls[id] ?? null,
-      }
+      return { id, label: row?.learning_outcomes ?? row?.topic ?? id }
     })
+
+    // Satu chip per topik, bukan per CP. Baris tanpa `group_id` dikunci id
+    // CP-nya sendiri — kunci yang sama dengan yang ditulis LatihanSoalTab.
+    const seen = new Set<string>()
+    for (const id of selectedIds) {
+      const row = ctMap.get(id)
+      const key = row?.group_id ?? id
+      if (seen.has(key)) continue
+      seen.add(key)
+      const url = cp_urls[key]
+      if (!url?.trim()) continue
+      latihan_soal_list.push({ key, label: row?.topic ?? 'Latihan Soal', url })
+    }
   } else if (session && (session.custom_theme || (session.custom_learning_outcomes?.length ?? 0) > 0)) {
     // Kelas privat — tutor-authored tema/topik/CP, not linked to curriculum_topics
     tema = session.custom_theme
@@ -121,8 +135,13 @@ export async function getJadwalSessionDetail(
     cp_list = (session.custom_learning_outcomes ?? []).map((text, i) => ({
       id: `custom-${i}`,
       label: text,
-      bank_soal_url: null,
     }))
+
+    // Topik bebas: satu latihan soal untuk seluruh sesi, dikunci `custom`.
+    const customUrl = cp_urls['custom']
+    if (customUrl?.trim()) {
+      latihan_soal_list.push({ key: 'custom', label: session.topic ?? 'Latihan Soal', url: customUrl })
+    }
   }
 
   const assessmentList = assessmentRows ?? []
@@ -151,6 +170,7 @@ export async function getJadwalSessionDetail(
     tema,
     topik,
     cp_list,
+    latihan_soal_list,
     materials: materialsRes.data ?? [],
     assessments,
     catatan: noteRes.data?.body ?? null,

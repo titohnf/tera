@@ -42,7 +42,10 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login')
-  const isDashboard = pathname.startsWith('/tutor') || pathname.startsWith('/admin')
+  const isDashboard =
+    pathname.startsWith('/tutor') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/keluarga')
   const isPublic = pathname.startsWith('/unauthorized') || pathname.startsWith('/auth')
 
   if (isPublic) return supabaseResponse

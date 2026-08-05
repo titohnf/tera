@@ -290,7 +290,7 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                                   </div>
                                 ),
                               })
-                            const bankSoalCps = detail.cp_list.filter(cp => cp.bank_soal_url)
+                            const latihanSoalTopics = detail.latihan_soal_list ?? []
                             const soalAsesmenList = (detail.assessments ?? []).filter(a => a.link_url)
                             const chipCls = "inline-flex items-center gap-1 text-xs text-blue-600 border border-blue-200 bg-white px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors"
 
@@ -312,9 +312,9 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                                   </div>
                                 ),
                               })
-                            if (bankSoalCps.length > 0 || soalAsesmenList.length > 0)
+                            if (latihanSoalTopics.length > 0 || soalAsesmenList.length > 0)
                               items.push({
-                                label: 'Bank Soal',
+                                label: 'Latihan Soal',
                                 node: (
                                   <div className="flex flex-wrap gap-1.5">
                                     {soalAsesmenList.map((a, i) => (
@@ -323,10 +323,13 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                                         {`Asesmen ${i + 1}`}
                                       </Link>
                                     ))}
-                                    {bankSoalCps.map((cp, i) => (
-                                      <Link key={cp.id} href={cp.bank_soal_url!} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
+                                    {/* Satu chip per topik, dilabeli nama topiknya — dulu
+                                        per CP dan dilabeli "CP 1", "CP 2", yang tidak
+                                        memberi tahu apa pun tentang isinya. */}
+                                    {latihanSoalTopics.map(topic => (
+                                      <Link key={topic.key} href={topic.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
                                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                                        {bankSoalCps.length > 1 ? `CP ${i + 1}` : 'Bank Soal'}
+                                        {latihanSoalTopics.length > 1 ? topic.label : 'Latihan Soal'}
                                       </Link>
                                     ))}
                                   </div>

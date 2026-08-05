@@ -5,7 +5,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 
 export type ActionState = { error: string } | null
-export type ResourceKind = 'materi' | 'bank_soal'
+export type ResourceKind = 'materi' | 'latihan_soal'
 
 export type TopicContext = {
   curriculum: string
@@ -53,7 +53,7 @@ export async function createCurriculumResource(
     created_by: ctx.user.id,
   })
   if (error) return { error: error.message }
-  revalidatePath('/admin/materi-bank-soal')
+  revalidatePath('/admin/materi-latihan-soal')
   return null
 }
 
@@ -63,6 +63,6 @@ export async function deleteCurriculumResource(id: string): Promise<ActionState>
 
   const { error } = await ctx.admin.from('curriculum_resources').delete().eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/admin/materi-bank-soal')
+  revalidatePath('/admin/materi-latihan-soal')
   return null
 }

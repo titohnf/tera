@@ -1,9 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState, useCallback } from 'react'
-
-const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge']
-const GRADE_LEVELS = Array.from({ length: 12 }, (_, i) => `Kelas ${i + 1}`)
+import { CURRICULA, gradesFor, hasSemester, TKA_SEMESTER } from '@/lib/curriculum-config'
 
 type ActionState = { error: string } | null
 
@@ -80,7 +78,7 @@ function AddThemesForm({
           {defaultValues?.curriculum && <span className="text-gray-500">{defaultValues.curriculum}</span>}
           {subjectName && <><span className="text-gray-300">·</span><span className="text-gray-700 font-medium">{subjectName}</span></>}
           {defaultValues?.grade_level && <><span className="text-gray-300">·</span><span className="text-gray-500">{defaultValues.grade_level}</span></>}
-          {defaultValues?.semester && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
+          {defaultValues?.semester && hasSemester(defaultValues?.curriculum ?? '') && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
         </div>
       )}
 
@@ -182,7 +180,7 @@ function AddTopicsForm({ topicsAction, defaultValues, subjects, onSuccess }: {
           {defaultValues?.curriculum && <span className="text-gray-500">{defaultValues.curriculum}</span>}
           {subjectName && <><span className="text-gray-300">·</span><span className="text-gray-700 font-medium">{subjectName}</span></>}
           {defaultValues?.grade_level && <><span className="text-gray-300">·</span><span className="text-gray-500">{defaultValues.grade_level}</span></>}
-          {defaultValues?.semester && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
+          {defaultValues?.semester && hasSemester(defaultValues?.curriculum ?? '') && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
         </div>
       )}
 
@@ -277,7 +275,7 @@ function AddCPsForm({ cpsAction, defaultValues, subjects, onSuccess }: {
           {defaultValues?.curriculum && <span className="text-gray-500">{defaultValues.curriculum}</span>}
           {subjectName && <><span className="text-gray-300">·</span><span className="text-gray-700 font-medium">{subjectName}</span></>}
           {defaultValues?.grade_level && <><span className="text-gray-300">·</span><span className="text-gray-500">{defaultValues.grade_level}</span></>}
-          {defaultValues?.semester && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
+          {defaultValues?.semester && hasSemester(defaultValues?.curriculum ?? '') && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
         </div>
       )}
 
@@ -347,6 +345,12 @@ export default function CurriculumForm({ subjects, action, themesAction, topicsA
 
   const formRef = useRef<HTMLFormElement>(null)
 
+  // Edit mode lets the curriculum be changed, and the curriculum decides which
+  // grades exist and whether there is a semester at all — so it is tracked here
+  // rather than left to the uncontrolled select.
+  const [editCurriculum, setEditCurriculum] = useState(defaultValues?.curriculum ?? 'Kurikulum Merdeka')
+  const editGrades = gradesFor(editCurriculum)
+
   useEffect(() => {
     if (state === null && !isEdit) formRef.current?.reset()
   }, [state, isEdit])
@@ -379,7 +383,7 @@ export default function CurriculumForm({ subjects, action, themesAction, topicsA
           {defaultValues?.curriculum && <span className="text-gray-500">{defaultValues.curriculum}</span>}
           {subjectName && <><span className="text-gray-300">·</span><span className="text-gray-700 font-medium">{subjectName}</span></>}
           {defaultValues?.grade_level && <><span className="text-gray-300">·</span><span className="text-gray-500">{defaultValues.grade_level}</span></>}
-          {defaultValues?.semester && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
+          {defaultValues?.semester && hasSemester(defaultValues?.curriculum ?? '') && <><span className="text-gray-300">·</span><span className="text-gray-500">Semester {defaultValues.semester}</span></>}
         </div>
       )}
 
@@ -483,7 +487,8 @@ export default function CurriculumForm({ subjects, action, themesAction, topicsA
             <select
               name="curriculum"
               required
-              defaultValue={defaultValues?.curriculum ?? 'Kurikulum Merdeka'}
+              value={editCurriculum}
+              onChange={e => setEditCurriculum(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               {CURRICULA.map(c => <option key={c} value={c}>{c}</option>)}
@@ -505,28 +510,35 @@ export default function CurriculumForm({ subjects, action, themesAction, topicsA
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Kelas</label>
               <select
+                key={editCurriculum}
                 name="grade_level"
                 required
-                defaultValue={defaultValues?.grade_level ?? ''}
+                defaultValue={editGrades.includes(defaultValues?.grade_level ?? '') ? defaultValues?.grade_level : ''}
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="" disabled>Pilih kelas</option>
-                {GRADE_LEVELS.map(g => <option key={g} value={g}>{g}</option>)}
+                {editGrades.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Semester</label>
-              <select
-                name="semester"
-                required
-                defaultValue={defaultValues?.semester ?? ''}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="" disabled>Pilih</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-              </select>
-            </div>
+            {hasSemester(editCurriculum) ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Semester</label>
+                <select
+                  name="semester"
+                  required
+                  defaultValue={defaultValues?.semester ?? ''}
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="" disabled>Pilih</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                </select>
+              </div>
+            ) : (
+              // TKA has no semesters; the column still needs a value, so the
+              // filler is submitted silently instead of being asked for.
+              <input type="hidden" name="semester" value={TKA_SEMESTER} />
+            )}
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Urutan</label>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import CurriculumTable from './CurriculumTable'
 import CurriculumNav from './CurriculumNav'
+import { CURRICULA, SEMESTERS, gradesFor, hasSemester, semesterFor, type Curriculum } from '@/lib/curriculum-config'
 
 type Topic = {
   id: string
@@ -33,11 +34,6 @@ interface Props {
   updateAction: (id: string, prevState: ActionState, formData: FormData) => Promise<ActionState>
   deleteAction: (id: string) => Promise<ActionState>
 }
-
-const GRADES = Array.from({ length: 12 }, (_, i) => `Kelas ${i + 1}`)
-const SEMESTERS = [1, 2]
-const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge'] as const
-type Curriculum = typeof CURRICULA[number]
 
 function gradeToLevel(grade: string): string {
   const num = parseInt(grade.replace('Kelas ', ''), 10)
@@ -75,13 +71,22 @@ export default function CurriculumClient({ topics, subjects, createAction, creat
     setOpenThemeKey(`${subjectName}__${theme}`)
   }
 
+  // Not every curriculum spans the same axes: TKA only exists in the grades
+  // that sit the test, and has no semesters at all. Deriving the effective
+  // values instead of resetting state on switch means the grade you had picked
+  // is still there when you switch back.
+  const grades = gradesFor(curriculum)
+  const activeGrade = grades.includes(grade) ? grade : grades[0]
+  const activeSemester = semesterFor(curriculum, semester)
+  const showSemester = hasSemester(curriculum)
+
   const filtered = topics.filter(t =>
     t.curriculum === curriculum &&
-    t.grade_level === grade &&
-    t.semester === semester
+    t.grade_level === activeGrade &&
+    t.semester === activeSemester
   )
 
-  const activeLevel = gradeToLevel(grade)
+  const activeLevel = gradeToLevel(activeGrade)
   const curriculumSubjects = subjects.filter(s =>
     s.curriculum.includes(curriculum) && s.level.includes(activeLevel)
   )
@@ -137,12 +142,12 @@ export default function CurriculumClient({ topics, subjects, createAction, creat
           <div className="flex-1 min-w-0 flex items-center gap-2 bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-2 h-9 overflow-x-auto relative">
             <div className="flex items-center gap-0.5">
               <span className="px-2 text-xs font-medium text-gray-400 shrink-0">Kelas:</span>
-              {GRADES.map(g => (
+              {grades.map(g => (
                 <button
                   key={g}
                   onClick={() => setGrade(g)}
                   className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-                    grade === g
+                    activeGrade === g
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                   }`}
@@ -151,22 +156,26 @@ export default function CurriculumClient({ topics, subjects, createAction, creat
                 </button>
               ))}
             </div>
-            <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex items-center gap-0.5">
-              {SEMESTERS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setSemester(s)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                    semester === s
-                      ? 'bg-gray-700 text-white shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Sem {s}
-                </button>
-              ))}
-            </div>
+            {showSemester && (
+              <>
+                <div className="w-px h-5 bg-gray-200 mx-1" />
+                <div className="flex items-center gap-0.5">
+                  {SEMESTERS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setSemester(s)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                        activeSemester === s
+                          ? 'bg-gray-700 text-white shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      Sem {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {openThemeKey && (
                 <button
@@ -192,7 +201,7 @@ export default function CurriculumClient({ topics, subjects, createAction, creat
             topics={filtered}
             subjects={subjects}
             curriculumSubjects={curriculumSubjects}
-            filter={{ curriculum, grade_level: grade, semester }}
+            filter={{ curriculum, grade_level: activeGrade, semester: activeSemester }}
             createAction={createAction}
             createThemesAction={createThemesAction}
             createTopicsAction={createTopicsAction}

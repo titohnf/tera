@@ -203,7 +203,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                   </button>
                 </div>
                 <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 px-5 py-4">
-                  <p className="text-sm text-gray-400">Belum ada tema untuk kelas & semester ini.</p>
+                  <p className="text-sm text-gray-400">Belum ada tema untuk pilihan ini.</p>
                 </div>
               </div>
             )

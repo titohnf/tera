@@ -231,7 +231,7 @@ export default async function SessionPage({
     session.subject_id
       ? supabase
           .from('curriculum_topics')
-          .select('id, grade_level, semester, theme, topic, learning_outcomes')
+          .select('id, group_id, grade_level, semester, theme, topic, learning_outcomes')
           .eq('subject_id', session.subject_id)
           .order('sort_order')
       : Promise.resolve({ data: [] }),
@@ -281,7 +281,7 @@ export default async function SessionPage({
   const assessments = assessmentsResult.data ?? []
   const tutorName = (profileResult.data as { full_name: string } | null)?.full_name ?? null
   const curriculumTopics = (curriculumTopicsResult.data ?? []) as {
-    id: string; grade_level: string; semester: number
+    id: string; group_id: string | null; grade_level: string; semester: number
     theme: string | null; topic: string; learning_outcomes: string | null
   }[]
 

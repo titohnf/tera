@@ -23,8 +23,8 @@ type Topic = {
 }
 
 // Asesmen (from the `assessments` table) is display-only here — admins add
-// materi/bank soal via this page, but assessments are always authored by a
-// tutor from the session's own "Asesmen & Bank Soal" tab.
+// materi/latihan soal via this page, but assessments are always authored by a
+// tutor from the session's own "Asesmen & Latihan Soal" tab.
 export type DisplayKind = ResourceKind | 'asesmen'
 
 export type DisplayRow = {
@@ -48,7 +48,7 @@ export type DisplayRow = {
   // never filled in properly. Admin-added curriculum_resources have none.
   sessionId: string | null
   // Whether this link's underlying Google Drive file has already been
-  // copied into the shared "Materi dan Bank Soal" Drive folder.
+  // copied into the shared "Materi dan Latihan Soal" Drive folder.
   isDuplicated: boolean
 }
 
@@ -60,7 +60,7 @@ interface Props {
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
 
-const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', bank_soal: 'Bank Soal', asesmen: 'Asesmen' }
+const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen' }
 
 function AddResourceForm({ subjects, allTopics, onSubmit, onCancel }: {
   subjects: { id: string; name: string }[]
@@ -228,7 +228,7 @@ function AddResourceForm({ subjects, allTopics, onSubmit, onCancel }: {
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Jenis</label>
         <div className="flex gap-2">
-          {(['materi', 'bank_soal'] as const).map(k => (
+          {(['materi', 'latihan_soal'] as const).map(k => (
             <button
               key={k}
               type="button"
@@ -293,12 +293,12 @@ type TopicGroup = {
   topicSource: 'kurikulum' | 'tutor'
   tutorLabel: string
   materi: DisplayRow[]
-  bankSoal: DisplayRow[]
+  latihanSoal: DisplayRow[]
   asesmen: DisplayRow[]
 }
 
 // One row per (topic, contributor) pair — a topic can be touched by several
-// tutors (and/or admin) with different materi/bank soal/asesmen each, so
+// tutors (and/or admin) with different materi/latihan soal/asesmen each, so
 // splitting rows this way keeps the "Tutor" column unambiguous instead of
 // having to merge unrelated contributors' items into one cell.
 function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
@@ -310,12 +310,12 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
     if (!groups.has(key)) {
       groups.set(key, {
         key, topicKey, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
-        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], bankSoal: [], asesmen: [],
+        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], latihanSoal: [], asesmen: [],
       })
     }
     const g = groups.get(key)!
     if (r.kind === 'materi') g.materi.push(r)
-    else if (r.kind === 'bank_soal') g.bankSoal.push(r)
+    else if (r.kind === 'latihan_soal') g.latihanSoal.push(r)
     else g.asesmen.push(r)
   }
   return Array.from(groups.values()).sort((a, b) =>
@@ -324,7 +324,7 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
   )
 }
 
-type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'bankSoal'
+type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'latihanSoal'
 type SortDir = 'asc' | 'desc'
 
 // "Kelas 10" should sort after "Kelas 2" — compare the numeric grade, not
@@ -345,7 +345,7 @@ function compareGroups(a: TopicGroup, b: TopicGroup, key: SortKey): number {
     case 'tutorLabel': return a.tutorLabel.localeCompare(b.tutorLabel)
     case 'materi': return a.materi.length - b.materi.length
     case 'asesmen': return a.asesmen.length - b.asesmen.length
-    case 'bankSoal': return a.bankSoal.length - b.bankSoal.length
+    case 'latihanSoal': return a.latihanSoal.length - b.latihanSoal.length
   }
 }
 
@@ -454,7 +454,7 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
 
 const PAGE_SIZE = 10
 
-export default function MateriBankSoalTable({ rows, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState<SortKey>('subjectName')
@@ -508,7 +508,7 @@ export default function MateriBankSoalTable({ rows, allTopics, allSubjects, crea
 
       {groups.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-10 px-5">
-          Belum ada materi/bank soal yang cocok dengan filter ini.
+          Belum ada materi/latihan soal yang cocok dengan filter ini.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -522,7 +522,7 @@ export default function MateriBankSoalTable({ rows, allTopics, allSubjects, crea
                 <SortableHeader label="Tutor" sortKey="tutorLabel" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Materi" sortKey="materi" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Asesmen" sortKey="asesmen" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Bank Soal" sortKey="bankSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Latihan Soal" sortKey="latihanSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -553,7 +553,7 @@ export default function MateriBankSoalTable({ rows, allTopics, allSubjects, crea
                     <ResourceCell items={g.asesmen} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
+                    <ResourceCell items={g.latihanSoal} onDelete={handleDelete} />
                   </td>
                 </tr>
               ))}

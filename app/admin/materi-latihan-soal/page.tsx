@@ -2,8 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { createCurriculumResource, deleteCurriculumResource } from '@/lib/actions/admin/curriculum-resources'
 import { runResourceDuplication } from '@/lib/actions/admin/curriculum-resource-duplication'
 import { collectAllResourceLinks } from '@/lib/curriculum-resource-links'
-import MateriBankSoalClient from '@/components/admin/materi-bank-soal/MateriBankSoalClient'
-import DuplicationStatusPanel from '@/components/admin/materi-bank-soal/DuplicationStatusPanel'
+import MateriLatihanSoalClient from '@/components/admin/materi-latihan-soal/MateriLatihanSoalClient'
+import DuplicationStatusPanel from '@/components/admin/materi-latihan-soal/DuplicationStatusPanel'
 
 type TutorRef = { full_name: string; nickname: string | null } | null
 
@@ -32,9 +32,9 @@ type MaterialSourceRow = {
   } | null
 }
 
-// Bank soal is captured per-CP on the session itself (sessions.cp_urls, a
-// {cpId: url} map — see components/admin/sessions/BankSoalTab.tsx), not in
-// the `assessments` table. `assessments` is the separate "Asesmen" grading
+// Latihan soal is captured per TOPIC on the session itself (sessions.cp_urls, a
+// {topicGroupId: url} map since migration 080 — see
+// components/admin/sessions/LatihanSoalTab.tsx), not in the `assessments` table. `assessments` is the separate "Asesmen" grading
 // feature (max_score/due_at/results) and gets its own column instead.
 type SessionCpUrlRow = {
   id: string
@@ -50,7 +50,7 @@ type SessionCpUrlRow = {
 
 export type TutorResourceRow = {
   id: string
-  kind: 'materi' | 'bank_soal' | 'asesmen'
+  kind: 'materi' | 'latihan_soal' | 'asesmen'
   title: string
   href: string
   sessionId: string
@@ -94,30 +94,34 @@ function toTutorResources(
     })
 }
 
-function toBankSoalResources(
+function toLatihanSoalResources(
   sessionRows: SessionCpUrlRow[],
-  topicsById: Map<string, { learning_outcomes: string | null }>,
+  // Kuncinya id topik (migrasi 080), jadi yang dibutuhkan di sini adalah nama
+  // topik plus satu CP wakil — kolom Kurikulum/Kelas/Semester di tabel masih
+  // ditelusuri lewat `curriculum_topics`, dan semua CP satu topik memberi
+  // jawaban yang sama untuk kolom-kolom itu.
+  topicByGroupId: Map<string, { topic: string; representativeCpId: string }>,
   classInfoById: Map<string, { gradeLevel: string | null; semester: number | null }>,
 ): TutorResourceRow[] {
   const out: TutorResourceRow[] = []
   for (const s of sessionRows) {
     if (!s.subject_id || !s.cp_urls) continue
     const classInfo = classInfoById.get(s.class_id)
-    for (const [cpId, url] of Object.entries(s.cp_urls)) {
+    for (const [topicKey, url] of Object.entries(s.cp_urls)) {
       if (!url?.trim()) continue
-      const isCustom = cpId.startsWith('custom-')
-      const customIndex = isCustom ? Number(cpId.slice('custom-'.length)) : -1
-      const title = isCustom
-        ? s.custom_learning_outcomes?.[customIndex] ?? 'Bank Soal'
-        : topicsById.get(cpId)?.learning_outcomes ?? 'Bank Soal'
+      // `custom` (dan `custom-N` dari data sebelum migrasi 080) = topik bebas
+      // milik kelas privat, tidak punya baris kurikulum.
+      const isCustom = topicKey.startsWith('custom')
+      const group = topicByGroupId.get(topicKey)
+      const title = isCustom ? s.topic ?? 'Latihan Soal' : group?.topic ?? 'Latihan Soal'
       out.push({
-        id: `${s.id}__${cpId}`,
-        kind: 'bank_soal',
+        id: `${s.id}__${topicKey}`,
+        kind: 'latihan_soal',
         title,
         href: url,
         sessionId: s.id,
         subjectId: s.subject_id,
-        curriculumTopicId: isCustom ? null : cpId,
+        curriculumTopicId: isCustom ? null : (group?.representativeCpId ?? null),
         customTheme: isCustom ? s.custom_theme : null,
         topicText: isCustom ? s.topic : null,
         tutorName: shortTutorName(s.tutor),
@@ -178,19 +182,20 @@ async function buildClassInfoMap(
   return map
 }
 
-export default async function MateriBankSoalPage() {
+export default async function MateriLatihanSoalPage() {
   const admin = createAdminClient()
 
   const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
-      .select('id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
+      .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
       .order('subject_id')
       .order('grade_level')
       .order('semester')
       .order('sort_order') as unknown as Promise<{
         data: {
           id: string
+          group_id: string | null
           curriculum: string
           subject_id: string
           grade_level: string
@@ -217,7 +222,7 @@ export default async function MateriBankSoalPage() {
           semester: number
           theme: string
           topic: string
-          kind: 'materi' | 'bank_soal'
+          kind: 'materi' | 'latihan_soal'
           title: string
           link_url: string
           created_at: string
@@ -249,11 +254,23 @@ export default async function MateriBankSoalPage() {
   ])]
   const classInfoById = await buildClassInfoMap(admin, allClassIds)
 
-  const topicsById = new Map((topics ?? []).map(t => [t.id, { learning_outcomes: t.learning_outcomes }]))
+  // Satu entri per topik, dengan CP pertamanya sebagai wakil. Baris tanpa
+  // `group_id` (belum ter-backfill migrasi 060) tetap dimasukkan dengan id
+  // CP-nya sendiri sebagai kunci — sama dengan yang dipakai LatihanSoalTab saat
+  // menyimpan, jadi keduanya tetap bertemu.
+  const topicByGroupId = new Map<string, { topic: string; representativeCpId: string }>()
+  for (const t of topics ?? []) {
+    if (!t.topic) continue
+    const key = t.group_id ?? t.id
+    if (!topicByGroupId.has(key)) {
+      topicByGroupId.set(key, { topic: t.topic, representativeCpId: t.id })
+    }
+  }
+
   const tutorResources: TutorResourceRow[] = [
     ...toTutorResources(materialRows ?? [], 'materi', classInfoById),
     ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById),
-    ...toBankSoalResources(sessionCpUrlRows ?? [], topicsById, classInfoById),
+    ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
   ]
 
   const doneFileIds = new Set((duplicationRows ?? []).map(r => r.drive_file_id))
@@ -267,8 +284,8 @@ export default async function MateriBankSoalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Materi dan Bank Soal</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Kumpulan materi, bank soal, dan asesmen per topik, mengikuti struktur Kurikulum</p>
+        <h1 className="text-xl font-semibold text-gray-900">Materi dan Latihan Soal</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Kumpulan materi, latihan soal, dan asesmen per topik, mengikuti struktur Kurikulum</p>
       </div>
 
       <DuplicationStatusPanel
@@ -277,7 +294,7 @@ export default async function MateriBankSoalPage() {
         runAction={runResourceDuplication}
       />
 
-      <MateriBankSoalClient
+      <MateriLatihanSoalClient
         topics={topics ?? []}
         subjects={(subjects ?? []).map(s => ({ ...s, curriculum: s.curriculum ?? [], level: s.level ?? [] }))}
         resources={resources ?? []}

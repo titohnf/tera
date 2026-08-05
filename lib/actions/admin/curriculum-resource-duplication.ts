@@ -60,7 +60,7 @@ export async function runResourceDuplication(): Promise<DuplicationRunResult> {
     }
   }
 
-  revalidatePath('/admin/materi-bank-soal')
+  revalidatePath('/admin/materi-latihan-soal')
 
   return { succeeded, failed: failedTitles.length, failedTitles }
 }

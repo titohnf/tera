@@ -2,5 +2,22 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  # Build default Node kehabisan heap di repo sebesar ini — terbukti di mesin
+  # lokal: `next build` mati dengan SIGABRT sampai heap-nya dinaikkan. Netlify
+  # memakai default yang sama, jadi tanpa baris ini build di sana pun gagal.
+  NODE_OPTIONS = "--max-old-space-size=8192"
+  # Dikunci supaya build di Netlify tidak diam-diam pindah versi Node saat
+  # image build mereka diperbarui.
+  NODE_VERSION = "24"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Panel admin tidak boleh diindeks mesin pencari. Ini bukan pengaman — RLS dan
+# proxy.ts yang menjaga aksesnya — tapi tidak ada gunanya halaman login staf
+# muncul di hasil pencarian.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

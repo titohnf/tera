@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import MateriBankSoalTable, { type DisplayRow, type DisplayKind } from './MateriBankSoalTable'
+import MateriLatihanSoalTable, { type DisplayRow, type DisplayKind } from './MateriLatihanSoalTable'
 import type { ResourceKind, TopicContext, ActionState } from '@/lib/actions/admin/curriculum-resources'
+import { CURRICULA, SEMESTERS, gradesFor, hasSemester } from '@/lib/curriculum-config'
 
 type Topic = {
   id: string
@@ -56,9 +57,6 @@ interface Props {
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
 
-const GRADES = Array.from({ length: 12 }, (_, i) => `Kelas ${i + 1}`)
-const SEMESTERS = [1, 2]
-const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge']
 
 // Extracts a Google Drive file id from a docs.google.com/drive.google.com
 // link (e.g. .../document/d/FILE_ID/edit, .../file/d/FILE_ID/view). Used to
@@ -76,7 +74,7 @@ function extractDriveFileId(url: string): string | null {
   }
 }
 
-export default function MateriBankSoalClient({ topics, subjects, resources, tutorResources, duplicatedFileIds, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalClient({ topics, subjects, resources, tutorResources, duplicatedFileIds, createResourceAction, deleteResourceAction }: Props) {
   const [curriculumFilter, setCurriculumFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [semesterFilter, setSemesterFilter] = useState<number | ''>('')
@@ -186,7 +184,14 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={curriculumFilter}
-            onChange={e => setCurriculumFilter(e.target.value)}
+            onChange={e => {
+              // A grade or semester left over from the previous curriculum can
+              // be one this curriculum does not have, which would silently
+              // filter everything away. Reset both on switch.
+              setCurriculumFilter(e.target.value)
+              setGradeFilter('')
+              setSemesterFilter('')
+            }}
             className="h-9 border border-gray-200 rounded-lg px-2.5 text-xs font-medium text-gray-700 bg-white"
           >
             <option value="">Semua Kurikulum</option>
@@ -199,17 +204,19 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
             className="h-9 border border-gray-200 rounded-lg px-2.5 text-xs font-medium text-gray-700 bg-white"
           >
             <option value="">Semua Kelas</option>
-            {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+            {gradesFor(curriculumFilter).map(g => <option key={g} value={g}>{g}</option>)}
           </select>
 
-          <select
-            value={semesterFilter}
-            onChange={e => setSemesterFilter(e.target.value ? Number(e.target.value) : '')}
-            className="h-9 border border-gray-200 rounded-lg px-2.5 text-xs font-medium text-gray-700 bg-white"
-          >
-            <option value="">Semua Semester</option>
-            {SEMESTERS.map(s => <option key={s} value={s}>Semester {s}</option>)}
-          </select>
+          {hasSemester(curriculumFilter) && (
+            <select
+              value={semesterFilter}
+              onChange={e => setSemesterFilter(e.target.value ? Number(e.target.value) : '')}
+              className="h-9 border border-gray-200 rounded-lg px-2.5 text-xs font-medium text-gray-700 bg-white"
+            >
+              <option value="">Semua Semester</option>
+              {SEMESTERS.map(s => <option key={s} value={s}>Semester {s}</option>)}
+            </select>
+          )}
 
           <select
             value={subjectFilter}
@@ -247,7 +254,7 @@ export default function MateriBankSoalClient({ topics, subjects, resources, tuto
         </div>
       </div>
 
-      <MateriBankSoalTable
+      <MateriLatihanSoalTable
         rows={filteredRows}
         allTopics={topics}
         allSubjects={allSubjectsWithTopics}

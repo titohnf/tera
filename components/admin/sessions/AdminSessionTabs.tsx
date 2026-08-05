@@ -10,6 +10,7 @@ import AssessmentList from '@/components/assessment/AssessmentList'
 import { deleteMaterialAdmin, getSignedUrlAdmin } from '@/lib/actions/admin/materials'
 import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { createAssessmentAdmin, submitGradesAdmin } from '@/lib/actions/admin/assessments'
+import { groupCpsByTopic } from '@/lib/latihan-soal-topics'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 interface Student {
@@ -56,6 +57,7 @@ type TabKey = typeof TABS[number]['key']
 
 interface CurriculumTopic {
   id: string
+  group_id: string | null
   grade_level: string
   semester: number
   theme: string | null
@@ -98,11 +100,12 @@ export default function AdminSessionTabs({
   const [isSavingUrls, startSavingUrls] = useTransition()
 
   const selectedCpRows = curriculumTopics.filter(t => selectedCpIds.includes(t.id) && t.learning_outcomes)
-  const cpUrlsDirty = selectedCpRows.some(cp => (localCpUrls[cp.id] ?? '') !== (savedCpUrls[cp.id] ?? ''))
+  const selectedTopics = groupCpsByTopic(selectedCpRows)
+  const cpUrlsDirty = selectedTopics.some(t => (localCpUrls[t.key] ?? '') !== (savedCpUrls[t.key] ?? ''))
 
   function saveCpUrls() {
     const urlsToSave = Object.fromEntries(
-      selectedCpRows.map(cp => [cp.id, (localCpUrls[cp.id] ?? '').trim()]).filter(([, v]) => v)
+      selectedTopics.map(t => [t.key, (localCpUrls[t.key] ?? '').trim()]).filter(([, v]) => v)
     )
     startSavingUrls(async () => {
       await saveSessionCpUrls(sessionId, urlsToSave)
@@ -185,7 +188,7 @@ export default function AdminSessionTabs({
           </div>
         )}
 
-        {/* Asesmen & Bank Soal */}
+        {/* Asesmen & Latihan Soal */}
         {activeTab === 'assessment' && (
           <div className="space-y-8">
             <AssessmentList
@@ -197,18 +200,18 @@ export default function AdminSessionTabs({
               submitGradesAction={submitGradesAdmin}
             />
 
-            {selectedCpRows.length > 0 && (
+            {selectedTopics.length > 0 && (
               <div className="border-t pt-6">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">Bank Soal per CP</h2>
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">Latihan Soal per Topik</h2>
                 <div className="space-y-3">
-                  {selectedCpRows.map(cp => (
-                    <div key={cp.id} className="space-y-1">
-                      <p className="text-xs font-medium text-gray-500 truncate">{cp.learning_outcomes}</p>
+                  {selectedTopics.map(topic => (
+                    <div key={topic.key} className="space-y-1">
+                      <p className="text-xs font-medium text-gray-500 truncate">{topic.heading}</p>
                       <input
                         type="url"
-                        value={localCpUrls[cp.id] ?? ''}
-                        onChange={e => setLocalCpUrls(prev => ({ ...prev, [cp.id]: e.target.value }))}
-                        placeholder="URL Bank Soal"
+                        value={localCpUrls[topic.key] ?? ''}
+                        onChange={e => setLocalCpUrls(prev => ({ ...prev, [topic.key]: e.target.value }))}
+                        placeholder="URL Latihan Soal"
                         className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -221,7 +224,7 @@ export default function AdminSessionTabs({
                     disabled={!cpUrlsDirty || isSavingUrls}
                     className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                   >
-                    {isSavingUrls ? 'Menyimpan...' : 'Simpan Bank Soal'}
+                    {isSavingUrls ? 'Menyimpan...' : 'Simpan Latihan Soal'}
                   </button>
                   {!cpUrlsDirty && Object.values(savedCpUrls).some(v => v) && (
                     <span className="text-xs text-green-600">Tersimpan</span>

@@ -5,7 +5,7 @@ import AttendanceAndNotes from '@/components/tutor/AttendanceAndNotes'
 import MaterialList from '@/components/materials/MaterialList'
 import AssessmentList from '@/components/assessment/AssessmentList'
 import SessionTopicEditor from '@/components/admin/sessions/SessionTopicEditor'
-import BankSoalTab from '@/components/admin/sessions/BankSoalTab'
+import LatihanSoalTab from '@/components/admin/sessions/LatihanSoalTab'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 // ── Action types ──────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ interface GradeResult {
 const TABS = [
   { key: 'materials', label: 'Topik & Materi' },
   { key: 'attendance', label: 'Presensi & Catatan' },
-  { key: 'assessment', label: 'Asesmen & Bank Soal' },
+  { key: 'assessment', label: 'Asesmen & Latihan Soal' },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -86,6 +86,7 @@ type TabKey = typeof TABS[number]['key']
 // ── Component ─────────────────────────────────────────────────────────────────
 interface CurriculumTopic {
   id: string
+  group_id: string | null
   grade_level: string
   semester: number
   theme: string | null
@@ -93,7 +94,7 @@ interface CurriculumTopic {
   learning_outcomes: string | null
 }
 
-// CurriculumTopic is compatible with BankSoalTab's CpRow (same shape)
+// CurriculumTopic is compatible with LatihanSoalTab's CpRow (same shape)
 
 export default function SessionTabs({
   sessionId,
@@ -247,7 +248,7 @@ export default function SessionTabs({
           </div>
         )}
 
-        {/* Asesmen & Bank Soal */}
+        {/* Asesmen & Latihan Soal */}
         {activeTab === 'assessment' && (
           <div className="space-y-6">
             <AssessmentList
@@ -265,7 +266,7 @@ export default function SessionTabs({
               topic={topic}
             />
             <div className="border-t border-slate-200" />
-            <BankSoalTab
+            <LatihanSoalTab
               sessionId={sessionId}
               selectedCpIds={selectedCpIds ?? []}
               cpRows={curriculumTopics}

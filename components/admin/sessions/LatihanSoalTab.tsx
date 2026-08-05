@@ -2,13 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { saveSessionCpUrls } from '@/lib/actions/admin/curriculum'
+import { CUSTOM_TOPIC_KEY, groupCpsByTopic, type LatihanSoalCpRow, type LatihanSoalTopic } from '@/lib/latihan-soal-topics'
 
-interface CpRow {
-  id: string
-  learning_outcomes: string | null
-  theme: string | null
-  topic: string
-}
+type CpRow = LatihanSoalCpRow
 
 interface Props {
   sessionId: string
@@ -20,12 +16,17 @@ interface Props {
   saveAction?: (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
 }
 
-export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, customLearningOutcomes = [], initialCpUrls, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
+export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, customLearningOutcomes = [], initialCpUrls, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
   const curriculumCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
-  const customCps = customLearningOutcomes
-    .map((text, i) => ({ id: `custom-${i}`, learning_outcomes: text }))
-    .filter(c => c.learning_outcomes?.trim())
-  const selectedCps = [...curriculumCps, ...customCps]
+  const customOutcomes = customLearningOutcomes.filter(text => text?.trim())
+
+  const topics: LatihanSoalTopic[] = [
+    ...groupCpsByTopic(curriculumCps),
+    ...(customOutcomes.length > 0
+      ? [{ key: CUSTOM_TOPIC_KEY, heading: 'Topik sesi ini', outcomes: customOutcomes }]
+      : []),
+  ]
+
   const [urls, setUrls] = useState<Record<string, string>>(initialCpUrls)
   const [savedUrls, setSavedUrls] = useState<Record<string, string>>(initialCpUrls)
   const [isPending, startTransition] = useTransition()
@@ -33,8 +34,8 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, customLe
 
   const isDirty = JSON.stringify(urls) !== JSON.stringify(savedUrls)
 
-  function setUrl(cpId: string, value: string) {
-    setUrls(prev => ({ ...prev, [cpId]: value }))
+  function setUrl(topicKey: string, value: string) {
+    setUrls(prev => ({ ...prev, [topicKey]: value }))
   }
 
   function save() {
@@ -49,7 +50,7 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, customLe
     })
   }
 
-  if (selectedCps.length === 0) {
+  if (topics.length === 0) {
     return (
       <div className="text-center py-10 text-sm text-gray-400">
         Belum ada CP yang dipilih. Pilih CP di tab{' '}
@@ -60,23 +61,34 @@ export default function BankSoalTab({ sessionId, selectedCpIds, cpRows, customLe
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">URL Bank Soal per CP</p>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">URL Latihan Soal per Topik</p>
 
       <div className="space-y-2">
-        {selectedCps.map((cp, idx) => {
-          const url = urls[cp.id] ?? ''
+        {topics.map((topic, idx) => {
+          const url = urls[topic.key] ?? ''
           return (
-            <div key={cp.id} className="border border-slate-200 rounded-xl p-4 space-y-2">
+            <div key={topic.key} className="border border-slate-200 rounded-xl p-4 space-y-2">
               <div className="flex items-start gap-2">
                 <span className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center mt-0.5">
                   {idx + 1}
                 </span>
-                <p className="text-sm text-gray-800 leading-snug">{cp.learning_outcomes}</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-800 leading-snug">{topic.heading}</p>
+                  {/* CP-nya tetap ditampilkan sebagai konteks: yang berubah
+                      adalah satuan penyimpanannya, bukan apa yang diajarkan. */}
+                  {topic.outcomes.length > 0 && (
+                    <ul className="list-inside list-disc space-y-0.5 text-xs text-gray-500">
+                      {topic.outcomes.map((text, i) => (
+                        <li key={i}>{text}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
               <input
                 type="url"
                 value={url}
-                onChange={e => setUrl(cp.id, e.target.value)}
+                onChange={e => setUrl(topic.key, e.target.value)}
                 placeholder="https://..."
                 disabled={readOnly}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"

@@ -19,9 +19,9 @@ export function extractDriveFileId(url: string): string | null {
   }
 }
 
-// Gathers every materi/bank-soal/asesmen link across the app (admin-added
+// Gathers every materi/latihan-soal/asesmen link across the app (admin-added
 // curriculum_resources, tutor-submitted materials/assessments, and the
-// per-CP bank soal urls on sessions.cp_urls — see BankSoalTab.tsx) and
+// per-topic latihan soal urls on sessions.cp_urls — see LatihanSoalTab.tsx) and
 // dedupes to the underlying Drive file id, keyed to a representative title
 // used when naming the duplicated copy.
 export async function collectAllResourceLinks(
@@ -37,18 +37,27 @@ export async function collectAllResourceLinks(
     admin.from('assessments').select('title, link_url').not('link_url', 'is', null) as unknown as Promise<{
       data: { title: string; link_url: string | null }[] | null
     }>,
-    admin.from('curriculum_topics').select('id, learning_outcomes') as unknown as Promise<{
-      data: { id: string; learning_outcomes: string | null }[] | null
+    // Kunci cp_urls adalah id topik sejak migrasi 080, jadi judul salinannya
+    // diambil dari nama topik. Baris `curriculum_topics` yang belum punya
+    // group_id ikut dipetakan lewat id-nya sendiri — kunci yang sama dengan
+    // yang ditulis LatihanSoalTab untuk baris seperti itu.
+    admin.from('curriculum_topics').select('id, group_id, topic') as unknown as Promise<{
+      data: { id: string; group_id: string | null; topic: string | null }[] | null
     }>,
     admin
       .from('sessions')
-      .select('cp_urls, custom_learning_outcomes')
+      .select('cp_urls, topic')
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{
-        data: { cp_urls: Record<string, string> | null; custom_learning_outcomes: string[] | null }[] | null
+        data: { cp_urls: Record<string, string> | null; topic: string | null }[] | null
       }>,
   ])
 
-  const topicsById = new Map((topics ?? []).map(t => [t.id, t.learning_outcomes]))
+  const topicNameByKey = new Map<string, string>()
+  for (const t of topics ?? []) {
+    if (!t.topic) continue
+    const key = t.group_id ?? t.id
+    if (!topicNameByKey.has(key)) topicNameByKey.set(key, t.topic)
+  }
   const byFileId = new Map<string, string>()
 
   function add(title: string, link: string | null | undefined) {
@@ -63,11 +72,12 @@ export async function collectAllResourceLinks(
   for (const r of assessments ?? []) add(r.title, r.link_url)
   for (const s of sessionsWithCpUrls ?? []) {
     if (!s.cp_urls) continue
-    for (const [cpId, url] of Object.entries(s.cp_urls)) {
-      const isCustom = cpId.startsWith('custom-')
-      const title = isCustom
-        ? s.custom_learning_outcomes?.[Number(cpId.slice('custom-'.length))] ?? 'Bank Soal'
-        : topicsById.get(cpId) ?? 'Bank Soal'
+    for (const [topicKey, url] of Object.entries(s.cp_urls)) {
+      // `custom` (dan `custom-N` peninggalan sebelum migrasi 080) = topik
+      // bebas milik kelas privat; namanya ada di sesinya sendiri.
+      const title = topicKey.startsWith('custom')
+        ? s.topic ?? 'Latihan Soal'
+        : topicNameByKey.get(topicKey) ?? 'Latihan Soal'
       add(title, url)
     }
   }
