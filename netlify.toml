@@ -13,11 +13,3 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Panel admin tidak boleh diindeks mesin pencari. Ini bukan pengaman — RLS dan
-# proxy.ts yang menjaga aksesnya — tapi tidak ada gunanya halaman login staf
-# muncul di hasil pencarian.
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
