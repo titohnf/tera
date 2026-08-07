@@ -40,8 +40,50 @@ export async function approveSessionPayroll(sessionId: string) {
 
   revalidatePath(`/admin/sessions/${sessionId}`)
   revalidatePath(`/admin/users/${session.tutor_id}`)
+  revalidatePath(`/admin/payroll-review`)
   revalidatePath(`/tutor/sessions/${sessionId}`)
   return { success: true }
+}
+
+/**
+ * Menyetujui banyak sesi sekaligus dari halaman review bulanan.
+ * Sesi yang jurnalnya belum lengkap dilewati, bukan menggagalkan seluruh batch —
+ * jumlahnya dikembalikan supaya admin tahu berapa yang masih perlu ditindaklanjuti.
+ */
+export async function approveSessionPayrollBulk(sessionIds: string[]) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+  if (sessionIds.length === 0) return { approved: 0, skipped: 0 }
+
+  const eligible: string[] = []
+  // Tiap pengecekan kelengkapan memicu beberapa query — jalankan bertahap
+  // agar tidak membanjiri koneksi saat satu tutor punya puluhan sesi.
+  for (let i = 0; i < sessionIds.length; i += 10) {
+    const batch = sessionIds.slice(i, i + 10)
+    const checks = await Promise.all(batch.map(id => getSessionCompletionStatus(id)))
+    batch.forEach((id, idx) => {
+      if (checks[idx]?.canComplete) eligible.push(id)
+    })
+  }
+
+  if (eligible.length > 0) {
+    const { error } = await ctx.admin
+      .from('sessions')
+      .update({
+        payroll_status: 'approved',
+        payroll_reviewed_by: ctx.user.id,
+        payroll_reviewed_at: new Date().toISOString(),
+        payroll_rejection_reason: null,
+        payroll_tutor_note: null,
+        payroll_tutor_note_at: null,
+      })
+      .in('id', eligible)
+
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/admin/payroll-review')
+  return { approved: eligible.length, skipped: sessionIds.length - eligible.length }
 }
 
 export async function rejectSessionPayroll(sessionId: string, reason: string) {
@@ -70,6 +112,7 @@ export async function rejectSessionPayroll(sessionId: string, reason: string) {
 
   revalidatePath(`/admin/sessions/${sessionId}`)
   revalidatePath(`/admin/users/${session.tutor_id}`)
+  revalidatePath(`/admin/payroll-review`)
   revalidatePath(`/tutor/sessions/${sessionId}`)
   return { success: true }
 }
