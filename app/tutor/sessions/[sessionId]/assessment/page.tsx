@@ -3,6 +3,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AssessmentList from '@/components/assessment/AssessmentList'
+import { isAbsentFromSession } from '@/lib/session-status'
 
 export default async function AssessmentPage({
   params,
@@ -34,6 +35,15 @@ export default async function AssessmentPage({
     .select('student_id, profiles(id, full_name)')
     .eq('class_id', session.class_id)
     .eq('is_active', true)
+
+  const { data: attendances } = await supabase
+    .from('attendances')
+    .select('student_id, status')
+    .eq('session_id', sessionId)
+
+  const absentStudentIds = (attendances ?? [])
+    .filter(a => isAbsentFromSession(a.status))
+    .map(a => a.student_id)
 
   const assessmentIds = (assessments ?? []).map(a => a.id)
   const { data: results } = assessmentIds.length > 0
@@ -72,6 +82,7 @@ export default async function AssessmentPage({
           full_name: (cs.profiles as unknown as { id: string; full_name: string } | null)?.full_name ?? 'Siswa',
         }))}
         results={results ?? []}
+        absentStudentIds={absentStudentIds}
       />
     </div>
   )

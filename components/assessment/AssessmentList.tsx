@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, useMemo } from 'react'
 import { createAssessment, submitGrades } from '@/lib/actions/assessments'
 
 type CreateAction = (sessionId: string, data: unknown) => Promise<{ error?: string; success?: boolean }>
@@ -59,6 +59,7 @@ export default function AssessmentList({
   assessments: initialAssessments,
   students,
   results,
+  absentStudentIds,
   readOnly = false,
   createAction = createAssessment,
   submitGradesAction = submitGrades,
@@ -72,6 +73,8 @@ export default function AssessmentList({
   assessments: AssessmentItem[]
   students: Student[]
   results: GradeResult[]
+  /** Siswa yang presensinya bukan hadir/telat — tidak perlu dinilai. */
+  absentStudentIds?: string[]
   readOnly?: boolean
   createAction?: CreateAction
   submitGradesAction?: SubmitGradesAction
@@ -106,6 +109,11 @@ export default function AssessmentList({
     knownIdsRef.current = new Set(initialAssessments.map(a => a.id))
   }, [initialAssessments])
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const absentIds = useMemo(() => new Set(absentStudentIds ?? []), [absentStudentIds])
+  // Hanya siswa yang hadir/telat yang perlu dinilai — sisanya tetap ditampilkan
+  // agar tutor tahu kenapa barisnya dilewati.
+  const gradableStudents = students.filter(s => !absentIds.has(s.id))
 
   useEffect(() => {
     if (!menuOpenId) return
@@ -169,7 +177,7 @@ export default function AssessmentList({
   }
 
   function handleSubmitGrades(assessmentId: string, maxScore: number) {
-    const rows = students.map(s => {
+    const rows = gradableStudents.map(s => {
       const g = getGrade(assessmentId, s.id)
       const scoreNum = parseFloat(g.score)
       return {
@@ -231,7 +239,7 @@ export default function AssessmentList({
   }
 
   const gradedCountByAssessment = (assessmentId: string) =>
-    results.filter(r => r.assessment_id === assessmentId && r.score !== null).length
+    results.filter(r => r.assessment_id === assessmentId && r.score !== null && !absentIds.has(r.student_id)).length
 
   return (
     <div className="space-y-3">
@@ -315,10 +323,12 @@ export default function AssessmentList({
                       <div className="flex items-center gap-3 mt-1">
                         {(() => {
                           const graded = gradedCountByAssessment(assessment.id)
-                          const ungraded = students.length - graded
+                          const ungraded = gradableStudents.length - graded
                           return (
                             <span className={`text-xs font-medium ${ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
-                              {ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
+                              {gradableStudents.length === 0
+                                ? 'Tidak ada siswa hadir'
+                                : ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
                             </span>
                           )
                         })()}
@@ -402,6 +412,18 @@ export default function AssessmentList({
                     <tbody className="[&>tr:first-child>td]:pt-3">
                       {students.map(student => {
                         const g = getGrade(assessment.id, student.id)
+                        if (absentIds.has(student.id)) {
+                          return (
+                            <tr key={student.id}>
+                              <td className="py-1.5 font-medium text-gray-400">{student.full_name}</td>
+                              <td className="py-1.5 text-center" colSpan={2}>
+                                <span className="inline-flex text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                  Tidak hadir — tidak perlu dinilai
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        }
                         return (
                           <tr key={student.id}>
                             <td className="py-1.5 font-medium text-gray-900">{student.full_name}</td>

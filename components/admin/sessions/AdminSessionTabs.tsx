@@ -12,6 +12,7 @@ import { submitAttendanceAdmin } from '@/lib/actions/admin/attendance'
 import { createAssessmentAdmin, submitGradesAdmin } from '@/lib/actions/admin/assessments'
 import { groupCpsByTopic } from '@/lib/latihan-soal-topics'
 import type { AttendanceStatus } from '@/lib/types/database'
+import { isAbsentFromSession } from '@/lib/session-status'
 
 interface Student {
   id: string
@@ -195,6 +196,7 @@ export default function AdminSessionTabs({
               sessionId={sessionId}
               assessments={assessments}
               students={assessmentStudents}
+              absentStudentIds={students.filter(s => isAbsentFromSession(s.currentStatus)).map(s => s.id)}
               results={results}
               createAction={createAssessmentAdmin}
               submitGradesAction={submitGradesAdmin}

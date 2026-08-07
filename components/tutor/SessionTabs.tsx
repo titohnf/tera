@@ -6,6 +6,7 @@ import MaterialUploader from '@/components/materials/MaterialUploader'
 import MaterialList from '@/components/materials/MaterialList'
 import AssessmentList from '@/components/assessment/AssessmentList'
 import type { AttendanceStatus } from '@/lib/types/database'
+import { isAbsentFromSession } from '@/lib/session-status'
 
 interface Student {
   id: string
@@ -145,6 +146,7 @@ export default function SessionTabs({
           sessionId={sessionId}
           assessments={assessments}
           students={assessmentStudents}
+          absentStudentIds={students.filter(s => isAbsentFromSession(s.currentStatus)).map(s => s.id)}
           results={results}
         />
       )}

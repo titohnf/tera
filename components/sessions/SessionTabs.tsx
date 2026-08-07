@@ -7,6 +7,7 @@ import AssessmentList from '@/components/assessment/AssessmentList'
 import SessionTopicEditor from '@/components/admin/sessions/SessionTopicEditor'
 import LatihanSoalTab from '@/components/admin/sessions/LatihanSoalTab'
 import type { AttendanceStatus } from '@/lib/types/database'
+import { isAbsentFromSession } from '@/lib/session-status'
 
 // ── Action types ──────────────────────────────────────────────────────────────
 type SubmitAttendanceAction = (sessionId: string, records: unknown) => Promise<{ error?: string; success?: boolean }>
@@ -255,6 +256,7 @@ export default function SessionTabs({
               sessionId={sessionId}
               assessments={assessments}
               students={assessmentStudents}
+              absentStudentIds={students.filter(s => isAbsentFromSession(s.currentStatus)).map(s => s.id)}
               results={results}
               readOnly={!!readOnlyReason}
               createAction={createAssessmentAction}

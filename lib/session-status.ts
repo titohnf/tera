@@ -11,6 +11,12 @@ export function getSessionDisplayStatus(
   return { label: 'Sesuai Jadwal', color: 'bg-blue-100 text-blue-700' }
 }
 
+// Siswa yang presensinya sudah diisi tapi tidak hadir tidak perlu dinilai.
+// Presensi yang belum diisi (null) tetap dianggap perlu dinilai.
+export function isAbsentFromSession(status: string | null | undefined): boolean {
+  return status === 'absent' || status === 'excused'
+}
+
 export const SESSION_DISPLAY_STATUS_OPTIONS = [
   { key: '', label: 'Semua Jadwal' },
   { key: 'on_schedule', label: 'Sesuai Jadwal' },

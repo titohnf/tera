@@ -11,6 +11,8 @@ export type CompletionCheck = {
   materialsCount: number
   assessmentsCount: number
   gradedCount: number
+  /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
+  gradesRequired: number
   hasAllAttendance: boolean
   hasAllNotes: boolean
   hasMaterials: boolean
@@ -50,19 +52,23 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   const sc = studentCount ?? 0
   const assessmentIds = (assessmentList ?? []).map(a => a.id)
   const assessmentsCount = assessmentIds.length
+  const presentLateIds = (presentLateAttendances ?? []).map(a => a.student_id)
+  const presentLateCount = presentLateIds.length
 
-  // Count how many students have a score (not null) across all assessments for this session
+  // Only students who actually attended need a score — an absent student has
+  // nothing to be assessed on, so their blank row must not block completion.
   let gradedCount = 0
-  if (assessmentIds.length > 0 && sc > 0) {
+  if (assessmentIds.length > 0 && presentLateCount > 0) {
     const { count } = await admin
       .from('assessment_results')
       .select('*', { count: 'exact', head: true })
       .in('assessment_id', assessmentIds)
+      .in('student_id', presentLateIds)
       .not('score', 'is', null)
     gradedCount = count ?? 0
   }
+  const gradesRequired = assessmentsCount * presentLateCount
 
-  const presentLateCount = (presentLateAttendances ?? []).length
   const hasTopic = !!(session.topic?.trim())
   const hasAllAttendance = (attendanceCount ?? 0) >= sc && sc > 0
   // Notes required for present/late students; skip only if attendance is fully submitted and none are present/late
@@ -72,8 +78,13 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
       ? true
       : notesCount >= presentLateCount
   const hasMaterials = (materialsCount ?? 0) >= 1
-  // Requires at least 1 assessment AND all students graded in every assessment
-  const hasAssessments = assessmentsCount >= 1 && gradedCount >= assessmentsCount * sc
+  // Mirrors the notes rule: needs at least 1 assessment with every attending
+  // student graded, and is skipped entirely when nobody attended.
+  const hasAssessments = !hasAllAttendance
+    ? false
+    : presentLateCount === 0
+      ? true
+      : assessmentsCount >= 1 && gradedCount >= gradesRequired
   const canComplete = hasTopic && hasAllAttendance && hasAllNotes && hasMaterials && hasAssessments
 
   return {
@@ -85,6 +96,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     materialsCount: materialsCount ?? 0,
     assessmentsCount,
     gradedCount,
+    gradesRequired,
     hasAllAttendance,
     hasAllNotes,
     hasMaterials,
