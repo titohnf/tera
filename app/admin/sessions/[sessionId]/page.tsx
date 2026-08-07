@@ -209,6 +209,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             displayStatus={displayStatus}
             sessionId={sessionId}
             status={session.status}
+            payrollStatus={session.payroll_status}
             scheduledAt={session.scheduled_at}
             durationMinutes={session.duration_minutes}
             updateAction={updateWithId}

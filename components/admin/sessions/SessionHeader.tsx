@@ -12,6 +12,7 @@ interface Props {
   displayStatus: { label: string; color: string }
   sessionId: string
   status: string
+  payrollStatus: string
   scheduledAt: string
   durationMinutes: number
   updateAction: (prevState: { error: string } | null, formData: FormData) => Promise<{ error: string } | null>
@@ -34,6 +35,7 @@ export default function SessionHeader({
   displayStatus,
   sessionId,
   status,
+  payrollStatus,
   scheduledAt,
   durationMinutes,
   updateAction,
@@ -42,7 +44,10 @@ export default function SessionHeader({
   defaultValues,
 }: Props) {
   const [editOpen, setEditOpen] = useState(false)
-  const canEdit = status !== 'completed' && status !== 'cancelled'
+  // Sesi yang sudah selesai tetap bisa dikoreksi admin — salah pilih mapel atau
+  // tutor baru ketahuan saat review gaji. Gerbangnya persetujuan gaji, bukan
+  // status sesi: begitu disetujui, datanya sudah ikut terhitung dan dikunci.
+  const canEdit = status !== 'cancelled' && payrollStatus !== 'approved'
 
   return (
     <>

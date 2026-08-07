@@ -107,6 +107,19 @@ export async function updateSession(sessionId: string, prevState: ActionState, f
   if (!date || !time) return { error: 'Tanggal dan waktu wajib diisi' }
   if (!tutorId) return { error: 'Tutor wajib dipilih' }
 
+  // Sesi yang gajinya sudah disetujui tidak boleh berubah lagi — nilainya sudah
+  // ikut terhitung. Selama masih pending/ditolak, admin bebas mengoreksi.
+  const { data: current } = await ctx.admin
+    .from('sessions')
+    .select('status, payroll_status')
+    .eq('id', sessionId)
+    .single()
+  if (!current) return { error: 'Sesi tidak ditemukan' }
+  if (current.status === 'cancelled') return { error: 'Sesi yang dibatalkan tidak bisa diubah' }
+  if (current.payroll_status === 'approved') {
+    return { error: 'Gaji sesi ini sudah disetujui — tolak dulu reviewnya sebelum mengubah detail sesi.' }
+  }
+
   const scheduledAt = wibToUtcDate(date, time).toISOString()
 
   const updatePayload: Record<string, unknown> = {
