@@ -101,7 +101,7 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
   if (classIds.length > 0) {
     const { data: enrollments } = await admin
       .from('class_students')
-      .select('class_id, enrolled_at, unenrolled_at, profiles!student_id(full_name, nickname, grade)')
+      .select('class_id, enrolled_at, unenrolled_at, is_active, profiles!student_id(full_name, nickname, grade)')
       .in('class_id', classIds) as unknown as {
         data: (EnrollmentWindow & { class_id: string; profiles: { full_name: string; nickname: string | null; grade: number | null } | null })[] | null
       }

@@ -66,7 +66,7 @@ async function getEnrollmentWindow(
 ): Promise<EnrollmentWindow | null> {
   const { data } = await admin
     .from('class_students')
-    .select('enrolled_at, unenrolled_at')
+    .select('enrolled_at, unenrolled_at, is_active')
     .eq('student_id', studentId)
     .eq('class_id', classId)
     .maybeSingle() as { data: EnrollmentWindow | null }
@@ -451,7 +451,7 @@ export async function syncPrivateClassDraftInvoices(
   // siswa di kelas yang sama bisa dapat jumlah berbeda untuk bulan yang sama.
   const { data: enrollmentRows } = await admin
     .from('class_students')
-    .select('student_id, enrolled_at, unenrolled_at')
+    .select('student_id, enrolled_at, unenrolled_at, is_active')
     .eq('class_id', classId) as unknown as {
       data: (EnrollmentWindow & { student_id: string })[] | null
     }

@@ -16,6 +16,19 @@
 export type EnrollmentWindow = {
   enrolled_at: string | null
   unenrolled_at: string | null
+  /**
+   * Opsional, tapi selalu ikut di-select oleh pemanggil yang menyaring roster.
+   * Baris non-aktif tanpa `unenrolled_at` berarti siswa dikeluarkan oleh kode
+   * yang belum mengenal rentang ini — tanggal keluarnya tidak diketahui, jadi
+   * rentangnya diperlakukan kosong seperti backfill di migrasi 085. Tanpa ini,
+   * siswa yang dikeluarkan lewat versi lama muncul kembali di seluruh sesi
+   * kelasnya begitu kode baru dipakai.
+   */
+  is_active?: boolean
+}
+
+function hasUnknownExit(window: EnrollmentWindow): boolean {
+  return window.is_active === false && !window.unenrolled_at
 }
 
 /**
@@ -36,6 +49,7 @@ export function dayToIso(day: string): string {
 
 /** Apakah sesi pada `scheduledAt` jatuh di dalam rentang keanggotaan. */
 export function coversSession(window: EnrollmentWindow, scheduledAt: string): boolean {
+  if (hasUnknownExit(window)) return false
   const day = dayKey(scheduledAt)
   if (window.enrolled_at && day < dayKey(window.enrolled_at)) return false
   if (window.unenrolled_at && day > dayKey(window.unenrolled_at)) return false
@@ -44,6 +58,7 @@ export function coversSession(window: EnrollmentWindow, scheduledAt: string): bo
 
 /** Apakah rentangnya menyentuh bulan "YYYY-MM" — dipakai saat menagih. */
 export function coversMonth(window: EnrollmentWindow, month: string): boolean {
+  if (hasUnknownExit(window)) return false
   if (window.enrolled_at && month < dayKey(window.enrolled_at).slice(0, 7)) return false
   if (window.unenrolled_at && month > dayKey(window.unenrolled_at).slice(0, 7)) return false
   return true
@@ -62,6 +77,7 @@ export function billingRange(
   classStart: string | null,
   classEnd: string | null,
 ): { start: string | null; end: string | null } | null {
+  if (hasUnknownExit(window)) return null
   const starts = [classStart, window.enrolled_at ? dayKey(window.enrolled_at) : null]
     .filter((d): d is string => !!d)
   const ends = [classEnd, window.unenrolled_at ? dayKey(window.unenrolled_at) : null]
@@ -79,6 +95,6 @@ export function rosterForSession<T extends EnrollmentWindow>(
   enrollments: T[],
   scheduledAt: string | null | undefined,
 ): T[] {
-  if (!scheduledAt) return enrollments
+  if (!scheduledAt) return enrollments.filter(e => !hasUnknownExit(e))
   return enrollments.filter(e => coversSession(e, scheduledAt))
 }

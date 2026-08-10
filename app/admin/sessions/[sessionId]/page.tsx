@@ -75,12 +75,13 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   ] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name, grade, avatar_url)')
+      .select('student_id, enrolled_at, unenrolled_at, is_active, profiles(id, full_name, grade, avatar_url)')
       .eq('class_id', session.class_id) as unknown as Promise<{
         data: {
           student_id: string
           enrolled_at: string
           unenrolled_at: string | null
+          is_active: boolean
           profiles: { id: string; full_name: string; grade: number | null; avatar_url: string | null } | null
         }[] | null
       }>,

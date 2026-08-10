@@ -29,7 +29,7 @@ export default async function AttendancePage({
   // sudah keluar tetap muncul di sesi-sesi sebelum ia keluar.
   const { data: allEnrollments } = await supabase
     .from('class_students')
-    .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name)')
+    .select('student_id, enrolled_at, unenrolled_at, is_active, profiles(id, full_name)')
     .eq('class_id', session.class_id)
 
   const enrolledStudents = rosterForSession(allEnrollments ?? [], session.scheduled_at)

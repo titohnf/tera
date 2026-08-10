@@ -112,6 +112,7 @@ export async function getLaporanBulananData(studentId: string, month: string): P
   type EnrollRow = {
     enrolled_at: string
     unenrolled_at: string | null
+    is_active: boolean
     classes: {
       id: string
       name: string
@@ -122,7 +123,7 @@ export async function getLaporanBulananData(studentId: string, month: string): P
 
   const { data: enrollData } = await admin
     .from('class_students')
-    .select('enrolled_at, unenrolled_at, classes(id, name, level, profiles!tutor_id(full_name))')
+    .select('enrolled_at, unenrolled_at, is_active, classes(id, name, level, profiles!tutor_id(full_name))')
     .eq('student_id', studentId) as unknown as { data: EnrollRow[] | null }
 
   const enrollments = (enrollData ?? []).filter(e => e.classes !== null)

@@ -43,7 +43,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     // Jumlah siswa yang dinilai per sesi ini, bukan seluruh anggota kelas:
     // siswa yang baru bergabung setelah sesi ini tidak boleh ikut menahan
     // penyelesaian sesi karena presensinya kosong.
-    admin.from('class_students').select('enrolled_at, unenrolled_at').eq('class_id', session.class_id),
+    admin.from('class_students').select('enrolled_at, unenrolled_at, is_active').eq('class_id', session.class_id),
     admin.from('attendances').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
     admin.from('attendances').select('student_id').eq('session_id', sessionId).in('status', ['present', 'late']),
     // A student may have up to one note per category — count distinct students, not rows

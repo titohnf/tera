@@ -198,7 +198,7 @@ export default async function SessionPage({
   ] = await Promise.all([
     supabase
       .from('class_students')
-      .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name, grade)')
+      .select('student_id, enrolled_at, unenrolled_at, is_active, profiles(id, full_name, grade)')
       .eq('class_id', session.class_id),
     supabase
       .from('attendances')
