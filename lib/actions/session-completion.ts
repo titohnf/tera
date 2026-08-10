@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { rosterForSession } from '@/lib/enrollment'
 
 export type CompletionCheck = {
   studentCount: number
@@ -25,21 +26,24 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
 
   const { data: session } = await admin
     .from('sessions')
-    .select('id, status, topic, class_id')
+    .select('id, status, topic, class_id, scheduled_at')
     .eq('id', sessionId)
     .single()
 
   if (!session) return null
 
   const [
-    { count: studentCount },
+    { data: enrollments },
     { count: attendanceCount },
     { data: presentLateAttendances },
     { data: notedStudents },
     { count: materialsCount },
     { data: assessmentList },
   ] = await Promise.all([
-    admin.from('class_students').select('*', { count: 'exact', head: true }).eq('class_id', session.class_id).eq('is_active', true),
+    // Jumlah siswa yang dinilai per sesi ini, bukan seluruh anggota kelas:
+    // siswa yang baru bergabung setelah sesi ini tidak boleh ikut menahan
+    // penyelesaian sesi karena presensinya kosong.
+    admin.from('class_students').select('enrolled_at, unenrolled_at').eq('class_id', session.class_id),
     admin.from('attendances').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
     admin.from('attendances').select('student_id').eq('session_id', sessionId).in('status', ['present', 'late']),
     // A student may have up to one note per category — count distinct students, not rows
@@ -49,7 +53,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   ])
   const notesCount = new Set((notedStudents ?? []).map(n => n.student_id)).size
 
-  const sc = studentCount ?? 0
+  const sc = rosterForSession(enrollments ?? [], session.scheduled_at).length
   const assessmentIds = (assessmentList ?? []).map(a => a.id)
   const assessmentsCount = assessmentIds.length
   const presentLateIds = (presentLateAttendances ?? []).map(a => a.student_id)

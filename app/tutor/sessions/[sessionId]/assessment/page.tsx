@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AssessmentList from '@/components/assessment/AssessmentList'
 import { isAbsentFromSession } from '@/lib/session-status'
+import { rosterForSession } from '@/lib/enrollment'
 
 export default async function AssessmentPage({
   params,
@@ -17,7 +18,7 @@ export default async function AssessmentPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, status, class_id, classes(name)')
+    .select('id, status, class_id, scheduled_at, classes(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single()
@@ -30,11 +31,12 @@ export default async function AssessmentPage({
     .eq('session_id', sessionId)
     .order('created_at', { ascending: false })
 
-  const { data: enrolledStudents } = await supabase
+  const { data: allEnrollments } = await supabase
     .from('class_students')
-    .select('student_id, profiles(id, full_name)')
+    .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name)')
     .eq('class_id', session.class_id)
-    .eq('is_active', true)
+
+  const enrolledStudents = rosterForSession(allEnrollments ?? [], session.scheduled_at)
 
   const { data: attendances } = await supabase
     .from('attendances')

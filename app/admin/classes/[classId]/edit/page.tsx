@@ -2,10 +2,18 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { updateClass } from '@/lib/actions/admin/classes'
 import { notFound } from 'next/navigation'
 import ClassForm, { type TutorWithMeta } from '@/components/admin/classes/ClassForm'
-import StudentManager from '@/components/admin/classes/StudentManager'
+import StudentManager, { type Enrollment } from '@/components/admin/classes/StudentManager'
 import Link from 'next/link'
 
 type Profile = { id: string; full_name: string; email: string; level: string | null }
+
+type EnrollmentRow = {
+  student_id: string
+  is_active: boolean
+  enrolled_at: string
+  unenrolled_at: string | null
+  profiles: Profile | null
+}
 
 export default async function EditClassPage({ params }: { params: Promise<{ classId: string }> }) {
   const { classId } = await params
@@ -33,10 +41,9 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
     admin.from('class_slots').select('slot_index, day_of_week, start_time, tutor_id, tutor_ids, subject_ids')
       .eq('class_id', classId).order('slot_index'),
     admin.from('class_students')
-      .select('student_id, profiles!student_id(id, full_name, email, level)')
-      .eq('class_id', classId)
-      .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: Profile | null }[] | null
+      .select('student_id, is_active, enrolled_at, unenrolled_at, profiles!student_id(id, full_name, email, level)')
+      .eq('class_id', classId) as unknown as Promise<{
+        data: EnrollmentRow[] | null
       }>,
     admin.from('profiles').select('id, full_name, email, level').eq('role', 'student').order('full_name') as unknown as Promise<{
       data: Profile[] | null
@@ -66,12 +73,30 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
     availability: availByTutor.get(t.id) ?? [],
   }))
 
-  const enrolledStudents: Profile[] = (enrolledRows ?? [])
-    .map(e => e.profiles)
-    .filter((p): p is Profile => p !== null)
+  const toEnrollment = (rows: EnrollmentRow[]): Enrollment[] =>
+    rows
+      .filter(r => r.profiles !== null)
+      .map(r => ({
+        id: r.profiles!.id,
+        full_name: r.profiles!.full_name,
+        email: r.profiles!.email,
+        enrolled_at: r.enrolled_at,
+        unenrolled_at: r.unenrolled_at,
+      }))
 
-  const enrolledIds = new Set(enrolledStudents.map(s => s.id))
-  const availableStudents = (allStudentRows ?? []).filter(s => !enrolledIds.has(s.id))
+  const allRows = enrolledRows ?? []
+  const enrolledStudents = toEnrollment(allRows.filter(r => r.is_active))
+  const formerStudents = toEnrollment(allRows.filter(r => !r.is_active))
+
+  // ClassForm memakai jenjang siswa aktif untuk memvalidasi level kelas.
+  const enrolledLevels = allRows
+    .filter(r => r.is_active && r.profiles)
+    .map(r => r.profiles!.level)
+
+  const classStartDate: string | null = (cls as { start_date?: string | null }).start_date ?? null
+
+  const knownIds = new Set(allRows.map(r => r.student_id))
+  const availableStudents = (allStudentRows ?? []).filter(s => !knownIds.has(s.id))
 
   const updateClassWithId = updateClass.bind(null, classId)
 
@@ -92,7 +117,9 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
           <StudentManager
             classId={classId}
             enrolledStudents={enrolledStudents}
+            formerStudents={formerStudents}
             availableStudents={availableStudents}
+            classStartDate={classStartDate}
           />
         </div>
 
@@ -102,7 +129,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
             tutors={tutors}
             subjects={subjects ?? []}
             enrolledCount={enrolledStudents.length}
-            enrolledLevels={enrolledStudents.map(s => s.level)}
+            enrolledLevels={enrolledLevels}
             defaultValues={{
               name: cls.name,
               level: cls.level,
@@ -111,7 +138,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
               fokus_types: (cls as any).fokus_types ?? null,
               is_active: cls.is_active,
               status: (cls as any).status ?? 'aktif',
-              start_date: (cls as any).start_date ?? null,
+              start_date: classStartDate,
               end_date: (cls as any).end_date ?? null,
               duration_minutes: (cls as any).duration_minutes ?? 90,
               semester: (cls as any).semester ?? null,

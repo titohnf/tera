@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
+import { coversSession, type EnrollmentWindow } from '@/lib/enrollment'
 
 // Sessions are stored as scheduled_at in UTC; admin enters/reads times in
 // WIB (Asia/Jakarta, UTC+7, no DST). Compute the WIB day boundaries in UTC
@@ -100,13 +101,15 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
   if (classIds.length > 0) {
     const { data: enrollments } = await admin
       .from('class_students')
-      .select('class_id, profiles!student_id(full_name, nickname, grade)')
-      .in('class_id', classIds)
-      .eq('is_active', true) as unknown as {
-        data: { class_id: string; profiles: { full_name: string; nickname: string | null; grade: number | null } | null }[] | null
+      .select('class_id, enrolled_at, unenrolled_at, profiles!student_id(full_name, nickname, grade)')
+      .in('class_id', classIds) as unknown as {
+        data: (EnrollmentWindow & { class_id: string; profiles: { full_name: string; nickname: string | null; grade: number | null } | null })[] | null
       }
     for (const e of enrollments ?? []) {
       if (!e.profiles) continue
+      // Siswa yang baru bergabung bulan depan belum ikut disebut hari ini.
+      // Bandingkan dengan tanggal WIB-nya, bukan batas UTC hari itu.
+      if (!coversSession(e, `${dateStr}T00:00:00Z`)) continue
       const list = studentsByClass.get(e.class_id) ?? []
       list.push(e.profiles)
       studentsByClass.set(e.class_id, list)

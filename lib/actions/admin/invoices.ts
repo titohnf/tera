@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { billingRange, coversSession, type EnrollmentWindow } from '@/lib/enrollment'
 
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr)
@@ -30,14 +31,20 @@ function monthRange(month: string): [string, string] {
   return [start, end]
 }
 
+/**
+ * Jumlah sesi yang ditagihkan ke seorang siswa. `window` membatasi hitungan
+ * ke masa siswa itu benar-benar ikut kelas — tanpa itu, siswa yang bergabung
+ * di tengah semester ikut ditagih sesi sebelum ia masuk.
+ */
 async function countSessionsForClass(
   admin: ReturnType<typeof createAdminClient>,
   classId: string,
-  period?: string
+  period?: string,
+  window?: EnrollmentWindow,
 ): Promise<number> {
   let query = admin
     .from('sessions')
-    .select('*', { count: 'exact', head: true })
+    .select('scheduled_at')
     .eq('class_id', classId)
     .neq('status', 'cancelled')
 
@@ -46,8 +53,24 @@ async function countSessionsForClass(
     query = query.gte('scheduled_at', start).lt('scheduled_at', end)
   }
 
-  const { count } = await query
-  return count ?? 0
+  const { data } = await query as unknown as { data: { scheduled_at: string }[] | null }
+  const rows = data ?? []
+  if (!window) return rows.length
+  return rows.filter(s => coversSession(window, s.scheduled_at)).length
+}
+
+async function getEnrollmentWindow(
+  admin: ReturnType<typeof createAdminClient>,
+  studentId: string,
+  classId: string,
+): Promise<EnrollmentWindow | null> {
+  const { data } = await admin
+    .from('class_students')
+    .select('enrolled_at, unenrolled_at')
+    .eq('student_id', studentId)
+    .eq('class_id', classId)
+    .maybeSingle() as { data: EnrollmentWindow | null }
+  return data
 }
 
 async function verifyAdmin() {
@@ -303,9 +326,10 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
     .maybeSingle()
   if (draftCheck) return { error: 'Masih ada invoice draft yang belum dikirim. Kirim atau hapus dulu sebelum membuat invoice baru.' }
 
-  const [{ data: student }, { data: cls }] = await Promise.all([
+  const [{ data: student }, { data: cls }, enrollment] = await Promise.all([
     ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
     ctx.admin.from('classes').select('name, level, class_type, jenis, start_date, end_date').eq('id', classId).single(),
+    getEnrollmentWindow(ctx.admin, studentId, classId),
   ])
 
   if (!student) return { error: 'Siswa tidak ditemukan' }
@@ -333,18 +357,20 @@ export async function generateFirstInvoice(studentId: string, classId: string) {
 
   if (isPrivate) {
     unit = 'pertemuan'
-    const { count } = await ctx.admin
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('class_id', classId)
-      .neq('status', 'cancelled')
-    quantity = count ?? 0
+    quantity = await countSessionsForClass(ctx.admin, classId, undefined, enrollment ?? undefined)
     if (quantity === 0) return { error: 'Belum ada sesi terjadwal untuk kelas privat ini' }
   } else {
     unit = 'bulan'
-    quantity = (cls as any).start_date && (cls as any).end_date
-      ? monthsBetween((cls as any).start_date, (cls as any).end_date)
-      : 1
+    // Ditagih hanya untuk bulan-bulan siswa ini benar-benar ikut, bukan
+    // seluruh umur kelas — siswa yang masuk Agustus di kelas yang mulai Juli
+    // tidak ditagih Juli.
+    const range = billingRange(
+      enrollment ?? { enrolled_at: null, unenrolled_at: null },
+      (cls as any).start_date,
+      (cls as any).end_date,
+    )
+    if (!range) return { error: 'Masa keanggotaan siswa tidak beririsan dengan periode kelas' }
+    quantity = range.start && range.end ? monthsBetween(range.start, range.end) : 1
   }
 
   const description = [typeLabel, (cls as any).level, rate?.jenis].filter(Boolean).join(' ')
@@ -415,16 +441,31 @@ export async function syncPrivateClassDraftInvoices(
 
   const { data: draftInvoices } = await admin
     .from('invoices')
-    .select('id, line_items')
+    .select('id, student_id, line_items')
     .eq('class_id', classId)
-    .eq('status', 'draft') as { data: { id: string; line_items: SyncableLineItem[] }[] | null }
+    .eq('status', 'draft') as { data: { id: string; student_id: string; line_items: SyncableLineItem[] }[] | null }
 
   if (!draftInvoices || draftInvoices.length === 0) return
 
+  // Hitungan pertemuan dibatasi masa keanggotaan masing-masing siswa, jadi dua
+  // siswa di kelas yang sama bisa dapat jumlah berbeda untuk bulan yang sama.
+  const { data: enrollmentRows } = await admin
+    .from('class_students')
+    .select('student_id, enrolled_at, unenrolled_at')
+    .eq('class_id', classId) as unknown as {
+      data: (EnrollmentWindow & { student_id: string })[] | null
+    }
+  const windowByStudent = new Map((enrollmentRows ?? []).map(r => [r.student_id, r]))
+
   const countCache = new Map<string, number>()
-  async function liveCountFor(period?: string): Promise<number> {
-    const key = period ?? '__whole_class__'
-    if (!countCache.has(key)) countCache.set(key, await countSessionsForClass(admin, classId, period))
+  async function liveCountFor(studentId: string, period?: string): Promise<number> {
+    const key = `${studentId}:${period ?? '__whole_class__'}`
+    if (!countCache.has(key)) {
+      countCache.set(
+        key,
+        await countSessionsForClass(admin, classId, period, windowByStudent.get(studentId)),
+      )
+    }
     return countCache.get(key)!
   }
 
@@ -455,7 +496,7 @@ export async function syncPrivateClassDraftInvoices(
         updatedItems.push(item)
         continue
       }
-      const liveCount = await liveCountFor(item.period)
+      const liveCount = await liveCountFor(inv.student_id, item.period)
       const liveAmount = currentRate ?? item.amount
       if (item.months === liveCount && item.amount === liveAmount) {
         updatedItems.push(item)
@@ -496,9 +537,10 @@ export async function generateMonthlyInvoiceForStudent(studentId: string, classI
     .maybeSingle()
   if (existing) return { error: 'Invoice untuk bulan ini sudah ada' }
 
-  const [{ data: student }, { data: cls }] = await Promise.all([
+  const [{ data: student }, { data: cls }, enrollment] = await Promise.all([
     ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
     ctx.admin.from('classes').select('name, level, class_type, jenis').eq('id', classId).single(),
+    getEnrollmentWindow(ctx.admin, studentId, classId),
   ])
 
   if (!student) return { error: 'Siswa tidak ditemukan' }
@@ -507,8 +549,10 @@ export async function generateMonthlyInvoiceForStudent(studentId: string, classI
     return { error: 'Invoice bulanan hanya berlaku untuk kelas privat' }
   }
 
-  const sessionCount = await countSessionsForClass(ctx.admin, classId, month)
-  if (sessionCount === 0) return { error: 'Belum ada sesi terjadwal di bulan ini' }
+  const sessionCount = await countSessionsForClass(ctx.admin, classId, month, enrollment ?? undefined)
+  if (sessionCount === 0) {
+    return { error: 'Belum ada sesi di bulan ini yang masuk masa keanggotaan siswa' }
+  }
 
   const clsData = cls as { name: string; level: string | null; class_type: string; jenis: string | null }
   const billingJenis = clsData.jenis === 'reguler' ? 'Reguler' : clsData.jenis === 'fokus' ? 'Fokus' : null

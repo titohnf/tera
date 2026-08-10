@@ -5,6 +5,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { syncPrivateClassDraftInvoices } from './invoices'
+import { dayToIso } from '@/lib/enrollment'
 
 export type ActionState = { error: string } | null
 
@@ -189,7 +190,10 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       studentIds.map(sid => ({
         class_id: data.id,
         student_id: sid,
-        enrolled_at: new Date().toISOString(),
+        // Siswa yang ikut sejak kelas dibentuk mulai dari tanggal mulai kelas,
+        // bukan dari jam kelas ini dibuat di sistem — kalau tidak, sesi-sesi
+        // awal kelas jatuh di luar rentang keanggotaannya sendiri.
+        enrolled_at: startDate ? dayToIso(startDate) : new Date().toISOString(),
         is_active: true,
       }))
     )
@@ -372,17 +376,78 @@ export async function deleteClass(classId: string): Promise<ActionState> {
   redirect('/admin/classes')
 }
 
-export async function enrollStudent(classId: string, studentId: string): Promise<ActionState> {
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * `enrolledAt` adalah tanggal (YYYY-MM-DD) siswa mulai ikut kelas — dipakai
+ * untuk siswa yang bergabung setelah kelasnya berjalan. Kalau kosong, dipakai
+ * tanggal mulai kelas supaya siswa dianggap ikut sejak awal.
+ */
+export async function enrollStudent(
+  classId: string,
+  studentId: string,
+  enrolledAt?: string,
+): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
+  if (enrolledAt && !DAY_RE.test(enrolledAt)) return { error: 'Tanggal mulai tidak valid' }
+
+  let startDay = enrolledAt
+  if (!startDay) {
+    const { data: cls } = await ctx.admin.from('classes').select('start_date').eq('id', classId).single()
+    startDay = (cls as { start_date: string | null } | null)?.start_date ?? undefined
+  }
 
   const { error } = await ctx.admin.from('class_students').upsert(
-    { class_id: classId, student_id: studentId, is_active: true, enrolled_at: new Date().toISOString() },
+    {
+      class_id: classId,
+      student_id: studentId,
+      is_active: true,
+      enrolled_at: startDay ? dayToIso(startDay) : new Date().toISOString(),
+      // Mendaftar ulang siswa yang pernah keluar membuka lagi rentangnya.
+      unenrolled_at: null,
+    },
     { onConflict: 'class_id,student_id' }
   )
 
   if (error) return { error: error.message }
+  await syncPrivateClassDraftInvoices(classId, ctx.admin)
   revalidatePath(`/admin/classes/${classId}`)
+  revalidatePath(`/admin/classes/${classId}/edit`)
+  return null
+}
+
+/**
+ * Ubah rentang keanggotaan siswa yang sudah terdaftar. `unenrolledAt` kosong
+ * berarti keanggotaannya masih berjalan.
+ */
+export async function updateEnrollmentWindow(
+  classId: string,
+  studentId: string,
+  enrolledAt: string,
+  unenrolledAt: string | null,
+): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+  if (!DAY_RE.test(enrolledAt)) return { error: 'Tanggal mulai tidak valid' }
+  if (unenrolledAt && !DAY_RE.test(unenrolledAt)) return { error: 'Tanggal berhenti tidak valid' }
+  if (unenrolledAt && unenrolledAt < enrolledAt) {
+    return { error: 'Tanggal berhenti tidak boleh mendahului tanggal mulai' }
+  }
+
+  const { error } = await ctx.admin
+    .from('class_students')
+    .update({
+      enrolled_at: dayToIso(enrolledAt),
+      unenrolled_at: unenrolledAt ? dayToIso(unenrolledAt) : null,
+    })
+    .eq('class_id', classId)
+    .eq('student_id', studentId)
+
+  if (error) return { error: error.message }
+  await syncPrivateClassDraftInvoices(classId, ctx.admin)
+  revalidatePath(`/admin/classes/${classId}`)
+  revalidatePath(`/admin/classes/${classId}/edit`)
   return null
 }
 
@@ -482,17 +547,42 @@ export async function completeClass(classId: string): Promise<void> {
   redirect(`/admin/classes/${classId}`)
 }
 
-export async function unenrollStudent(classId: string, studentId: string): Promise<ActionState> {
+/**
+ * `unenrolledAt` adalah tanggal terakhir siswa ikut kelas (inklusif). Sesi
+ * sampai tanggal itu tetap miliknya — presensi dan laporan bulan-bulan
+ * sebelumnya tidak ikut hilang saat siswa dikeluarkan.
+ */
+export async function unenrollStudent(
+  classId: string,
+  studentId: string,
+  unenrolledAt?: string,
+): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
+  if (unenrolledAt && !DAY_RE.test(unenrolledAt)) return { error: 'Tanggal berhenti tidak valid' }
+
+  const lastDay = unenrolledAt ?? new Date().toISOString().slice(0, 10)
+
+  const { data: existing } = await ctx.admin
+    .from('class_students')
+    .select('enrolled_at')
+    .eq('class_id', classId)
+    .eq('student_id', studentId)
+    .maybeSingle() as { data: { enrolled_at: string } | null }
+
+  if (existing && lastDay < existing.enrolled_at.slice(0, 10)) {
+    return { error: 'Tanggal berhenti tidak boleh mendahului tanggal mulai' }
+  }
 
   const { error } = await ctx.admin
     .from('class_students')
-    .update({ is_active: false })
+    .update({ is_active: false, unenrolled_at: dayToIso(lastDay) })
     .eq('class_id', classId)
     .eq('student_id', studentId)
 
   if (error) return { error: error.message }
+  await syncPrivateClassDraftInvoices(classId, ctx.admin)
   revalidatePath(`/admin/classes/${classId}`)
+  revalidatePath(`/admin/classes/${classId}/edit`)
   return null
 }

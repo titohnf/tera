@@ -3,6 +3,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import NoteEditor from '@/components/notes/NoteEditor'
+import { rosterForSession } from '@/lib/enrollment'
 
 export default async function NotesPage({
   params,
@@ -16,18 +17,19 @@ export default async function NotesPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, status, class_id, topic, classes(name)')
+    .select('id, status, class_id, topic, scheduled_at, classes(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single()
 
   if (!session) notFound()
 
-  const { data: enrolledStudents } = await supabase
+  const { data: allEnrollments } = await supabase
     .from('class_students')
-    .select('student_id, profiles(id, full_name)')
+    .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name)')
     .eq('class_id', session.class_id)
-    .eq('is_active', true)
+
+  const enrolledStudents = rosterForSession(allEnrollments ?? [], session.scheduled_at)
 
   const { data: existingNotes } = await supabase
     .from('performance_notes')

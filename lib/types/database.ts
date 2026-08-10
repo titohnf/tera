@@ -55,7 +55,9 @@ export interface ClassStudentRow {
   id: string
   class_id: string
   student_id: string
+  // Rentang keanggotaan, inklusif di kedua ujung — lihat lib/enrollment.ts
   enrolled_at: string
+  unenrolled_at: string | null
   is_active: boolean
 }
 
@@ -241,8 +243,9 @@ export interface Database {
       }
       class_students: {
         Row: ClassStudentRow
-        Insert: Omit<ClassStudentRow, 'id' | 'enrolled_at'>
-        Update: Partial<Omit<ClassStudentRow, 'id' | 'enrolled_at'>>
+        Insert: Omit<ClassStudentRow, 'id' | 'enrolled_at' | 'unenrolled_at'>
+          & Partial<Pick<ClassStudentRow, 'enrolled_at' | 'unenrolled_at'>>
+        Update: Partial<Omit<ClassStudentRow, 'id'>>
       }
       sessions: {
         Row: SessionRow

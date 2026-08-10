@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { coversSession } from '@/lib/enrollment'
 
 export type LaporanStudent = {
   id: string
@@ -109,6 +110,8 @@ export async function getLaporanBulananData(studentId: string, month: string): P
   if (!student) return null
 
   type EnrollRow = {
+    enrolled_at: string
+    unenrolled_at: string | null
     classes: {
       id: string
       name: string
@@ -119,13 +122,19 @@ export async function getLaporanBulananData(studentId: string, month: string): P
 
   const { data: enrollData } = await admin
     .from('class_students')
-    .select('classes(id, name, level, profiles!tutor_id(full_name))')
+    .select('enrolled_at, unenrolled_at, classes(id, name, level, profiles!tutor_id(full_name))')
     .eq('student_id', studentId) as unknown as { data: EnrollRow[] | null }
 
-  const classes: LaporanClass[] = (enrollData ?? [])
-    .map(e => e.classes)
-    .filter((c): c is NonNullable<EnrollRow['classes']> => c !== null)
+  const enrollments = (enrollData ?? []).filter(e => e.classes !== null)
+
+  const classes: LaporanClass[] = enrollments
+    .map(e => e.classes!)
     .map(c => ({ id: c.id, name: c.name, level: c.level, tutor_name: c.profiles?.full_name ?? null }))
+
+  // Rentang keanggotaan per kelas, dipakai membuang sesi di luar masa siswa
+  // ikut kelas itu — siswa yang baru masuk Agustus tidak boleh membawa sesi
+  // Juli ke laporannya.
+  const windowByClass = new Map(enrollments.map(e => [e.classes!.id, e]))
 
   const classIds = classes.map(c => c.id)
   const classNameMap = new Map(classes.map(c => [c.id, c.name]))
@@ -150,7 +159,10 @@ export async function getLaporanBulananData(studentId: string, month: string): P
       .order('scheduled_at', { ascending: true }) as unknown as { data: SessionRow[] | null }
     : { data: [] as SessionRow[] }
 
-  const sessionRows = sessionData ?? []
+  const sessionRows = (sessionData ?? []).filter(s => {
+    const window = windowByClass.get(s.class_id)
+    return window ? coversSession(window, s.scheduled_at) : false
+  })
   const sessionIds = sessionRows.map(s => s.id)
 
   const { data: attendanceData } = sessionIds.length > 0

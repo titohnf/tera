@@ -18,6 +18,7 @@ import ApprovedSwapInfo from '@/components/tutor/ApprovedSwapInfo'
 import ResolvedNoticeBanner from '@/components/tutor/ResolvedNoticeBanner'
 import RequestPayrollReReview from '@/components/tutor/RequestPayrollReReview'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { rosterForSession } from '@/lib/enrollment'
 import { splitClassName } from '@/lib/format-class-name'
 import type { AttendanceStatus } from '@/lib/types/database'
 
@@ -197,9 +198,8 @@ export default async function SessionPage({
   ] = await Promise.all([
     supabase
       .from('class_students')
-      .select('student_id, profiles(id, full_name, grade)')
-      .eq('class_id', session.class_id)
-      .eq('is_active', true),
+      .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name, grade)')
+      .eq('class_id', session.class_id),
     supabase
       .from('attendances')
       .select('student_id, status, notes')
@@ -273,7 +273,8 @@ export default async function SessionPage({
       }
     : null
 
-  const enrolledStudents = enrolledResult.data ?? []
+  // Hanya siswa yang keanggotaannya mencakup tanggal sesi ini — lihat lib/enrollment.ts
+  const enrolledStudents = rosterForSession(enrolledResult.data ?? [], session.scheduled_at)
   const attendances = attendanceResult.data ?? []
   const existingNotes = notesResult.data ?? []
   const templates = templatesResult.data ?? []

@@ -14,6 +14,7 @@ import SessionHeader from '@/components/admin/sessions/SessionHeader'
 import SessionTabs from '@/components/sessions/SessionTabs'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { rosterForSession } from '@/lib/enrollment'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -63,7 +64,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   if (!session) notFound()
 
   const [
-    { data: classStudents },
+    { data: allEnrollments },
     { data: attendances },
     { data: existingNotes },
     { data: templates },
@@ -74,10 +75,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   ] = await Promise.all([
     admin
       .from('class_students')
-      .select('student_id, profiles(id, full_name, grade, avatar_url)')
-      .eq('class_id', session.class_id)
-      .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: { id: string; full_name: string; grade: number | null; avatar_url: string | null } | null }[] | null
+      .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name, grade, avatar_url)')
+      .eq('class_id', session.class_id) as unknown as Promise<{
+        data: {
+          student_id: string
+          enrolled_at: string
+          unenrolled_at: string | null
+          profiles: { id: string; full_name: string; grade: number | null; avatar_url: string | null } | null
+        }[] | null
       }>,
     admin
       .from('attendances')
@@ -133,6 +138,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   if (freshSession) session.status = freshSession.status
 
   const date = new Date(session.scheduled_at)
+
+  // Hanya siswa yang keanggotaannya mencakup tanggal sesi ini — lihat lib/enrollment.ts
+  const classStudents = rosterForSession(allEnrollments ?? [], session.scheduled_at)
 
   // Derive grade from enrolled students (mode of their grades)
   const enrolledGrades = (classStudents ?? [])

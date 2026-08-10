@@ -3,6 +3,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AttendanceForm from '@/components/attendance/AttendanceForm'
+import { rosterForSession } from '@/lib/enrollment'
 
 export default async function AttendancePage({
   params,
@@ -16,18 +17,22 @@ export default async function AttendancePage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, status, class_id, classes(name)')
+    .select('id, status, class_id, scheduled_at, classes(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single()
 
   if (!session) notFound()
 
-  const { data: enrolledStudents } = await supabase
+  // Roster diambil apa adanya lalu disaring per rentang keanggotaan: siswa
+  // yang baru masuk bulan ini tidak muncul di sesi bulan lalu, dan siswa yang
+  // sudah keluar tetap muncul di sesi-sesi sebelum ia keluar.
+  const { data: allEnrollments } = await supabase
     .from('class_students')
-    .select('student_id, profiles(id, full_name)')
+    .select('student_id, enrolled_at, unenrolled_at, profiles(id, full_name)')
     .eq('class_id', session.class_id)
-    .eq('is_active', true)
+
+  const enrolledStudents = rosterForSession(allEnrollments ?? [], session.scheduled_at)
 
   const { data: existingAttendances } = await supabase
     .from('attendances')
