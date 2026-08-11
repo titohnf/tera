@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import PrintButton from '@/components/admin/invoices/PrintButton'
 import AutoPrint from '@/components/admin/invoices/AutoPrint'
+import { displayLineItemDescription } from '@/lib/invoice-line-items'
 
 type LineItem = {
   description: string
@@ -149,7 +150,7 @@ export default async function PrintInvoicePage({
                     </td>
                   ) : (
                     <>
-                      <td className="px-3 py-2 text-gray-800 border-r border-gray-300">{item.description}</td>
+                      <td className="px-3 py-2 text-gray-800 border-r border-gray-300">{displayLineItemDescription(item.description)}</td>
                       <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-300 whitespace-nowrap">
                         {item.months} {item.unit === 'pertemuan' ? 'pertm' : 'bln'}
                       </td>

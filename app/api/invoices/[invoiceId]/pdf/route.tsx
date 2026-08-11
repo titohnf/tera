@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { displayLineItemDescription } from '@/lib/invoice-line-items'
 import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
 
 const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
@@ -115,7 +116,7 @@ function InvoicePDF({ invoice }: { invoice: InvoiceRow }) {
                 <Text style={{ flex: 1 }}>{item.description}</Text>
               ) : (
                 <>
-                  <Text style={s.col1}>{item.description}</Text>
+                  <Text style={s.col1}>{displayLineItemDescription(item.description)}</Text>
                   <Text style={s.col2}>{item.months} {item.unit === 'pertemuan' ? 'pertm' : 'bln'}</Text>
                   <Text style={s.col3}>{formatRupiah(item.amount)}</Text>
                 </>
