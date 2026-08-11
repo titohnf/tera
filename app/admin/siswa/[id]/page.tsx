@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { coversSession } from '@/lib/enrollment'
 import { evaluateStudentCritical } from '@/lib/studentCritical'
 import CriticalDetailCard from '@/components/siswa/CriticalDetailCard'
 import UnenrollButton from '@/components/siswa/UnenrollButton'
@@ -192,6 +193,7 @@ export default async function SiswaDetailPage({
   type RawEnroll = {
     is_active: boolean
     enrolled_at: string | null
+    unenrolled_at: string | null
     classes: {
       id: string
       name: string
@@ -205,7 +207,7 @@ export default async function SiswaDetailPage({
 
   const allEnrollResult = await (admin
     .from('class_students')
-    .select('is_active, enrolled_at, classes(id, name, level, is_active, schedule_days, schedule_time, profiles!tutor_id(full_name))')
+    .select('is_active, enrolled_at, unenrolled_at, classes(id, name, level, is_active, schedule_days, schedule_time, profiles!tutor_id(full_name))')
     .eq('student_id', studentId) as unknown as Promise<{ data: RawEnroll[] | null }>)
 
   const allEnrollRaw: RawEnroll[] = allEnrollResult.data ?? []
@@ -230,6 +232,18 @@ export default async function SiswaDetailPage({
 
   const allClassIds = allEnrollRaw.map(e => e.classes?.id).filter((cid): cid is string => !!cid)
   const activeClassIds = enrolledClasses.map(c => c.id)
+
+  // Rentang keanggotaan per kelas, dipakai membuang sesi di luar masa siswa
+  // ikut kelas itu — siswa yang baru masuk Agustus tidak boleh melihat jadwal
+  // Juli kelasnya di tab Kelas, ikut terhitung di statistik, atau muncul di
+  // riwayat nilainya.
+  const windowByClass = new Map(
+    allEnrollRaw.filter(e => e.classes).map(e => [e.classes!.id, e] as const),
+  )
+  const inWindow = (s: { class_id: string; scheduled_at: string }) => {
+    const window = windowByClass.get(s.class_id)
+    return window ? coversSession(window, s.scheduled_at) : false
+  }
 
   // Fetch class subjects via two explicit queries (avoids FK join ambiguity in PostgREST)
   if (allClassIds.length > 0) {
@@ -271,7 +285,7 @@ export default async function SiswaDetailPage({
     admin.from('performance_notes').select('id, category, body, created_at, session_id, sessions(scheduled_at, topic, class_id), profiles!tutor_id(full_name)').eq('student_id', studentId).order('created_at', { ascending: false }).limit(30) as unknown as Promise<{ data: NoteRow[] | null }>,
   ])
 
-  const sessions: SessionRow[] = sessionsRes.data ?? []
+  const sessions: SessionRow[] = (sessionsRes.data ?? []).filter(inWindow)
   const attendances: AttendanceRow[] = attendancesRes.data ?? []
   const invoices: InvoiceRow[] = invoicesRes.data ?? []
   const notes: NoteRow[] = notesRes.data ?? []
@@ -302,7 +316,7 @@ export default async function SiswaDetailPage({
       .select('id, class_id, scheduled_at, topic, status, subject_id, profiles!tutor_id(full_name)')
       .in('class_id', activeClassIds)
       .order('scheduled_at', { ascending: false }) as unknown as { data: UpcomingSession[] | null }
-    upcomingSessions = allSessionsData ?? []
+    upcomingSessions = (allSessionsData ?? []).filter(inWindow)
     const firstUpcoming = upcomingSessions.find(s => s.status === 'scheduled' && s.scheduled_at >= nowIso)
     if (firstUpcoming) nextScheduledSessionDate = new Date(firstUpcoming.scheduled_at)
   }
@@ -352,7 +366,7 @@ export default async function SiswaDetailPage({
       .in('class_id', historicalClassIds)
       .eq('status', 'completed')
       .order('scheduled_at', { ascending: true }) as unknown as { data: { class_id: string; scheduled_at: string }[] | null }
-    for (const s of histData ?? []) {
+    for (const s of (histData ?? []).filter(inWindow)) {
       const existing = historicalSessionStats.get(s.class_id)
       if (!existing) {
         historicalSessionStats.set(s.class_id, { count: 1, firstDate: s.scheduled_at, lastDate: s.scheduled_at })
