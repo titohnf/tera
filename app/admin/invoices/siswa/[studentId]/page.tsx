@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/invoices/StudentClassInvoiceTable'
+import { billingRange } from '@/lib/enrollment'
 import CreateInvoiceButton, { type GeneratableClass, type MonthlyInvoiceClass } from '@/components/admin/invoices/CreateInvoiceButton'
 
 type InvoiceRow = {
@@ -14,6 +15,14 @@ type InvoiceRow = {
   status: string
   line_items: { period?: string }[]
   classes: { name: string; start_date: string | null; end_date: string | null } | null
+}
+
+type EnrollmentRow = {
+  class_id: string
+  is_active: boolean
+  enrolled_at: string | null
+  unenrolled_at: string | null
+  classes: { name: string; class_type: string | null } | null
 }
 
 type PaymentRow = {
@@ -50,9 +59,8 @@ export default async function StudentInvoiceDetailPage({
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
     admin
       .from('class_students')
-      .select('class_id, classes!class_id(name, class_type)')
-      .eq('student_id', studentId)
-      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; classes: { name: string; class_type: string | null } | null }[] | null }>,
+      .select('class_id, is_active, enrolled_at, unenrolled_at, classes!class_id(name, class_type)')
+      .eq('student_id', studentId) as unknown as Promise<{ data: EnrollmentRow[] | null }>,
   ])
 
   if (!profileRes.data) notFound()
@@ -77,18 +85,33 @@ export default async function StudentInvoiceDetailPage({
     paymentsByInvoice.get(p.invoice_id)!.push(p)
   }
 
+  const allEnrollments = enrollmentsRes.data ?? []
+  const windowByClass = new Map(allEnrollments.map(e => [e.class_id, e] as const))
+
   // Group invoices by class
   const classMap = new Map<string, ClassGroup>()
   for (const inv of invoices) {
     const key = inv.class_id ?? '__no_class__'
     const className = inv.classes?.name ?? 'Tanpa Kelas'
     if (!classMap.has(key)) {
+      // Rincian cicilan di pesan WhatsApp harus mengikuti bulan-bulan yang
+      // benar-benar ditagih. Invoice-nya sudah dihitung dari irisan rentang
+      // kelas dengan masa keanggotaan siswa (lihat billingRange di
+      // lib/actions/admin/invoices.ts), jadi rentang yang ditampilkan harus
+      // dipotong dengan cara yang sama — siswa yang masuk Agustus tidak
+      // boleh melihat Juli di daftar cicilannya.
+      const window = inv.class_id ? windowByClass.get(inv.class_id) : undefined
+      const range = billingRange(
+        window ?? { enrolled_at: null, unenrolled_at: null },
+        inv.classes?.start_date ?? null,
+        inv.classes?.end_date ?? null,
+      )
       classMap.set(key, {
         classId: inv.class_id,
         className,
         invoices: [],
-        classStartDate: inv.classes?.start_date ?? null,
-        classEndDate: inv.classes?.end_date ?? null,
+        classStartDate: range?.start ?? null,
+        classEndDate: range?.end ?? null,
       })
     }
     classMap.get(key)!.invoices.push({
@@ -107,7 +130,7 @@ export default async function StudentInvoiceDetailPage({
   const groups = Array.from(classMap.values())
 
   // Add enrolled classes with no invoices as groups so they show in the table
-  const enrollments = enrollmentsRes.data ?? []
+  const enrollments = allEnrollments.filter(e => e.is_active)
   for (const enr of enrollments) {
     if (!classMap.has(enr.class_id)) {
       groups.push({ classId: enr.class_id, className: enr.classes?.name ?? 'Tanpa Nama', invoices: [] })
