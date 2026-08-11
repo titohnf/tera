@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/invoices/PrintButton'
+import Letterhead from '@/components/admin/print/Letterhead'
+import SignatureBlock from '@/components/admin/print/SignatureBlock'
 import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
 import type { PayslipRow } from '@/lib/types/database'
 
@@ -44,23 +46,12 @@ export default async function PrintPayslipPage({
       </div>
 
       <div className="max-w-2xl mx-auto p-12">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-lg font-bold text-gray-900">Tera Learning Center</p>
-            <p className="text-xs text-gray-600 mt-0.5">Ruko Depok Bersih Jl. Rawageni No. 9k</p>
-            <p className="text-xs text-gray-600">Kel. Ratujaya, Kec. Cipayung, Kota Depok</p>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Telepon: 0813 1550 2949 &mdash; Email: teralearningcenter.id@gmail.com
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xl font-bold text-gray-900 tracking-widest">SLIP GAJI</p>
-            <p className="text-xs text-gray-600 mt-1 font-mono">{payslip.payslip_number}</p>
-          </div>
-        </div>
+        <Letterhead />
 
-        <hr className="border-gray-800 border-t-2 mb-6" />
+        <div className="text-center mb-6">
+          <p className="text-xl font-bold text-gray-900 tracking-widest">SLIP GAJI</p>
+          <p className="text-xs text-gray-600 mt-1 font-mono">{payslip.payslip_number}</p>
+        </div>
 
         {/* Info tutor */}
         <div className="grid grid-cols-2 gap-8 mb-6">
@@ -135,22 +126,20 @@ export default async function PrintPayslipPage({
           </div>
         )}
 
-        {/* Signature */}
-        <div className="grid grid-cols-2 gap-8 mt-10">
+        {/* Tanda terima tutor sengaja dipertahankan di samping blok pimpinan —
+            slip gaji perlu bukti diterima, yang tidak ada di invoice/kuitansi.
+            Tinggi kolom kosongnya disamakan dengan tinggi gambar stempel
+            (h-24) supaya kedua nama sejajar. */}
+        <div className="grid grid-cols-2 gap-8 mt-10 items-start">
           <div className="text-sm text-center">
             <p className="text-gray-600 mb-1">
               Diterima, Depok, {formatDate(payslip.pay_date)}
             </p>
             <p className="font-semibold text-gray-900">Tutor</p>
-            <div className="h-16"></div>
-            <p className="text-gray-900">{payslip.tutor_name}</p>
+            <div className="h-24"></div>
+            <p className="font-semibold text-gray-900">{payslip.tutor_name}</p>
           </div>
-          <div className="text-sm text-center">
-            <p className="text-gray-600 mb-1">&nbsp;</p>
-            <p className="font-semibold text-gray-900">Pimpinan Tera Learning Center</p>
-            <div className="h-16"></div>
-            <p className="text-gray-900">Suci Purnama Sari, M.Si.</p>
-          </div>
+          <SignatureBlock date={formatDate(payslip.pay_date)} />
         </div>
       </div>
     </>

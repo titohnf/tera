@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
+import Letterhead from '@/components/admin/print/Letterhead'
+import SignatureBlock from '@/components/admin/print/SignatureBlock'
 import type { Metadata } from 'next'
 import PrintButton from '@/components/admin/invoices/PrintButton'
 
@@ -98,19 +100,7 @@ export default async function PengingatPage({
       )}
 
       <div className="max-w-2xl mx-auto p-12">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-lg font-bold text-gray-900">Bimbel Tera</p>
-            <p className="text-xs text-gray-600 mt-0.5">Jl. Rawageni No. 9k, Kel. Ratujaya, Kec. Cipayung, Kota Depok</p>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Telepon: 0813 1550 2949 &middot; Email: teralearningcenter.id@gmail.com
-            </p>
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-tera.png" alt="Tera Bimbel" className="h-10 w-auto" />
-        </div>
-
-        <hr className="border-gray-300 mb-4" />
+        <Letterhead />
 
         <div className="text-center mb-6">
           <p className="text-xl font-bold text-gray-900 tracking-widest">PEMBERITAHUAN TAGIHAN</p>
@@ -177,15 +167,7 @@ export default async function PengingatPage({
         )}
 
         <div className="flex justify-end mt-8">
-          <div className="text-sm text-center">
-            <p className="text-gray-600 mb-1">
-              Depok, {formatDate(new Date().toISOString())}
-            </p>
-            <p className="font-semibold text-gray-900">Pimpinan Bimbel Tera</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/ttd-stempel.png" alt="Tanda tangan dan stempel" className="h-24 w-auto mx-auto" />
-            <p className="font-semibold text-gray-900">Suci Purnama Sari, M.Si.</p>
-          </div>
+          <SignatureBlock date={formatDate(new Date().toISOString())} />
         </div>
       </div>
     </>
