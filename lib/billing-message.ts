@@ -11,6 +11,11 @@ export type MonthlyInstallment = { label: string; month: string; amount: number 
 // having to think in pertemuan or ask what this month's amount is). Any
 // rounding remainder is absorbed into the last month so the sum stays exact.
 export function getMonthlyBreakdown(totalDue: number, startDate?: string | null, endDate?: string | null): MonthlyInstallment[] {
+  return splitAcrossMonths(totalDue, billingMonths(startDate, endDate))
+}
+
+/** Bulan-bulan kalender yang dilewati sebuah rentang tagihan, berurutan. */
+export function billingMonths(startDate?: string | null, endDate?: string | null): BillingMonth[] {
   if (!startDate || !endDate) return []
   const [sy, sm] = startDate.split('-').map(Number)
   const [ey, em] = endDate.split('-').map(Number)
@@ -26,7 +31,7 @@ export function getMonthlyBreakdown(totalDue: number, startDate?: string | null,
       month: `${year}-${String(monthIndex + 1).padStart(2, '0')}`,
     })
   }
-  return splitAcrossMonths(totalDue, months)
+  return months
 }
 
 export type BillingMonth = Omit<MonthlyInstallment, 'amount'>
@@ -42,6 +47,54 @@ export function splitAcrossMonths(total: number, months: BillingMonth[]): Monthl
     ...m,
     amount: i === n - 1 ? total - base * (n - 1) : base,
   }))
+}
+
+export type BillingLineItem = {
+  months: number
+  amount: number
+  is_deduction: boolean
+  unit?: 'bulan' | 'pertemuan'
+}
+
+/**
+ * Rencana cicilan bulanan sebuah invoice kelas grup.
+ *
+ * Membagi rata `total_due` ke seluruh bulan tidak selalu benar: siswa yang
+ * bergabung di tengah bulan pertama ditagih beberapa pertemuan pro-rata di
+ * bulan itu, lalu tarif bulanan penuh sesudahnya. Angka rata-rata tidak cocok
+ * dengan invoice cetaknya, dan orang tua yang membandingkan keduanya akan
+ * bingung.
+ *
+ * Bulan bertarif penuh diambil dari ujung belakang rentang sebanyak `months`
+ * pada baris satuan "bulan", dan sisa tagihannya jatuh ke bulan-bulan di
+ * depannya. Sengaja tidak membaca teks deskripsi untuk menebak bulan — teks itu
+ * diketik tangan dan sudah terbukti bisa salah (ada baris Juli yang tertulis
+ * "Juni"). Kalau bentuknya tidak dikenali, kembali ke pembagian rata.
+ */
+export function getInstallmentPlan(
+  totalDue: number,
+  lineItems: BillingLineItem[],
+  startDate?: string | null,
+  endDate?: string | null,
+): MonthlyInstallment[] {
+  const months = billingMonths(startDate, endDate)
+  if (months.length === 0) return []
+
+  const monthly = lineItems.find(i => !i.is_deduction && i.unit === 'bulan')
+  if (!monthly || monthly.months <= 0 || monthly.months >= months.length) {
+    return splitAcrossMonths(totalDue, months)
+  }
+
+  const leading = months.slice(0, months.length - monthly.months)
+  const remainder = totalDue - monthly.months * monthly.amount
+  // Tidak ada sisa untuk dibagi ke bulan-bulan depan — mencantumkannya sebagai
+  // Rp 0 lebih membingungkan daripada membaginya rata seperti biasa.
+  if (remainder <= 0) return splitAcrossMonths(totalDue, months)
+
+  return [
+    ...splitAcrossMonths(remainder, leading),
+    ...months.slice(leading.length).map(m => ({ ...m, amount: monthly.amount })),
+  ]
 }
 
 /**

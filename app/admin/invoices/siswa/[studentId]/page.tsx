@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import StudentClassInvoiceTable, { type ClassGroup } from '@/components/admin/invoices/StudentClassInvoiceTable'
 import { billingRange } from '@/lib/enrollment'
+import type { BillingLineItem } from '@/lib/billing-message'
 import CreateInvoiceButton, { type GeneratableClass, type MonthlyInvoiceClass } from '@/components/admin/invoices/CreateInvoiceButton'
 
 type InvoiceRow = {
@@ -13,7 +14,7 @@ type InvoiceRow = {
   issued_at: string
   due_date: string | null
   status: string
-  line_items: { period?: string }[]
+  line_items: (BillingLineItem & { period?: string })[]
   classes: { name: string; start_date: string | null; end_date: string | null } | null
 }
 
@@ -124,6 +125,7 @@ export default async function StudentInvoiceDetailPage({
       eff_status: effectiveStatus(inv, today),
       payments: paymentsByInvoice.get(inv.id) ?? [],
       isMonthly: inv.line_items.some(i => i.period),
+      lineItems: inv.line_items,
     })
   }
 

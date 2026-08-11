@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
-import { getMonthlyBreakdown, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment } from '@/lib/billing-message'
+import { getMonthlyBreakdown, getInstallmentPlan, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment, type BillingLineItem } from '@/lib/billing-message'
 
 // Pakai label dari rincian tagihan bila bulannya ada di sana (supaya ikut
 // membawa tahun saat rentangnya lintas tahun), selain itu nama bulan saja.
@@ -29,6 +29,7 @@ export type InvoiceItem = {
   eff_status: string
   payments: Payment[]
   isMonthly: boolean
+  lineItems: BillingLineItem[]
 }
 
 export type ClassGroup = {
@@ -165,7 +166,7 @@ function InvoiceCard({
           // enrollment's total.
           billingLines = [`Total Tagihan: ${formatRupiah(invoice!.total_due)}`]
         } else {
-          const breakdown = getMonthlyBreakdown(invoice!.total_due, group.classStartDate, group.classEndDate)
+          const breakdown = getInstallmentPlan(invoice!.total_due, invoice!.lineItems, group.classStartDate, group.classEndDate)
           const periodLabel = formatPeriodLabel(group.classStartDate, group.classEndDate)
           billingLines = breakdown.length > 0
             ? [
