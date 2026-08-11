@@ -570,7 +570,10 @@ export async function generateMonthlyInvoiceForStudent(studentId: string, classI
   const amount = rate ? Number(rate.amount) : 0
 
   const monthLabel = new Date(`${month}-01T00:00:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-  const description = `Privat${clsData.level ? ` ${clsData.level}` : ''} — ${monthLabel} (${sessionCount} pertemuan)`
+  // Jumlah pertemuannya ada di `months` dan tampil di kolom Qty. Menuliskannya
+  // lagi di deskripsi membuat baris ini menyebut dua angka begitu admin
+  // mengoreksi Qty (lihat displayLineItemDescription untuk invoice lama).
+  const description = `Privat${clsData.level ? ` ${clsData.level}` : ''} — ${monthLabel}`
   const lineItems = [{ description, months: sessionCount, amount, is_deduction: false, unit: 'pertemuan' as const, period: month }]
   const totalDue = sessionCount * amount
 
