@@ -44,6 +44,7 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
   const [message, setMessage] = useState<{ text: string; tone: 'error' | 'info' } | null>(null)
 
   const pendingIds = group.sessions.filter(s => s.payrollStatus === 'pending').map(s => s.id)
+  const incompleteCount = group.sessions.filter(s => s.payrollStatus === 'incomplete').length
 
   function handleApprove(sessionId: string) {
     setMessage(null)
@@ -97,6 +98,9 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
           <p className="text-xs text-gray-400 mt-0.5">
             {group.sessions.length} sesi
             {pendingIds.length > 0 && ` · ${pendingIds.length} menunggu review`}
+            {incompleteCount > 0 && (
+              <span className="text-orange-600 font-medium"> · {incompleteCount} jurnal belum lengkap</span>
+            )}
           </p>
         </div>
         {pendingIds.length > 0 && (
@@ -193,7 +197,9 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
                       </div>
                     ) : (
                       <div className="flex items-center justify-end gap-2">
-                        {s.payrollStatus !== 'approved' && (
+                        {/* Sesi berjurnal belum lengkap tidak bisa direview sama sekali —
+                            approveSessionPayroll pun akan menolaknya. */}
+                        {s.payrollStatus !== 'incomplete' && s.payrollStatus !== 'approved' && (
                           <button
                             onClick={() => handleApprove(s.id)}
                             disabled={isPending}
@@ -202,7 +208,7 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
                             Setujui
                           </button>
                         )}
-                        {s.payrollStatus !== 'rejected' && (
+                        {s.payrollStatus !== 'incomplete' && s.payrollStatus !== 'rejected' && (
                           <button
                             onClick={() => { setRejectingId(s.id); setReason(''); setMessage(null) }}
                             disabled={isPending}

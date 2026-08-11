@@ -1,4 +1,73 @@
-import type { Session, SalaryScheme, Attendance, SessionPayment } from './types/database'
+import type { Session, SalaryScheme, Attendance, SessionPayment, PayslipLineItem } from './types/database'
+
+export interface ClassBreakdownRow {
+  className: string
+  sessionCount: number
+  /** Tarif per pertemuan. Null kalau sesi di kelas ini tidak seragam tarifnya. */
+  basePerSession: number | null
+  baseMin: number
+  baseMax: number
+  baseTotal: number
+  grandTotal: number
+}
+
+/**
+ * Membuang daftar nama siswa di akhir nama kelas.
+ *
+ * Slip lama menyimpan className sebagai "Grup 7 SMP ... (Siswa A, Siswa B)".
+ * Nama siswa tidak ada gunanya di rincian gaji tutor dan membuat kolomnya
+ * melebar, jadi dibersihkan saat tampil — slip yang sudah tersimpan pun ikut
+ * rapi tanpa perlu digenerate ulang.
+ */
+export function stripStudentNames(className: string): string {
+  return className.replace(/\s*\([^()]*\)\s*$/, '').trim()
+}
+
+/**
+ * Meringkas baris slip gaji jadi satu baris per kelas.
+ *
+ * `basePerSession` sengaja dipisah dari `baseTotal`: kolom "Base" di samping
+ * "Pertemuan 3x" dibaca orang sebagai tarif satuan, jadi yang ditampilkan harus
+ * tarif satuan supaya pertemuan × base = total benar-benar cocok. Tarif bisa
+ * tidak seragam dalam satu kelas (tarif berubah di tengah bulan, atau ada
+ * session_payments yang menimpa), makanya rentang min–max ikut dibawa.
+ */
+export function buildClassBreakdown(items: PayslipLineItem[]): ClassBreakdownRow[] {
+  const byClass = new Map<string, { sessionCount: number; baseTotal: number; grandTotal: number; bases: Set<number> }>()
+
+  for (const item of items) {
+    const className = stripStudentNames(item.className)
+    let row = byClass.get(className)
+    if (!row) {
+      row = { sessionCount: 0, baseTotal: 0, grandTotal: 0, bases: new Set<number>() }
+      byClass.set(className, row)
+    }
+    row.sessionCount++
+    row.baseTotal += item.baseAmount
+    row.grandTotal += item.totalAmount
+    row.bases.add(item.baseAmount)
+  }
+
+  return [...byClass.entries()].map(([className, row]) => {
+    const bases = [...row.bases]
+    return {
+      className,
+      sessionCount: row.sessionCount,
+      basePerSession: bases.length === 1 ? bases[0] : null,
+      baseMin: Math.min(...bases),
+      baseMax: Math.max(...bases),
+      baseTotal: row.baseTotal,
+      grandTotal: row.grandTotal,
+    }
+  })
+}
+
+/** Label kolom "Base per Pertemuan" — satu angka, atau rentang kalau tidak seragam. */
+export function formatBasePerSession(row: ClassBreakdownRow, format: (n: number) => string): string {
+  return row.basePerSession !== null
+    ? format(row.basePerSession)
+    : `${format(row.baseMin)} – ${format(row.baseMax)}`
+}
 
 export interface SessionRate {
   class_type: string

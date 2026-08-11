@@ -3,6 +3,7 @@ import { getUser } from '@/lib/supabase/get-user'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
+import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
 import type { PayslipRow } from '@/lib/types/database'
 
 function formatRupiah(n: number) {
@@ -77,14 +78,7 @@ export default async function TutorPayslipDetailPage({
 
       {/* Breakdown per kelas */}
       {(() => {
-        const byClass: Record<string, { sessionCount: number; baseTotal: number; grandTotal: number }> = {}
-        for (const item of payslip.line_items) {
-          if (!byClass[item.className]) byClass[item.className] = { sessionCount: 0, baseTotal: 0, grandTotal: 0 }
-          byClass[item.className].sessionCount++
-          byClass[item.className].baseTotal += item.baseAmount
-          byClass[item.className].grandTotal += item.totalAmount
-        }
-        const rows = Object.entries(byClass)
+        const rows = buildClassBreakdown(payslip.line_items)
         return (
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             <div className="px-5 pt-5 pb-3">
@@ -96,17 +90,17 @@ export default async function TutorPayslipDetailPage({
                   <tr className="border-t border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     <th className="text-left px-5 py-3">Nama Kelas</th>
                     <th className="text-center px-4 py-3">Jumlah Pertemuan</th>
-                    <th className="text-right px-4 py-3">Base</th>
+                    <th className="text-right px-4 py-3">Base / Pertemuan</th>
                     <th className="text-right px-5 py-3">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {rows.map(([className, data]) => (
-                    <tr key={className}>
-                      <td className="px-5 py-3 font-medium text-gray-900">{className}</td>
-                      <td className="px-4 py-3 text-center text-gray-600">{data.sessionCount}x</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{formatRupiah(data.baseTotal)}</td>
-                      <td className="px-5 py-3 text-right font-semibold text-gray-900">{formatRupiah(data.grandTotal)}</td>
+                  {rows.map(row => (
+                    <tr key={row.className}>
+                      <td className="px-5 py-3 font-medium text-gray-900">{row.className}</td>
+                      <td className="px-4 py-3 text-center text-gray-600">{row.sessionCount}x</td>
+                      <td className="px-4 py-3 text-right text-gray-700">{formatBasePerSession(row, formatRupiah)}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-gray-900">{formatRupiah(row.grandTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -114,7 +108,8 @@ export default async function TutorPayslipDetailPage({
                   <tr>
                     <td className="px-5 py-2.5 text-xs font-semibold text-gray-600">Total</td>
                     <td className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600">{payslip.total_sessions}x</td>
-                    <td className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700">{formatRupiah(payslip.base_total)}</td>
+                    {/* Menjumlahkan tarif per pertemuan lintas kelas tidak berarti apa-apa */}
+                    <td className="px-4 py-2.5 text-right text-xs font-semibold text-gray-400">—</td>
                     <td className="px-5 py-2.5 text-right text-xs font-bold text-gray-900">{formatRupiah(payslip.grand_total)}</td>
                   </tr>
                 </tfoot>

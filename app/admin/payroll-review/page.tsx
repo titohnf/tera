@@ -10,6 +10,7 @@ type SessionRow = {
   duration_minutes: number | null
   topic: string | null
   tutor_id: string | null
+  status: string
   payroll_status: string
   payroll_rejection_reason: string | null
   payroll_tutor_note: string | null
@@ -44,22 +45,30 @@ export default async function PayrollReviewPage({
   const admin = createAdminClient()
   const { data: sessions } = await admin
     .from('sessions')
-    .select('id, scheduled_at, duration_minutes, topic, tutor_id, payroll_status, payroll_rejection_reason, payroll_tutor_note, classes(id, name), profiles!tutor_id(id, full_name)')
-    .eq('status', 'completed')
+    .select('id, scheduled_at, duration_minutes, topic, tutor_id, status, payroll_status, payroll_rejection_reason, payroll_tutor_note, classes(id, name), profiles!tutor_id(id, full_name)')
+    .neq('status', 'cancelled')
     .gte('scheduled_at', monthStart)
     .lt('scheduled_at', monthEnd)
     .order('scheduled_at', { ascending: true }) as unknown as { data: SessionRow[] | null }
 
-  const allSessions = sessions ?? []
+  // Sesi yang belum `completed` berarti jurnalnya belum lengkap — belum bisa
+  // direview sama sekali. Ditampilkan sebagai status tersendiri supaya sesi
+  // yang mandek tidak menghilang begitu saja dari layar admin.
+  const allSessions = (sessions ?? []).map(s => ({
+    ...s,
+    reviewStatus: s.status === 'completed' ? s.payroll_status : 'incomplete',
+  }))
+
   const counts = {
     total: allSessions.length,
-    pending: allSessions.filter(s => s.payroll_status === 'pending').length,
-    approved: allSessions.filter(s => s.payroll_status === 'approved').length,
-    rejected: allSessions.filter(s => s.payroll_status === 'rejected').length,
+    incomplete: allSessions.filter(s => s.reviewStatus === 'incomplete').length,
+    pending: allSessions.filter(s => s.reviewStatus === 'pending').length,
+    approved: allSessions.filter(s => s.reviewStatus === 'approved').length,
+    rejected: allSessions.filter(s => s.reviewStatus === 'rejected').length,
   }
 
   const visible = selectedStatus
-    ? allSessions.filter(s => s.payroll_status === selectedStatus)
+    ? allSessions.filter(s => s.reviewStatus === selectedStatus)
     : allSessions
 
   const groupMap = new Map<string, PayrollReviewGroup>()
@@ -80,7 +89,7 @@ export default async function PayrollReviewPage({
       topic: s.topic,
       classId: s.classes?.id ?? null,
       className: s.classes?.name ?? 'Kelas',
-      payrollStatus: s.payroll_status,
+      payrollStatus: s.reviewStatus,
       rejectionReason: s.payroll_rejection_reason,
       tutorNote: s.payroll_tutor_note,
     })
@@ -93,13 +102,14 @@ export default async function PayrollReviewPage({
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Review Gaji Sesi</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Sesi terlaksana {monthLabel} — hanya sesi yang disetujui yang masuk hitungan slip gaji.
+            Sesi {monthLabel} — slip gaji dihitung dari sesi yang jurnalnya sudah lengkap;
+            review di sini untuk kontrol kualitas jurnalnya.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <PayrollReviewFilters monthOptions={monthOptions} month={selectedMonth} status={selectedStatus} />
           <Link
-            href={`/admin/payslips/generate?month=${selectedMonth}`}
+            href={`/admin/payslips?month=${selectedMonth}`}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
           >
             Buat Slip Gaji
@@ -107,8 +117,14 @@ export default async function PayrollReviewPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard label="Total Sesi Terlaksana" value={counts.total} />
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <MetricCard label="Total Sesi" value={counts.total} sub="di luar yang dibatalkan" />
+        <MetricCard
+          label="Jurnal Belum Lengkap"
+          value={counts.incomplete}
+          valueColor="text-orange-600"
+          tooltip="Sesi yang jurnalnya belum diisi tuntas oleh tutor. Belum bisa direview dan belum masuk hitungan slip gaji."
+        />
         <MetricCard label="Menunggu Review" value={counts.pending} valueColor="text-yellow-600" />
         <MetricCard label="Disetujui" value={counts.approved} valueColor="text-green-600" />
         <MetricCard label="Ditolak" value={counts.rejected} valueColor="text-red-600" />

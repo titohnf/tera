@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/invoices/PrintButton'
+import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
 import type { PayslipRow } from '@/lib/types/database'
 
 const formatRupiah = (n: number) =>
@@ -76,14 +77,7 @@ export default async function PrintPayslipPage({
 
         {/* Breakdown table per kelas */}
         {(() => {
-          const byClass: Record<string, { sessionCount: number; baseTotal: number; grandTotal: number }> = {}
-          for (const item of payslip.line_items) {
-            if (!byClass[item.className]) byClass[item.className] = { sessionCount: 0, baseTotal: 0, grandTotal: 0 }
-            byClass[item.className].sessionCount++
-            byClass[item.className].baseTotal += item.baseAmount
-            byClass[item.className].grandTotal += item.totalAmount
-          }
-          const rows = Object.entries(byClass)
+          const rows = buildClassBreakdown(payslip.line_items)
           return (
             <table className="w-full border-collapse text-sm mb-2">
               <thead>
@@ -95,7 +89,7 @@ export default async function PrintPayslipPage({
                     Jumlah Pertemuan
                   </th>
                   <th className="text-right px-3 py-2 text-xs font-bold text-gray-900 border-r border-gray-800 w-32">
-                    Base
+                    Base / Pertemuan
                   </th>
                   <th className="text-right px-3 py-2 text-xs font-bold text-gray-900 w-32">
                     Total
@@ -103,12 +97,14 @@ export default async function PrintPayslipPage({
                 </tr>
               </thead>
               <tbody>
-                {rows.map(([className, data]) => (
-                  <tr key={className} className="border-l border-r border-b border-gray-800">
-                    <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-800">{className}</td>
-                    <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-800">{data.sessionCount}x</td>
-                    <td className="px-3 py-2 text-right text-gray-800 border-r border-gray-800">{formatRupiah(data.baseTotal)}</td>
-                    <td className="px-3 py-2 text-right font-medium text-gray-900">{formatRupiah(data.grandTotal)}</td>
+                {rows.map(row => (
+                  <tr key={row.className} className="border-l border-r border-b border-gray-800">
+                    <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-800">{row.className}</td>
+                    <td className="px-3 py-2 text-center text-gray-800 border-r border-gray-800">{row.sessionCount}x</td>
+                    <td className="px-3 py-2 text-right text-gray-800 border-r border-gray-800">
+                      {formatBasePerSession(row, formatRupiah)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-900">{formatRupiah(row.grandTotal)}</td>
                   </tr>
                 ))}
               </tbody>

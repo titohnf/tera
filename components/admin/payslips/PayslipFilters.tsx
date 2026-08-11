@@ -6,6 +6,7 @@ interface Props {
   q: string
   statusFilter: string
   month: string
+  monthOptions: { value: string; label: string }[]
 }
 
 const STATUS_OPTIONS = [
@@ -15,12 +16,13 @@ const STATUS_OPTIONS = [
   { label: 'Dibayar',      value: 'paid' },
 ]
 
-export default function PayslipFilters({ q, statusFilter, month }: Props) {
+export default function PayslipFilters({ q, statusFilter, month, monthOptions }: Props) {
   const router = useRouter()
 
-  function buildUrl(newStatus: string, newQ?: string) {
+  function buildUrl(newStatus: string, newQ?: string, newMonth?: string) {
     const params = new URLSearchParams()
-    if (month) params.set('month', month)
+    const activeMonth = newMonth ?? month
+    if (activeMonth) params.set('month', activeMonth)
     const search = newQ !== undefined ? newQ : q
     if (search) params.set('q', search)
     if (newStatus) params.set('status', newStatus)
@@ -31,6 +33,17 @@ export default function PayslipFilters({ q, statusFilter, month }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {/* Bulan */}
+      <select
+        value={month}
+        onChange={(e) => router.push(buildUrl(statusFilter, undefined, e.target.value))}
+        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {monthOptions.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+
       {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PayslipActions from '@/components/admin/payslips/PayslipActions'
 import MetricCard from '@/components/dashboard/MetricCard'
+import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
+import { fetchJournalStatusByTutor, emptyJournalCounts, isFullyApproved, countUnapproved } from '@/lib/payroll-journal'
 import type { PayslipRow } from '@/lib/types/database'
 
 function formatRupiah(n: number) {
@@ -39,15 +41,9 @@ export default async function PayslipDetailPage({
   const [year, mon] = payslip.month.split('-').map(Number)
   const workMonthLabel = new Date(year, mon - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 
-  // Breakdown per kelas
-  const byClass: Record<string, { sessionCount: number; baseTotal: number; grandTotal: number }> = {}
-  for (const item of payslip.line_items) {
-    if (!byClass[item.className]) byClass[item.className] = { sessionCount: 0, baseTotal: 0, grandTotal: 0 }
-    byClass[item.className].sessionCount++
-    byClass[item.className].baseTotal += item.baseAmount
-    byClass[item.className].grandTotal += item.totalAmount
-  }
-  const classRows = Object.entries(byClass)
+  const classRows = buildClassBreakdown(payslip.line_items)
+  const journalByTutor = await fetchJournalStatusByTutor(admin, payslip.month)
+  const journal = journalByTutor[payslip.tutor_id] ?? emptyJournalCounts()
 
   return (
     <div className="space-y-5">
@@ -92,6 +88,42 @@ export default async function PayslipDetailPage({
         </div>
       </div>
 
+      {/* Peringatan sebelum transfer */}
+      {!isFullyApproved(journal) && journal.total > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+          <p className="text-sm font-semibold text-orange-800">
+            {countUnapproved(journal)} dari {journal.total} sesi jurnalnya belum disetujui
+          </p>
+          <p className="text-sm text-orange-700 mt-1">
+            Gaji sudah dihitung penuh dari sesi terjadwal, tapi sebaiknya transfer ditahan sampai
+            jurnalnya beres.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {journal.incomplete > 0 && (
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-orange-100 text-orange-800">
+                {journal.incomplete} jurnal belum lengkap
+              </span>
+            )}
+            {journal.pending > 0 && (
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                {journal.pending} menunggu review
+              </span>
+            )}
+            {journal.rejected > 0 && (
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                {journal.rejected} ditolak
+              </span>
+            )}
+            <Link
+              href={`/admin/payroll-review?month=${payslip.month}`}
+              className="text-xs font-medium text-orange-800 underline hover:text-orange-900"
+            >
+              Buka Review Gaji Sesi
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5">
         <PayslipActions payslip={payslip} />
@@ -112,17 +144,19 @@ export default async function PayslipDetailPage({
                 <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <th className="pl-5 pr-4 py-3 text-left">Nama Kelas</th>
                   <th className="px-4 py-3 text-center">Pertemuan</th>
-                  <th className="px-4 py-3 text-right hidden sm:table-cell">Base</th>
+                  <th className="px-4 py-3 text-right hidden sm:table-cell">Base / Pertemuan</th>
                   <th className="px-4 py-3 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {classRows.map(([className, data]) => (
-                  <tr key={className} className="hover:bg-slate-50 transition-colors">
-                    <td className="pl-5 pr-4 py-3 font-medium text-gray-900">{className}</td>
-                    <td className="px-4 py-3 text-center text-gray-600">{data.sessionCount}x</td>
-                    <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">{formatRupiah(data.baseTotal)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatRupiah(data.grandTotal)}</td>
+                {classRows.map(row => (
+                  <tr key={row.className} className="hover:bg-slate-50 transition-colors">
+                    <td className="pl-5 pr-4 py-3 font-medium text-gray-900">{row.className}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{row.sessionCount}x</td>
+                    <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">
+                      {formatBasePerSession(row, formatRupiah)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatRupiah(row.grandTotal)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,7 +164,8 @@ export default async function PayslipDetailPage({
                 <tr>
                   <td className="pl-5 pr-4 py-3 text-sm font-semibold text-gray-600">Total</td>
                   <td className="px-4 py-3 text-center text-sm font-semibold text-gray-600">{payslip.total_sessions}x</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-gray-600 hidden sm:table-cell">{formatRupiah(payslip.base_total)}</td>
+                  {/* Menjumlahkan tarif per pertemuan lintas kelas tidak berarti apa-apa */}
+                  <td className="px-4 py-3 text-right text-sm font-semibold text-gray-400 hidden sm:table-cell">—</td>
                   <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">{formatRupiah(payslip.grand_total)}</td>
                 </tr>
               </tfoot>

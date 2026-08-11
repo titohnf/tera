@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 type Option = { value: string; label: string }
 
 const STATUS_OPTIONS: Option[] = [
-  { value: 'pending',  label: 'Menunggu Review' },
-  { value: 'rejected', label: 'Ditolak' },
-  { value: 'approved', label: 'Disetujui' },
-  { value: '',         label: 'Semua Status' },
+  { value: 'pending',    label: 'Menunggu Review' },
+  { value: 'incomplete', label: 'Jurnal Belum Lengkap' },
+  { value: 'rejected',   label: 'Ditolak' },
+  { value: 'approved',   label: 'Disetujui' },
+  { value: '',           label: 'Semua Status' },
 ]
 
 export default function PayrollReviewFilters({
