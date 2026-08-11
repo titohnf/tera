@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
-import { getMonthlyBreakdown, formatPeriodLabel } from '@/lib/billing-message'
+import { getMonthlyBreakdown, splitAcrossMonths, formatPeriodLabel } from '@/lib/billing-message'
 
 export type Payment = {
   id: string
@@ -198,6 +198,10 @@ function InvoiceCard({
     const sisa = kekurangan
     const pengingatUrl = `${window.location.origin}/api/invoices/${invoice!.id}/pengingat/pdf`
     const breakdown = invoice!.isMonthly ? [] : getMonthlyBreakdown(invoice!.total_due, group.classStartDate, group.classEndDate)
+    // Re-split what's actually left over the months still ahead — the
+    // original per-month figure assumed every tahap was paid in full, so
+    // reusing it would understate (or overstate) the remaining cicilan.
+    const remaining = splitAcrossMonths(sisa, breakdown.slice(invPayments.length).map(m => m.label))
 
     const billingLines = breakdown.length > 0
       ? [
@@ -205,9 +209,13 @@ function InvoiceCard({
           ...invPayments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
           '',
           `Sisa Pembayaran: ${formatRupiah(sisa)}`,
-          '',
-          `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
-          ...breakdown.slice(invPayments.length).map(m => `${m.label} : ${formatRupiah(m.amount)}`),
+          ...(remaining.length > 0
+            ? [
+                '',
+                `Pembayaran dapat dilakukan secara bertahap setiap bulannya sebesar:`,
+                ...remaining.map(m => `${m.label} : ${formatRupiah(m.amount)}`),
+              ]
+            : []),
         ]
       : [
           ...invPayments.map((p, i) => `Sudah dibayar Tahap ${i + 1} (${formatDate(p.paid_at)}): ${formatRupiah(p.amount)}`),

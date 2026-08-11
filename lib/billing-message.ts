@@ -14,18 +14,28 @@ export function getMonthlyBreakdown(totalDue: number, startDate?: string | null,
   const [sy, sm] = startDate.split('-').map(Number)
   const [ey, em] = endDate.split('-').map(Number)
   const n = Math.max(1, (ey - sy) * 12 + (em - sm) + 1)
-  const base = Math.floor(totalDue / n / 1000) * 1000
-  const result: MonthlyInstallment[] = []
+  const labels: string[] = []
   for (let i = 0; i < n; i++) {
     const absoluteMonth = (sm - 1) + i
     const monthIndex = absoluteMonth % 12
     const year = sy + Math.floor(absoluteMonth / 12)
-    const amount = i === n - 1 ? totalDue - base * (n - 1) : base
     // Only disambiguate with the year when the span crosses a year boundary.
-    const label = ey !== sy ? `${MONTH_NAMES[monthIndex]} ${year}` : MONTH_NAMES[monthIndex]
-    result.push({ label, amount })
+    labels.push(ey !== sy ? `${MONTH_NAMES[monthIndex]} ${year}` : MONTH_NAMES[monthIndex])
   }
-  return result
+  return splitAcrossMonths(totalDue, labels)
+}
+
+// Spreads an amount evenly over the given months, rounded down to the
+// nearest thousand with the remainder absorbed into the last month so the
+// sum stays exact.
+export function splitAcrossMonths(total: number, labels: string[]): MonthlyInstallment[] {
+  const n = labels.length
+  if (n === 0) return []
+  const base = Math.max(0, Math.floor(total / n / 1000) * 1000)
+  return labels.map((label, i) => ({
+    label,
+    amount: i === n - 1 ? total - base * (n - 1) : base,
+  }))
 }
 
 export function formatPeriodLabel(startDate?: string | null, endDate?: string | null): string {
