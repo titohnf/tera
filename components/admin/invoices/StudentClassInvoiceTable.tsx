@@ -4,7 +4,13 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
-import { getMonthlyBreakdown, splitAcrossMonths, formatPeriodLabel } from '@/lib/billing-message'
+import { getMonthlyBreakdown, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment } from '@/lib/billing-message'
+
+// Pakai label dari rincian tagihan bila bulannya ada di sana (supaya ikut
+// membawa tahun saat rentangnya lintas tahun), selain itu nama bulan saja.
+function monthLabelOf(paidAt: string, breakdown: MonthlyInstallment[]): string {
+  return breakdown.find(m => m.month === paidAt.slice(0, 7))?.label ?? monthNameOf(paidAt)
+}
 
 export type Payment = {
   id: string
@@ -198,15 +204,20 @@ function InvoiceCard({
     const sisa = kekurangan
     const pengingatUrl = `${window.location.origin}/api/invoices/${invoice!.id}/pengingat/pdf`
     const breakdown = invoice!.isMonthly ? [] : getMonthlyBreakdown(invoice!.total_due, group.classStartDate, group.classEndDate)
-    // Re-split what's actually left over the months still ahead — the
-    // original per-month figure assumed every tahap was paid in full, so
-    // reusing it would understate (or overstate) the remaining cicilan.
-    const remaining = splitAcrossMonths(sisa, breakdown.slice(invPayments.length).map(m => m.label))
+    // Bulan-bulan yang masih di depan, dihitung dari bulan berjalan. Tahap
+    // ke-N tidak bisa disamakan dengan bulan ke-N: ada pembayaran yang
+    // menutup pertemuan pro-rata di bulan sebelum masa tagihan dimulai, dan
+    // ada orang tua yang membayar beberapa bulan sekaligus. Sisa tagihan
+    // dibagi rata ke bulan-bulan yang tersisa itu, bukan ke sisa daftar.
+    const thisMonth = new Date().toLocaleDateString('sv-SE').slice(0, 7)
+    const remaining = splitAcrossMonths(sisa, breakdown.filter(m => m.month >= thisMonth))
 
     const billingLines = breakdown.length > 0
       ? [
           `Sudah dibayar:`,
-          ...invPayments.map((p, i) => `- Tahap ${i + 1} - ${breakdown[i]?.label ?? `Bulan ${i + 1}`}: ${formatRupiah(p.amount)}`),
+          // Dilabeli dari tanggal bayarnya sendiri supaya pembayaran Juli
+          // tetap tertulis Juli walau masa tagihannya mulai Agustus.
+          ...invPayments.map((p, i) => `- Tahap ${i + 1} - ${monthLabelOf(p.paid_at, breakdown)}: ${formatRupiah(p.amount)}`),
           '',
           `Sisa Pembayaran: ${formatRupiah(sisa)}`,
           ...(remaining.length > 0
