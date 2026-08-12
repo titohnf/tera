@@ -3,6 +3,7 @@ import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/admin/classes/ClassFilters'
 import { splitClassPrefix } from '@/lib/format-class-name'
+import { resolveClassStatus, ALL_CLASS_STATUS } from '@/lib/class-filters'
 
 type ClassRow = {
   id: string
@@ -24,7 +25,9 @@ export default async function ClassesPage({
 }: {
   searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string }>
 }) {
-  const { level: levelFilter = '', status: statusFilter = '', type: typeFilter = '', q = '' } = await searchParams
+  const { level: levelFilter = '', status: rawStatus, type: typeFilter = '', q = '' } = await searchParams
+
+  const statusFilter = resolveClassStatus(rawStatus)
   const admin = createAdminClient()
 
   const now = new Date()
@@ -36,8 +39,7 @@ export default async function ClassesPage({
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: ClassRow[] | null }>,
     admin
       .from('class_students')
-      .select('class_id, profiles!student_id(nickname, full_name)')
-      .eq('is_active', true) as unknown as Promise<{ data: { class_id: string; profiles: { nickname: string | null; full_name: string } | null }[] | null }>,
+      .select('class_id, is_active, profiles!student_id(nickname, full_name)') as unknown as Promise<{ data: { class_id: string; is_active: boolean; profiles: { nickname: string | null; full_name: string } | null }[] | null }>,
     admin
       .from('sessions')
       .select('class_id, scheduled_at')
@@ -62,14 +64,25 @@ export default async function ClassesPage({
 
   const allClasses = classes ?? []
 
-  const studentNamesByClass = new Map<string, string[]>()
+  // Kolom Siswa menampilkan anggota yang masih aktif. Kalau tidak ada satu pun
+  // yang tersisa — kelas privat yang sudah selesai, atau siswanya sudah
+  // dinonaktifkan — kolomnya jatuh ke anggota terakhir yang pernah ada.
+  // Menampilkan "—" di situ membuat kelas privat kehilangan satu-satunya
+  // penanda siapa pemiliknya, padahal namanya memang ditulis per siswa.
+  const activeNamesByClass = new Map<string, string[]>()
+  const formerNamesByClass = new Map<string, string[]>()
   for (const e of enrollments ?? []) {
     const label = e.profiles?.nickname || e.profiles?.full_name
-    if (label) {
-      const arr = studentNamesByClass.get(e.class_id) ?? []
-      arr.push(label)
-      studentNamesByClass.set(e.class_id, arr)
-    }
+    if (!label) continue
+    const target = e.is_active ? activeNamesByClass : formerNamesByClass
+    const arr = target.get(e.class_id) ?? []
+    arr.push(label)
+    target.set(e.class_id, arr)
+  }
+  const studentNamesByClass = new Map<string, string[]>()
+  for (const classId of new Set([...activeNamesByClass.keys(), ...formerNamesByClass.keys()])) {
+    const active = activeNamesByClass.get(classId) ?? []
+    studentNamesByClass.set(classId, active.length > 0 ? active : formerNamesByClass.get(classId) ?? [])
   }
 
   // Build sesi lookup: last completed per class
@@ -121,10 +134,16 @@ export default async function ClassesPage({
     return { completed, target, pct }
   }
 
-  const activeClassCount = allClasses.filter(c => c.is_active).length
-  const regularCount = allClasses.filter(c => c.class_type === 'group').length
-  const privateCount = allClasses.filter(c => c.class_type === 'private').length
-  const yayasanCount = allClasses.filter(c => c.class_type === 'yayasan').length
+  // Kartu ringkasan mengikuti filter status saja, bukan jenjang/tipe/pencarian.
+  // Kalau ia menghitung seluruh kelas, angkanya berselisih dengan tabel di
+  // bawahnya sejak halaman pertama kali dibuka; kalau ia ikut filter tipe,
+  // memilih "Privat" membuat kartu Grup jadi 0 dan ketiganya kehilangan guna.
+  const statusScoped = statusFilter === ALL_CLASS_STATUS
+    ? allClasses
+    : allClasses.filter(c => c.status === statusFilter)
+  const regularCount = statusScoped.filter(c => c.class_type === 'group').length
+  const privateCount = statusScoped.filter(c => c.class_type === 'private').length
+  const yayasanCount = statusScoped.filter(c => c.class_type === 'yayasan').length
 
   // Filter
   let filtered = allClasses
@@ -135,7 +154,7 @@ export default async function ClassesPage({
     )
   }
   if (levelFilter) filtered = filtered.filter(c => c.level === levelFilter)
-  if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter)
+  if (statusFilter !== ALL_CLASS_STATUS) filtered = filtered.filter(c => c.status === statusFilter)
   if (typeFilter === 'group') filtered = filtered.filter(c => c.class_type === 'group')
   else if (typeFilter === 'private') filtered = filtered.filter(c => c.class_type === 'private')
   else if (typeFilter === 'yayasan') filtered = filtered.filter(c => c.class_type === 'yayasan')
@@ -150,8 +169,10 @@ export default async function ClassesPage({
     return qs ? `/admin/classes?${qs}` : '/admin/classes'
   }
 
-  const hasFilter = !!(q || levelFilter || statusFilter || typeFilter)
-  const tableTitle = hasFilter
+  // Judulnya mengikuti apa yang benar-benar tersaring, bukan apakah ada filter
+  // yang dipasang. Status default "aktif" sudah menyembunyikan kelas selesai,
+  // jadi menyebut total kelas di situ akan berbohong tentang isi tabelnya.
+  const tableTitle = filtered.length !== allClasses.length
     ? `Menampilkan ${filtered.length} dari ${allClasses.length} kelas`
     : `${allClasses.length} Kelas`
 

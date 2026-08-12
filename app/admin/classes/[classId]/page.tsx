@@ -40,10 +40,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }>,
     admin
       .from('class_students')
-      .select('student_id, profiles!student_id(id, full_name, email, grade, avatar_url)')
-      .eq('class_id', classId)
-      .eq('is_active', true) as unknown as Promise<{
-        data: { student_id: string; profiles: (Profile & { grade: number | null; avatar_url: string | null }) | null }[] | null
+      .select('student_id, is_active, profiles!student_id(id, full_name, email, grade, avatar_url)')
+      .eq('class_id', classId) as unknown as Promise<{
+        data: { student_id: string; is_active: boolean; profiles: (Profile & { grade: number | null; avatar_url: string | null }) | null }[] | null
       }>,
     admin
       .from('sessions')
@@ -130,6 +129,25 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       : Promise.resolve({ data: null as { session_id: string }[] | null }),
   ])
 
+  // Alasan pembatalan diambil terpisah dan kegagalannya sengaja diabaikan.
+  //
+  // Migrasi di proyek ini dijalankan manual, jadi kode bisa saja sampai lebih
+  // dulu daripada kolomnya. Kalau kolom ini ikut di select utama, satu kolom
+  // yang belum ada membuat SELURUH query sesi gagal dan halaman ini menyatakan
+  // "belum ada sesi" — padahal sesinya ada. Dipisah begini, yang hilang paling
+  // banter cuma keterangan alasannya sampai migrasi 090 dijalankan.
+  const reasonRes = sessionIds.length > 0
+    ? await admin.from('sessions').select('id, cancellation_reason').in('id', sessionIds)
+    : { data: null }
+  const reasonById = new Map(
+    ((reasonRes.data ?? []) as { id: string; cancellation_reason: string | null }[])
+      .map(r => [r.id, r.cancellation_reason]),
+  )
+  const sessionsWithReason = (sessions ?? []).map(sess => ({
+    ...sess,
+    cancellation_reason: reasonById.get(sess.id) ?? null,
+  }))
+
   const gradedSessionIds = (gradedData ?? [])
     .filter(a => (a.assessment_results[0]?.count ?? 0) > 0)
     .map(a => a.session_id)
@@ -138,7 +156,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
 
   // Derive most common grade from enrolled students
   type ProfileWithGrade = Profile & { grade: number | null; avatar_url?: string | null }
-  const enrolledWithGrade = (enrolled ?? [])
+  // Anggota aktif dulu; kalau kelasnya sudah selesai dan tidak ada yang
+  // tersisa, tampilkan anggota terakhirnya. Kelas yang pernah berjalan tanpa
+  // satu pun nama siswa tidak bisa dikenali lagi isinya.
+  const activeRows = (enrolled ?? []).filter(e => e.is_active)
+  const rosterRows = activeRows.length > 0 ? activeRows : (enrolled ?? [])
+  const enrolledWithGrade = rosterRows
     .map(e => e.profiles)
     .filter((p): p is NonNullable<typeof p> => p !== null) as ProfileWithGrade[]
   const grades = enrolledWithGrade.map(p => p.grade).filter((g): g is number => g != null)
@@ -304,7 +327,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <ClassSessions
           classId={classId}
-          sessions={sessions ?? []}
+          sessions={sessionsWithReason}
           gradedSessionIds={gradedSessionIds}
           pendingSessionIds={pendingSessionIds}
           tutors={tutors ?? []}

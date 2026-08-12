@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { ALL_CLASS_STATUS, DEFAULT_CLASS_STATUS } from '@/lib/class-filters'
 
 interface Props {
   q: string
@@ -26,6 +27,8 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
       ...overrides,
     }
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
+    // URL tanpa parameter status sudah berarti "aktif", jadi tidak perlu ditulis.
+    if (params.status === DEFAULT_CLASS_STATUS) delete params.status
     const qs = new URLSearchParams(params).toString()
     return qs ? `${pathname}?${qs}` : pathname
   }
@@ -38,7 +41,9 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
     }, 300)
   }
 
-  const hasFilter = !!(q || level || type || status)
+  // Status "aktif" adalah keadaan bawaan halaman ini, jadi ia bukan sesuatu
+  // yang perlu di-reset — kalau ikut dihitung, tombol Reset tidak pernah hilang.
+  const hasFilter = !!(q || level || type) || status !== DEFAULT_CLASS_STATUS
 
   const selectCls = (active: boolean) =>
     `text-sm border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
@@ -80,8 +85,8 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
         <option value="yayasan">Yayasan</option>
       </select>
 
-      <select value={status} onChange={e => router.push(buildUrl({ status: e.target.value }))} className={selectCls(!!status)}>
-        <option value="">Semua Status</option>
+      <select value={status} onChange={e => router.push(buildUrl({ status: e.target.value }))} className={selectCls(status !== ALL_CLASS_STATUS)}>
+        <option value={ALL_CLASS_STATUS}>Semua Status</option>
         <option value="aktif">Aktif</option>
         <option value="selesai">Selesai</option>
       </select>
