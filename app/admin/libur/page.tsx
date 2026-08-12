@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import HolidayManager from '@/components/admin/holidays/HolidayManager'
-import type { Holiday } from '@/lib/actions/admin/holidays'
+import type { Holiday } from '@/lib/holidays'
 
 export default async function LiburPage() {
   const admin = createAdminClient()

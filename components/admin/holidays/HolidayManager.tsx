@@ -8,11 +8,13 @@ import {
   deleteHoliday,
   cancelSessionsOnHoliday,
   getClashingSessions,
+} from '@/lib/actions/admin/holidays'
+import {
   HOLIDAY_KINDS,
   type Holiday,
   type HolidayKind,
   type ClashingSession,
-} from '@/lib/actions/admin/holidays'
+} from '@/lib/holidays'
 
 const KIND_BADGE: Record<HolidayKind, string> = {
   nasional: 'bg-red-50 text-red-700',

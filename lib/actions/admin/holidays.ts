@@ -3,30 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
-
-export type HolidayKind = 'nasional' | 'cuti_bersama' | 'internal'
-
-export const HOLIDAY_KINDS: { value: HolidayKind; label: string }[] = [
-  { value: 'nasional', label: 'Libur Nasional' },
-  { value: 'cuti_bersama', label: 'Cuti Bersama' },
-  { value: 'internal', label: 'Libur Bimbel' },
-]
-
-export type Holiday = {
-  id: string
-  holiday_date: string
-  name: string
-  kind: HolidayKind
-  notes: string | null
-}
-
-/** Sesi yang jatuh di tanggal libur dan belum dibatalkan. */
-export type ClashingSession = {
-  id: string
-  scheduled_at: string
-  className: string
-  tutorName: string
-}
+import { HOLIDAY_KINDS, type HolidayKind, type ClashingSession } from '@/lib/holidays'
 
 async function verifyAdmin() {
   const user = await getUser()
