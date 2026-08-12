@@ -1,4 +1,13 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import Link from 'next/link'
+import {
+  getMonthlyTotals,
+  outstandingAmount,
+  currentMonthWib,
+  formatMonthLabel,
+  OUTSTANDING_SELECT,
+  type InvoiceWithPayments,
+} from '@/lib/finance/laba-rugi'
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
@@ -50,8 +59,8 @@ function SectionHeader({ title }: { title: string }) {
 export default async function AnalyticsPage() {
   const admin = createAdminClient()
   const now = new Date()
+  const month = currentMonthWib(now)
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
 
   const [
     { count: totalStudents },
@@ -61,11 +70,10 @@ export default async function AnalyticsPage() {
     { data: monthSessions },
     { count: totalActiveEnrollments },
     { count: totalEverEnrolled },
-    { data: invoicesPaid },
-    { data: invoicesPending },
+    { data: unpaidInvoices },
     { data: assessmentResults },
-    { data: allAssessments },
     { data: tutorSessions },
+    monthlyTotals,
   ] = await Promise.all([
     admin.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     admin.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', firstOfMonth),
@@ -74,13 +82,17 @@ export default async function AnalyticsPage() {
     admin.from('sessions').select('id, duration_minutes').eq('status', 'completed').gte('scheduled_at', firstOfMonth),
     admin.from('class_students').select('*', { count: 'exact', head: true }).eq('is_active', true),
     admin.from('class_students').select('*', { count: 'exact', head: true }),
-    admin.from('invoices').select('total_due').eq('status', 'paid').gte('issued_at', firstOfMonth),
-    admin.from('invoices').select('total_due').neq('status', 'paid'),
+    admin.from('invoices').select(OUTSTANDING_SELECT).neq('status', 'paid') as unknown as Promise<{
+      data: InvoiceWithPayments[] | null
+    }>,
     admin.from('assessment_results').select('score, assessments!inner(max_score)') as unknown as Promise<{
       data: { score: number | null; assessments: { max_score: number } | null }[] | null
     }>,
-    admin.from('assessments').select('id, max_score'),
     admin.from('sessions').select('tutor_id').eq('status', 'completed').gte('scheduled_at', firstOfMonth).not('tutor_id', 'is', null),
+    // Angka keuangan diambil dari modul yang sama dengan halaman Laba Rugi dan
+    // dashboard, supaya ketiganya tidak pernah menyebut angka yang berbeda
+    // untuk bulan yang sama.
+    getMonthlyTotals(admin, [month]),
   ])
 
   // Attendance rate this month
@@ -103,12 +115,13 @@ export default async function AnalyticsPage() {
   // Rasio siswa / tutor
   const ratioSiswaPerTutor = totalTutors ? ((totalActiveEnrollments ?? 0) / totalTutors).toFixed(1) : null
 
-  // Revenue bulan ini
-  const revenuePaid = (invoicesPaid ?? []).reduce((s, i) => s + (i.total_due ?? 0), 0)
-  const revenuePending = (invoicesPending ?? []).reduce((s, i) => s + (i.total_due ?? 0), 0)
+  // Keuangan bulan ini — basis kas, lihat lib/finance/laba-rugi.ts
+  const pnl = monthlyTotals[0]
+  const revenuePending = outstandingAmount(unpaidInvoices)
   const revenuePerSiswa = (totalActiveEnrollments ?? 0) > 0
-    ? Math.round(revenuePaid / (totalActiveEnrollments ?? 1))
+    ? Math.round(pnl.cashIn / (totalActiveEnrollments ?? 1))
     : 0
+  const marginPct = pnl.cashIn > 0 ? Math.round((pnl.netProfit / pnl.cashIn) * 100) : null
 
   // Utilisasi tutor bulan ini
   const activeTutorIdsThisMonth = new Set((tutorSessions ?? []).map(s => s.tutor_id).filter(Boolean))
@@ -222,20 +235,38 @@ export default async function AnalyticsPage() {
         <SectionHeader title="Keuangan" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <MetricCard
-            label="Revenue Bulan Ini"
-            value={formatRupiah(revenuePaid)}
-            sub="invoice terbayar"
+            label="Uang Masuk Bulan Ini"
+            value={formatRupiah(pnl.cashIn)}
+            sub="pembayaran yang diterima"
             color="green"
           />
           <MetricCard
-            label="Revenue per Siswa"
+            label="Gaji Tutor"
+            value={formatRupiah(pnl.payroll)}
+            sub={pnl.payrollUnpaid > 0 ? `${formatRupiah(pnl.payrollUnpaid)} belum dibayar` : 'slip gaji bulan ini'}
+            color={pnl.payroll > 0 ? 'red' : 'default'}
+          />
+          <MetricCard
+            label="Biaya Operasional"
+            value={formatRupiah(pnl.operational)}
+            sub="di luar gaji tutor"
+            color={pnl.operational > 0 ? 'orange' : 'default'}
+          />
+          <MetricCard
+            label="Laba Bersih"
+            value={formatRupiah(pnl.netProfit)}
+            sub={marginPct !== null ? `margin ${marginPct}%` : 'belum ada pemasukan'}
+            color={pnl.netProfit >= 0 ? 'blue' : 'red'}
+          />
+          <MetricCard
+            label="Uang Masuk per Siswa"
             value={revenuePerSiswa > 0 ? formatRupiah(revenuePerSiswa) : '—'}
             sub="rata-rata per siswa aktif"
           />
           <MetricCard
-            label="Tagihan Belum Dibayar"
+            label="Piutang"
             value={formatRupiah(revenuePending)}
-            sub="invoice draft & sent"
+            sub="tagihan terkirim yang belum lunas"
             color={revenuePending > 0 ? 'orange' : 'default'}
           />
           <UnavailableCard label="MRR (Recurring Revenue)" reason="perlu model langganan" />
@@ -268,8 +299,11 @@ export default async function AnalyticsPage() {
       </div>
 
       <p className="text-sm text-gray-400 mt-2">
-        Data operasional & akademik dihitung secara real-time. Metrik keuangan berdasarkan invoice yang sudah dibayar di bulan ini.
-        Kartu abu-abu menunjukkan metrik yang membutuhkan fitur atau data tambahan untuk diaktifkan.
+        Data operasional &amp; akademik dihitung secara real-time. Metrik keuangan memakai basis kas untuk{' '}
+        {formatMonthLabel(month)} — sumber angkanya sama persis dengan{' '}
+        <Link href="/admin/finance" className="text-blue-500 hover:underline">halaman Laba Rugi</Link>,
+        tempat rinciannya bisa dibuka per bulan. Kartu abu-abu menunjukkan metrik yang membutuhkan
+        fitur atau data tambahan untuk diaktifkan.
       </p>
     </div>
   )

@@ -1,6 +1,7 @@
-export type Period = 'sm1' | 'sm2' | 'ytd' | 'all'
+export type Period = 'bulan' | 'sm1' | 'sm2' | 'ytd' | 'all'
 
 export const PERIODS: { key: Period; label: string }[] = [
+  { key: 'bulan', label: 'Bulan Ini' },
   { key: 'sm2', label: 'SM 2 (Jan–Jun)' },
   { key: 'sm1', label: 'SM 1 (Jul–Des)' },
   { key: 'ytd', label: 'YTD' },
@@ -19,6 +20,12 @@ export function getDateRange(period: Period, now = new Date()): DateRange {
   const year = now.getFullYear()
 
   switch (period) {
+    case 'bulan':
+      return {
+        from: new Date(year, now.getMonth(), 1),
+        to: new Date(year, now.getMonth() + 1, 0, 23, 59, 59, 999),
+        period,
+      }
     case 'sm2':
       return {
         from: new Date(year, 0, 1),
@@ -49,6 +56,7 @@ export function getDateRange(period: Period, now = new Date()): DateRange {
 export function formatPeriodLabel(period: Period, now = new Date()): string {
   const year = now.getFullYear()
   switch (period) {
+    case 'bulan': return now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
     case 'sm2': return `SM 2 ${year} (Jan–Jun)`
     case 'sm1': return `SM 1 ${year} (Jul–Des)`
     case 'ytd': return `YTD ${year} (Jan – ${now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })})`
