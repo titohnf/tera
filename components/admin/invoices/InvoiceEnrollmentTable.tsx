@@ -16,6 +16,8 @@ export type EnrollmentRow = {
   bulanLabel: string
   hasExisting: boolean
   lastPaymentMonth: string | null
+  isFormer: boolean
+  sessionGap: { billed: number; actual: number } | null
 }
 
 const CLASS_STATUS_BADGE: Record<string, string> = {
@@ -154,6 +156,13 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                 <td className="px-4 py-3">
                   <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block font-medium text-gray-900 hover:text-blue-600 transition-colors">
                     {row.studentName}
+                    {/* Barisnya riwayat: uangnya tetap dihitung, tapi tidak
+                        boleh terbaca sebagai siswa yang masih berjalan. */}
+                    {row.isFormer && (
+                      <span className="ml-2 inline-flex text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 align-middle">
+                        Sudah berhenti
+                      </span>
+                    )}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -168,6 +177,17 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                         ? `Angsuran ${row.lastPaymentMonth}`
                         : CLASS_STATUS_LABEL[row.status]}
                     </span>
+                    {/* Sesi di kalender tidak sama dengan yang ditagihkan —
+                        angkanya ditulis apa adanya supaya bisa langsung dicek. */}
+                    {row.sessionGap && (
+                      <span
+                        className="ml-1.5 inline-flex text-xs font-medium px-2 py-1 rounded-lg bg-orange-100 text-orange-700"
+                        title={`Kalender ${row.sessionGap.actual} pertemuan, tertagih ${row.sessionGap.billed}`}
+                      >
+                        {row.sessionGap.actual > row.sessionGap.billed ? 'Kurang tagih' : 'Lebih tagih'}
+                        {' '}{Math.abs(row.sessionGap.actual - row.sessionGap.billed)} sesi
+                      </span>
+                    )}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
