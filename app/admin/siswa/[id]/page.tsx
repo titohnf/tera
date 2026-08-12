@@ -7,6 +7,7 @@ import { evaluateStudentCritical } from '@/lib/studentCritical'
 import CriticalDetailCard from '@/components/siswa/CriticalDetailCard'
 import UnenrollButton from '@/components/siswa/UnenrollButton'
 import StudentStatusButton from '@/components/admin/siswa/StudentStatusButton'
+import DeleteStudentButton from '@/components/admin/siswa/DeleteStudentButton'
 import JadwalTable from '@/components/admin/siswa/JadwalTable'
 import ProfileAccordion from '@/components/admin/siswa/ProfileAccordion'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
@@ -956,6 +957,14 @@ export default async function SiswaDetailPage({
                 isActive={profile.is_active ?? true}
                 studentName={profile.full_name ?? 'Siswa'}
               />
+              {/* Dipisah garis supaya tidak tertekan saat yang dimaksud
+                  sebenarnya "nonaktifkan" — yang ini tidak bisa dibatalkan. */}
+              <div className="pt-2 mt-2 border-t border-slate-100">
+                <DeleteStudentButton
+                  userId={studentId}
+                  studentName={profile.full_name ?? 'Siswa'}
+                />
+              </div>
             </div>
           </div>
         </div>

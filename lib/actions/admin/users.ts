@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { dayToIso } from '@/lib/enrollment'
+import { todayWib } from '@/lib/daily-message'
 
 export type ActionState = { error: string } | null
 
@@ -163,9 +165,21 @@ export async function setStudentIsActive(userId: string, isActive: boolean): Pro
   if (error) return { error: error.message }
 
   if (!isActive) {
+    // `unenrolled_at` wajib ikut diisi, bukan sekadar is_active.
+    //
+    // coversSession() di lib/enrollment.ts memperlakukan baris non-aktif yang
+    // unenrolled_at-nya kosong sebagai "tanggal keluar tidak diketahui", dan
+    // rentang seperti itu dianggap KOSONG — tidak ada satu pun sesi yang
+    // dianggap miliknya. Tanpa baris ini, menonaktifkan siswa membuat seluruh
+    // riwayatnya (sesi, kehadiran, nilai, riwayat kelas) lenyap dari halaman
+    // detailnya, padahal maksud tombol ini cuma berhenti les.
+    //
+    // Tanggal keluarnya adalah hari ini: sampai hari ini ia masih tercatat
+    // ikut, sesudahnya tidak. Ini konvensi yang sama dengan unenrollStudent()
+    // di lib/actions/admin/classes.ts.
     const { error: enrollErr } = await ctx.admin
       .from('class_students')
-      .update({ is_active: false })
+      .update({ is_active: false, unenrolled_at: dayToIso(todayWib()) })
       .eq('student_id', userId)
       .eq('is_active', true)
 
@@ -174,6 +188,148 @@ export async function setStudentIsActive(userId: string, isActive: boolean): Pro
 
   revalidatePath(`/admin/siswa/${userId}`)
   revalidatePath('/admin/siswa')
+  return null
+}
+
+export type StudentDeletionImpact = {
+  studentName: string
+  enrollments: number
+  attendances: number
+  assessmentResults: number
+  performanceNotes: number
+  reportNotes: number
+  invoices: number
+  paymentCount: number
+  paymentTotal: number
+  familyLinks: number
+  practiceRecords: number
+}
+
+/**
+ * Apa saja yang akan ikut terhapus bersama seorang siswa.
+ *
+ * Dipanggil sebelum dialog konfirmasi tampil. Menghapus siswa memicu cascade
+ * yang panjang dan tidak terlihat dari layar mana pun, jadi angkanya
+ * ditunjukkan lebih dulu — terutama pembayaran, karena laporan Laba Rugi bulan
+ * bersangkutan ikut berubah begitu invoicenya hilang.
+ */
+export async function getStudentDeletionImpact(
+  userId: string,
+): Promise<{ error: string } | StudentDeletionImpact> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { data: profile } = await ctx.admin
+    .from('profiles')
+    .select('full_name, role')
+    .eq('id', userId)
+    .single()
+
+  if (!profile) return { error: 'Siswa tidak ditemukan' }
+  if (profile.role !== 'student') return { error: 'Hanya profil siswa yang bisa dihapus di sini' }
+
+  const { data: invoices } = await ctx.admin
+    .from('invoices')
+    .select('id, invoice_payments(amount)')
+    .eq('student_id', userId) as unknown as {
+      data: { id: string; invoice_payments: { amount: number }[] | null }[] | null
+    }
+
+  const invoiceRows = invoices ?? []
+  const payments = invoiceRows.flatMap(i => i.invoice_payments ?? [])
+
+  const countOf = async (table: string, column: string) => {
+    const { count } = await ctx.admin
+      .from(table)
+      .select('*', { count: 'exact', head: true })
+      .eq(column, userId)
+    return count ?? 0
+  }
+
+  const [
+    enrollments, attendances, assessmentResults, performanceNotes, reportNotes,
+    familyLinks, practiceRecords,
+  ] = await Promise.all([
+    countOf('class_students', 'student_id'),
+    countOf('attendances', 'student_id'),
+    countOf('assessment_results', 'student_id'),
+    countOf('performance_notes', 'student_id'),
+    countOf('monthly_report_notes', 'student_id'),
+    countOf('family_students', 'student_id'),
+    countOf('learners', 'profile_id'),
+  ])
+
+  return {
+    studentName: profile.full_name ?? '',
+    enrollments,
+    attendances,
+    assessmentResults,
+    performanceNotes,
+    reportNotes,
+    invoices: invoiceRows.length,
+    paymentCount: payments.length,
+    paymentTotal: payments.reduce((s, p) => s + (Number(p.amount) || 0), 0),
+    familyLinks,
+    practiceRecords,
+  }
+}
+
+/**
+ * Menghapus siswa beserta seluruh jejaknya. Tidak bisa dibatalkan.
+ *
+ * Disediakan untuk data uji coba, bukan untuk siswa yang berhenti — untuk itu
+ * ada Nonaktifkan Siswa, yang menyimpan riwayatnya.
+ *
+ * `confirmName` harus sama persis dengan nama siswa. Tombol hapus terletak di
+ * dekat tombol nonaktifkan, dan keduanya tidak bisa dibedakan lagi setelah
+ * ditekan, jadi yang membedakannya adalah usaha mengetik nama.
+ */
+export async function deleteStudent(userId: string, confirmName: string): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { data: profile } = await ctx.admin
+    .from('profiles')
+    .select('full_name, role')
+    .eq('id', userId)
+    .single()
+
+  if (!profile) return { error: 'Siswa tidak ditemukan' }
+  if (profile.role !== 'student') return { error: 'Hanya profil siswa yang bisa dihapus di sini' }
+
+  const expected = (profile.full_name ?? '').trim().toLowerCase()
+  if (confirmName.trim().toLowerCase() !== expected) {
+    return { error: 'Nama yang diketik tidak sama dengan nama siswa' }
+  }
+
+  // Invoice memakai `on delete set null` pada student_id supaya riwayat
+  // keuangan selamat saat profil hilang. Untuk penghapusan yang disengaja itu
+  // justru salah: invoicenya akan tertinggal tanpa pemilik, tetap membawa
+  // student_name, dan tetap terhitung di Laba Rugi. Jadi dihapus lebih dulu —
+  // invoice_payments ikut lewat cascade dari invoice_id.
+  const { error: invoiceErr } = await ctx.admin.from('invoices').delete().eq('student_id', userId)
+  if (invoiceErr) return { error: invoiceErr.message }
+
+  // Sisanya (class_students, attendances, assessment_results,
+  // performance_notes, monthly_report_notes, family_students, learners,
+  // notification_logs) ikut lewat cascade dari profiles.
+  const { error: profileErr } = await ctx.admin.from('profiles').delete().eq('id', userId)
+  if (profileErr) return { error: profileErr.message }
+
+  // Sejak migrasi 076 profil siswa tidak selalu punya akun login — yang punya
+  // login adalah akun keluarga. Kalau akunnya memang ada, hapus juga supaya
+  // emailnya bebas dipakai lagi; kalau tidak ada, bukan kegagalan.
+  await ctx.admin.auth.admin.deleteUser(userId).catch(() => undefined)
+
+  // Avatar tidak ikut cascade karena berada di storage, bukan di database.
+  const { data: avatarFiles } = await ctx.admin.storage.from('avatars').list(userId)
+  if (avatarFiles && avatarFiles.length > 0) {
+    await ctx.admin.storage.from('avatars').remove(avatarFiles.map(f => `${userId}/${f.name}`))
+  }
+
+  revalidatePath('/admin/siswa')
+  revalidatePath('/admin/users')
+  revalidatePath('/admin')
   return null
 }
 
