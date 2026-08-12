@@ -160,13 +160,25 @@ export async function updateSessionTopic(sessionId: string, topic: string): Prom
   return null
 }
 
-export async function updateSessionStatus(sessionId: string, newStatus: string): Promise<ActionState> {
+export async function updateSessionStatus(
+  sessionId: string,
+  newStatus: string,
+  cancellationReason?: string,
+): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
+  // Alasan hanya melekat pada status 'cancelled'. Kalau sesi dikembalikan ke
+  // terjadwal atau ditandai selesai, alasan lama harus ikut hilang — kalau
+  // tidak, sesi yang berjalan normal tetap membawa keterangan "siswa sakit"
+  // dari pembatalan yang sudah dianulir.
   const { error } = await ctx.admin
     .from('sessions')
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .update({
+      status: newStatus,
+      cancellation_reason: newStatus === 'cancelled' ? (cancellationReason?.trim() || null) : null,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', sessionId)
 
   if (error) return { error: error.message }
@@ -213,6 +225,7 @@ export async function updateSessionStatus(sessionId: string, newStatus: string):
   revalidatePath(`/admin/sessions/${sessionId}`)
   revalidatePath('/admin/sessions')
   revalidatePath('/admin/payments')
+  revalidatePath('/admin/classes', 'layout')
   return null
 }
 

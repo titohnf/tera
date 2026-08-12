@@ -19,6 +19,7 @@ type SessionRow = {
   duration_minutes: number
   status: string
   payroll_status: string
+  cancellation_reason: string | null
   location: string | null
   topic: string | null
   subjects: { name: string } | null
@@ -200,7 +201,7 @@ export default function ClassSessions({
                     <td className="pl-6 pr-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/sessions/${session.id}`} className="block">
-                        <p className="font-medium text-gray-900">
+                        <p className={`font-medium ${session.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                           {date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                         <p className="text-sm text-gray-400">
@@ -223,9 +224,25 @@ export default function ClassSessions({
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/sessions/${session.id}`} className="block">
-                        <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${payrollBadge.cls}`}>
-                          {payrollBadge.label}
-                        </span>
+                        {/* Sesi batal tidak punya urusan payroll, jadi kolomnya
+                            dipakai untuk menyatakan pembatalannya — sebelumnya
+                            sesi batal tampak sama persis dengan sesi biasa. */}
+                        {session.status === 'cancelled' ? (
+                          <>
+                            <span className="inline-flex text-sm font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                              Dibatalkan
+                            </span>
+                            {session.cancellation_reason && (
+                              <p className="text-xs text-gray-500 mt-1 max-w-[180px]">
+                                {session.cancellation_reason}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <span className={`inline-flex text-sm font-medium px-2 py-0.5 rounded-full ${payrollBadge.cls}`}>
+                            {payrollBadge.label}
+                          </span>
+                        )}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-right">
