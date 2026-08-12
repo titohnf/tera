@@ -37,6 +37,28 @@ function todayWib() {
   return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
+function selisihHari(day: string, from: string) {
+  const [y, m, d] = day.split('-').map(Number)
+  const [fy, fm, fd] = from.split('-').map(Number)
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(fy, fm - 1, fd)) / 86400000)
+}
+
+/**
+ * Kalender ini tidak mengisi dirinya sendiri.
+ *
+ * Dari 18 tanggal libur setahun, cuma lima yang jatuh di tanggal yang sama tiap
+ * tahun; sisanya mengikuti kalender Hijriah, Saka, lunisolar, atau Paskah, dan
+ * tanggal resminya baru pasti setelah SKB 3 Menteri terbit — biasanya sekitar
+ * September untuk tahun berikutnya. Jadi tanggalnya memang dimasukkan manual
+ * setahun sekali.
+ *
+ * Yang berbahaya bukan pekerjaan manualnya, tapi lupanya: kalender yang habis
+ * tidak terlihat rusak, ia cuma diam, dan sesi kembali terjadwal di hari libur
+ * persis seperti sebelum fitur ini ada. Karena itu halamannya yang menagih,
+ * dua bulan sebelum tanggal terakhirnya lewat.
+ */
+const AMBANG_PERINGATAN_HARI = 60
+
 const inputClass =
   'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
@@ -82,6 +104,16 @@ export default function HolidayManager({
 
   const upcoming = holidays.filter(h => h.holiday_date >= todayWib())
   const past = holidays.filter(h => h.holiday_date < todayWib())
+
+  // Dihitung sendiri, bukan mengandalkan urutan baris dari server — halaman ini
+  // mengurutkan menurun, dan itu terlalu mudah berubah tanpa ada yang sadar
+  // peringatan ini ikut rusak.
+  const tanggalTerjauh = upcoming.reduce<string | null>(
+    (max, h) => (max === null || h.holiday_date > max ? h.holiday_date : max),
+    null,
+  )
+  const sisaHari = tanggalTerjauh ? selisihHari(tanggalTerjauh, todayWib()) : 0
+  const perluDiisi = tanggalTerjauh === null || sisaHari < AMBANG_PERINGATAN_HARI
 
   function renderRow(h: Holiday) {
     const clash = clashCounts[h.id] ?? 0
@@ -192,6 +224,21 @@ export default function HolidayManager({
           {adding ? 'Batal' : '+ Tambah Tanggal Libur'}
         </button>
       </div>
+
+      {perluDiisi && (
+        <div className="text-sm bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          <p className="font-medium text-amber-900">
+            {tanggalTerjauh === null
+              ? 'Tidak ada tanggal libur akan datang di kalender.'
+              : `Kalender libur habis setelah ${formatTanggal(tanggalTerjauh)}.`}
+          </p>
+          <p className="text-amber-800 mt-1">
+            Tambahkan tanggal libur berikutnya, kalau tidak sesi akan terjadwal di hari
+            libur seperti sebelum kalender ini ada. Tanggal resminya menunggu SKB 3
+            Menteri, yang biasanya terbit sekitar September untuk tahun berikutnya.
+          </p>
+        </div>
+      )}
 
       {error && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</p>}
       {notice && <p className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-4 py-2.5">{notice}</p>}
