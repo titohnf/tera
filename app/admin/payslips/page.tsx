@@ -70,17 +70,29 @@ export default async function PayslipsPage({
   // Stats for the active month (unfiltered by status)
   const { data: allForMonth } = await admin
     .from('payslips')
-    .select('grand_total, status')
+    .select('grand_total, status, tutor_id, total_sessions')
     .eq('month', activeMonth)
     .eq('is_deleted', false)
-    .gt('total_sessions', 0) as unknown as { data: { grand_total: number; status: string }[] | null }
+    .gt('total_sessions', 0) as unknown as {
+      data: { grand_total: number; status: string; tutor_id: string; total_sessions: number }[] | null
+    }
 
   const allList = allForMonth ?? []
   const totalGrand   = allList.reduce((s, p) => s + p.grand_total, 0)
+  const totalSessions = allList.reduce((s, p) => s + p.total_sessions, 0)
   const totalPaid    = allList.filter(p => p.status === 'paid').reduce((s, p) => s + p.grand_total, 0)
   const totalPending = allList.filter(p => p.status !== 'paid').reduce((s, p) => s + p.grand_total, 0)
   const paidCount    = allList.filter(p => p.status === 'paid').length
   const unpaidCount  = allList.filter(p => p.status !== 'paid').length
+
+  // Kolom Sesi adalah angka yang dibekukan saat slip dibuat, sementara chip
+  // Jurnal dihitung ulang tiap halaman dibuka. Menambah atau membatalkan sesi
+  // setelah slip dibuat membuat keduanya berselisih, dan tanpa penanda selisih
+  // itu terbaca seperti salah hitung — padahal slipnya cuma belum diperbarui.
+  const liveSessionCount = (tutorId: string) => journalByTutor[tutorId]?.total ?? 0
+  const isStale = (p: { tutor_id: string; total_sessions: number }) =>
+    liveSessionCount(p.tutor_id) !== p.total_sessions
+  const staleDraftCount = allList.filter(p => p.status === 'draft' && isStale(p)).length
 
   return (
     <div className="space-y-5">
@@ -128,6 +140,20 @@ export default async function PayslipsPage({
         />
       </div>
 
+      {staleDraftCount > 0 && (
+        <div className="flex items-start gap-2.5 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p className="text-sm text-orange-700">
+            {staleDraftCount === 1 ? '1 slip draft' : `${staleDraftCount} slip draft`} tidak lagi cocok
+            dengan data sesi terbaru — ada sesi yang ditambah atau dibatalkan setelah slipnya dibuat.
+            Tekan <strong>Buat Slip Gaji {workMonthLabel}</strong> di atas untuk menghitung ulang.
+            Slip yang sudah terkirim atau dibayar tidak ikut berubah.
+          </p>
+        </div>
+      )}
+
       {/* Bulan + Search + Status filter */}
       <PayslipFilters
         q={q}
@@ -168,6 +194,7 @@ export default async function PayslipsPage({
                 {list.map(p => {
                   const journal = journalByTutor[p.tutor_id] ?? emptyJournalCounts()
                   const allApproved = isFullyApproved(journal)
+                  const stale = isStale(p)
                   // Seluruh sisanya harus disebut, bukan cuma yang belum lengkap —
                   // kalau tidak, angkanya terbaca tidak berjumlah (8/12 tapi hanya
                   // 2 yang diterangkan, 2 sisanya seolah hilang).
@@ -189,8 +216,17 @@ export default async function PayslipsPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-center hidden md:table-cell">
-                      <Link href={`/admin/payslips/${p.id}`} className="block text-gray-600">
-                        {p.total_sessions}
+                      <Link href={`/admin/payslips/${p.id}`} className="block">
+                        <span className={stale ? 'font-medium text-orange-600' : 'text-gray-600'}>
+                          {p.total_sessions}
+                        </span>
+                        {stale && (
+                          <p className="text-xs text-orange-500 mt-0.5 whitespace-nowrap">
+                            {p.status === 'draft'
+                              ? `kini ${journal.total} · buat ulang`
+                              : `kini ${journal.total} · terkunci`}
+                          </p>
+                        )}
                       </Link>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
@@ -234,7 +270,13 @@ export default async function PayslipsPage({
               </tbody>
               <tfoot className="border-t border-slate-100 bg-slate-50">
                 <tr>
-                  <td className="pl-5 pr-4 py-3 text-sm font-semibold text-gray-600" colSpan={4}>Total</td>
+                  <td className="pl-5 pr-4 py-3 text-sm font-semibold text-gray-600" colSpan={2}>Total</td>
+                  {/* Kelas responsifnya harus sama dengan header dan barisnya,
+                      kalau tidak kolomnya bergeser saat Sesi & Jurnal disembunyikan. */}
+                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-900 hidden md:table-cell">
+                    {totalSessions}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell" />
                   <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatRupiah(totalGrand)}</td>
                   <td colSpan={2} />
                 </tr>
