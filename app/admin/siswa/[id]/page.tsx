@@ -3,13 +3,15 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { coversSession } from '@/lib/enrollment'
+import { sekarangIso } from '@/lib/waktu'
 import { evaluateStudentCritical } from '@/lib/studentCritical'
 import CriticalDetailCard from '@/components/siswa/CriticalDetailCard'
 import UnenrollButton from '@/components/siswa/UnenrollButton'
 import StudentStatusButton from '@/components/admin/siswa/StudentStatusButton'
 import DeleteStudentButton from '@/components/admin/siswa/DeleteStudentButton'
-import JadwalTable from '@/components/admin/siswa/JadwalTable'
-import ProfileAccordion from '@/components/admin/siswa/ProfileAccordion'
+import JadwalTable from '@/components/siswa/JadwalTable'
+import SiswaSidebar from '@/components/siswa/SiswaSidebar'
+import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +46,7 @@ type EnrolledClass = {
 
 type SessionRow = {
   id: string
+  cancellation_reason?: string | null
   class_id: string
   scheduled_at: string
   topic: string | null
@@ -107,11 +110,6 @@ function getInitials(name: string | null): string {
   return ((parts[0][0] ?? '') + (parts[parts.length - 1][0] ?? '')).toUpperCase()
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
 function formatDateShort(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -122,7 +120,6 @@ function formatCurrency(amount: number): string {
 }
 
 const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-const DAYS_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
 const STATUS_SESSION: Record<string, { label: string; cls: string }> = {
   scheduled: { label: 'Terjadwal',  cls: 'bg-blue-50 text-blue-500' },
@@ -166,6 +163,7 @@ export default async function SiswaDetailPage({
   const { tab: rawTab } = await searchParams
   const activeTab: Tab = (TABS.some(t => t.key === rawTab) ? rawTab : 'jadwal') as Tab
 
+  const sekarang = await sekarangIso()
   const admin = createAdminClient()
 
   let student: Profile | null = null
@@ -279,7 +277,7 @@ export default async function SiswaDetailPage({
 
   const [sessionsRes, attendancesRes, invoicesRes, notesRes] = await Promise.all([
     allClassIds.length > 0
-      ? admin.from('sessions').select('id, class_id, scheduled_at, topic, status, subject_id').in('class_id', allClassIds).eq('status', 'completed').order('scheduled_at', { ascending: false }).limit(200) as unknown as Promise<{ data: SessionRow[] | null }>
+      ? admin.from('sessions').select('id, class_id, scheduled_at, topic, status, cancellation_reason, subject_id').in('class_id', allClassIds).eq('status', 'completed').order('scheduled_at', { ascending: false }).limit(200) as unknown as Promise<{ data: SessionRow[] | null }>
       : Promise.resolve({ data: [] as SessionRow[] }),
     admin.from('attendances').select('session_id, status').eq('student_id', studentId) as unknown as Promise<{ data: AttendanceRow[] | null }>,
     admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes').eq('student_id', studentId).order('issued_at', { ascending: false }).limit(24) as unknown as Promise<{ data: InvoiceRow[] | null }>,
@@ -305,7 +303,7 @@ export default async function SiswaDetailPage({
     }
   }
 
-  type UpcomingSession = { id: string; class_id: string; scheduled_at: string; topic: string | null; status: string; subject_id: string | null; profiles: { full_name: string } | null }
+  type UpcomingSession = { id: string; class_id: string; scheduled_at: string; topic: string | null; status: string; cancellation_reason: string | null; subject_id: string | null; profiles: { full_name: string } | null }
 
   let upcomingSessions: UpcomingSession[] = []
   let nextScheduledSessionDate: Date | null = null
@@ -314,7 +312,7 @@ export default async function SiswaDetailPage({
     const nowIso = new Date().toISOString()
     const { data: allSessionsData } = await admin
       .from('sessions')
-      .select('id, class_id, scheduled_at, topic, status, subject_id, profiles!tutor_id(full_name)')
+      .select('id, class_id, scheduled_at, topic, status, cancellation_reason, subject_id, profiles!tutor_id(full_name)')
       .in('class_id', activeClassIds)
       .order('scheduled_at', { ascending: false }) as unknown as { data: UpcomingSession[] | null }
     upcomingSessions = (allSessionsData ?? []).filter(inWindow)
@@ -386,14 +384,6 @@ export default async function SiswaDetailPage({
 
   const resultMap = new Map<string, AssessmentResultRow>()
   for (const r of assessmentResults) resultMap.set(r.assessment_id, r)
-
-  const sessionComprehensionMap: Record<string, string> = {}
-  for (const a of assessments) {
-    const result = resultMap.get(a.id)
-    if (result?.feedback && /^L[0-5]$/.test(result.feedback ?? '') && a.session_id) {
-      sessionComprehensionMap[a.session_id] = result.feedback
-    }
-  }
 
   const today = new Date().toISOString().slice(0, 10)
   const completedSessions = sessions.filter(s => s.status === 'completed')
@@ -584,76 +574,31 @@ export default async function SiswaDetailPage({
               <div className="p-5 space-y-6">
                 <div>
                   <JadwalTable
+                    sekarangIso={sekarang}
+                    showAdminLinks
                     sessions={upcomingSessions}
                     enrolledClasses={enrolledClasses.map(c => ({ id: c.id, name: c.name, is_active: c.is_active, subject_name: c.subject_names[0] ?? null, tutor: c.tutor }))}
                     subjectNameMap={Object.fromEntries(subjectNameMap)}
                     attendanceMap={Object.fromEntries(attendanceMap)}
                     sessionTutorMap={sessionTutorMap}
-                    sessionComprehensionMap={sessionComprehensionMap}
                     studentId={studentId}
                   />
                 </div>
 
-                {/* Historical classes */}
-                {historicalClasses.length > 0 && (
-                  <div className="pt-4 border-t border-slate-100">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
-                      Riwayat Kelas ({historicalClasses.length})
-                    </p>
-                    <div className="overflow-x-auto rounded-lg border border-slate-100">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            <th className="pl-4 pr-3 py-2.5 text-left">Kelas</th>
-                            <th className="px-3 py-2.5 text-center">Total Sesi</th>
-                            <th className="px-3 py-2.5 text-left hidden sm:table-cell">Mulai</th>
-                            <th className="px-3 py-2.5 text-left hidden sm:table-cell">Selesai</th>
-                            <th className="pr-3 pl-2 py-2.5" />
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {historicalClasses.map(cls => {
-                            const stats = historicalSessionStats.get(cls.id)
-                            const firstDate = stats?.firstDate
-                              ? new Date(stats.firstDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                              : '—'
-                            const lastDate = stats?.lastDate
-                              ? new Date(stats.lastDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                              : '—'
-                            return (
-                              <tr key={cls.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="pl-4 pr-3 py-2.5">
-                                  <Link href={`/admin/classes/${cls.id}`} className="block">
-                                    <p className="font-medium text-gray-700">{cls.name}</p>
-                                    {cls.subject_names.length > 0 && <p className="text-xs text-gray-400">{cls.subject_names.join(', ')}</p>}
-                                  </Link>
-                                </td>
-                                <td className="px-3 py-2.5 text-center">
-                                  <Link href={`/admin/classes/${cls.id}`} className="block font-semibold text-gray-700">
-                                    {stats?.count ?? 0}
-                                  </Link>
-                                </td>
-                                <td className="px-3 py-2.5 text-gray-500 hidden sm:table-cell">
-                                  <Link href={`/admin/classes/${cls.id}`} className="block">{firstDate}</Link>
-                                </td>
-                                <td className="px-3 py-2.5 text-gray-500 hidden sm:table-cell">
-                                  <Link href={`/admin/classes/${cls.id}`} className="block">{lastDate}</Link>
-                                </td>
-                                <td className="pr-3 pl-2 py-2.5 text-right">
-                                  <Link href={`/admin/classes/${cls.id}`}>
-                                    <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                  </Link>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                <RiwayatKelas
+                  kelas={historicalClasses.map(c => {
+                    const stats = historicalSessionStats.get(c.id)
+                    return {
+                      id: c.id,
+                      name: c.name,
+                      subject_names: c.subject_names,
+                      jumlahSesi: stats?.count ?? 0,
+                      mulai: stats?.firstDate ?? null,
+                      selesai: stats?.lastDate ?? null,
+                    }
+                  })}
+                  classHref={id => `/admin/classes/${id}`}
+                />
               </div>
             )}
 
@@ -777,158 +722,18 @@ export default async function SiswaDetailPage({
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Info */}
-          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
-            <div className="space-y-4">
-
-              {/* Profil + Orang Tua (accordion) */}
-              <ProfileAccordion>
-                <div className="space-y-2">
-                  {profile.level && (
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-gray-500 shrink-0">Level</span>
-                      <span className="text-sm text-gray-700">{profile.level}</span>
-                    </div>
-                  )}
-                  {profile.grade && (
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-gray-500 shrink-0">Kelas</span>
-                      <span className="text-sm text-gray-700">{profile.grade}</span>
-                    </div>
-                  )}
-                  {profile.birth_date && (
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-gray-500 shrink-0">Tgl Lahir</span>
-                      <span className="text-sm text-gray-700">{formatDate(profile.birth_date)}</span>
-                    </div>
-                  )}
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="text-sm text-gray-500 shrink-0">Email</span>
-                    <span className="text-sm text-gray-700 text-right break-all">{profile.email ?? '—'}</span>
-                  </div>
-                  {profile.phone && (
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-gray-500 shrink-0">HP</span>
-                      <span className="text-sm text-gray-700">{profile.phone}</span>
-                    </div>
-                  )}
-                </div>
-
-                {(profile.parent_name || profile.parent_phone) && (
-                  <div className="border-t border-slate-100 mt-3 pt-3">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Orang Tua</p>
-                    <div className="space-y-2">
-                      {profile.parent_name && (
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm text-gray-500 shrink-0">Nama</span>
-                          <span className="text-sm text-gray-700 text-right">{profile.parent_name}</span>
-                        </div>
-                      )}
-                      {profile.parent_phone && (
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm text-gray-500 shrink-0">HP</span>
-                          <span className="text-sm text-gray-700">{profile.parent_phone}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </ProfileAccordion>
-
-              {/* Kelas Aktif */}
-              {enrolledClasses.filter(c => c.is_active).length > 0 && (
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Kelas Aktif</p>
-                  <div className="space-y-3">
-                    {enrolledClasses.filter(c => c.is_active).map(cls => (
-                      <Link key={cls.id} href={`/admin/classes/${cls.id}`} className="block hover:opacity-80 transition-opacity">
-                        <p className="text-sm font-medium text-gray-700">{cls.name}</p>
-                        {(() => {
-                          const rows = Math.max(cls.schedule_days.length, cls.subject_names.length, 1)
-                          return (
-                            <div className="mt-2 space-y-0.5">
-                              {Array.from({ length: rows }, (_, i) => {
-                                const day = cls.schedule_days[i]
-                                const subj = cls.subject_names[i]
-                                return (
-                                  <div key={i} className="flex items-center justify-between gap-2">
-                                    <span className="text-sm text-gray-500">
-                                      {day !== undefined ? DAYS_SHORT[day] : '—'}
-                                      {cls.schedule_time && `, ${cls.schedule_time.slice(0, 5)}`}
-                                    </span>
-                                    {subj && (
-                                      <span className="text-sm font-medium text-gray-700 shrink-0">{subj}</span>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )
-                        })()}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Performa */}
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Performa</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Total sesi</span>
-                    <span className="text-sm font-semibold text-gray-800">{completedSessions.length}</span>
-                  </div>
-                  {hadirPct !== null && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">Kehadiran</span>
-                      <span className="text-sm font-semibold text-gray-800">{hadirPct}%</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Pembayaran */}
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Pembayaran</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Sudah bayar</span>
-                    <span className="text-sm font-semibold text-gray-800">{formatCurrency(paidTotal)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Belum bayar</span>
-                    <span className={`text-sm font-semibold ${unpaidTotal > 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                      {formatCurrency(unpaidTotal)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Akun */}
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Akun</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Bergabung</span>
-                    <span className="text-sm text-gray-700">
-                      {new Date(profile.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Masa bergabung</span>
-                    <span className="text-sm text-gray-700">
-                      {(() => {
-                        const months = (now2.getFullYear() - enrolledAt.getFullYear()) * 12 + (now2.getMonth() - enrolledAt.getMonth())
-                        return months <= 0 ? '< 1 bulan' : `${months} bulan`
-                      })()}
-                    </span>
-                  </div>
-                </div>
-                <p className="font-mono text-[11px] text-gray-300 break-all mt-3 leading-relaxed">{studentId}</p>
-              </div>
-            </div>
-          </div>
+          <SiswaSidebar
+            tampilkanProfil
+            profil={profile}
+            kelasAktif={enrolledClasses.filter(c => c.is_active)}
+            totalSesi={completedSessions.length}
+            hadirPersen={hadirPct}
+            sudahBayar={paidTotal}
+            belumBayar={unpaidTotal}
+            bergabung={profile.created_at}
+            studentId={studentId}
+            classHref={id => `/admin/classes/${id}`}
+          />
 
           {/* Aksi */}
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">

@@ -71,6 +71,16 @@ export function tanggalPanjang(iso: string) {
  * termasuk membaca jam. Di server component asinkron hal itu sebenarnya sah,
  * tapi memisahkannya membuat maksudnya eksplisit dan lint tetap bersih.
  */
+/**
+ * Bulan berjalan, dipisahkan dari badan komponen dengan alasan yang sama
+ * seperti `sejakJam` di bawah: membaca jam saat render dilarang lint
+ * `react-hooks/purity`.
+ */
+export async function bulanIni() {
+  const d = new Date()
+  return { tahun: d.getFullYear(), bulan: d.getMonth() + 1 }
+}
+
 export async function sejakJam(toleransiJam: number) {
   return new Date(Date.now() - toleransiJam * 60 * 60 * 1000).toISOString()
 }

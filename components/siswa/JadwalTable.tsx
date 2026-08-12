@@ -1,8 +1,20 @@
 'use client'
 
+/**
+ * Tabel jadwal & kehadiran murid, dipakai halaman detail siswa admin DAN beranda
+ * anak di portal keluarga.
+ *
+ * Dulu tinggal di `components/admin/siswa/`, dan itu menyesatkan begitu portal
+ * keluarga ikut memakainya: pembaca berikutnya akan mengira ini layar admin dan
+ * mengubahnya tanpa sadar sedang mengubah apa yang dilihat orang tua. Yang
+ * khusus admin sekarang cuma `showAdminLinks`.
+ */
+
 import { useState, useTransition, Fragment } from 'react'
 import Link from 'next/link'
-import { getJadwalSessionDetail, type JadwalSessionDetail } from '@/lib/actions/admin/jadwal'
+import { getJadwalSessionDetail, type JadwalSessionDetail } from '@/lib/actions/jadwal'
+import { KEHADIRAN, sorotBaris } from '@/lib/kehadiran'
+import { stripClassUniqueTag } from '@/lib/format-class-name'
 
 const COMPREHENSION_LEVELS: Record<string, { label: string; bg: string; text: string }> = {
   L0: { label: 'L0: Tidak Paham Sama Sekali',     bg: 'bg-red-200',    text: 'text-red-900' },
@@ -13,8 +25,45 @@ const COMPREHENSION_LEVELS: Record<string, { label: string; bg: string; text: st
   L5: { label: 'L5: Mahir',                        bg: 'bg-purple-200', text: 'text-purple-900' },
 }
 
+/**
+ * Kalimat pembatalan yang dibaca orang tua.
+ *
+ * Alasan dari kalender libur sudah berupa frasa utuh ("Libur Nasional —
+ * Proklamasi Kemerdekaan", lihat cancelSessionsOnHoliday), jadi satu aturan
+ * cukup untuk libur maupun alasan lain — tidak perlu mendeteksi "libur" secara
+ * khusus. Yang tidak punya alasan sama sekali adalah pembatalan manual dari
+ * masa sebelum migrasi 090, atau yang memang dikosongkan adminnya.
+ */
+function alasanBatal(alasan: string | null | undefined): string {
+  const teks = alasan?.trim()
+  return teks ? `Dibatalkan karena ${teks}` : 'Dibatalkan oleh Admin'
+}
+
+/**
+ * Bulan sebuah sesi menurut WIB, bukan UTC.
+ *
+ * `scheduled_at` disimpan UTC. Sesi sore hari aman diiris apa adanya, tapi sesi
+ * pagi (00:00–06:59 WIB) jatuh di tanggal UTC sebelumnya — dan kalau itu tanggal
+ * 1, sesinya masuk ke bulan yang salah di penyaring ini. Pola geseran +7 jam
+ * yang sama dipakai di lib/actions/admin/holidays.ts.
+ */
+function bulanWib(iso: string): string {
+  return new Date(new Date(iso).getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 7)
+}
+
+function namaBulan(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('id-ID', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
 type Session = {
   id: string
+  /** Diisi sejak migrasi 090; kalender libur mengisinya otomatis. */
+  cancellation_reason?: string | null
   class_id: string
   scheduled_at: string
   topic: string | null
@@ -30,35 +79,34 @@ type EnrolledClass = {
   tutor: { full_name: string } | null
 }
 
-const ATTENDANCE_STATUS: Record<string, { label: string; cls: string }> = {
-  present: { label: 'Hadir',     cls: 'bg-green-100 text-green-700' },
-  late:    { label: 'Terlambat', cls: 'bg-yellow-100 text-yellow-700' },
-  absent:  { label: 'Absen',     cls: 'bg-red-100 text-red-600' },
-  excused: { label: 'Izin',      cls: 'bg-gray-100 text-gray-500' },
-}
 
 interface Props {
+  /** Jam server, untuk menentukan "Jadwal berikutnya". Lihat lib/waktu.ts. */
+  sekarangIso?: string
+  /** Tautan "kelola sesi" hanya berarti untuk admin; keluarga tidak punya
+   *  halaman itu dan akan dipulangkan proxy kalau menekannya. */
+  showAdminLinks?: boolean
   sessions: Session[]
   enrolledClasses: EnrolledClass[]
   subjectNameMap: Record<string, string>
   attendanceMap: Record<string, string>
   sessionTutorMap: Record<string, string>
-  sessionComprehensionMap: Record<string, string>
   studentId: string
 }
 
 
 interface ClassTableProps {
+  sekarangIso?: string
+  showAdminLinks?: boolean
   cls: EnrolledClass
   sessions: Session[]
   subjectNameMap: Record<string, string>
   attendanceMap: Record<string, string>
   sessionTutorMap: Record<string, string>
-  sessionComprehensionMap: Record<string, string>
   studentId: string
 }
 
-function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessionTutorMap, sessionComprehensionMap, studentId }: ClassTableProps) {
+function ClassSessionTable({ sekarangIso, showAdminLinks, cls, sessions, subjectNameMap, attendanceMap, sessionTutorMap, studentId }: ClassTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [detailMap, setDetailMap] = useState<Record<string, JadwalSessionDetail | null>>({})
   const [, startTransition] = useTransition()
@@ -67,6 +115,11 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
   const [collapsed, setCollapsed] = useState<boolean>(!cls.is_active)
   const [selectedStatus, setSelectedStatus] = useState<string>('')
   const [selectedMapel, setSelectedMapel] = useState<string>('')
+  const [selectedBulan, setSelectedBulan] = useState<string>('')
+  // Terlama dulu: baris 1 adalah sesi paling awal, sehingga nomor barisnya
+  // terbaca sebagai "pertemuan ke-berapa" — bukan hitungan mundur dari sesi
+  // terakhir yang berubah arti tiap kali ada sesi baru.
+  const [urutan, setUrutan] = useState<'terbaru' | 'terlama'>('terlama')
 
   const getSubjectNameRaw = (s: Session): string =>
     (s.subject_id && subjectNameMap[s.subject_id])
@@ -79,15 +132,56 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
     new Set(sessions.map(getSubjectName).filter(n => !!n))
   ).sort()
 
-  const filteredSessions = sessions.filter(s => {
-    const statusMatch = !selectedStatus || s.status === selectedStatus
-    const mapelMatch = !selectedMapel || getSubjectName(s) === selectedMapel
-    return statusMatch && mapelMatch
-  })
+  const bulanOptions = Array.from(new Set(sessions.map(s => bulanWib(s.scheduled_at)))).sort()
 
-  function handleRowClick(sessionId: string) {
-    if (expandedId === sessionId) { setExpandedId(null); return }
+  const filteredSessions = sessions
+    .filter(s => {
+      const statusMatch = !selectedStatus || s.status === selectedStatus
+      const mapelMatch = !selectedMapel || getSubjectName(s) === selectedMapel
+      const bulanMatch = !selectedBulan || bulanWib(s.scheduled_at) === selectedBulan
+      return statusMatch && mapelMatch && bulanMatch
+    })
+    // Disalin dulu: `sessions` milik pemanggil, dan mengurutkannya di tempat
+    // akan mengacak nomor baris di render berikutnya.
+    .slice()
+    .sort((a, b) =>
+      urutan === 'terbaru'
+        ? b.scheduled_at.localeCompare(a.scheduled_at)
+        : a.scheduled_at.localeCompare(b.scheduled_at),
+    )
+
+  /**
+   * Membuka satu sesi dari luar tabel dan menggulir ke barisnya.
+   *
+   * Berbeda dari klik baris biasa, ini tidak pernah menutup: yang menekan
+   * "Lihat detail sesi" bermaksud melihatnya, bukan menyembunyikannya. Kelas
+   * yang sedang terlipat dibuka, dan penyaring yang kebetulan menyembunyikan
+   * sesi itu dikembalikan ke "Semua" — kalau tidak, tombolnya menggulir ke
+   * baris yang tidak ada dan terasa rusak.
+   */
+  function bukaDanGulir(sessionId: string) {
+    setCollapsed(false)
+
+    const sesi = sessions.find(x => x.id === sessionId)
+    if (sesi) {
+      if (selectedStatus && sesi.status !== selectedStatus) setSelectedStatus('')
+      if (selectedMapel && getSubjectName(sesi) !== selectedMapel) setSelectedMapel('')
+    }
+
     setExpandedId(sessionId)
+    muatDetail(sessionId)
+
+    // Menunggu satu frame supaya barisnya sudah benar-benar dirender sebelum
+    // digulir — kelas yang baru dibuka belum ada di DOM saat ini.
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`sesi-${sessionId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  /** Mengambil detail satu sesi kalau belum pernah diambil. */
+  function muatDetail(sessionId: string) {
     if (sessionId in detailMap) return
     setLoadingId(sessionId)
     startTransition(async () => {
@@ -102,6 +196,12 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
     })
   }
 
+  function handleRowClick(sessionId: string) {
+    if (expandedId === sessionId) { setExpandedId(null); return }
+    setExpandedId(sessionId)
+    muatDetail(sessionId)
+  }
+
   const selectCls = "text-sm text-gray-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
 
   const completedSessions = sessions.filter(s => s.status === 'completed')
@@ -112,65 +212,103 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
   }).length
   const hadirPct = completedCount > 0 ? Math.round((hadirCount / completedCount) * 100) : null
 
-  const subjectLevelsMap = new Map<string, number[]>()
-  for (const s of completedSessions) {
-    const level = sessionComprehensionMap[s.id]
-    if (!level) continue
-    const subj = getSubjectNameRaw(s)
-    if (!subj) continue
-    const arr = subjectLevelsMap.get(subj) ?? []
-    arr.push(parseInt(level[1]))
-    subjectLevelsMap.set(subj, arr)
-  }
-  const subjectAvgLevels = Array.from(subjectLevelsMap.entries()).map(([subj, levels]) => ({
-    subj,
-    avg: `L${Math.round(levels.reduce((a, b) => a + b, 0) / levels.length)}`,
-  }))
+  // Sesi terdekat yang belum lewat. `sekarangIso` datang dari server (lihat
+  // lib/waktu.ts) supaya perbandingannya murni dan hasil render server sama
+  // dengan hasil hidrasi di browser.
+  const sesiBerikutnya = sekarangIso
+    ? sessions
+        .filter(s => s.status !== 'cancelled' && s.scheduled_at >= sekarangIso)
+        .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null
+    : null
 
   return (
     <div className="space-y-3">
+      {/* -mx-5/-mt-5 membatalkan padding kartu pembungkusnya (p-5 di kedua
+          halaman) supaya banner ini melebar penuh sampai tepi kartu. */}
+      {sesiBerikutnya && (
+        <div className="-mx-5 -mt-5 mb-4 flex items-center justify-between gap-3 flex-wrap border-b border-blue-100 bg-blue-50/60 px-5 py-5">
+          <div className="flex items-start gap-2">
+            {/* Titik diletakkan di luar kolom teks — kalau ia ikut di dalam
+                baris label, tanggal di bawahnya jadi tidak sejajar dengan
+                tulisan "Jadwal berikutnya". */}
+            <span className="relative mt-1 flex h-2 w-2 shrink-0" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+            </span>
+            <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+              Jadwal berikutnya
+            </p>
+            <p className="text-sm font-medium text-gray-800 mt-0.5">
+              {new Date(sesiBerikutnya.scheduled_at).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+              {', '}
+              {new Date(sesiBerikutnya.scheduled_at).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              {getSubjectName(sesiBerikutnya) && (
+                <span className="text-gray-500"> · {getSubjectName(sesiBerikutnya)}</span>
+              )}
+            </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => bukaDanGulir(sesiBerikutnya.id)}
+            className="shrink-0 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            Lihat detail sesi
+          </button>
+        </div>
+      )}
+
+      {/* Banner kelas dan tabelnya satu kesatuan: tabel selebar banner, ditarik
+          naik (-mt-4) dan diberi z-10 sehingga ia yang menimpa — tepi atasnya
+          menjorok sedikit ke bagian bawah banner. Karena itu banner diberi ruang
+          bawah lebih (pb-7) saat terbuka, supaya tulisannya tidak tertutup. */}
+      <div>
       {/* Class name toggle */}
       <button
         onClick={() => setCollapsed(c => !c)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+        className={`w-full px-4 pt-3 border border-slate-200! rounded-xl bg-white hover:bg-slate-50 transition-colors ${collapsed ? 'pb-3' : 'pb-7'}`}
       >
-        <div className="flex flex-col items-start">
-          <span className={`text-sm font-semibold ${cls.is_active ? 'text-gray-800' : 'text-gray-500'}`}>{cls.name}</span>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {completedCount} Terlaksana
-            {hadirPct !== null && <> · {hadirCount} Hadir ({hadirPct}%)</>}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {subjectAvgLevels.map(({ subj, avg }) => (
-            <span key={subj} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${COMPREHENSION_LEVELS[avg]?.bg ?? 'bg-gray-100'} ${COMPREHENSION_LEVELS[avg]?.text ?? 'text-gray-600'}`}>
-              {subj} · {avg}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col items-start min-w-0">
+            <span className={`text-sm font-semibold truncate ${cls.is_active ? 'text-gray-800' : 'text-gray-500'}`}>
+              {stripClassUniqueTag(cls.name ?? '')}
             </span>
-          ))}
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
-            {cls.is_active ? 'Aktif' : 'Selesai'}
-          </span>
-          <svg className={`w-4 h-4 transition-transform text-gray-400 ${collapsed ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p className="text-xs text-gray-500 mt-0.5">
+              {completedCount} Terlaksana
+              {hadirPct !== null && <> · {hadirCount} Hadir ({hadirPct}%)</>}
+            </p>
+          </div>
+          <svg className={`w-4 h-4 shrink-0 transition-transform text-gray-400 ${collapsed ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </button>
 
-      {!collapsed && <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        {/* Filters + label */}
-        <div className="flex items-center justify-between gap-2 flex-wrap px-5 pt-4 pb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedStatus}
-              onChange={e => { setSelectedStatus(e.target.value); setExpandedId(null) }}
-              className={selectCls}
-            >
-              <option value="">Semua Status</option>
-              <option value="completed">Selesai</option>
-              <option value="cancelled">Dibatalkan</option>
-              <option value="scheduled">Terjadwal</option>
-              <option value="ongoing">Berlangsung</option>
-            </select>
+      {!collapsed && <div className="relative z-10 -mt-4 bg-white border border-slate-200 rounded-xl overflow-hidden">
+        {/* Judul di kiri, penyaring di kanan */}
+        <div className="flex items-center justify-between gap-3 flex-wrap px-5 pt-4 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Sesi Kelas</h3>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {bulanOptions.length > 1 && (
+              <select
+                value={selectedBulan}
+                onChange={e => { setSelectedBulan(e.target.value); setExpandedId(null) }}
+                className={selectCls}
+              >
+                <option value="">Semua Bulan</option>
+                {bulanOptions.map(b => (
+                  <option key={b} value={b}>{namaBulan(b)}</option>
+                ))}
+              </select>
+            )}
             {mapelOptions.length > 0 && (
               <select
                 value={selectedMapel}
@@ -183,6 +321,17 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                 ))}
               </select>
             )}
+            <select
+              value={selectedStatus}
+              onChange={e => { setSelectedStatus(e.target.value); setExpandedId(null) }}
+              className={selectCls}
+            >
+              <option value="">Semua Status</option>
+              <option value="completed">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
+              <option value="scheduled">Terjadwal</option>
+              <option value="ongoing">Berlangsung</option>
+            </select>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -190,11 +339,29 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
           <thead>
             <tr className="border-t border-slate-100 bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               <th className="w-8 pl-4 pr-3 py-3 text-left">No</th>
-              <th className="px-4 py-3 text-left">Tanggal</th>
+              <th className="px-4 py-3 text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUrutan(u => (u === 'terlama' ? 'terbaru' : 'terlama'))
+                    setExpandedId(null)
+                  }}
+                  title={urutan === 'terlama' ? 'Terlama dulu — klik untuk membalik' : 'Terbaru dulu — klik untuk membalik'}
+                  className="inline-flex items-center gap-1 uppercase tracking-wide hover:text-gray-700 transition-colors"
+                >
+                  Tanggal
+                  <svg
+                    className={`w-3 h-3 transition-transform ${urutan === 'terbaru' ? 'rotate-180' : ''}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+              </th>
               <th className="px-4 py-3 text-left">Jam</th>
               <th className="px-4 py-3 text-left hidden sm:table-cell">Mapel</th>
               <th className="px-4 py-3 text-left hidden md:table-cell">Tutor</th>
-              <th className="px-4 py-3 text-left">Kehadiran</th>
+              <th className="px-4 py-3 text-left">Keterangan</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -207,30 +374,31 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
               </tr>
             ) : filteredSessions.map((s, idx) => {
               const dt = new Date(s.scheduled_at)
+              // Sesi yang dibatalkan tidak pernah punya baris kehadiran, jadi
+              // dulu ia jatuh ke "—": barisnya merah tanpa menerangkan kenapa.
+              // Statusnya sendiri yang jadi keterangannya.
               const attendance = attendanceMap[s.id]
               const attendanceSt = attendance
-                ? (ATTENDANCE_STATUS[attendance] ?? { label: attendance, cls: 'bg-gray-100 text-gray-500' })
+                ? (KEHADIRAN[attendance] ?? { label: attendance, cls: 'bg-gray-100 text-gray-500' })
                 : null
               const isExpanded = expandedId === s.id
               const isLoading = loadingId === s.id
               const detail = detailMap[s.id]
+              const sorot = sorotBaris(s.status, attendance)
 
               return (
                 <Fragment key={s.id}>
                   <tr
+                    id={`sesi-${s.id}`}
                     onClick={() => handleRowClick(s.id)}
                     className={`cursor-pointer transition-colors ${
-                      s.status === 'cancelled'
-                        ? isExpanded
-                          ? 'font-medium bg-red-50 [&>td]:border-t [&>td]:border-t-red-200 border-b border-b-red-200 [&>td:last-child]:border-r [&>td:last-child]:border-r-red-200'
-                          : 'bg-red-100/80 hover:bg-red-100'
-                        : isExpanded
-                          ? 'font-medium bg-slate-50 [&>td]:text-gray-900 [&>td]:border-t [&>td]:border-t-slate-300 border-b border-b-slate-300 [&>td:last-child]:border-r [&>td:last-child]:border-r-slate-300'
-                          : 'hover:bg-slate-50'
+                      isExpanded
+                        ? `font-medium [&>td]:text-gray-900 [&>td]:border-t border-b [&>td:last-child]:border-r ${sorot.baris}`
+                        : 'hover:bg-slate-50'
                     }`}
                   >
-                    <td className={`pl-4 pr-3 py-3 text-gray-400 text-xs border-l-[3px] ${isExpanded ? 'border-l-blue-500' : 'border-l-transparent'}`}>{idx + 1}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-700">
+                    <td className={`pl-4 pr-3 py-3 text-gray-400 text-xs border-l-[3px] ${isExpanded ? sorot.garis : 'border-l-transparent'}`}>{idx + 1}</td>
+                    <td className={`px-4 py-3 whitespace-nowrap ${s.status === 'cancelled' ? 'text-red-500' : 'text-gray-700'}`}>
                       {dt.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-500">
@@ -244,9 +412,11 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                       {(sessionTutorMap[s.id] ?? cls.tutor?.full_name)?.split(' ')[0] ?? '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {attendanceSt
-                        ? <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${attendanceSt.cls}`}>{attendanceSt.label}</span>
-                        : <span className="text-gray-300">—</span>}
+                      {s.status === 'cancelled'
+                        ? <span className="inline-flex text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Dibatalkan</span>
+                        : attendanceSt
+                          ? <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${attendanceSt.cls}`}>{attendanceSt.label}</span>
+                          : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="pr-4 pl-2 py-3">
                       <div className="flex justify-end">
@@ -262,9 +432,18 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
 
                   {isExpanded && (
                     <tr>
-                      <td colSpan={7} className="bg-white p-0 border-l-[3px] border-l-blue-500 border-t border-t-slate-300 border-b border-b-slate-300 border-r border-r-slate-300">
+                      <td colSpan={7} className={`bg-white p-0 border-l-[3px] border-t border-b border-r ${sorot.panel}`}>
                         <div className="pl-3 pr-4 py-3">
-                          {isLoading ? (
+                          {/* `undefined` berarti belum pernah diambil, `null`
+                              berarti pengambilannya gagal. Keduanya harus
+                              ditangkap sebelum isinya dibaca — dulu hanya `null`
+                              yang diperiksa, jadi baris yang terbuka sebelum
+                              detailnya sempat masuk melempar
+                              "Cannot read properties of undefined". */}
+                          {s.status === 'cancelled' && (
+                            <p className="text-sm text-red-500 pb-2">{alasanBatal(s.cancellation_reason)}</p>
+                          )}
+                          {isLoading || detail === undefined ? (
                             <p className="text-sm text-gray-400 py-1">Memuat...</p>
                           ) : detail === null ? (
                             <p className="text-sm text-gray-400 py-1">Gagal memuat detail.</p>
@@ -360,12 +539,12 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
                               })
                             if (detail.catatan)
                               items.push({ label: 'Catatan', node: <span className="text-sm text-gray-700 leading-relaxed">{detail.catatan}</span> })
-                            const detailLink = (
+                            const detailLink = showAdminLinks ? (
                               <Link href={`/admin/sessions/${s.id}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline">
                                 Lihat detail sesi
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                               </Link>
-                            )
+                            ) : null
                             return (
                               <div>
                                 {items.length === 0 ? (
@@ -403,11 +582,12 @@ function ClassSessionTable({ cls, sessions, subjectNameMap, attendanceMap, sessi
         </table>
         </div>
       </div>}
+      </div>
     </div>
   )
 }
 
-export default function JadwalTable({ sessions, enrolledClasses, subjectNameMap, attendanceMap, sessionTutorMap, sessionComprehensionMap, studentId }: Props) {
+export default function JadwalTable({ sekarangIso, showAdminLinks = false, sessions, enrolledClasses, subjectNameMap, attendanceMap, sessionTutorMap, studentId }: Props) {
   if (sessions.length === 0) {
     return <p className="text-sm text-gray-400 text-center py-6">Belum ada sesi.</p>
   }
@@ -425,12 +605,13 @@ export default function JadwalTable({ sessions, enrolledClasses, subjectNameMap,
       {classesWithSessions.map((cls, i) => (
         <div key={cls.id}>
           <ClassSessionTable
+            sekarangIso={sekarangIso}
+            showAdminLinks={showAdminLinks}
             cls={cls}
             sessions={sessions.filter(s => s.class_id === cls.id)}
             subjectNameMap={subjectNameMap}
             attendanceMap={attendanceMap}
             sessionTutorMap={sessionTutorMap}
-            sessionComprehensionMap={sessionComprehensionMap}
             studentId={studentId}
           />
         </div>

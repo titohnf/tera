@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { getUser } from '@/lib/supabase/get-user'
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { bolehBacaMurid, siapa } from '@/lib/akses'
 
 /**
  * Penjaga untuk route di `app/api`.
@@ -18,21 +18,6 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
  * menautkan berkas-berkas ini — kalau nanti ada, tambahkan di sini dengan sadar,
  * jangan lewat celah.
  */
-
-async function actor(): Promise<{ id: string; role: string } | null> {
-  const user = await getUser()
-  if (!user) return null
-
-  const admin = createAdminClient()
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.role) return null
-  return { id: user.id, role: profile.role as string }
-}
 
 /**
  * Yang belum masuk DIARAHKAN ke login, bukan ditolak mentah.
@@ -54,21 +39,8 @@ export async function denyUnlessCanReadStudent(
   studentId: string,
   req: NextRequest,
 ): Promise<NextResponse | null> {
-  const who = await actor()
-  if (!who) return keLogin(req)
-  if (who.role === 'admin') return null
-
-  if (who.role === 'parent') {
-    const admin = createAdminClient()
-    const { data } = await admin
-      .from('family_students')
-      .select('student_id')
-      .eq('family_id', who.id)
-      .eq('student_id', studentId)
-      .maybeSingle()
-    if (data) return null
-  }
-
+  if (!(await siapa())) return keLogin(req)
+  if (await bolehBacaMurid(studentId)) return null
   return new NextResponse('Tidak berhak atas berkas ini', { status: 403 })
 }
 
@@ -81,9 +53,7 @@ export async function denyUnlessCanReadInvoice(
   invoiceId: string,
   req: NextRequest,
 ): Promise<NextResponse | null> {
-  const who = await actor()
-  if (!who) return keLogin(req)
-  if (who.role === 'admin') return null
+  if (!(await siapa())) return keLogin(req)
 
   const admin = createAdminClient()
   const { data: invoice } = await admin

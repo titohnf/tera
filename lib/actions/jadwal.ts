@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { bolehBacaMurid } from '@/lib/akses'
 
 export type JadwalSessionDetail = {
   tema: string | null
@@ -16,10 +17,38 @@ export type JadwalSessionDetail = {
   attendance_notes: string | null
 }
 
+/** Kosong, dipakai saat pemanggil tidak berhak — bukan melempar, supaya baris
+ *  yang dibuka cuma tidak berisi apa-apa alih-alih merusak halaman. */
+const DETAIL_KOSONG: JadwalSessionDetail = {
+  tema: null,
+  topik: null,
+  cp_list: [],
+  latihan_soal_list: [],
+  materials: [],
+  assessments: [],
+  catatan: null,
+  attendance_notes: null,
+}
+
+/**
+ * Isi satu baris sesi yang dibuka di tabel jadwal.
+ *
+ * Server action ini memakai service role dan SEBELUMNYA tidak memeriksa apa
+ * pun: siapa saja yang bisa memanggilnya mendapat catatan tutor, catatan
+ * kehadiran, dan nilai asesmen murid mana pun. Yang menahannya hanya kebetulan
+ * — cuma halaman admin yang memuat komponennya, jadi cuma bundel admin yang
+ * membawa id action-nya. Itu bukan penjagaan.
+ *
+ * Sekarang penjaganya eksplisit, dan itulah yang memungkinkan tabel yang sama
+ * dipakai di portal keluarga: aturan siapa boleh membaca apa dijawab di sini,
+ * bukan oleh halaman mana yang kebetulan merendernya.
+ */
 export async function getJadwalSessionDetail(
   sessionId: string,
   studentId: string,
 ): Promise<JadwalSessionDetail> {
+  if (!(await bolehBacaMurid(studentId))) return DETAIL_KOSONG
+
   const admin = createAdminClient()
 
   const [sessionRes, attendanceRes, noteRes, materialsRes] = await Promise.all([

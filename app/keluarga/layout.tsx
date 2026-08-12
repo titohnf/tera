@@ -18,7 +18,10 @@ export default async function KeluargaLayout({ children }: { children: React.Rea
           profileHref="/keluarga"
         />
       </header>
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</main>
+      {/* max-w-5xl mengikuti `app/admin/layout.tsx`: beranda anak memakai
+          tata letak tiga kolom yang sama dengan halaman detail siswa admin, dan
+          di 3xl kolom kanannya terjepit. Di ponsel gridnya tetap menumpuk. */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</main>
     </div>
   )
 }
