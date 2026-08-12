@@ -4,6 +4,21 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+/**
+ * Tujuan yang aman untuk dituju setelah masuk.
+ *
+ * Hanya jalur relatif di dalam Tera yang diterima. Tanpa penyaringan ini,
+ * `?next=https://situs-lain/...` membuat halaman login kita jadi batu loncatan
+ * yang meyakinkan untuk memancing orang — mereka melihat domain Tera, masuk,
+ * lalu dilempar ke tempat lain. `//` ikut ditolak karena browser membacanya
+ * sebagai alamat berdomain lain.
+ */
+function tujuanAman(next: string | null): string {
+  if (!next) return '/'
+  if (!next.startsWith('/') || next.startsWith('//')) return '/'
+  return next
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +35,11 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
     } else {
-      window.location.href = '/'
+      // `/` menyortir tujuan menurut peran; `next` dipakai kalau pengguna
+      // datang dari tautan berkas atau halaman tertentu dan harus kembali ke
+      // sana, bukan ke berandanya.
+      const next = new URLSearchParams(window.location.search).get('next')
+      window.location.href = tujuanAman(next)
     }
     setLoading(false)
   }

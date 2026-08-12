@@ -4,6 +4,7 @@ import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
 import { getLaporanBulananData, type LaporanBulananData } from '@/lib/reports/laporan-bulanan'
+import { denyUnlessCanReadStudent } from '@/lib/api-auth'
 
 const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
 
@@ -190,6 +191,9 @@ export async function GET(
   { params }: { params: Promise<{ studentId: string }> },
 ) {
   const { studentId } = await params
+  const denied = await denyUnlessCanReadStudent(studentId, req)
+  if (denied) return denied
+
   const { searchParams } = new URL(req.url)
   const now = new Date()
   const month = searchParams.get('month') ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`

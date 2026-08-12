@@ -4,6 +4,7 @@ import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
+import { denyUnlessCanReadInvoice } from '@/lib/api-auth'
 
 const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
 const signaturePath = path.join(process.cwd(), 'public', 'ttd-stempel.png')
@@ -149,10 +150,13 @@ function PengingatPDF({ invoice, payments, totalPaid, sisaTagihan, chargeDescrip
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ invoiceId: string }> },
 ) {
   const { invoiceId } = await params
+  const denied = await denyUnlessCanReadInvoice(invoiceId, req)
+  if (denied) return denied
+
   const admin = createAdminClient()
 
   const [invoiceRes, paymentsRes] = await Promise.all([

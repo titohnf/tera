@@ -29,6 +29,17 @@ export default async function TagihanPage({
     .neq('status', 'draft')
     .order('issued_at', { ascending: false })
 
+  // Ringkasan yang sama dengan kolom "Pembayaran" di detail siswa milik admin.
+  // Tagihan yang dibatalkan tidak masuk hitungan tunggakan — ia memang sudah
+  // tidak ditagih, dan memasukkannya membuat angka di dua layar berbeda.
+  const rows = invoices ?? []
+  const sudahBayar = rows
+    .filter((i) => i.status === 'paid')
+    .reduce((s, i) => s + Number(i.total_due), 0)
+  const belumBayar = rows
+    .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
+    .reduce((s, i) => s + Number(i.total_due), 0)
+
   return (
     <div className="space-y-6">
       <div>
@@ -37,6 +48,23 @@ export default async function TagihanPage({
         </Link>
         <h1 className="text-xl font-semibold text-gray-900 mt-1">Tagihan</h1>
       </div>
+
+      {rows.length > 0 && (
+        <section className="rounded-xl bg-white shadow ring-1 ring-gray-900/5 p-5 grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-gray-400">Sudah dibayar</p>
+            <p className="text-lg font-semibold text-gray-900 tabular-nums">{rupiah(sudahBayar)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Belum dibayar</p>
+            <p
+              className={`text-lg font-semibold tabular-nums ${belumBayar > 0 ? 'text-red-600' : 'text-gray-900'}`}
+            >
+              {rupiah(belumBayar)}
+            </p>
+          </div>
+        </section>
+      )}
 
       {(invoices ?? []).length === 0 ? (
         <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
@@ -57,6 +85,12 @@ export default async function TagihanPage({
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold tabular-nums text-gray-900">{rupiah(Number(i.total_due))}</p>
+                  <a
+                    href={`/api/invoices/${i.id}/pdf`}
+                    className="text-xs font-medium text-blue-600 hover:underline"
+                  >
+                    Unduh PDF
+                  </a>
                   <span className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${s.kelas}`}>{s.teks}</span>
                 </div>
               </li>

@@ -46,7 +46,18 @@ export default async function LaporanPage({
         <div className="space-y-4">
           {(laporan ?? []).map((l) => (
             <section key={l.month} className="rounded-xl bg-white p-5 shadow ring-1 ring-gray-900/5">
-              <h2 className="text-sm font-semibold text-gray-900">{namaBulan(l.month)}</h2>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">{namaBulan(l.month)}</h2>
+                {/* Pengganti tautan PDF yang dulu terbuka tanpa login: di sini
+                    orang tua sudah masuk, dan route-nya kini memeriksa bahwa
+                    murid ini memang anaknya. */}
+                <a
+                  href={`/api/laporan-bulanan/${studentId}/pdf?month=${l.month}`}
+                  className="shrink-0 text-xs font-medium text-blue-600 hover:underline"
+                >
+                  Unduh PDF
+                </a>
+              </div>
               <div className="mt-3 space-y-3">
                 {bagian.map((b) =>
                   l[b.key] ? (

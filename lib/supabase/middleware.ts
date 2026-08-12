@@ -53,6 +53,10 @@ export async function updateSession(request: NextRequest) {
   if (!user && isDashboard) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    // Tujuan aslinya dibawa serta. Tanpa ini, tautan ke halaman tertentu selalu
+    // berakhir di beranda peran setelah masuk, dan orang harus mencari sendiri
+    // apa yang tadi mau dibukanya.
+    url.searchParams.set('next', pathname + request.nextUrl.search)
     return NextResponse.redirect(url)
   }
 
