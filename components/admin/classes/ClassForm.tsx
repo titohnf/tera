@@ -22,9 +22,10 @@ type SlotState = {
   tutorIds: (string | null)[]
   day: number | null
   time: string
+  effectiveFrom: string
 }
 
-type SlotDefault = { subjectIds: (string | null)[]; tutorIds: (string | null)[]; day: number | null; time: string }
+type SlotDefault = { subjectIds: (string | null)[]; tutorIds: (string | null)[]; day: number | null; time: string; effectiveFrom?: string | null }
 
 type DefaultValues = {
   name?: string
@@ -71,7 +72,7 @@ function buildClassName(classType: string, jenjang: string, grade: number | null
 }
 
 function emptySlot(): SlotState {
-  return { subjectIds: [null], tutorIds: [null], day: null, time: '' }
+  return { subjectIds: [null], tutorIds: [null], day: null, time: '', effectiveFrom: '' }
 }
 
 // Returns true if tutor can teach the given subject at the given jenjang
@@ -396,6 +397,23 @@ function SlotSegment({
           </div>
         </div>
 
+        {/* Berlaku mulai — batas tanggal regenerasi untuk hari ini */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            Berlaku Mulai <span className="normal-case font-normal text-gray-400">(opsional)</span>
+          </label>
+          <input
+            type="date"
+            value={slot.effectiveFrom}
+            onChange={e => onChange({ ...slot, effectiveFrom: e.target.value })}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Kosongkan kalau berlaku sejak kelas dimulai. Diisi = sesi{slot.day !== null ? ` ${DAY_NAMES[slot.day]}` : ''} sebelum tanggal ini tidak ikut diubah,
+            jadi mapel/tutor lama tetap tercatat di riwayat.
+          </p>
+        </div>
+
         {/* Mapel + tutor pairs — first is the fixed mapel, extras rotate week
             to week and each can have its own tutor */}
         <div className="space-y-3">
@@ -499,6 +517,7 @@ export default function ClassForm({
     tutorIds: s.tutorIds.length > 0 ? s.tutorIds : [null],
     day: s.day,
     time: s.time,
+    effectiveFrom: s.effectiveFrom ?? '',
   }))
   const [slotCount, setSlotCount] = useState(defaultSlots.length)
   const [slots, setSlots] = useState<SlotState[]>(defaultSlots)
@@ -615,6 +634,7 @@ export default function ClassForm({
       tutorIds: pairs.map(p => p.tutorId ?? ''),
       day: s.day,
       time: s.time,
+      effectiveFrom: s.effectiveFrom || null,
     }
   }))
 

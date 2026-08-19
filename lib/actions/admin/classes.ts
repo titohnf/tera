@@ -65,7 +65,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }
+  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string; effectiveFrom?: string | null }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -91,6 +91,14 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   if (slots.some(s => s.subjectIds.some((_, i) => !s.tutorIds[i]))) return { error: 'Setiap mata pelajaran harus memiliki tutor' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+  // Tanggal berlaku slot (opsional): dipakai untuk mengubah mapel/tutor sebuah
+  // hari mulai tanggal tertentu tanpa menulis ulang sesi sebelum tanggal itu.
+  if (slots.some(s => s.effectiveFrom && !DAY_RE.test(s.effectiveFrom))) {
+    return { error: 'Tanggal berlaku slot tidak valid' }
+  }
+  if (slots.some(s => s.effectiveFrom && s.effectiveFrom > endDate)) {
+    return { error: 'Tanggal berlaku slot tidak boleh melewati tanggal terakhir kelas' }
+  }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
   // invoices and tutor payroll — without it, invoices/payslips silently
   // compute a Rp0 rate instead of erroring. Yayasan classes skip parent
@@ -175,6 +183,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
       tutor_id: s.tutorIds[0] ?? null,
       tutor_ids: s.tutorIds,
       subject_ids: s.subjectIds,
+      effective_from: s.effectiveFrom || null,
     }))
   )
 
@@ -210,7 +219,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }
+  type SlotInput = { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string; effectiveFrom?: string | null }
 
   const name = (formData.get('name') as string)?.trim()
   const level = (formData.get('level') as string)?.trim() || null
@@ -237,6 +246,14 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   if (slots.some(s => s.subjectIds.some((_, i) => !s.tutorIds[i]))) return { error: 'Setiap mata pelajaran harus memiliki tutor' }
   if (!startDate || !endDate) return { error: 'Tanggal kelas pertama dan terakhir wajib diisi' }
   if (endDate < startDate) return { error: 'Tanggal terakhir harus setelah tanggal pertama' }
+  // Tanggal berlaku slot (opsional): dipakai untuk mengubah mapel/tutor sebuah
+  // hari mulai tanggal tertentu tanpa menulis ulang sesi sebelum tanggal itu.
+  if (slots.some(s => s.effectiveFrom && !DAY_RE.test(s.effectiveFrom))) {
+    return { error: 'Tanggal berlaku slot tidak valid' }
+  }
+  if (slots.some(s => s.effectiveFrom && s.effectiveFrom > endDate)) {
+    return { error: 'Tanggal berlaku slot tidak boleh melewati tanggal terakhir kelas' }
+  }
   // jenis (Reguler/Fokus) drives the billing_rates lookup for both parent
   // invoices and tutor payroll — without it, invoices/payslips silently
   // compute a Rp0 rate instead of erroring. Yayasan classes skip parent
@@ -290,6 +307,7 @@ export async function updateClass(classId: string, prevState: ActionState, formD
       tutor_id: s.tutorIds[0] ?? null,
       tutor_ids: s.tutorIds,
       subject_ids: s.subjectIds,
+      effective_from: s.effectiveFrom || null,
     }))
   )
 
@@ -327,9 +345,39 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   const localDateKey = (iso: string) =>
     new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
-  const idsToDelete = scheduledSessions.filter(s => !filledSessionIds.has(s.id)).map(s => s.id)
+  // Earliest date each weekday may be rebuilt from. A slot without an
+  // effective date still governs its weekday from the start of the class, so
+  // one such slot lifts the protection for that day entirely ('' below).
+  // A weekday with no slot at all is absent from the map, and its leftover
+  // sessions are deleted as before — the class no longer meets that day.
+  const rebuildFromByDay = new Map<number, string>()
+  for (const slot of slots) {
+    if (slot.day === null) continue
+    const current = rebuildFromByDay.get(slot.day)
+    if (current === '') continue
+    if (!slot.effectiveFrom) { rebuildFromByDay.set(slot.day, ''); continue }
+    if (current === undefined || slot.effectiveFrom < current) {
+      rebuildFromByDay.set(slot.day, slot.effectiveFrom)
+    }
+  }
+
+  // Sessions dated before their weekday's rebuild date are left exactly as
+  // they are — mapel, tutor, and all — whether or not the tutor ever filled
+  // them in. That is what makes "ubah mapel Selasa mulai Agustus" leave the
+  // Selasa sessions of earlier months untouched.
+  const isBeforeRebuild = (iso: string) => {
+    const dateKey = localDateKey(iso)
+    const dow = new Date(`${dateKey}T00:00:00Z`).getUTCDay()
+    const from = rebuildFromByDay.get(dow)
+    return from !== undefined && from !== '' && dateKey < from
+  }
+
+  const idsToDelete = scheduledSessions
+    .filter(s => !filledSessionIds.has(s.id) && !isBeforeRebuild(s.scheduled_at))
+    .map(s => s.id)
+  const deletedIds = new Set(idsToDelete)
   const preservedDateKeys = new Set(
-    scheduledSessions.filter(s => filledSessionIds.has(s.id)).map(s => localDateKey(s.scheduled_at))
+    scheduledSessions.filter(s => !deletedIds.has(s.id)).map(s => localDateKey(s.scheduled_at))
   )
 
   if (idsToDelete.length > 0) {
@@ -452,7 +500,7 @@ export async function updateEnrollmentWindow(
 }
 
 function generateSessionsFromSlots(
-  slots: { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string }[],
+  slots: { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string; effectiveFrom?: string | null }[],
   startDate: string,
   endDate: string,
   classId: string,
@@ -490,8 +538,13 @@ function generateSessionsFromSlots(
 
   while (current <= end) {
     const dow = current.getUTCDay() // 0=Sun..6=Sat
+    const dayKey = current.toISOString().slice(0, 10)
     slots.forEach((slot, slotIndex) => {
       if (slot.day === null || slot.day !== dow) return
+      // A slot that only takes effect from a given date generates nothing
+      // before it — and its rotation starts counting there too, so the first
+      // meeting under the new arrangement is the first subject in the list.
+      if (slot.effectiveFrom && dayKey < slot.effectiveFrom) return
       const occurrence = occurrenceCounts.get(slotIndex) ?? 0
       occurrenceCounts.set(slotIndex, occurrence + 1)
       const rotationIndex = slot.subjectIds.length > 0 ? occurrence % slot.subjectIds.length : 0
@@ -584,5 +637,11 @@ export async function unenrollStudent(
   await syncPrivateClassDraftInvoices(classId, ctx.admin)
   revalidatePath(`/admin/classes/${classId}`)
   revalidatePath(`/admin/classes/${classId}/edit`)
+  // Halaman siswanya ikut, karena aksi ini juga dipanggil dari sana lewat
+  // dialog "Nonaktifkan Siswa" (StudentStatusButton). Tanpa baris ini kelas
+  // yang baru dilepas masih terpampang sebagai "Kelas Aktif" di halaman tempat
+  // tombolnya ditekan — konvensi yang sama dengan setStudentIsActive().
+  revalidatePath(`/admin/siswa/${studentId}`)
+  revalidatePath('/admin/siswa')
   return null
 }

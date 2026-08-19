@@ -38,7 +38,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
     admin.from('subjects').select('id, name').order('name'),
     admin.from('tutor_subjects').select('tutor_id, subject_id, level'),
     admin.from('tutor_availability').select('tutor_id, day_of_week, start_time, end_time'),
-    admin.from('class_slots').select('slot_index, day_of_week, start_time, tutor_id, tutor_ids, subject_ids')
+    admin.from('class_slots').select('slot_index, day_of_week, start_time, tutor_id, tutor_ids, subject_ids, effective_from')
       .eq('class_id', classId).order('slot_index'),
     admin.from('class_students')
       .select('student_id, is_active, enrolled_at, unenrolled_at, profiles!student_id(id, full_name, email, level)')
@@ -148,6 +148,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ clas
                 tutorIds: r.tutor_ids?.length ? r.tutor_ids : (r.tutor_id ? [r.tutor_id] : [null]),
                 day: r.day_of_week ?? null,
                 time: r.start_time ? r.start_time.slice(0, 5) : '',
+                effectiveFrom: r.effective_from ?? '',
               })),
             }}
             showActiveToggle
