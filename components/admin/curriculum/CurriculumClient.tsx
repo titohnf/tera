@@ -29,6 +29,7 @@ interface Props {
   createCPsAction: (prevState: ActionState, formData: FormData) => Promise<ActionState>
   renameThemeAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null }, newName: string) => Promise<ActionState>
   deleteThemeAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null }) => Promise<ActionState>
+  moveThemeAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null }, direction: 'up' | 'down') => Promise<ActionState>
   renameTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string }, newName: string) => Promise<ActionState>
   deleteTopicAction: (ctx: { curriculum: string; subject_id: string; grade_level: string; semester: number; theme: string | null; topic: string }) => Promise<ActionState>
   updateAction: (id: string, prevState: ActionState, formData: FormData) => Promise<ActionState>
@@ -42,7 +43,7 @@ function gradeToLevel(grade: string): string {
   return 'SMA'
 }
 
-export default function CurriculumClient({ topics, subjects, createAction, createThemesAction, createTopicsAction, createCPsAction, updateAction, deleteAction, renameThemeAction, deleteThemeAction, renameTopicAction, deleteTopicAction }: Props) {
+export default function CurriculumClient({ topics, subjects, createAction, createThemesAction, createTopicsAction, createCPsAction, updateAction, deleteAction, renameThemeAction, deleteThemeAction, moveThemeAction, renameTopicAction, deleteTopicAction }: Props) {
   const [curriculum, setCurriculum] = useState<Curriculum>('Kurikulum Merdeka')
   const [curriculumOpen, setCurriculumOpen] = useState(false)
   const curriculumRef = useRef<HTMLDivElement>(null)
@@ -208,6 +209,7 @@ export default function CurriculumClient({ topics, subjects, createAction, creat
             createCPsAction={createCPsAction}
             renameThemeAction={renameThemeAction}
             deleteThemeAction={deleteThemeAction}
+            moveThemeAction={moveThemeAction}
             renameTopicAction={renameTopicAction}
             deleteTopicAction={deleteTopicAction}
             updateAction={updateAction}

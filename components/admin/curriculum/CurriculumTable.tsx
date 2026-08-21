@@ -50,6 +50,7 @@ interface Props {
   deleteAction: (id: string) => Promise<ActionState>
   renameThemeAction: (ctx: ThemeCtx, newName: string) => Promise<ActionState>
   deleteThemeAction: (ctx: ThemeCtx) => Promise<ActionState>
+  moveThemeAction: (ctx: ThemeCtx, direction: 'up' | 'down') => Promise<ActionState>
   renameTopicAction: (ctx: TopicCtx, newName: string) => Promise<ActionState>
   deleteTopicAction: (ctx: TopicCtx) => Promise<ActionState>
   openThemeKey: string | null
@@ -148,12 +149,12 @@ function themeBadgeClass(theme: string) {
   return 'bg-gray-50 text-gray-600'
 }
 
-export default function CurriculumTable({ topics, subjects, curriculumSubjects, filter, createAction, createThemesAction, createTopicsAction, createCPsAction, updateAction, deleteAction, renameThemeAction, deleteThemeAction, renameTopicAction, deleteTopicAction, openThemeKey, onToggleTheme, onOpenTheme }: Props) {
+export default function CurriculumTable({ topics, subjects, curriculumSubjects, filter, createAction, createThemesAction, createTopicsAction, createCPsAction, updateAction, deleteAction, renameThemeAction, deleteThemeAction, moveThemeAction, renameTopicAction, deleteTopicAction, openThemeKey, onToggleTheme, onOpenTheme }: Props) {
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null)
   const [addContext, setAddContext] = useState<AddContext | null>(null)
   const [editingTheme, setEditingTheme] = useState<ThemeCtx | null>(null)
   const [editingTopicName, setEditingTopicName] = useState<TopicCtx | null>(null)
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
 
   function handleDelete(id: string) {
     if (!confirm('Hapus CP ini?')) return
@@ -164,6 +165,13 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
     const label = ctx.theme ?? 'Lainnya'
     if (!confirm(`Hapus tema "${label}" beserta semua topik dan CP di dalamnya?`)) return
     startTransition(async () => { await deleteThemeAction(ctx) })
+  }
+
+  function handleMoveTheme(ctx: ThemeCtx, direction: 'up' | 'down') {
+    startTransition(async () => {
+      const result = await moveThemeAction(ctx, direction)
+      if (result?.error) alert(result.error)
+    })
   }
 
   function handleDeleteTopic(ctx: TopicCtx) {
@@ -240,6 +248,13 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                 const themeKey = `${subjectName}__${theme}`
                 const isCollapsed = openThemeKey !== themeKey
                 const themeNum = themeIdx + 1
+                const themeCtx: ThemeCtx = {
+                  curriculum: items[0].curriculum,
+                  subject_id: items[0].subject_id,
+                  grade_level: items[0].grade_level,
+                  semester: items[0].semester,
+                  theme: items[0].theme,
+                }
                 return (
                 <div
                   key={theme}
@@ -289,8 +304,31 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                                 Tambah Topik
                               </button>
                               <div className="w-px h-3 bg-gray-200" />
+                              {/* Urutan tema itu turunan dari sort_order baris-barisnya, jadi
+                                  memindahkannya berarti menukar angka urut dengan tema tetangga
+                                  — lihat moveTheme di lib/actions/admin/curriculum.ts */}
                               <button
-                                onClick={(e) => { e.stopPropagation(); setEditingTheme({ curriculum: items[0].curriculum, subject_id: items[0].subject_id, grade_level: items[0].grade_level, semester: items[0].semester, theme: items[0].theme }) }}
+                                onClick={(e) => { e.stopPropagation(); handleMoveTheme(themeCtx, 'up') }}
+                                disabled={isPending || themeIdx === 0}
+                                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400 disabled:cursor-not-allowed"
+                                title="Geser tema ke atas"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleMoveTheme(themeCtx, 'down') }}
+                                disabled={isPending || themeIdx === byTheme.size - 1}
+                                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400 disabled:cursor-not-allowed"
+                                title="Geser tema ke bawah"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingTheme(themeCtx) }}
                                 className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                                 title="Edit tema"
                               >
@@ -299,7 +337,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                                 </svg>
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteTheme({ curriculum: items[0].curriculum, subject_id: items[0].subject_id, grade_level: items[0].grade_level, semester: items[0].semester, theme: items[0].theme }) }}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteTheme(themeCtx) }}
                                 className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                                 title="Hapus tema"
                               >

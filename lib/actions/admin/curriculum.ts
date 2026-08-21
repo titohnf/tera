@@ -201,6 +201,76 @@ export async function renameTheme(ctx_: ThemeContext, newTheme: string): Promise
   return null
 }
 
+/**
+ * Menggeser satu tema ke atas atau ke bawah relatif tema tetangganya.
+ *
+ * Urutan tema tidak disimpan di mana pun: `CurriculumTable` menyusunnya dari
+ * `sort_order` TERKECIL milik baris-baris di dalamnya. Jadi memindahkan tema
+ * berarti menukar angka urut kedua blok, bukan mengubah satu kolom.
+ *
+ * Caranya: ambil seluruh nilai `sort_order` dari kedua blok, urutkan, lalu
+ * bagikan ulang ke baris-barisnya dalam urutan blok yang baru. Himpunan
+ * angkanya tetap persis sama, jadi tema lain tidak ikut bergeser dan nomor
+ * pertemuan tidak melompat — yang bertukar hanya siapa memakai angka yang mana.
+ */
+export async function moveTheme(ctx_: ThemeContext, direction: 'up' | 'down'): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+  const { curriculum, subject_id, grade_level, semester, theme } = ctx_
+
+  const { data: rows, error: fetchError } = await (ctx.admin
+    .from('curriculum_topics')
+    .select('id, theme, sort_order')
+    .eq('curriculum', curriculum).eq('subject_id', subject_id)
+    .eq('grade_level', grade_level).eq('semester', semester)
+    .order('sort_order') as unknown as Promise<{
+      data: { id: string; theme: string | null; sort_order: number }[] | null
+      error: { message: string } | null
+    }>)
+  if (fetchError) return { error: fetchError.message }
+
+  // Blok per tema, dalam urutan kemunculan pertama — barisnya sudah terurut
+  // `sort_order`, jadi urutan blok di sini sama dengan yang dilihat admin.
+  const blocks = new Map<string, { id: string; sort_order: number }[]>()
+  for (const row of rows ?? []) {
+    const key = row.theme ?? ''
+    const block = blocks.get(key)
+    if (block) block.push(row)
+    else blocks.set(key, [row])
+  }
+
+  // Diurutkan sama persis seperti tabelnya: berdasarkan `sort_order` terkecil
+  // di tiap blok. Sort-nya stabil, jadi blok dengan angka terkecil yang sama
+  // tetap dalam urutan kemunculannya.
+  const minSort = (key: string) => Math.min(...blocks.get(key)!.map(r => r.sort_order))
+  const keys = [...blocks.keys()].sort((a, b) => minSort(a) - minSort(b))
+  const index = keys.indexOf(theme ?? '')
+  if (index === -1) return { error: 'Tema tidak ditemukan' }
+
+  const neighbourIndex = direction === 'up' ? index - 1 : index + 1
+  if (neighbourIndex < 0 || neighbourIndex >= keys.length) return null // sudah di ujung
+
+  const current = blocks.get(keys[index])!
+  const neighbour = blocks.get(keys[neighbourIndex])!
+  const resequenced = direction === 'up' ? [...current, ...neighbour] : [...neighbour, ...current]
+  const slots = [...current, ...neighbour].map(r => r.sort_order).sort((a, b) => a - b)
+
+  const updates = resequenced
+    .map((row, i) => ({ id: row.id, sort_order: slots[i] }))
+    .filter((row, i) => row.sort_order !== resequenced[i].sort_order)
+
+  for (const row of updates) {
+    const { error } = await ctx.admin
+      .from('curriculum_topics')
+      .update({ sort_order: row.sort_order })
+      .eq('id', row.id)
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/admin/curriculum')
+  return null
+}
+
 export async function deleteTheme(ctx_: ThemeContext): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }

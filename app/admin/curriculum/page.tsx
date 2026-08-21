@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { createCurriculumTopic, createCurriculumThemes, createCurriculumTopics, createCurriculumCPs, updateCurriculumTopic, deleteCurriculumTopic, renameTheme, deleteTheme, renameTopic, deleteTopic } from '@/lib/actions/admin/curriculum'
+import { createCurriculumTopic, createCurriculumThemes, createCurriculumTopics, createCurriculumCPs, updateCurriculumTopic, deleteCurriculumTopic, renameTheme, deleteTheme, moveTheme, renameTopic, deleteTopic } from '@/lib/actions/admin/curriculum'
 import CurriculumClient from '@/components/admin/curriculum/CurriculumClient'
 
 export default async function CurriculumPage() {
@@ -47,6 +47,7 @@ export default async function CurriculumPage() {
         createCPsAction={createCurriculumCPs}
         renameThemeAction={renameTheme}
         deleteThemeAction={deleteTheme}
+        moveThemeAction={moveTheme}
         renameTopicAction={renameTopic}
         deleteTopicAction={deleteTopic}
         updateAction={updateCurriculumTopic}
