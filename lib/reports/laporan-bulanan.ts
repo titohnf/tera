@@ -1,6 +1,25 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { coversSession } from '@/lib/enrollment'
 
+/**
+ * Enam bulan terakhir sebagai `YYYY-MM`, terbaru dulu — jendela laporan yang
+ * ditawarkan halaman admin maupun portal keluarga.
+ *
+ * Dipusatkan di sini karena kedua halaman itu harus menawarkan bulan yang sama:
+ * begitu keduanya menghitung sendiri, admin dan orang tua bisa melihat daftar
+ * bulan yang berbeda dan mengira lawan bicaranya salah lihat.
+ *
+ * Menerima `sekarang` alih-alih membaca jam sendiri: membaca jam saat render
+ * dilarang lint `react-hooks/purity`, jadi pemanggil menyiapkannya lebih dulu
+ * (lihat `bulanIni` di lib/keluarga.ts).
+ */
+export function jendelaLaporan(sekarang: { tahun: number; bulan: number }): string[] {
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(Date.UTC(sekarang.tahun, sekarang.bulan - 1 - i, 1))
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+  })
+}
+
 export type LaporanStudent = {
   id: string
   full_name: string | null

@@ -8,25 +8,16 @@ import Link from 'next/link'
  * menonaktifkan, dan menghapus adalah alat kerja admin, bukan informasi tentang
  * anaknya. Halaman admin merendernya sendiri sebagai kartu terpisah.
  *
- * Judul "Profil" dibuang bersama akordeonnya; isinya toh cuma beberapa baris,
- * dan menyembunyikannya di balik satu ketukan tidak menghemat apa pun selain
- * satu baris tulisan.
- *
- * Blok profil dan orang tua itu sendiri hanya untuk admin (`tampilkanProfil`).
- * Bagi keluarga isinya adalah datanya sendiri yang sudah mereka ketahui — nama
- * dan nomor mereka sendiri, disalin dari formulir pendaftaran — jadi ia cuma
- * memakan ruang teratas tanpa memberi tahu apa pun.
+ * Blok profil (level, kelas, email, HP) dan orang tua sudah dibuang seluruhnya:
+ * bagi keluarga isinya adalah datanya sendiri yang sudah mereka ketahui, dan
+ * bagi admin data yang sama sudah ada di kepala halaman dan formulir ubah —
+ * jadi ia cuma memakan ruang teratas tanpa memberi tahu apa pun.
  *
  * `classHref` menentukan apakah nama kelas bisa diklik: admin menuju halaman
  * kelas, keluarga tidak punya halaman itu.
  */
 
 const HARI = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
-
-function tanggal(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-}
 
 function rupiah(n: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -71,8 +62,6 @@ export type SidebarKelas = {
 }
 
 export default function SiswaSidebar({
-  profil,
-  tampilkanProfil = false,
   kelasAktif,
   totalSesi,
   hadirPersen,
@@ -80,19 +69,9 @@ export default function SiswaSidebar({
   belumBayar,
   bergabung,
   studentId,
+  tampilkanId = true,
   classHref,
 }: {
-  /** Blok profil + orang tua. Admin saja. */
-  tampilkanProfil?: boolean
-  profil: {
-    level?: string | null
-    grade?: string | null
-    birth_date?: string | null
-    email?: string | null
-    phone?: string | null
-    parent_name?: string | null
-    parent_phone?: string | null
-  }
   kelasAktif: SidebarKelas[]
   totalSesi: number
   hadirPersen: number | null
@@ -100,6 +79,12 @@ export default function SiswaSidebar({
   belumBayar: number
   bergabung: string | null
   studentId: string
+  /**
+   * UUID mentah di blok Akun. Berguna bagi admin saat mencocokkan baris dengan
+   * basis data; bagi orang tua ia cuma deretan aksara yang memakan ruang, dan
+   * di ponsel ia membungkus jadi tiga baris di dasar halaman.
+   */
+  tampilkanId?: boolean
   classHref?: (id: string) => string
 }) {
   const masaBergabung = (() => {
@@ -113,29 +98,6 @@ export default function SiswaSidebar({
 
   return (
     <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5 space-y-4 [&>*+*]:border-t [&>*+*]:border-slate-100 [&>*+*]:pt-4">
-      {tampilkanProfil && (
-        <>
-          <div className="space-y-2">
-            {profil.level && <Baris label="Level">{profil.level}</Baris>}
-            {profil.grade && <Baris label="Kelas">{profil.grade}</Baris>}
-            {profil.birth_date && <Baris label="Tgl Lahir">{tanggal(profil.birth_date)}</Baris>}
-            <Baris label="Email">
-              <span className="break-all">{profil.email ?? '—'}</span>
-            </Baris>
-            {profil.phone && <Baris label="HP">{profil.phone}</Baris>}
-          </div>
-
-          {(profil.parent_name || profil.parent_phone) && (
-            <Bagian judul="Orang Tua">
-              <div className="space-y-2">
-                {profil.parent_name && <Baris label="Nama">{profil.parent_name}</Baris>}
-                {profil.parent_phone && <Baris label="HP">{profil.parent_phone}</Baris>}
-              </div>
-            </Bagian>
-          )}
-        </>
-      )}
-
       {kelasAktif.length > 0 && (
         <Bagian judul="Kelas Aktif">
           <div className="space-y-3">
@@ -220,9 +182,11 @@ export default function SiswaSidebar({
           </Baris>
           <Baris label="Masa bergabung">{masaBergabung}</Baris>
         </div>
-        <p className="font-mono text-[11px] text-gray-300 break-all mt-3 leading-relaxed">
-          {studentId}
-        </p>
+        {tampilkanId && (
+          <p className="font-mono text-[11px] text-gray-300 break-all mt-3 leading-relaxed">
+            {studentId}
+          </p>
+        )}
       </Bagian>
     </div>
   )

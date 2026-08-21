@@ -13,3 +13,17 @@
 export async function sekarangIso(): Promise<string> {
   return new Date().toISOString()
 }
+
+/**
+ * Bulan berjalan, dipisahkan dari badan komponen dengan alasan yang sama
+ * seperti `sekarangIso` di atas.
+ *
+ * Dulu tinggal di lib/keluarga.ts. Ia pindah ke sini begitu halaman detail
+ * siswa admin ikut memerlukannya: membaca jam bukan urusan portal keluarga, dan
+ * halaman admin tidak semestinya mengimpor modul keluarga cuma untuk tahu
+ * sekarang bulan berapa.
+ */
+export async function bulanIni(): Promise<{ tahun: number; bulan: number }> {
+  const d = new Date()
+  return { tahun: d.getFullYear(), bulan: d.getMonth() + 1 }
+}

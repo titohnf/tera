@@ -17,7 +17,7 @@ export default async function PenguasaanPage({
   params: Promise<{ studentId: string }>
 }) {
   const { studentId } = await params
-  const { anak } = await anakOrRedirect(studentId)
+  await anakOrRedirect(studentId)
   const supabase = await createClient()
 
   const { data: learner } = await supabase
@@ -75,8 +75,11 @@ export default async function PenguasaanPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={`/keluarga/${studentId}`} className="text-xs text-gray-400 hover:text-gray-600">
-          ← {anak.full_name}
+        {/* Pulang ke Profil, dari situlah halaman ini dibuka. Bilah navigasi
+            bawah tidak punya tempat untuknya — mendarat di Beranda membuat
+            pengunjung mengira ia tersesat. */}
+        <Link href={`/keluarga/${studentId}/profil`} className="text-xs text-gray-400 hover:text-gray-600">
+          ← Profil
         </Link>
         <h1 className="text-xl font-semibold text-gray-900 mt-1">Penguasaan</h1>
         <p className="text-sm text-gray-500 mt-0.5">

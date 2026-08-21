@@ -1,8 +1,10 @@
 import Link from 'next/link'
-import { anakOrRedirect, bulanIni } from '@/lib/keluarga'
+import { anakOrRedirect } from '@/lib/keluarga'
 import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import LaporanBulananView from '@/components/laporan/LaporanBulananView'
+import RiwayatTabs from '@/components/keluarga/RiwayatTabs'
 import { createClient } from '@/lib/supabase/server'
+import { bulanIni } from '@/lib/waktu'
 
 /**
  * Laporan bulanan yang dilihat keluarga — laporan yang SAMA dengan yang dibuka
@@ -34,7 +36,7 @@ export default async function LaporanAnak({
 }) {
   const { studentId } = await params
   const { month } = await searchParams
-  const { anak } = await anakOrRedirect(studentId)
+  await anakOrRedirect(studentId)
   const supabase = await createClient()
 
   const sekarang = await bulanIni()
@@ -71,13 +73,13 @@ export default async function LaporanAnak({
 
   return (
     <div className="space-y-6">
+      {/* Remah roti "← nama anak" dibuang: berpindah halaman sekarang urusan
+          bilah navigasi bawah, dan tautan kembali yang menumpuk di atasnya cuma
+          memberi dua jalan untuk satu hal. */}
+      <RiwayatTabs studentId={studentId} aktif="laporan" />
+
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <Link href={`/keluarga/${studentId}`} className="text-xs text-gray-400 hover:text-gray-600">
-            ← {anak.full_name}
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900 mt-1">Laporan Bulanan</h1>
-        </div>
+        <h1 className="text-lg font-semibold text-gray-900">Laporan Bulanan</h1>
         {report && (
           <a
             href={`/api/laporan-bulanan/${studentId}/pdf?month=${bulanDipilih}`}

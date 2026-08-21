@@ -43,11 +43,19 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
       .select('session_id, student_id, status')
       .gte('created_at', startOfMonth),
 
-    // Most recent session per student (limit large, we filter in JS)
+    // Sesi terakhir per siswa (limit besar, disaring di JS).
+    //
+    // Yang dihitung adalah sesi yang sudah LEWAT dan tidak dibatalkan, apa pun
+    // statusnya — bukan hanya `completed`. Sesi yang sudah berlangsung tapi
+    // absensinya belum diisi masih berstatus `scheduled`; kalau ia tidak
+    // dihitung, siswa yang les kemarin bisa dilaporkan "tidak ada sesi dalam 8
+    // hari" (W-SESI) atau bahkan KC-04. Yang terukur jadinya kerajinan tutor
+    // mengisi absensi, bukan apakah siswanya masih les.
     admin
       .from('sessions')
       .select('id, class_id, scheduled_at')
-      .eq('status', 'completed')
+      .neq('status', 'cancelled')
+      .lte('scheduled_at', now.toISOString())
       .order('scheduled_at', { ascending: false })
       .limit(2000),
 
@@ -108,7 +116,7 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
     attendanceBySession.get(a.session_id)!.set(a.student_id, a.status)
   }
 
-  // class → last completed session date
+  // class → tanggal sesi terakhir yang sudah lewat (tidak termasuk dibatalkan)
   const lastSessionByClass = new Map<string, Date>()
   for (const s of allSessions) {
     const existing = lastSessionByClass.get(s.class_id)

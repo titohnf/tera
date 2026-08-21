@@ -34,13 +34,6 @@ type PaymentRow = {
   created_at: string
 }
 
-function effectiveStatus(inv: InvoiceRow, today: string): string {
-  if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.due_date && inv.due_date < today) {
-    return 'overdue'
-  }
-  return inv.status
-}
-
 export default async function StudentInvoiceDetailPage({
   params,
 }: {
@@ -48,7 +41,6 @@ export default async function StudentInvoiceDetailPage({
 }) {
   const { studentId } = await params
   const admin = createAdminClient()
-  const today = new Date().toISOString().slice(0, 10)
 
   const [profileRes, invoicesRes, enrollmentsRes] = await Promise.all([
     admin.from('profiles').select('id, full_name, nickname, parent_name, parent_phone').eq('id', studentId).single(),
@@ -122,7 +114,6 @@ export default async function StudentInvoiceDetailPage({
       issued_at: inv.issued_at,
       due_date: inv.due_date,
       status: inv.status,
-      eff_status: effectiveStatus(inv, today),
       payments: paymentsByInvoice.get(inv.id) ?? [],
       isMonthly: inv.line_items.some(i => i.period),
       lineItems: inv.line_items,

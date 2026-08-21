@@ -44,12 +44,20 @@ export async function keluargaContext() {
   return { user, namaKeluarga: profile.full_name as string, anak }
 }
 
-/** Memastikan `studentId` di URL benar-benar anak keluarga ini. */
+/**
+ * Memastikan `studentId` di URL benar-benar anak keluarga ini.
+ *
+ * `jumlahAnak` ikut dikembalikan karena `anak` di sini menimpa daftar `anak`
+ * milik konteks — pemanggil kehilangan cara menghitungnya. Halaman anak
+ * memakainya untuk memutuskan apakah remah roti "Anak /" ada gunanya: keluarga
+ * beranak satu selalu dilempar langsung ke halaman ini, jadi tidak ada daftar
+ * untuk dituju kembali.
+ */
 export async function anakOrRedirect(studentId: string) {
   const ctx = await keluargaContext()
   const anak = ctx.anak.find((a) => a.id === studentId)
   if (!anak) redirect('/keluarga')
-  return { ...ctx, anak }
+  return { ...ctx, anak, jumlahAnak: ctx.anak.length }
 }
 
 export function tanggalPanjang(iso: string) {
@@ -71,16 +79,6 @@ export function tanggalPanjang(iso: string) {
  * termasuk membaca jam. Di server component asinkron hal itu sebenarnya sah,
  * tapi memisahkannya membuat maksudnya eksplisit dan lint tetap bersih.
  */
-/**
- * Bulan berjalan, dipisahkan dari badan komponen dengan alasan yang sama
- * seperti `sejakJam` di bawah: membaca jam saat render dilarang lint
- * `react-hooks/purity`.
- */
-export async function bulanIni() {
-  const d = new Date()
-  return { tahun: d.getFullYear(), bulan: d.getMonth() + 1 }
-}
-
 export async function sejakJam(toleransiJam: number) {
   return new Date(Date.now() - toleransiJam * 60 * 60 * 1000).toISOString()
 }

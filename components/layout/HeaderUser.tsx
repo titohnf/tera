@@ -9,9 +9,18 @@ import { useState, useRef, useEffect } from 'react'
 interface HeaderUserProps {
   user: { email: string; fullName: string; avatarUrl?: string | null }
   profileHref: string
+  /**
+   * Hanya avatar, tanpa nama dan tanpa panah — dipakai portal keluarga.
+   *
+   * Namanya toh sudah muncul di dalam menu begitu avatarnya diketuk, dan di
+   * ponsel nama panjang mendorong bilah atas jadi sesak. Admin dan tutor tetap
+   * memakai bentuk penuh: mereka bekerja di layar lebar dan sering berpindah
+   * akun, jadi nama yang selalu terlihat itu ada gunanya.
+   */
+  hanyaAvatar?: boolean
 }
 
-export default function HeaderUser({ user, profileHref }: HeaderUserProps) {
+export default function HeaderUser({ user, profileHref, hanyaAvatar = false }: HeaderUserProps) {
   const router = useRouter()
   const supabase = createClient()
   const [open, setOpen] = useState(false)
@@ -35,7 +44,10 @@ export default function HeaderUser({ user, profileHref }: HeaderUserProps) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        aria-label={hanyaAvatar ? `Menu akun ${user.fullName}` : undefined}
+        className={`flex items-center rounded-lg hover:bg-gray-100 transition-colors ${
+          hanyaAvatar ? 'gap-1 pl-1.5 pr-1 h-11' : 'gap-2 px-2 py-1.5'
+        }`}
       >
         <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
           {user.avatarUrl ? (
@@ -44,7 +56,11 @@ export default function HeaderUser({ user, profileHref }: HeaderUserProps) {
             user.fullName.charAt(0).toUpperCase()
           )}
         </div>
-        <span className="text-sm font-medium text-gray-800">{user.fullName}</span>
+        {!hanyaAvatar && (
+          <span className="text-sm font-medium text-gray-800">{user.fullName}</span>
+        )}
+        {/* Chevron tetap ada meski namanya disembunyikan: avatar sendirian
+            terbaca sebagai gambar, bukan sebagai tombol. */}
         <svg className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

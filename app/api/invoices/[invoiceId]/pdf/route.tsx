@@ -187,10 +187,15 @@ export async function GET(
 
   const buffer = await renderToBuffer(<InvoicePDF invoice={invoice} />)
 
+  // `?preview=1` menampilkan PDF-nya di tab, tanpa `?` mengunduhnya. Tombol
+  // "Lihat" memakai yang pertama, menu titik tiga yang kedua — pasangan yang
+  // sama dipakai halaman invoice admin lewat halaman cetaknya.
+  const pratinjau = req.nextUrl.searchParams.get('preview') === '1'
+
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="Invoice-${invoice.invoice_number}.pdf"`,
+      'Content-Disposition': `${pratinjau ? 'inline' : 'attachment'}; filename="Invoice-${invoice.invoice_number}.pdf"`,
     },
   })
 }

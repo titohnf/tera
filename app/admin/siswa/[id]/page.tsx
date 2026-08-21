@@ -3,13 +3,16 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { coversSession } from '@/lib/enrollment'
-import { sekarangIso } from '@/lib/waktu'
+import { sekarangIso, bulanIni } from '@/lib/waktu'
+import { todayWib } from '@/lib/daily-message'
+import { jendelaLaporan } from '@/lib/reports/laporan-bulanan'
 import { evaluateStudentCritical } from '@/lib/studentCritical'
 import CriticalDetailCard from '@/components/siswa/CriticalDetailCard'
-import UnenrollButton from '@/components/siswa/UnenrollButton'
 import StudentStatusButton from '@/components/admin/siswa/StudentStatusButton'
 import DeleteStudentButton from '@/components/admin/siswa/DeleteStudentButton'
 import JadwalTable from '@/components/siswa/JadwalTable'
+import SiswaTabs from '@/components/siswa/SiswaTabs'
+import TagihanList, { type PembayaranRow } from '@/components/siswa/TagihanList'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
@@ -67,6 +70,7 @@ type InvoiceRow = {
   due_date: string | null
   issued_at: string | null
   notes: string | null
+  classes: { name: string } | null
 }
 
 type AssessmentRow = {
@@ -83,22 +87,25 @@ type AssessmentResultRow = {
   feedback: string | null
 }
 
-type NoteRow = {
-  id: string
-  category: string
-  body: string
-  created_at: string
-  session_id: string
-  sessions: { scheduled_at: string; topic: string | null; class_id: string } | null
-  profiles: { full_name: string } | null
-}
-
-type Tab = 'jadwal' | 'tagihan' | 'catatan'
+/**
+ * Tab-nya sama persis dengan beranda anak di portal keluarga
+ * (`app/keluarga/[studentId]/page.tsx`) — termasuk "Laporan", yang dulu di sini
+ * bernama "Catatan" dan memuat daftar catatan performa mentah. Admin dan orang
+ * tua yang saling menelepon sambil melihat layar berbeda harus lebih dulu
+ * sepakat mereka sedang melihat hal yang sama; itu tidak mungkin kalau tab
+ * ketiganya saja sudah berbeda isi.
+ *
+ * Catatan performanya tidak hilang: Laporan Bulanan membacanya dari tabel yang
+ * sama (`performance_notes`, lihat lib/reports/laporan-bulanan.ts) dan
+ * mengelompokkannya per kategori — jadi admin kini membacanya per bulan, di
+ * halaman yang sama dengan yang dibuka orang tua.
+ */
+type Tab = 'jadwal' | 'tagihan' | 'laporan'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'jadwal',    label: 'Kelas' },
   { key: 'tagihan',   label: 'Tagihan' },
-  { key: 'catatan',   label: 'Catatan' },
+  { key: 'laporan',   label: 'Laporan' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -110,29 +117,12 @@ function getInitials(name: string | null): string {
   return ((parts[0][0] ?? '') + (parts[parts.length - 1][0] ?? '')).toUpperCase()
 }
 
-function formatDateShort(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
-}
-
 const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
 
 const STATUS_SESSION: Record<string, { label: string; cls: string }> = {
   scheduled: { label: 'Terjadwal',  cls: 'bg-blue-50 text-blue-500' },
   completed:  { label: 'Selesai',   cls: 'bg-green-50 text-green-600' },
   cancelled:  { label: 'Dibatalkan', cls: 'bg-red-50 text-red-400' },
-}
-
-const STATUS_INVOICE: Record<string, { label: string; cls: string }> = {
-  draft:     { label: 'Draft',      cls: 'bg-gray-100 text-gray-400' },
-  sent:      { label: 'Terkirim',   cls: 'bg-blue-50 text-blue-500' },
-  paid:      { label: 'Lunas',      cls: 'bg-green-50 text-green-600' },
-  overdue:   { label: 'Overdue',    cls: 'bg-red-50 text-red-500' },
-  cancelled: { label: 'Dibatalkan', cls: 'bg-gray-100 text-gray-400' },
 }
 
 const ATTENDANCE_STATUS: Record<string, { label: string; cls: string }> = {
@@ -275,19 +265,39 @@ export default async function SiswaDetailPage({
     }
   }
 
-  const [sessionsRes, attendancesRes, invoicesRes, notesRes] = await Promise.all([
+  const [sessionsRes, attendancesRes, invoicesRes, sesiLewatRes] = await Promise.all([
     allClassIds.length > 0
       ? admin.from('sessions').select('id, class_id, scheduled_at, topic, status, cancellation_reason, subject_id').in('class_id', allClassIds).eq('status', 'completed').order('scheduled_at', { ascending: false }).limit(200) as unknown as Promise<{ data: SessionRow[] | null }>
       : Promise.resolve({ data: [] as SessionRow[] }),
     admin.from('attendances').select('session_id, status').eq('student_id', studentId) as unknown as Promise<{ data: AttendanceRow[] | null }>,
-    admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes').eq('student_id', studentId).order('issued_at', { ascending: false }).limit(24) as unknown as Promise<{ data: InvoiceRow[] | null }>,
-    admin.from('performance_notes').select('id, category, body, created_at, session_id, sessions(scheduled_at, topic, class_id), profiles!tutor_id(full_name)').eq('student_id', studentId).order('created_at', { ascending: false }).limit(30) as unknown as Promise<{ data: NoteRow[] | null }>,
+    admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes, classes(name)').eq('student_id', studentId).order('issued_at', { ascending: false }).limit(24) as unknown as Promise<{ data: InvoiceRow[] | null }>,
+    // Sesi yang sudah LEWAT dan tidak dibatalkan — apa pun statusnya.
+    //
+    // Dipakai khusus untuk "kapan terakhir siswa ini les" (W-SESI dan KC-04),
+    // dan sengaja terpisah dari kueri `completed` di atas yang menyuapi
+    // statistik kehadiran. Dulu keduanya satu: sesi yang sudah berlangsung tapi
+    // absensinya belum diisi masih berstatus `scheduled`, jadi tidak dihitung,
+    // dan siswa yang les kemarin bisa dilaporkan "tidak ada sesi dalam 8 hari".
+    // Yang diukur jadinya kerajinan tutor mengisi absensi, bukan apakah
+    // siswanya masih les.
+    allClassIds.length > 0
+      ? admin.from('sessions').select('class_id, scheduled_at').in('class_id', allClassIds).neq('status', 'cancelled').lte('scheduled_at', new Date().toISOString()).order('scheduled_at', { ascending: false }).limit(50) as unknown as Promise<{ data: { class_id: string; scheduled_at: string }[] | null }>
+      : Promise.resolve({ data: [] as { class_id: string; scheduled_at: string }[] }),
   ])
 
   const sessions: SessionRow[] = (sessionsRes.data ?? []).filter(inWindow)
+  const sesiLewatTerakhir = (sesiLewatRes.data ?? []).filter(inWindow)[0] ?? null
   const attendances: AttendanceRow[] = attendancesRes.data ?? []
   const invoices: InvoiceRow[] = invoicesRes.data ?? []
-  const notes: NoteRow[] = notesRes.data ?? []
+
+  // Pembayaran per tagihan, untuk baris yang bisa dibuka di tab Tagihan.
+  const { data: pembayaranRows } = invoices.length > 0
+    ? await admin
+        .from('invoice_payments')
+        .select('id, invoice_id, amount, paid_at')
+        .in('invoice_id', invoices.map(i => i.id)) as unknown as { data: PembayaranRow[] | null }
+    : { data: null }
+  const pembayaran: PembayaranRow[] = pembayaranRows ?? []
 
   const sessionIds = sessions.map(s => s.id)
   let assessments: AssessmentRow[] = []
@@ -316,8 +326,25 @@ export default async function SiswaDetailPage({
       .in('class_id', activeClassIds)
       .order('scheduled_at', { ascending: false }) as unknown as { data: UpcomingSession[] | null }
     upcomingSessions = (allSessionsData ?? []).filter(inWindow)
-    const firstUpcoming = upcomingSessions.find(s => s.status === 'scheduled' && s.scheduled_at >= nowIso)
-    if (firstUpcoming) nextScheduledSessionDate = new Date(firstUpcoming.scheduled_at)
+
+    // Sesi terjadwal TERDEKAT — yang paling kecil tanggalnya, bukan yang
+    // pertama ditemukan.
+    //
+    // Kueri di atas mengurutkan menurun (`ascending: false`) demi tabel jadwal,
+    // jadi `.find()` di sini dulu memungut sesi terjadwal yang PALING JAUH.
+    // Akibatnya KL-02 ("Tidak ada sesi terjadwal dalam 14 hari ke depan")
+    // menyala untuk siswa yang sebenarnya punya sesi minggu depan, asalkan sesi
+    // terakhir di rangkaiannya lebih dari 14 hari lagi. Halaman daftar siswa
+    // sudah benar sejak awal — ia mengambil yang terkecil, lihat
+    // lib/supabase/studentCriticalQueries.ts:183 — sehingga kedua halaman
+    // menampilkan status berbeda untuk siswa yang sama.
+    const terjadwal = upcomingSessions.filter(
+      s => s.status === 'scheduled' && s.scheduled_at >= nowIso,
+    )
+    if (terjadwal.length > 0) {
+      const terdekat = terjadwal.reduce((a, b) => (a.scheduled_at <= b.scheduled_at ? a : b))
+      nextScheduledSessionDate = new Date(terdekat.scheduled_at)
+    }
   }
 
   const sessionSubjectIds = [...new Set([
@@ -385,7 +412,10 @@ export default async function SiswaDetailPage({
   const resultMap = new Map<string, AssessmentResultRow>()
   for (const r of assessmentResults) resultMap.set(r.assessment_id, r)
 
-  const today = new Date().toISOString().slice(0, 10)
+  // Hari ini menurut WIB, bukan UTC. `toISOString()` polos meleset satu hari
+  // antara pukul 00:00–06:59 WIB, dan di jam-jam itu tagihan yang jatuh tempo
+  // kemarin belum terhitung terlambat.
+  const today = todayWib()
   const completedSessions = sessions.filter(s => s.status === 'completed')
   const hadirCount = completedSessions.filter(s => { const st = attendanceMap.get(s.id); return st === 'present' || st === 'late' }).length
   const hadirPct = completedSessions.length > 0 ? Math.round((hadirCount / completedSessions.length) * 100) : null
@@ -439,14 +469,19 @@ export default async function SiswaDetailPage({
   })
 
   const tutorIsActive = enrolledClasses.length === 0 || enrolledClasses.some(c => c.tutor !== null)
-  const lastSessionDate = completedSessions.length > 0 ? new Date(completedSessions[0].scheduled_at) : null
+  const lastSessionDate = sesiLewatTerakhir ? new Date(sesiLewatTerakhir.scheduled_at) : null
   const enrolledAt = new Date(profile.created_at)
   const daysBetween = (a: Date, b: Date) => Math.floor((b.getTime() - a.getTime()) / 86_400_000)
 
   const criticalInput = {
     studentId: profile.id,
     studentName: profile.full_name ?? '',
-    isActive: true,
+    // Dulu dipaku `true`. Akibatnya siswa yang sudah dinonaktifkan tetap
+    // dievaluasi seolah masih les — semua aturan churn dan layanan disaring
+    // dengan `input.isActive` (lihat lib/studentCritical.ts), jadi ia bisa
+    // muncul sebagai "Belum di Kelas" atau "Tidak Ada Sesi" justru karena
+    // memang sudah berhenti.
+    isActive: profile.is_active ?? true,
     enrolledAt,
     attendanceRateThisMonth,
     sessionCountThisMonth: sessionsThisMonth.length,
@@ -465,6 +500,11 @@ export default async function SiswaDetailPage({
 
   const criticalResult = evaluateStudentCritical(criticalInput)
   const tabUrl = (t: Tab) => `/admin/siswa/${urlSlug}?tab=${t}`
+
+  // Jendela bulan yang SAMA dengan yang dilihat orang tua — keduanya memanggil
+  // `jendelaLaporan`, supaya admin dan orang tua tidak pernah menyebut daftar
+  // bulan yang berbeda saat saling menelepon.
+  const laporan = jendelaLaporan(await bulanIni())
 
   // ─── Schedule table ───────────────────────────────────────────────────────────
   const CLASS_PALETTE = [
@@ -487,7 +527,7 @@ export default async function SiswaDetailPage({
   const tabCounts: Partial<Record<Tab, number>> = {
     jadwal: enrolledClasses.length + historicalClasses.length,
     tagihan: invoices.length,
-    catatan: notes.length,
+    laporan: laporan.length,
   }
 
   return (
@@ -542,36 +582,31 @@ export default async function SiswaDetailPage({
             </div>
           </div>
 
+          {/* Status kritis, tepat di bawah nama.
+              Sempat tinggal di kolom kanan, tapi kolom itu sempit: deskripsi
+              kondisi, baris tindakan, dan tautan "Tangani" saling berdesakan
+              sampai tiap kondisi jadi beberapa baris pecah. Di kolom utama ia
+              muat dalam satu baris per kondisi, dan tetap terbaca lebih dulu
+              sebelum tab mana pun dibuka. */}
+          <CriticalDetailCard result={criticalResult} input={criticalInput} />
+
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
             {/* Tab nav */}
-            <div className="flex border-b border-slate-100 overflow-x-auto">
-              {TABS.map(t => {
-                const count = tabCounts[t.key]
-                return (
-                  <Link
-                    key={t.key}
-                    href={tabUrl(t.key)}
-                    className={`flex items-center gap-1.5 px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                      activeTab === t.key
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {t.label}
-                    {count !== undefined && count > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === t.key ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                        {count}
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
-            </div>
+            <SiswaTabs
+              tabs={TABS.map(t => ({ ...t, count: tabCounts[t.key] }))}
+              active={activeTab}
+              hrefFor={t => tabUrl(t as Tab)}
+            />
 
             {/* Tab: Jadwal */}
             {activeTab === 'jadwal' && (
               <div className="p-5 space-y-6">
+                {/* Tidak ada lagi daftar "Kelas Aktif" di sini. Ia dulu hadir
+                    demi tombol Keluar per kelas; begitu tombol itu pindah ke
+                    dialog "Nonaktifkan Siswa", yang tersisa cuma pengulangan —
+                    kelasnya sudah didaftar di kolom kanan, tutornya sudah
+                    tertulis di tiap sesi pada tabel di bawah. */}
                 <div>
                   <JadwalTable
                     sekarangIso={sekarang}
@@ -605,48 +640,9 @@ export default async function SiswaDetailPage({
             {/* Tab: Tagihan */}
             {activeTab === 'tagihan' && (
               <div>
-                {invoices.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-10">Belum ada tagihan.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          <th className="px-5 py-3 text-left">Deskripsi</th>
-                          <th className="px-4 py-3 text-left hidden sm:table-cell">Tanggal</th>
-                          <th className="px-4 py-3 text-left hidden sm:table-cell">Jatuh Tempo</th>
-                          <th className="px-4 py-3 text-right">Nominal</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3" />
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {invoices.map(inv => {
-                          const isOverdue = inv.status !== 'paid' && inv.due_date && inv.due_date < today
-                          const invSt = isOverdue ? { label: 'Overdue', cls: 'bg-red-100 text-red-600' } : (STATUS_INVOICE[inv.status] ?? { label: inv.status, cls: 'bg-gray-100 text-gray-500' })
-                          return (
-                            <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-5 py-3 text-gray-700">{inv.invoice_number ?? inv.notes ?? '—'}</td>
-                              <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{formatDateShort(inv.issued_at)}</td>
-                              <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{formatDateShort(inv.due_date)}</td>
-                              <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(inv.total_due)}</td>
-                              <td className="px-4 py-3">
-                                <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${invSt.cls}`}>{invSt.label}</span>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <Link href={`/admin/invoices/${inv.id}`}>
-                                  <svg className="w-4 h-4 text-gray-300 hover:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
-                                </Link>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <div className="p-5">
+                  <TagihanList tagihan={invoices} pembayaran={pembayaran} hariIni={today} untuk="admin" />
+                </div>
                 <div className="px-5 py-3 border-t border-slate-100">
                   <Link href={`/admin/invoices/new?student_id=${studentId}`} className="text-sm font-medium text-blue-600 hover:underline">
                     + Buat Tagihan
@@ -655,66 +651,32 @@ export default async function SiswaDetailPage({
               </div>
             )}
 
-            {/* Tab: Catatan */}
-            {activeTab === 'catatan' && (
-              <div className="p-5 space-y-4">
-                <CriticalDetailCard result={criticalResult} input={criticalInput} />
-
-                {/* Kelas aktif */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                    Kelas Aktif ({enrolledClasses.length})
-                  </p>
-                  {enrolledClasses.length === 0 ? (
-                    <p className="text-sm text-gray-400 py-4 text-center">Tidak ada kelas aktif saat ini.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {enrolledClasses.map(cls => (
-                        <div key={cls.id} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                          <Link href={`/admin/classes/${cls.id}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
-                            <p className="text-sm font-semibold text-gray-800">{cls.name}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {cls.tutor ? cls.tutor.full_name : 'Belum ada tutor'}
-                              {cls.level && ` · ${cls.level}`}
-                            </p>
-                          </Link>
-                          <div className="flex items-center gap-2 shrink-0 ml-3">
-                            <UnenrollButton classId={cls.id} studentId={studentId} />
-                            <Link href={`/admin/classes/${cls.id}`}>
-                              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-
-                {/* Catatan performa */}
-                {notes.length > 0 && (
-                  <div className="border-t border-slate-100 pt-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                      Catatan Performa ({notes.length})
-                    </p>
-                    <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
-                      {notes.map(note => (
-                        <div key={note.id} className="px-4 py-4">
-                          {note.category !== '_' && (
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{note.category}</p>
-                          )}
-                          <p className="text-sm text-gray-800 leading-relaxed">{note.body}</p>
-                          <p className="text-xs text-gray-400 mt-1.5">
-                            {note.profiles?.full_name ?? 'Tutor'}
-                            {note.sessions && ` · ${formatDateShort(note.sessions.scheduled_at)}`}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Tab: Laporan — bentuk dan isinya sama dengan tab Laporan di
+                portal keluarga, hanya tautannya menuju halaman admin. */}
+            {activeTab === 'laporan' && (
+              <div className="p-5">
+                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100 overflow-hidden">
+                  {laporan.map(m => {
+                    const [y, mo] = m.split('-').map(Number)
+                    return (
+                      <li key={m}>
+                        <Link
+                          href={`/admin/laporan-bulanan?student_id=${studentId}&month=${m}`}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                        >
+                          <span className="text-sm text-gray-800">
+                            {new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString('id-ID', {
+                              month: 'long',
+                              year: 'numeric',
+                              timeZone: 'UTC',
+                            })}
+                          </span>
+                          <span className="text-xs text-blue-600">Buka →</span>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
             )}
           </div>
@@ -723,8 +685,6 @@ export default async function SiswaDetailPage({
         {/* Sidebar */}
         <div className="space-y-4">
           <SiswaSidebar
-            tampilkanProfil
-            profil={profile}
             kelasAktif={enrolledClasses.filter(c => c.is_active)}
             totalSesi={completedSessions.length}
             hadirPersen={hadirPct}
@@ -761,6 +721,7 @@ export default async function SiswaDetailPage({
                 userId={studentId}
                 isActive={profile.is_active ?? true}
                 studentName={profile.full_name ?? 'Siswa'}
+                kelasAktif={enrolledClasses.map(c => ({ id: c.id, name: c.name }))}
               />
               {/* Dipisah garis supaya tidak tertekan saat yang dimaksud
                   sebenarnya "nonaktifkan" — yang ini tidak bisa dibatalkan. */}

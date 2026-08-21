@@ -68,7 +68,10 @@ export default function LaporanBulananView({
 
       <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Ringkasan Kehadiran</h2>
-        <div className="grid grid-cols-5 gap-3 text-center">
+        {/* Lima kolom di layar 375px menyisakan ~62px per kolom — persis selebar
+            label terpanjangnya ("Terlambat"), jadi tidak ada ruang bernapas sama
+            sekali. Tiga kolom di ponsel memberi ~103px. */}
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 text-center">
           <div>
             <p className="text-xl font-bold text-gray-800">{report.attendanceSummary.total}</p>
             <p className="text-xs text-gray-400 mt-0.5">Total Sesi</p>
@@ -103,7 +106,41 @@ export default function LaporanBulananView({
         {report.sessions.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">Belum ada sesi terlaksana di bulan ini.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Ponsel: satu sesi satu kartu. Kolom "Topik / Tema" memuat teks
+              bebas dari tutor — tema, capaian pembelajaran, catatan attitude —
+              yang di dalam sel tabel selebar ponsel akan terperas jadi satu
+              lajur sempit. */}
+          <div className="lg:hidden divide-y divide-slate-100 border-t border-slate-100">
+            {report.sessions.map(s => {
+              const att = s.attendance_status ? KEHADIRAN[s.attendance_status] : null
+              return (
+                <div key={s.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-gray-800">{formatDate(s.scheduled_at)}</p>
+                    {att ? (
+                      <span className={`shrink-0 whitespace-nowrap text-xs font-medium px-2 py-0.5 rounded-full ${att.cls}`}>{att.label}</span>
+                    ) : (
+                      <span className="shrink-0 whitespace-nowrap text-xs text-gray-300">Belum ditandai</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {s.topic ?? s.custom_theme ?? <span className="text-gray-300">—</span>}
+                  </p>
+                  {s.custom_learning_outcomes && s.custom_learning_outcomes.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">{s.custom_learning_outcomes.join(', ')}</p>
+                  )}
+                  {s.attitude_note && (
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      <span className="font-medium text-gray-400">Attitude:</span> {s.attitude_note}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-t border-b bg-gray-50">
                 <tr>
@@ -142,6 +179,7 @@ export default function LaporanBulananView({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
@@ -150,7 +188,28 @@ export default function LaporanBulananView({
         {report.assessments.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">Belum ada asesmen di bulan ini.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Ponsel: nilai naik ke atas sebagai angka besar. Kolom Feedback
+              adalah teks bebas tutor dan bisa panjang; di sel tabel selebar
+              ponsel ia jadi lajur satu-dua kata per baris. */}
+          <div className="lg:hidden divide-y divide-slate-100 border-t border-slate-100">
+            {report.assessments.map(a => (
+              <div key={a.id} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{a.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(a.scheduled_at)}</p>
+                  </div>
+                  <p className="shrink-0 whitespace-nowrap text-base font-semibold text-gray-900 tabular-nums">
+                    {a.score !== null ? <>{a.score} <span className="text-sm font-normal text-gray-400">/ {a.max_score}</span></> : <span className="text-gray-300">—</span>}
+                  </p>
+                </div>
+                {a.feedback && <p className="text-sm text-gray-500 mt-1.5">{a.feedback}</p>}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-t border-b bg-gray-50">
                 <tr>
@@ -178,6 +237,7 @@ export default function LaporanBulananView({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 

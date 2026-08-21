@@ -1,362 +1,178 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { anakOrRedirect, bulanIni } from '@/lib/keluarga'
-import { hitungKehadiran } from '@/lib/kehadiran'
-import { coversSession } from '@/lib/enrollment'
+import { anakOrRedirect } from '@/lib/keluarga'
+import { sesiBerikutnya, sisaTagihan } from '@/lib/keluarga-anak'
 import { sekarangIso } from '@/lib/waktu'
-import SiswaHeaderCard from '@/components/siswa/SiswaHeaderCard'
-import SiswaTabs from '@/components/siswa/SiswaTabs'
-import SiswaSidebar from '@/components/siswa/SiswaSidebar'
-import RiwayatKelas from '@/components/siswa/RiwayatKelas'
-import JadwalTable from '@/components/siswa/JadwalTable'
-
-const rupiah = (n: number) => `Rp ${n.toLocaleString('id-ID')}`
-
-const statusTagihan: Record<string, { teks: string; kelas: string }> = {
-  paid: { teks: 'Lunas', kelas: 'bg-green-100 text-green-700' },
-  sent: { teks: 'Belum dibayar', kelas: 'bg-yellow-100 text-yellow-700' },
-  overdue: { teks: 'Terlambat', kelas: 'bg-red-100 text-red-600' },
-  cancelled: { teks: 'Dibatalkan', kelas: 'bg-gray-100 text-gray-500' },
-}
+import BannerPromosi from '@/components/keluarga/BannerPromosi'
 
 /**
- * Beranda anak di portal keluarga — bentuknya sama dengan halaman detail siswa
- * milik admin: kartu identitas, bilah tab, lalu kolom ringkasan di kanan.
+ * Beranda seorang anak — layar pertama yang dilihat orang tua.
  *
- * Sebelumnya halaman ini punya wajahnya sendiri: dua kartu daftar dan sepetak
- * menu. Isinya memang berangkat dari data yang sama, tapi orang tua dan admin
- * yang saling menelepon sambil melihat layar berbeda harus lebih dulu sepakat
- * mereka sedang melihat hal yang sama — dan itu jauh lebih mudah kalau
- * halamannya memang terlihat sama.
+ * Isinya sengaja sedikit. Versi sebelumnya menaruh seluruh portal di sini:
+ * kartu identitas, ringkasan, empat tab berisi daftar sesi, tagihan, laporan,
+ * dan bahan belajar. Semuanya benar-benar dipakai, tapi bukan pada kunjungan
+ * yang sama — dan menumpuknya di satu layar membuat yang paling sering dicari
+ * ("kapan les berikutnya") harus dicari juga. Yang lain sekarang punya
+ * rutenya sendiri di bilah navigasi bawah.
  *
- * Tab "Catatan" milik admin tidak ada di sini. Catatan performa tutor sampai ke
- * orang tua di dalam Laporan Bulanan, tempat catatan itu dirakit; menaruhnya
- * dua kali cuma mengulang isi yang sama.
- *
- * Yang tetap milik admin: tombol Edit, Aksi (buat tagihan, jadwalkan sesi,
- * nonaktifkan, hapus), status kritis, dan blok Akun berisi UUID. Semuanya alat
- * kerja, bukan informasi tentang anaknya.
+ * Sisa tagihan tetap ikut, meski Tagihan sudah punya halaman sendiri: ia satu-
+ * satunya hal di portal ini yang menuntut tindakan, dan hal yang menuntut
+ * tindakan tidak boleh menunggu diketuk untuk terlihat. Ia hilang sendiri
+ * begitu lunas.
  */
-export default async function AnakBeranda({
-  params,
-  searchParams,
+
+// Sora tinggal di aplikasi terpisah (repo `form`) yang berbagi database dengan
+// Tera, jadi tautannya tidak bisa ditulis sebagai rute Next. Kalau env ini
+// kosong, kartunya tetap tampil tapi tidak bisa diketuk — lebih jujur daripada
+// menautkannya ke alamat tebakan yang berujung halaman 404.
+const SORA_URL = process.env.NEXT_PUBLIC_SORA_URL ?? ''
+
+function rupiah(n: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(n)
+}
+
+function KartuAplikasi({
+  nama,
+  keterangan,
+  teks,
+  href,
+  warna,
+  ikon,
 }: {
-  params: Promise<{ studentId: string }>
-  searchParams: Promise<{ tab?: string }>
+  nama: string
+  keterangan?: string
+  teks: string
+  href: string | null
+  warna: string
+  ikon: React.ReactNode
 }) {
-  const { studentId } = await params
-  const { tab } = await searchParams
-  const { anak } = await anakOrRedirect(studentId)
-  const supabase = await createClient()
+  const isi = (
+    <>
+      <span className={`w-11 h-11 rounded-xl ${warna} flex items-center justify-center shrink-0`}>
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {ikon}
+        </svg>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-lg font-bold tracking-tight text-gray-900">
+          {nama}
+          {keterangan && (
+            <span className="ml-1.5 text-xs font-medium text-gray-400 align-middle">
+              {keterangan}
+            </span>
+          )}
+        </span>
+        <span className="block text-sm text-gray-500 mt-0.5 leading-relaxed">{teks}</span>
+      </span>
+    </>
+  )
 
-  const waktuSekarang = await sekarangIso()
+  const dasar = 'flex items-start gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5'
 
-  const aktif = tab === 'tagihan' || tab === 'laporan' ? tab : 'jadwal'
-
-  const { data: profil } = await supabase
-    .from('profiles')
-    .select('full_name, nickname, grade, level, birth_date, email, phone, parent_name, parent_phone, created_at, is_active, avatar_url')
-    .eq('id', studentId)
-    .maybeSingle()
-
-  const { data: kelasRows } = await supabase
-    .from('class_students')
-    .select('class_id, is_active, enrolled_at, unenrolled_at, classes(name, schedule_days, schedule_time)')
-    .eq('student_id', studentId)
-
-  const kelas = (kelasRows ?? []) as unknown as {
-    class_id: string
-    is_active: boolean
-    enrolled_at: string | null
-    unenrolled_at: string | null
-    classes: { name: string; schedule_days: number[] | null; schedule_time: string | null } | null
-  }[]
-  const classIds = kelas.map((k) => k.class_id)
-
-  const { data: sesiRows } = classIds.length
-    ? await supabase
-        .from('sessions')
-        .select('id, class_id, scheduled_at, topic, status, cancellation_reason, subject_id, tutor_id')
-        .in('class_id', classIds)
-        .order('scheduled_at', { ascending: false })
-    : { data: null }
-  const semuaSesi = (sesiRows ?? []) as unknown as {
-    id: string
-    class_id: string
-    scheduled_at: string
-    topic: string | null
-    status: string
-    subject_id: string | null
-    tutor_id: string | null
-  }[]
-
-  // Sesi di luar masa anak ini ikut kelasnya dibuang — aturan yang sama dengan
-  // halaman detail siswa admin (`inWindow` di sana). Kelas hidup lebih lama
-  // daripada keanggotaan muridnya: anak yang baru masuk Agustus tidak punya
-  // urusan dengan sesi Juli kelasnya, dan menampilkannya di sini membuat jumlah
-  // sesi serta persentase kehadiran berbeda dengan yang dilihat admin.
-  const rentangKelas = new Map(kelas.map((k) => [k.class_id, k] as const))
-  const sesi = semuaSesi.filter((s) => {
-    const rentang = rentangKelas.get(s.class_id)
-    return rentang ? coversSession(rentang, s.scheduled_at) : false
-  })
-
-  const { data: hadirRows } = await supabase
-    .from('attendances')
-    .select('session_id, status')
-    .eq('student_id', studentId)
-
-  const attendanceMap: Record<string, string> = {}
-  for (const a of hadirRows ?? []) attendanceMap[a.session_id as string] = a.status as string
-
-  const { data: mapelRows } = await supabase.from('subjects').select('id, name')
-  const subjectNameMap: Record<string, string> = {}
-  for (const m of mapelRows ?? []) subjectNameMap[m.id as string] = m.name as string
-
-  const { data: tutorRows } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .in('id', [...new Set(sesi.map((s) => s.tutor_id).filter(Boolean))] as string[])
-  const namaTutor = new Map((tutorRows ?? []).map((t) => [t.id as string, t.full_name as string]))
-  const sessionTutorMap: Record<string, string> = {}
-  for (const s of sesi) if (s.tutor_id) sessionTutorMap[s.id] = namaTutor.get(s.tutor_id) ?? ''
-
-  // Invoice draft belum diterbitkan ke keluarga — angkanya masih bisa berubah.
-  const { data: invoiceRows } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, total_due, status, due_date, issued_at')
-    .eq('student_id', studentId)
-    .neq('status', 'draft')
-    .order('issued_at', { ascending: false })
-  const invoices = invoiceRows ?? []
-
-  // Jendela enam bulan yang SAMA dengan halaman laporan. Sempat di sini daftar
-  // ini diambil dari `monthly_report_notes`, dan tab-nya berkata "belum ada
-  // laporan" sementara halamannya membuka rekap penuh — dua jawaban berbeda
-  // untuk satu pertanyaan, di halaman yang sama.
-  const sekarang = await bulanIni()
-  const laporan = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(Date.UTC(sekarang.tahun, sekarang.bulan - 1 - i, 1))
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
-  })
-
-  const { total, persen } = hitungKehadiran(sesi, new Map(Object.entries(attendanceMap)))
-  const sudahBayar = invoices
-    .filter((i) => i.status === 'paid')
-    .reduce((s, i) => s + Number(i.total_due), 0)
-  const belumBayar = invoices
-    .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
-    .reduce((s, i) => s + Number(i.total_due), 0)
-
-  const kelasAktif = kelas.filter((k) => k.is_active)
-  const kelasLampau = kelas.filter((k) => !k.is_active)
-
-  // Tabel sesi hanya memuat kelas aktif, persis seperti halaman detail siswa
-  // admin. Kelas yang sudah selesai diringkas di bawahnya lewat RiwayatKelas,
-  // supaya ia tidak hilang sama sekali dari pandangan orang tua.
-  const idKelasAktif = new Set(kelasAktif.map((k) => k.class_id))
-  const sesiAktif = sesi.filter((s) => idKelasAktif.has(s.class_id))
-
-  const ringkasanLampau = kelasLampau.map((k) => {
-    const sesiKelas = sesi
-      .filter((s) => s.class_id === k.class_id)
-      .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
-    return {
-      id: k.class_id,
-      name: k.classes?.name ?? 'Kelas',
-      subject_names: mapelPerKelas.get(k.class_id) ?? [],
-      jumlahSesi: sesiKelas.length,
-      mulai: sesiKelas[0]?.scheduled_at ?? null,
-      selesai: sesiKelas.at(-1)?.scheduled_at ?? null,
-    }
-  })
-
-  // Mapel per kelas disimpulkan dari sesinya — sama seperti yang dilakukan
-  // halaman admin, karena kelas tidak menyimpan daftar mapelnya sendiri.
-  const mapelPerKelas = new Map<string, string[]>()
-  for (const s of sesi) {
-    if (!s.subject_id) continue
-    const nama = subjectNameMap[s.subject_id]
-    if (!nama) continue
-    const daftar = mapelPerKelas.get(s.class_id) ?? []
-    if (!daftar.includes(nama)) daftar.push(nama)
-    mapelPerKelas.set(s.class_id, daftar)
+  if (!href) {
+    return <div className={`${dasar} opacity-60`}>{isi}</div>
   }
 
-  const tabUrl = (t: string) => `/keluarga/${studentId}?tab=${t}`
+  return (
+    <a
+      href={href}
+      className={`${dasar} active:bg-slate-50 hover:ring-blue-300 transition`}
+    >
+      {isi}
+    </a>
+  )
+}
+
+export default async function AnakBeranda({
+  params,
+}: {
+  params: Promise<{ studentId: string }>
+}) {
+  const { studentId } = await params
+  const { anak } = await anakOrRedirect(studentId)
+
+  const sekarang = await sekarangIso()
+  const [sesi, belumBayar] = await Promise.all([
+    sesiBerikutnya(studentId, sekarang),
+    sisaTagihan(studentId),
+  ])
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link href="/keluarga" className="hover:text-blue-600 transition-colors">
-          Anak
+    <div className="space-y-4">
+      <BannerPromosi />
+
+      {belumBayar > 0 && (
+        <Link
+          href={`/keluarga/${studentId}/tagihan`}
+          className="flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-red-200 active:bg-slate-50 transition"
+        >
+          <span>
+            <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Belum dibayar
+            </span>
+            <span className="block text-lg font-bold text-red-600 tabular-nums mt-0.5">
+              {rupiah(belumBayar)}
+            </span>
+          </span>
+          <span className="text-sm font-medium text-blue-600 shrink-0">Lihat →</span>
         </Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">{anak.full_name}</span>
-      </div>
+      )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5">
-          <SiswaHeaderCard
-            fullName={profil?.full_name ?? anak.full_name}
-            nickname={profil?.nickname as string | null}
-            grade={profil?.grade as string | null}
-            isActive={(profil?.is_active as boolean | null) ?? true}
-            avatarUrl={profil?.avatar_url as string | null}
-          />
+      <Link
+        href={`/keluarga/${studentId}/jadwal`}
+        className="block rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5 active:bg-slate-50 hover:ring-blue-300 transition"
+      >
+        <p className="text-sm font-semibold text-gray-900">Jadwal bimbel berikutnya</p>
+        {sesi ? (
+          <>
+            <p className="text-base text-gray-900 mt-2">
+              {new Date(sesi.scheduled_at).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+              {', '}
+              {new Date(sesi.scheduled_at).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {[sesi.mapel, sesi.topik, sesi.tutor && `bersama ${sesi.tutor}`]
+                .filter(Boolean)
+                .join(' · ') || 'Belum ada rincian materi'}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-400 mt-2">
+            Belum ada sesi terjadwal untuk {anak.full_name}.
+          </p>
+        )}
+      </Link>
 
-          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 overflow-hidden">
-            <SiswaTabs
-              tabs={[
-                { key: 'jadwal', label: 'Kelas' },
-                { key: 'tagihan', label: 'Tagihan', count: invoices.length },
-                { key: 'laporan', label: 'Laporan', count: laporan.length },
-              ]}
-              active={aktif}
-              hrefFor={tabUrl}
-            />
+      <KartuAplikasi
+        nama="SORA"
+        teks="Kumpulan materi dan soal latihan."
+        href={SORA_URL || null}
+        warna="bg-blue-50 text-blue-600"
+        ikon={
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        }
+      />
 
-            {aktif === 'jadwal' && (
-              <div className="p-5 space-y-6">
-                <JadwalTable
-                  sekarangIso={waktuSekarang}
-                  sessions={sesiAktif}
-                  enrolledClasses={kelasAktif.map((k) => ({
-                    id: k.class_id,
-                    name: k.classes?.name ?? null,
-                    is_active: k.is_active,
-                    subject_name: null,
-                    tutor: null,
-                  }))}
-                  subjectNameMap={subjectNameMap}
-                  attendanceMap={attendanceMap}
-                  sessionTutorMap={sessionTutorMap}
-                  studentId={studentId}
-                />
-                <RiwayatKelas kelas={ringkasanLampau} />
-              </div>
-            )}
-
-            {aktif === 'tagihan' && (
-              <div className="p-5">
-                {invoices.length === 0 ? (
-                  <p className="text-sm text-gray-400 py-6 text-center">Belum ada tagihan.</p>
-                ) : (
-                  <div className="overflow-x-auto rounded-lg border border-slate-100">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        <tr>
-                          <th className="text-left px-4 py-2.5">Nomor</th>
-                          <th className="text-left px-4 py-2.5">Jatuh tempo</th>
-                          <th className="text-left px-4 py-2.5">Status</th>
-                          <th className="text-right px-4 py-2.5">Jumlah</th>
-                          <th className="px-4 py-2.5" />
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {invoices.map((i) => {
-                          const s = statusTagihan[i.status as string] ?? {
-                            teks: i.status as string,
-                            kelas: 'bg-gray-100 text-gray-600',
-                          }
-                          return (
-                            <tr key={i.id as string}>
-                              <td className="px-4 py-3 text-gray-800">{i.invoice_number as string}</td>
-                              <td className="px-4 py-3 text-gray-500">
-                                {i.due_date
-                                  ? new Date(i.due_date as string).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric',
-                                    })
-                                  : '—'}
-                              </td>
-                              <td className="px-4 py-3">
-                                <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${s.kelas}`}>
-                                  {s.teks}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-right font-semibold tabular-nums text-gray-900">
-                                {rupiah(Number(i.total_due))}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <a
-                                  href={`/api/invoices/${i.id}/pdf`}
-                                  className="text-xs font-medium text-blue-600 hover:underline"
-                                >
-                                  PDF
-                                </a>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {aktif === 'laporan' && (
-              <div className="p-5">
-                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100 overflow-hidden">
-                  {laporan.map((m) => {
-                    const [y, mo] = m.split('-').map(Number)
-                    return (
-                      <li key={m}>
-                        <Link
-                          href={`/keluarga/${studentId}/laporan?month=${m}`}
-                          className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
-                        >
-                          <span className="text-sm text-gray-800">
-                            {new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString('id-ID', {
-                              month: 'long',
-                              year: 'numeric',
-                              timeZone: 'UTC',
-                            })}
-                          </span>
-                          <span className="text-xs text-blue-600">Buka →</span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <SiswaSidebar
-            profil={(profil ?? {}) as Record<string, string | null>}
-            kelasAktif={kelasAktif.map((k) => ({
-              id: k.class_id,
-              name: k.classes?.name ?? null,
-              schedule_days: k.classes?.schedule_days ?? [],
-              schedule_time: k.classes?.schedule_time ?? null,
-              subject_names: mapelPerKelas.get(k.class_id) ?? [],
-            }))}
-            totalSesi={total}
-            hadirPersen={persen}
-            sudahBayar={sudahBayar}
-            belumBayar={belumBayar}
-            bergabung={(profil?.created_at as string | null) ?? null}
-            studentId={studentId}
-          />
-
-          <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Belajar</p>
-            <div className="space-y-2 text-sm">
-              <Link href={`/keluarga/${studentId}/materi`} className="block text-blue-600 hover:underline">
-                Materi
-              </Link>
-              <Link href={`/keluarga/${studentId}/penguasaan`} className="block text-blue-600 hover:underline">
-                Penguasaan
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <KartuAplikasi
+        nama="GAMA"
+        keterangan="Segera hadir"
+        teks="Game matematika."
+        href={null}
+        warna="bg-slate-100 text-slate-400"
+        ikon={
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm2.498-6.75h.007v.008h-.007V6.75zm-2.498 0h.008v.008H8.25V6.75zM12 12h.008v.008H12V12zm0 2.25h.008v.008H12v-.008zM9.75 18h.008v.008H9.75V18zm-2.25-2.25h.008v.008H7.5v-.008zM12 6.75V4.5m-7.5 15h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003 6v12a1.5 1.5 0 001.5 1.5z" />
+        }
+      />
     </div>
   )
 }

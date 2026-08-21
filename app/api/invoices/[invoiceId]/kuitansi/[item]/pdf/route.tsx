@@ -196,7 +196,7 @@ export async function GET(
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="Kuitansi-${kuitansiNumber}.pdf"`,
+      'Content-Disposition': `${req.nextUrl.searchParams.get('preview') === '1' ? 'inline' : 'attachment'}; filename="Kuitansi-${kuitansiNumber}.pdf"`,
     },
   })
 }
