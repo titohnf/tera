@@ -15,6 +15,7 @@ import SessionTabs from '@/components/sessions/SessionTabs'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { rosterForSession } from '@/lib/enrollment'
+import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import type { AttendanceStatus } from '@/lib/types/database'
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -153,9 +154,16 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       )[0]
     : null
 
-  // Filter by grade only — semester grouping is shown in the dropdown itself
+  // Filter by grade only — semester grouping is shown in the dropdown itself.
+  // Selain kelas sesi, jenjang lain ikut terbuka kalau ada siswa di roster ini
+  // yang dikecualikan untuk mapel tersebut — lihat lib/curriculum-grade.ts.
+  const allowedGradeLevels = await allowedCurriculumGradeLevels(admin, {
+    sessionGrade,
+    subjectId: session.subject_id ?? null,
+    studentIds: (classStudents ?? []).map(cs => cs.profiles?.id ?? cs.student_id),
+  })
   const filteredCurriculumTopics = (curriculumTopics ?? []).filter(t =>
-    sessionGrade == null || t.grade_level === `Kelas ${sessionGrade}`
+    allowedGradeLevels == null || allowedGradeLevels.includes(t.grade_level)
   )
   const dateStr = date.toISOString().split('T')[0]
   const timeStr = date.toTimeString().slice(0, 5)

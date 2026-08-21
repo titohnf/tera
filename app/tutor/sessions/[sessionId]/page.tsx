@@ -19,6 +19,7 @@ import ResolvedNoticeBanner from '@/components/tutor/ResolvedNoticeBanner'
 import RequestPayrollReReview from '@/components/tutor/RequestPayrollReReview'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { rosterForSession } from '@/lib/enrollment'
+import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import { splitClassName } from '@/lib/format-class-name'
 import type { AttendanceStatus } from '@/lib/types/database'
 
@@ -296,9 +297,18 @@ export default async function SessionPage({
       )[0]
     : null
 
-  // Filter by grade only — semester grouping is shown in the dropdown itself
+  // Filter by grade only — semester grouping is shown in the dropdown itself.
+  // Selain kelas sesi, jenjang lain ikut terbuka kalau ada siswa di roster ini
+  // yang dikecualikan untuk mapel tersebut — lihat lib/curriculum-grade.ts.
+  const allowedGradeLevels = await allowedCurriculumGradeLevels(supabase, {
+    sessionGrade,
+    subjectId: session.subject_id ?? null,
+    studentIds: enrolledStudents.map(cs =>
+      (cs.profiles as unknown as { id: string } | null)?.id ?? cs.student_id
+    ),
+  })
   const filteredCurriculumTopics = curriculumTopics.filter(t =>
-    sessionGrade == null || t.grade_level === `Kelas ${sessionGrade}`
+    allowedGradeLevels == null || allowedGradeLevels.includes(t.grade_level)
   )
 
   // Auto-complete if all criteria already met (handles sessions filled before this feature existed)

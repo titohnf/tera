@@ -27,6 +27,7 @@ interface CurriculumTopic {
 
 interface TopicGroup {
   key: string
+  gradeLevel: string
   semester: number
   theme: string | null
   topicName: string
@@ -68,15 +69,19 @@ export default function SessionTopicEditor({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  // De-duplicate topics: group rows by (semester, theme, topic)
+  // De-duplicate topics: group rows by (jenjang, semester, theme, topic).
+  // Jenjang ikut jadi kunci karena satu sesi bisa menerima lebih dari satu
+  // jenjang kurikulum (siswa dengan pengecualian — lihat lib/curriculum-grade.ts),
+  // dan judul seperti "Persiapan ATS · Simulasi ATS" ada di hampir semua kelas.
   const topicGroups = useMemo<TopicGroup[]>(() => {
     const map = new Map<string, TopicGroup>()
     for (const t of curriculumTopics) {
       if (!t.topic?.trim()) continue // skip theme-only placeholder rows
-      const key = `${t.semester}|${t.theme ?? ''}|${t.topic}`
+      const key = `${t.grade_level}|${t.semester}|${t.theme ?? ''}|${t.topic}`
       if (!map.has(key)) {
         map.set(key, {
           key,
+          gradeLevel: t.grade_level,
           semester: t.semester,
           theme: t.theme,
           topicName: t.topic,
@@ -190,15 +195,35 @@ export default function SessionTopicEditor({
     })
   }
 
-  // Group topic options by semester for dropdown
-  const bySemester = useMemo(() => {
-    return topicGroups.reduce<Record<number, Record<string, TopicGroup[]>>>((acc, g) => {
-      if (!acc[g.semester]) acc[g.semester] = {}
-      const themeKey = g.theme ?? '(Tanpa Tema)'
-      if (!acc[g.semester][themeKey]) acc[g.semester][themeKey] = []
-      acc[g.semester][themeKey].push(g)
-      return acc
-    }, {})
+  // Satu optgroup per tema. Jenjang hanya disebut di label kalau memang ada
+  // lebih dari satu di daftar ini — sesi biasa tetap terbaca seperti dulu.
+  const optionGroups = useMemo(() => {
+    const multiGrade = new Set(topicGroups.map(g => g.gradeLevel)).size > 1
+    const gradeNumber = (level: string) => {
+      const n = Number(level.replace(/\D/g, ''))
+      return Number.isFinite(n) ? n : 0
+    }
+    const ordered = topicGroups
+      .map((g, i) => ({ g, i }))
+      .sort((a, b) =>
+        gradeNumber(a.g.gradeLevel) - gradeNumber(b.g.gradeLevel) ||
+        a.g.semester - b.g.semester ||
+        a.i - b.i
+      )
+      .map(({ g }) => g)
+
+    const map = new Map<string, TopicGroup[]>()
+    for (const g of ordered) {
+      const label = [
+        multiGrade ? g.gradeLevel : null,
+        `Sem ${g.semester}`,
+        g.theme ?? '(Tanpa Tema)',
+      ].filter(Boolean).join(' · ')
+      const bucket = map.get(label)
+      if (bucket) bucket.push(g)
+      else map.set(label, [g])
+    }
+    return [...map.entries()]
   }, [topicGroups])
 
   return (
@@ -335,15 +360,13 @@ export default function SessionTopicEditor({
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"
             >
               <option value="">— Pilih topik —</option>
-              {Object.entries(bySemester).sort(([a], [b]) => Number(a) - Number(b)).flatMap(([sem, byTheme]) =>
-                Object.entries(byTheme).map(([theme, groups]) => (
-                  <optgroup key={`${sem}-${theme}`} label={`Sem ${sem} · ${theme}`}>
-                    {groups.map(g => (
-                      <option key={g.key} value={g.key}>{g.topicName}</option>
-                    ))}
-                  </optgroup>
-                ))
-              )}
+              {optionGroups.map(([label, groups]) => (
+                <optgroup key={label} label={label}>
+                  {groups.map(g => (
+                    <option key={g.key} value={g.key}>{g.topicName}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
 
