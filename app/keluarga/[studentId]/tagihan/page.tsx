@@ -43,7 +43,10 @@ export default async function TagihanAnak({
 
   return (
     <div className="space-y-5">
-      <h1 className="text-lg font-semibold text-gray-900">Tagihan</h1>
+      {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
+      <p className="text-sm text-gray-500">
+        Tagihan yang sudah diterbitkan, beserta pembayaran yang tercatat.
+      </p>
       <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
         <TagihanList
           tagihan={invoices as unknown as TagihanRow[]}

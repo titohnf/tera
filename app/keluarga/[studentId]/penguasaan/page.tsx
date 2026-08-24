@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { anakOrRedirect } from '@/lib/keluarga'
 import { masteryLabel, type MasteryBand } from '@/lib/reports/mastery-recap'
@@ -74,18 +73,10 @@ export default async function PenguasaanPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        {/* Pulang ke Profil, dari situlah halaman ini dibuka. Bilah navigasi
-            bawah tidak punya tempat untuknya — mendarat di Beranda membuat
-            pengunjung mengira ia tersesat. */}
-        <Link href={`/keluarga/${studentId}/profil`} className="text-xs text-gray-400 hover:text-gray-600">
-          ← Profil
-        </Link>
-        <h1 className="text-xl font-semibold text-gray-900 mt-1">Penguasaan</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Dihitung dari latihan mandiri, diurutkan dari yang paling perlu dikuatkan.
-        </p>
-      </div>
+      {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
+      <p className="text-sm text-gray-500">
+        Dihitung dari latihan mandiri, diurutkan dari yang paling perlu dikuatkan.
+      </p>
 
       {baris.length === 0 ? (
         <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">

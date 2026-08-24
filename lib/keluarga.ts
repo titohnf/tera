@@ -1,10 +1,18 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUser } from '@/lib/supabase/get-user'
+import { namaPendek } from '@/lib/nama'
 
 export interface Anak {
   id: string
   full_name: string
+  /**
+   * Panggilannya, atau kata pertama namanya kalau belum diisi — lihat
+   * `namaPendek`. Dipakai bilah pemilih anak, yang harus memuat dua sampai tiga
+   * nama dalam satu baris selebar 390px; nama lengkap di sana membuat tabnya
+   * harus digeser mendatar untuk melihat anak yang terakhir.
+   */
+  nama_pendek: string
 }
 
 /**
@@ -33,12 +41,15 @@ export async function keluargaContext() {
 
   const { data: links } = await supabase
     .from('family_students')
-    .select('student_id, profiles!family_students_student_id_fkey(id, full_name)')
+    .select('student_id, profiles!family_students_student_id_fkey(id, full_name, nickname)')
     .order('student_id')
 
-  const anak = ((links ?? []) as unknown as { profiles: Anak | null }[])
+  const anak = ((links ?? []) as unknown as {
+    profiles: { id: string; full_name: string; nickname: string | null } | null
+  }[])
     .map((l) => l.profiles)
-    .filter((a): a is Anak => a !== null)
+    .filter((p) => p !== null)
+    .map((p) => ({ id: p.id, full_name: p.full_name, nama_pendek: namaPendek(p) }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
   return { user, namaKeluarga: profile.full_name as string, anak }

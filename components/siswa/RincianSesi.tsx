@@ -4,8 +4,8 @@ import Link from 'next/link'
 import type { JadwalSessionDetail } from '@/lib/actions/jadwal'
 
 /**
- * Isi satu sesi yang dibuka — tema, topik, CP, materi, latihan soal, nilai, dan
- * catatan tutor.
+ * Isi satu sesi yang dibuka — tema, topik, CP, materi, latihan soal, nilai,
+ * catatan tutor, dan (kalau pemanggilnya mengisinya) nama tutornya.
  *
  * Diangkat dari badan `JadwalTable` supaya daftar kartu di ponsel
  * (`components/keluarga/SesiKartuList`) bisa menampilkan isi yang sama. Sebelum
@@ -30,12 +30,22 @@ export default function RincianSesi({
   detail,
   sessionId,
   topikSesi,
+  tutor,
   showAdminLinks = false,
 }: {
   /** `undefined` = belum diambil, `null` = gagal. */
   detail: JadwalSessionDetail | null | undefined
   sessionId: string
   topikSesi: string | null
+  /**
+   * Nama tutor, kalau pemanggilnya memang ingin ia muncul di sini. Datangnya
+   * sebagai prop, bukan dari `getJadwalSessionDetail`: pemanggilnya sudah
+   * memegang peta tutor per sesi, dan menambahkannya ke server action berarti
+   * satu kueri lagi untuk data yang sudah ada di tangan.
+   *
+   * `JadwalTable` tidak mengisinya — di sana tutor sudah punya kolom sendiri.
+   */
+  tutor?: string | null
   showAdminLinks?: boolean
 }) {
   if (detail === undefined) return <p className="text-sm text-gray-400 py-1">Memuat...</p>
@@ -133,6 +143,11 @@ export default function RincianSesi({
     })
   if (detail.catatan)
     items.push({ label: 'Catatan', node: <span className="text-sm text-gray-700 leading-relaxed">{detail.catatan}</span> })
+  // Paling bawah, sesudah catatan: yang dicari orang tua saat membuka rincian
+  // adalah apa yang dipelajari; siapa yang mengajar baru jadi pertanyaan
+  // sesudah itu terjawab.
+  if (tutor)
+    items.push({ label: 'Tutor', node: <span className="text-sm text-gray-700">{tutor}</span> })
   const detailLink = showAdminLinks ? (
     <Link href={`/admin/sessions/${sessionId}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline">
       Lihat detail sesi

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
 import { coversSession, type EnrollmentWindow } from '@/lib/enrollment'
+import { namaPendek } from '@/lib/nama'
 
 // Sessions are stored as scheduled_at in UTC; admin enters/reads times in
 // WIB (Asia/Jakarta, UTC+7, no DST). Compute the WIB day boundaries in UTC
@@ -61,15 +62,6 @@ const CLASS_TYPE_LABELS: Record<string, string> = {
   yayasan: 'Yayasan',
 }
 
-/** First word of a name — the fallback when a profile has no nickname. */
-function firstName(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] ?? fullName
-}
-
-function shortName(profile: { full_name: string; nickname: string | null }): string {
-  return profile.nickname?.trim() || firstName(profile.full_name)
-}
-
 /** "16:00" in WIB — toLocaleTimeString('id-ID') renders "16.00", which the message format doesn't use. */
 function wibTimeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-GB', {
@@ -122,7 +114,7 @@ export async function getTutorGroupsForDate(admin: SupabaseClient, dateStr: stri
 
     const students = studentsByClass.get(s.class_id) ?? []
     const typeLabel = CLASS_TYPE_LABELS[s.classes?.class_type ?? ''] ?? ''
-    const studentLabel = students.map(shortName).join(' & ')
+    const studentLabel = students.map(namaPendek).join(' & ')
     const classLabel = ['Kelas', typeLabel, studentLabel].filter(Boolean).join(' ').trim()
 
     // Grades only make it into the label when every student in the class

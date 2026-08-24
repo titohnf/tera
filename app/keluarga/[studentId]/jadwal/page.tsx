@@ -1,7 +1,6 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { sekarangIso } from '@/lib/waktu'
-import RiwayatTabs from '@/components/keluarga/RiwayatTabs'
 import SesiKartuList from '@/components/keluarga/SesiKartuList'
 import JadwalTable from '@/components/siswa/JadwalTable'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
@@ -17,6 +16,13 @@ import RiwayatKelas from '@/components/siswa/RiwayatKelas'
  * Kelas yang sudah selesai tetap diringkas di bawah, bukan dibuang: anak yang
  * pindah kelas di tengah tahun akan kehilangan seluruh sejarahnya kalau
  * halaman ini hanya memuat kelas aktif.
+ *
+ * Bilah tab "Jadwal Kelas / Laporan" yang dulu di puncak halaman ikut dilepas
+ * bersama pindahnya Laporan ke bawah Profil: bilah tab berisi satu tab bukan
+ * pilihan, cuma judul yang menyamar jadi tombol.
+ *
+ * Satu kartu besar yang dulu membungkus semuanya kini dipecah per bagian, agar
+ * saringan versi ponsel bisa berdiri di luar kartu daftar sesi.
  */
 export default async function JadwalAnak({
   params,
@@ -54,43 +60,44 @@ export default async function JadwalAnak({
 
   return (
     <div className="space-y-5">
-      <RiwayatTabs studentId={studentId} aktif="jadwal" />
-
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5 space-y-6">
-        {/* Tabelnya meluber ~89px di layar 375px meski Mapel dan Tutor sudah
-            disembunyikan, jadi di ponsel sesinya jadi kartu. Halaman admin
-            tetap memakai tabel di semua ukuran. */}
-        <div className="lg:hidden">
-          <SesiKartuList
-            sessions={sesiAktif}
-            subjectNameMap={subjectNameMap}
-            attendanceMap={attendanceMap}
-            sessionTutorMap={sessionTutorMap}
-            namaKelas={Object.fromEntries(
-              kelasAktif.map((k) => [k.class_id, k.classes?.name ?? null]),
-            )}
-            studentId={studentId}
-          />
-        </div>
-        <div className="hidden lg:block">
-          <JadwalTable
-            sekarangIso={waktuSekarang}
-            sessions={sesiAktif}
-            enrolledClasses={kelasAktif.map((k) => ({
-              id: k.class_id,
-              name: k.classes?.name ?? null,
-              is_active: k.is_active,
-              subject_name: null,
-              tutor: null,
-            }))}
-            subjectNameMap={subjectNameMap}
-            attendanceMap={attendanceMap}
-            sessionTutorMap={sessionTutorMap}
-            studentId={studentId}
-          />
-        </div>
-        <RiwayatKelas kelas={ringkasanLampau} />
+      {/* Ponsel: kartu sesinya berdiri langsung di atas latar halaman, tanpa
+          kartu pembungkus. Saringannya pun tidak di sini — ia berlabuh sebagai
+          ikon di bilah judul (lihat `SaringSheet`). Layar lebar tetap satu
+          kartu berisi tabel. */}
+      <div className="lg:hidden">
+        <SesiKartuList
+          sessions={sesiAktif}
+          subjectNameMap={subjectNameMap}
+          attendanceMap={attendanceMap}
+          sessionTutorMap={sessionTutorMap}
+          studentId={studentId}
+          sekarangIso={waktuSekarang}
+        />
       </div>
+
+      <div className="hidden lg:block bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
+        <JadwalTable
+          sekarangIso={waktuSekarang}
+          sessions={sesiAktif}
+          enrolledClasses={kelasAktif.map((k) => ({
+            id: k.class_id,
+            name: k.classes?.name ?? null,
+            is_active: k.is_active,
+            subject_name: null,
+            tutor: null,
+          }))}
+          subjectNameMap={subjectNameMap}
+          attendanceMap={attendanceMap}
+          sessionTutorMap={sessionTutorMap}
+          studentId={studentId}
+        />
+      </div>
+
+      {ringkasanLampau.length > 0 && (
+        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
+          <RiwayatKelas kelas={ringkasanLampau} garisPemisah={false} />
+        </div>
+      )}
     </div>
   )
 }

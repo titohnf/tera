@@ -33,14 +33,21 @@ function tanggal(iso: string | null): string {
 export default function RiwayatKelas({
   kelas,
   classHref,
+  garisPemisah = true,
 }: {
   kelas: KelasLampau[]
   classHref?: (id: string) => string
+  /**
+   * Garis tipis di atas ringkasan. Perlu saat ia menempel di bawah tabel sesi
+   * dalam satu kartu (halaman admin); mengganggu saat ia sendirian di dalam
+   * kartunya, karena garis di puncak kartu terbaca seperti sisa potongan.
+   */
+  garisPemisah?: boolean
 }) {
   if (kelas.length === 0) return null
 
   return (
-    <div className="pt-4 border-t border-slate-100">
+    <div className={garisPemisah ? 'pt-4 border-t border-slate-100' : ''}>
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
         Riwayat Kelas ({kelas.length})
       </p>

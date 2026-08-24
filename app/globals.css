@@ -117,3 +117,47 @@ select {
 
 
 
+
+/* Lembar pilihan yang naik dari sisi bawah layar (`components/keluarga/SaringSheet`).
+   Ditulis di sini, bukan dengan utilitas `animate-in`/`slide-in-from-bottom`:
+   proyek ini tidak memasang plugin tailwindcss-animate, jadi kelas-kelas itu
+   tidak menghasilkan apa pun. Base UI menahan elemennya tetap terpasang selama
+   animasi `data-closed` berjalan, jadi menutupnya ikut teranimasi. */
+@keyframes sheet-naik {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sheet-turun {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes sheet-pudar-masuk {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-pudar-keluar {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.sheet-bawah[data-open] {
+  animation: sheet-naik 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-bawah[data-closed] {
+  animation: sheet-turun 180ms ease-in;
+}
+.sheet-tirai[data-open] {
+  animation: sheet-pudar-masuk 220ms ease-out;
+}
+.sheet-tirai[data-closed] {
+  animation: sheet-pudar-keluar 180ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-bawah[data-open],
+  .sheet-bawah[data-closed],
+  .sheet-tirai[data-open],
+  .sheet-tirai[data-closed] {
+    animation-duration: 1ms;
+  }
+}

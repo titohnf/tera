@@ -22,12 +22,18 @@ import { usePathname } from 'next/navigation'
  *
  * Tidak dirender sama sekali untuk keluarga beranak satu — 20 dari 23 keluarga
  * — dan `app/keluarga/[studentId]/layout.tsx` yang memutuskannya.
+ *
+ * Yang tertulis di tab adalah nama panggilan, bukan nama lengkap: tiga nama
+ * lengkap tidak muat dalam satu baris selebar 390px, dan yang ketiga hanya
+ * ketahuan ada kalau bilahnya digeser mendatar — gerakan yang jarang ditemukan
+ * sendiri. Aturan panggilan-atau-kata-pertama ada di `lib/nama`, sama dengan
+ * yang dipakai pesan harian WhatsApp.
  */
 export default function AnakTabs({
   anak,
   aktif,
 }: {
-  anak: { id: string; full_name: string }[]
+  anak: { id: string; full_name: string; nama_pendek: string }[]
   aktif: string
 }) {
   const pathname = usePathname()
@@ -53,7 +59,9 @@ export default function AnakTabs({
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
-              {a.full_name}
+              {/* Nama lengkapnya tetap terbaca alat bantu layar dan tooltip:
+                  dua anak berpanggilan mirip tidak boleh jadi tebak-tebakan. */}
+              <span title={a.full_name}>{a.nama_pendek}</span>
             </Link>
           )
         })}

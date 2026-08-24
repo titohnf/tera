@@ -20,7 +20,14 @@ type Promo = {
   href: string | null
 }
 
-const PROMO: Promo | null = null
+// `href: null` — belum ada halaman referal untuk dituju. Begitu ada (atau
+// begitu kode referal keluarga bisa ditampilkan), isi kolom ini supaya
+// bannernya bisa diketuk alih-alih cuma memberi tahu.
+const PROMO: Promo | null = {
+  judul: 'Ajak teman, mereka dapat Rp100.000',
+  teks: 'Teman yang mendaftar dengan memasukkan kode referal Anda langsung mendapat voucher diskon Rp100.000.',
+  href: null,
+}
 
 export default function BannerPromosi() {
   if (!PROMO) return null
