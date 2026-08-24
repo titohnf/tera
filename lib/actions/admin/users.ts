@@ -39,7 +39,7 @@ export async function createUser(prevState: ActionState, formData: FormData): Pr
   if (!fullName) return { error: 'Nama lengkap wajib diisi' }
   if (!email) return { error: 'Email wajib diisi' }
   if (!password || password.length < 6) return { error: 'Password minimal 6 karakter' }
-  if (!['admin', 'tutor', 'student', 'parent'].includes(role)) return { error: 'Role tidak valid' }
+  if (!['admin', 'tutor', 'student', 'parent', 'mandiri'].includes(role)) return { error: 'Role tidak valid' }
 
   const { data: authData, error: authError } = await ctx.admin.auth.admin.createUser({
     email,
@@ -99,7 +99,7 @@ export async function updateUser(userId: string, prevState: ActionState, formDat
   const avatarFile = formData.get('avatar') as File | null
 
   if (!fullName) return { error: 'Nama lengkap wajib diisi' }
-  if (!['admin', 'tutor', 'student', 'parent'].includes(role)) return { error: 'Role tidak valid' }
+  if (!['admin', 'tutor', 'student', 'parent', 'mandiri'].includes(role)) return { error: 'Role tidak valid' }
 
   const updates: Record<string, string | number | null> = {
     full_name: fullName, phone, role, nickname, birth_date: birthDate || null,

@@ -20,5 +20,6 @@ export default async function RootPage() {
   if (profile?.role === 'admin') redirect('/admin')
   if (profile?.role === 'tutor') redirect('/tutor')
   if (profile?.role === 'parent') redirect('/keluarga')
+  if (profile?.role === 'mandiri') redirect('/mandiri')
   redirect('/unauthorized')
 }

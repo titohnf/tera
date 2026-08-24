@@ -41,11 +41,18 @@ export async function updateSession(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname
-  const isAuthPage = pathname.startsWith('/login')
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/daftar')
   const isDashboard =
     pathname.startsWith('/tutor') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/keluarga')
+    pathname.startsWith('/keluarga') ||
+    // Rumah pelanggan langganan dan permukaan belajar. Di sini hanya soal
+    // "sudah login atau belum"; peran dan hak pakainya diperiksa layout
+    // masing-masing, karena blok try di atas SENGAJA meloloskan permintaan saat
+    // layanan auth lambat — penjaga yang bisa gagal terbuka tidak boleh jadi
+    // satu-satunya.
+    pathname.startsWith('/mandiri') ||
+    pathname.startsWith('/belajar')
   const isPublic = pathname.startsWith('/unauthorized') || pathname.startsWith('/auth')
 
   if (isPublic) return supabaseResponse

@@ -1,7 +1,42 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { getUser } from '@/lib/supabase/get-user'
 import { rosterForSession } from '@/lib/enrollment'
+
+/**
+ * Boleh melihat / memicu penyelesaian sesi ini?
+ *
+ * Berkas ini `'use server'`, jadi setiap fungsi yang diekspornya adalah titik
+ * masuk yang bisa dipanggil siapa pun yang punya sesi login — id server action
+ * bukan rahasia dari orang yang bisa memuat bundel halaman. Sebelumnya
+ * keduanya berjalan dengan service role tanpa satu pun pemeriksaan, dan
+ * `checkAndCompleteSession()` MENGUBAH status sesi. Yang menahannya hanya
+ * kebetulan bahwa tidak ada orang tak dikenal yang punya akun — persis asumsi
+ * yang gugur begitu pendaftaran mandiri dibuka.
+ *
+ * Tidak memakai `isSessionTutor()`: fungsi itu mengunci sesi yang payroll-nya
+ * sudah disetujui, sedangkan halaman tutor memanggil pemeriksa ini justru untuk
+ * MENAMPILKAN keadaan sesi lama. Yang dibutuhkan di sini cuma "sesi ini memang
+ * urusanmu".
+ */
+async function bolehLihatSesi(
+  admin: ReturnType<typeof createAdminClient>,
+  sessionId: string,
+): Promise<boolean> {
+  const user = await getUser()
+  if (!user) return false
+
+  const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role === 'admin') return true
+
+  const { data: session } = await admin
+    .from('sessions')
+    .select('tutor_id')
+    .eq('id', sessionId)
+    .single()
+  return session?.tutor_id === user.id
+}
 
 export type CompletionCheck = {
   studentCount: number
@@ -23,6 +58,7 @@ export type CompletionCheck = {
 
 export async function getSessionCompletionStatus(sessionId: string): Promise<CompletionCheck | null> {
   const admin = createAdminClient()
+  if (!(await bolehLihatSesi(admin, sessionId))) return null
 
   const { data: session } = await admin
     .from('sessions')
@@ -116,6 +152,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
  */
 export async function checkAndCompleteSession(sessionId: string) {
   const admin = createAdminClient()
+  if (!(await bolehLihatSesi(admin, sessionId))) return
 
   const check = await getSessionCompletionStatus(sessionId)
   if (!check?.canComplete) return

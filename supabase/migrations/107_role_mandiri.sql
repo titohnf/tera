@@ -1,0 +1,37 @@
+-- ============================================================
+-- Role `mandiri`: pelanggan langganan yang bukan murid bimbel
+--
+-- Tiga produk akan hidup di satu aplikasi — TERA (administrasi bimbel), SORA
+-- (latihan soal), GAMA (game). Murid bimbel memakai akun keluarga dan boleh
+-- membuka ketiganya. Orang luar berlangganan SORA/GAMA dengan akun pribadi:
+-- satu orang satu akun, tanpa konsep anak, dan tanpa satu pun halaman TERA.
+--
+-- Kenapa nilai enum baru, bukan menumpang `student`:
+--
+--   * `student` sudah berarti CATATAN MURID BIMBEL sejak migrasi 076 — ia yang
+--     ditunjuk class_students, invoices, attendances. Pelanggan yang memakai
+--     role itu akan muncul di roster kelas, bisa didaftarkan ke kelas, dan bisa
+--     ditagih.
+--   * `lib/actions/admin/practice-access.ts` menolak profil non-`student`, dan
+--     `app/admin/siswa` serta `app/admin/latihan-mandiri` mendaftar
+--     `role = 'student'`. Semuanya akan ikut memuat orang luar tanpa diminta.
+--   * `announcements.target_roles` yang memuat 'student' akan menyiarkan
+--     pengumuman internal bimbel ke pelanggan.
+--
+-- Nilai tersendiri memaksa setiap tempat itu diperbarui dengan sadar, bukan
+-- ikut terbawa diam-diam.
+--
+-- Namanya mengambil kosakata yang sudah dipakai di aplikasi ini — "Latihan
+-- Mandiri", `app/admin/latihan-mandiri` — dan ia menyebut jenis orang, bukan
+-- nama produk. Satu orang bisa berlangganan SORA saja, GAMA saja, atau
+-- keduanya; produk mana yang dibayar disimpan di tabel `subscriptions`
+-- (migrasi 109), bukan di role-nya.
+--
+-- BERKAS INI SENGAJA HANYA BERISI SATU PERINTAH. `alter type ... add value`
+-- tidak boleh nilainya DIPAKAI di transaksi yang sama dengan yang
+-- menambahkannya, dan SQL editor Supabase membungkus tiap run dalam satu
+-- transaksi. Segala sesuatu yang menyebut 'mandiri' ada di migrasi 108 dan
+-- sesudahnya. Jalankan berkas ini sendirian.
+-- ============================================================
+
+alter type user_role add value if not exists 'mandiri';

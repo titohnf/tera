@@ -8,7 +8,13 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = 'admin' | 'tutor' | 'student' | 'parent'
+/**
+ * `student` adalah CATATAN MURID bimbel, bukan akun login — sejak migrasi 076
+ * yang login untuk sebuah keluarga adalah profil ber-role `parent`.
+ * `mandiri` adalah pelanggan langganan SORA/GAMA di luar bimbel: satu orang
+ * satu akun, tanpa anak, tanpa akses apa pun ke TERA.
+ */
+export type UserRole = 'admin' | 'tutor' | 'student' | 'parent' | 'mandiri'
 export type SessionStatus = 'scheduled' | 'ongoing' | 'completed' | 'cancelled'
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'excused'
 export type PaymentStatus = 'pending' | 'paid' | 'cancelled'
