@@ -27,12 +27,6 @@ import KartuAplikasi, { IKON_GAMA, IKON_SORA } from '@/components/apps/KartuApli
  * jaraknya, dari dua ketukan lewat halaman yang tidak dicari, jadi satu.
  */
 
-// Sora tinggal di aplikasi terpisah (repo `form`) yang berbagi database dengan
-// Tera, jadi tautannya tidak bisa ditulis sebagai rute Next. Kalau env ini
-// kosong, kartunya tetap tampil tapi tidak bisa diketuk — lebih jujur daripada
-// menautkannya ke alamat tebakan yang berujung halaman 404.
-const SORA_URL = process.env.NEXT_PUBLIC_SORA_URL ?? ''
-
 function rupiah(n: number): string {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -108,14 +102,23 @@ export default async function AnakBeranda({
         )}
       </Link>
 
-      {/* Sesudah "jadwal berikutnya", sebelum aplikasi luar: keempatnya bagian
-          dari portal ini, sementara SORA dan GAMA membawa pembaca keluar. */}
+      {/* Sesudah "jadwal berikutnya", sebelum kartu aplikasi: keempatnya bagian
+          dari halaman ini, sementara SORA dan GAMA adalah tempat lain. */}
       <PintasanKeluarga studentId={studentId} />
 
+      {/* SORA dulu menautkan keluar ke `NEXT_PUBLIC_SORA_URL` — aplikasi latihan
+          di repo `form`. Latihannya sekarang ada di `/belajar` milik repo ini,
+          permukaan yang sama yang dipakai pelanggan langganan. Itu menutup
+          perbedaan yang paling sulit dijelaskan: kartu yang sama membawa
+          keluarga ke aplikasi lain dan pelanggan ke halaman sendiri.
+
+          `?anak=` wajib untuk jalur keluarga — `belajarContext()` perlu tahu
+          atas nama siapa, dan memeriksanya lagi lewat `practice_start_as_child()`
+          di database, jadi id yang dikarang tidak menghasilkan apa pun. */}
       <KartuAplikasi
         nama="SORA"
-        teks="Kumpulan materi dan soal latihan."
-        href={SORA_URL || null}
+        teks="Latihan soal per topik, dengan pembahasan langsung."
+        href={`/belajar?anak=${studentId}`}
         warna="bg-blue-50 text-blue-600"
         ikon={IKON_SORA}
       />
