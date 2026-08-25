@@ -1,18 +1,14 @@
-import { belajarContext } from '@/lib/belajar'
+import { belajarContext } from '@/lib/belajar/konteks'
+import { mapelLatihan } from '@/lib/belajar/sesi'
+import PemilihLatihan from '@/components/belajar/PemilihLatihan'
 
 /**
- * Pintu masuk permukaan belajar.
+ * Pintu masuk permukaan belajar: memilih apa yang mau dilatih.
  *
- * Sengaja masih kerangka. Yang sudah benar dan sudah bisa diuji di sini adalah
- * SIAPA yang boleh masuk dan ATAS NAMA SIAPA — keluarga bimbel lewat `?anak=`,
- * pelanggan lewat langganan aktif, keduanya keluar dari `belajarContext()`
- * sebagai `learnerId` dan `hanyaPublik`.
- *
- * Isi halamannya — memilih mapel, memilih topik, mengerjakan soal, pembahasan,
- * ringkasan penguasaan — dibangun di tahap berikutnya di atas
- * `lib/belajar/sesi.ts`, satu-satunya tempat yang boleh memanggil RPC
- * `practice_*`. Dipisahkan begitu supaya tidak ada halaman yang tergoda
- * memanggil RPC-nya langsung dengan learner id yang datang dari browser.
+ * `belajarContext()` selalu baris pertama — ia yang memutuskan atas nama siapa
+ * halaman ini dibuka, dan ia pula yang memulangkan orang yang tidak berhak.
+ * Sesi belum dibuat di sini; itu terjadi saat tombol "Mulai Latihan" ditekan,
+ * dan sejak detik itu tempatnya pindah ke `/belajar/[sesiId]`.
  */
 export default async function BelajarBeranda({
   searchParams,
@@ -20,31 +16,21 @@ export default async function BelajarBeranda({
   searchParams: Promise<{ anak?: string }>
 }) {
   const { anak } = await searchParams
-  const { namaPelajar, hanyaPublik } = await belajarContext(anak)
+  const { learnerId, namaPelajar, hanyaPublik } = await belajarContext(anak)
+  const mapel = await mapelLatihan(learnerId)
 
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
         <p className="text-sm font-semibold text-gray-900">Berlatih sebagai {namaPelajar}</p>
-        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+        <p className="mt-1 text-sm leading-relaxed text-gray-500">
           {hanyaPublik
             ? 'Soal-soal yang terbuka untuk langganan.'
             : 'Seluruh bank soal bimbel.'}
         </p>
       </div>
 
-      {/* Arahan sementaranya berbeda per pembaca, dan itu bukan basa-basi:
-          keluarga bimbel memang masih berlatih di Sora, sementara pelanggan
-          langganan ditolak di sana — role `mandiri` tidak punya halaman di Sora.
-          Menyuruh semua orang "lewat Sora" berarti mengirim pelanggan ke pintu
-          yang menutup di depan mukanya. */}
-      <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
-        <p className="text-sm text-gray-500 leading-relaxed">
-          {hanyaPublik
-            ? 'Pemilihan mapel dan topiknya sedang disiapkan. Langgananmu sudah aktif — kamu akan bisa langsung berlatih di sini begitu bagian ini selesai.'
-            : 'Pemilihan mapel dan topiknya sedang disiapkan. Sementara ini latihan masih dikerjakan lewat Sora.'}
-        </p>
-      </div>
+      <PemilihLatihan mapel={mapel} anak={anak} />
     </div>
   )
 }

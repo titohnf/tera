@@ -1,4 +1,8 @@
 import Link from 'next/link'
+// Gaya KaTeX hanya dimuat di rute ini: soal berumus tidak pernah muncul di luar
+// permukaan belajar, dan berkasnya bukan sesuatu yang pantas dibawa setiap
+// halaman portal keluarga.
+import 'katex/dist/katex.min.css'
 
 /**
  * Rangka permukaan belajar — dipakai keluarga bimbel maupun pelanggan
