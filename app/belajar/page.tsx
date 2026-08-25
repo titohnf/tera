@@ -33,10 +33,16 @@ export default async function BelajarBeranda({
         </p>
       </div>
 
+      {/* Arahan sementaranya berbeda per pembaca, dan itu bukan basa-basi:
+          keluarga bimbel memang masih berlatih di Sora, sementara pelanggan
+          langganan ditolak di sana — role `mandiri` tidak punya halaman di Sora.
+          Menyuruh semua orang "lewat Sora" berarti mengirim pelanggan ke pintu
+          yang menutup di depan mukanya. */}
       <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
         <p className="text-sm text-gray-500 leading-relaxed">
-          Pemilihan mapel dan topiknya sedang disiapkan. Sementara ini latihan masih dikerjakan
-          lewat Sora.
+          {hanyaPublik
+            ? 'Pemilihan mapel dan topiknya sedang disiapkan. Langgananmu sudah aktif — kamu akan bisa langsung berlatih di sini begitu bagian ini selesai.'
+            : 'Pemilihan mapel dan topiknya sedang disiapkan. Sementara ini latihan masih dikerjakan lewat Sora.'}
         </p>
       </div>
     </div>
