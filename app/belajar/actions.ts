@@ -1,7 +1,6 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import { belajarContext } from '@/lib/belajar/konteks'
 import {
   bukaSesi,
@@ -57,11 +56,17 @@ export async function periksaJawaban(
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) return null
 
-  const hasil = await jawabSoal(pemilik.learnerId, sesiId, itemId, jawaban)
-  // Halaman sesinya server-rendered: tanpa ini, muat ulang sesudah menjawab
-  // akan menampilkan kemajuan yang tersimpan di cache, bukan yang barusan.
-  if (hasil) revalidatePath(`/belajar/${sesiId}`)
-  return hasil
+  // SENGAJA TIDAK me-`revalidatePath` halaman sesinya. Dulu ada di sini, dan
+  // itu yang membuat sesi pertama di produksi berakhir tanpa `finished_at`:
+  // revalidasi memaksa halaman sesi dirender ulang di server sesudah TIAP
+  // jawaban, dan sesudah jawaban terakhir penjaga "semua sudah dijawab" di sana
+  // berbunyi — pembacanya tersentak pindah sebelum sempat membaca pembahasan
+  // soal terakhir, dan tombol "Selesai" yang memanggil `practice_finish_session`
+  // tidak pernah tertekan.
+  //
+  // Tidak ada yang hilang dengan menghapusnya: rute sesi selalu dinamis, jadi
+  // muat ulang sungguhan tetap membaca keadaan terbaru dari database.
+  return jawabSoal(pemilik.learnerId, sesiId, itemId, jawaban)
 }
 
 export async function selesaikanLatihan(sesiId: string): Promise<void> {

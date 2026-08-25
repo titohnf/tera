@@ -115,6 +115,53 @@ export async function pemilikSesi(sesiId: string): Promise<PemilikSesi | null> {
   return { learnerId: baris.learner_id, nama: baris.learner_name, profileId: baris.profile_id }
 }
 
+export interface SesiTertunda {
+  sesiId: string
+  jumlahSoal: number
+  sudahDijawab: number
+}
+
+/**
+ * Sesi yang ditinggalkan sebelum selesai, kalau ada.
+ *
+ * Tanpa ini, kemampuan melanjutkan sesi yang dibangun migrasi 114 TIDAK BISA
+ * DIJANGKAU: rute sesi tidak ditautkan dari mana pun, jadi satu-satunya jalan
+ * kembali adalah alamat yang kebetulan masih tersimpan di riwayat peramban.
+ * Anak yang menutup tab kehilangan sesinya bukan karena datanya hilang,
+ * melainkan karena tidak ada pintu menuju ke sana.
+ *
+ * Sesi Sora lama dilewati (`item_ids` kosong): ia tidak punya undian tersimpan,
+ * jadi halaman sesinya akan memulangkan pembacanya ke sini lagi — pintu yang
+ * berputar kembali ke dirinya sendiri.
+ */
+export async function sesiTertunda(learnerId: string): Promise<SesiTertunda | null> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('practice_sessions')
+    .select('id, item_ids')
+    .eq('learner_id', learnerId)
+    .is('finished_at', null)
+    .order('started_at', { ascending: false })
+    .limit(5)
+
+  const sesi = ((data as { id: string; item_ids: string[] | null }[] | null) ?? []).find(
+    r => (r.item_ids?.length ?? 0) > 0
+  )
+  if (!sesi) return null
+
+  const { count } = await supabase
+    .from('practice_answers')
+    .select('id', { count: 'exact', head: true })
+    .eq('session_id', sesi.id)
+
+  return {
+    sesiId: sesi.id,
+    jumlahSoal: sesi.item_ids!.length,
+    sudahDijawab: count ?? 0,
+  }
+}
+
 /** Mapel yang benar-benar punya soal untuk pelajar ini. Menu kosong tidak pernah disodorkan. */
 export async function mapelLatihan(learnerId: string): Promise<MapelLatihan[]> {
   const supabase = await createClient()

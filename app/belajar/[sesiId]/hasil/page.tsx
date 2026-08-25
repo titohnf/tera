@@ -5,6 +5,7 @@ import {
   pemilikSesi,
   ringkasanSesi,
   rubrikMapel,
+  tutupSesi,
   type PitaPenguasaan,
 } from '@/lib/belajar/sesi'
 import { persenDari } from '@/lib/belajar/penilaian'
@@ -30,6 +31,14 @@ export default async function HasilSesi({
 
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) redirect('/belajar')
+
+  // Halaman inilah tanda sesi itu selesai, jadi di sinilah ia ditutup — bukan
+  // di tombol yang membawa orang ke sini. Sebuah tombol bisa tidak tertekan
+  // (dan memang pernah tidak: sesi pertama di produksi berakhir dengan
+  // `finished_at` null), sementara halaman ini pasti dilewati siapa pun yang
+  // sampai di akhir. `practice_finish_session` memakai `coalesce`, jadi membuka
+  // halaman ini dua kali tidak memundurkan waktu selesainya.
+  await tutupSesi(sesiId)
 
   const rincian = await ringkasanSesi(pemilik.learnerId, sesiId)
 
