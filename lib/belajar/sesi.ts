@@ -119,16 +119,27 @@ export interface SesiTertunda {
   sesiId: string
   jumlahSoal: number
   sudahDijawab: number
+  /** Semua soalnya sudah dijawab; yang tersisa cuma membuka hasilnya. */
+  tinggalHasil: boolean
 }
 
 /**
- * Sesi yang ditinggalkan sebelum selesai, kalau ada.
+ * Sesi yang ditinggalkan di tengah jalan, kalau ada.
  *
  * Tanpa ini, kemampuan melanjutkan sesi yang dibangun migrasi 114 TIDAK BISA
  * DIJANGKAU: rute sesi tidak ditautkan dari mana pun, jadi satu-satunya jalan
  * kembali adalah alamat yang kebetulan masih tersimpan di riwayat peramban.
- * Anak yang menutup tab kehilangan sesinya bukan karena datanya hilang,
- * melainkan karena tidak ada pintu menuju ke sana.
+ *
+ * Yang dicari BUKAN sekadar sesi terbaru yang belum selesai. Menekan "Mulai
+ * Latihan" lalu berubah pikiran meninggalkan sesi kosong, dan sesi kosong
+ * menawarkan tepat apa yang ditawarkan tombol "Mulai Latihan" — sambil menutupi
+ * sesi sungguhan yang ditinggalkan sebelumnya. Karena itu syaratnya: PALING
+ * TIDAK SATU SOAL SUDAH DIJAWAB.
+ *
+ * Sesi yang seluruh soalnya sudah dijawab tapi belum tertutup ikut dikembalikan
+ * — itu justru kasus yang paling perlu dijemput, karena membukanya yang akan
+ * mengisi `finished_at` yang tertinggal. Halaman sesi mengalihkannya ke hasil,
+ * dan halaman hasil yang menutupnya.
  *
  * Sesi Sora lama dilewati (`item_ids` kosong): ia tidak punya undian tersimpan,
  * jadi halaman sesinya akan memulangkan pembacanya ke sini lagi — pintu yang
@@ -143,22 +154,40 @@ export async function sesiTertunda(learnerId: string): Promise<SesiTertunda | nu
     .eq('learner_id', learnerId)
     .is('finished_at', null)
     .order('started_at', { ascending: false })
-    .limit(5)
+    .limit(10)
 
-  const sesi = ((data as { id: string; item_ids: string[] | null }[] | null) ?? []).find(
+  const kandidat = ((data as { id: string; item_ids: string[] | null }[] | null) ?? []).filter(
     r => (r.item_ids?.length ?? 0) > 0
   )
+  if (kandidat.length === 0) return null
+
+  // Satu kueri untuk semua kandidat, bukan satu per sesi: jumlahnya kecil, tapi
+  // "satu kueri per baris di layar" adalah kebiasaan yang mahalnya baru terasa
+  // setelah terlambat.
+  const { data: jawaban } = await supabase
+    .from('practice_answers')
+    .select('session_id')
+    .in(
+      'session_id',
+      kandidat.map(k => k.id)
+    )
+
+  const terjawab = new Map<string, number>()
+  for (const baris of (jawaban as { session_id: string }[] | null) ?? []) {
+    terjawab.set(baris.session_id, (terjawab.get(baris.session_id) ?? 0) + 1)
+  }
+
+  const sesi = kandidat.find(k => (terjawab.get(k.id) ?? 0) > 0)
   if (!sesi) return null
 
-  const { count } = await supabase
-    .from('practice_answers')
-    .select('id', { count: 'exact', head: true })
-    .eq('session_id', sesi.id)
+  const jumlahSoal = sesi.item_ids!.length
+  const sudahDijawab = terjawab.get(sesi.id) ?? 0
 
   return {
     sesiId: sesi.id,
-    jumlahSoal: sesi.item_ids!.length,
-    sudahDijawab: count ?? 0,
+    jumlahSoal,
+    sudahDijawab,
+    tinggalHasil: sudahDijawab >= jumlahSoal,
   }
 }
 

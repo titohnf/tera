@@ -45,10 +45,12 @@ export default async function BelajarBeranda({
         >
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-blue-900">
-              Lanjutkan latihan
+              {tertunda.tinggalHasil ? 'Lihat hasil latihan terakhir' : 'Lanjutkan latihan'}
             </span>
             <span className="block text-sm text-blue-700/80">
-              {tertunda.sudahDijawab} dari {tertunda.jumlahSoal} soal sudah dijawab.
+              {tertunda.tinggalHasil
+                ? `${tertunda.jumlahSoal} soal sudah dijawab, hasilnya belum dibuka.`
+                : `${tertunda.sudahDijawab} dari ${tertunda.jumlahSoal} soal sudah dijawab.`}
             </span>
           </span>
           <span className="shrink-0 text-blue-600" aria-hidden>
