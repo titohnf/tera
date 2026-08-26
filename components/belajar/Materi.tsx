@@ -19,7 +19,23 @@ export default function Materi({ materi }: { materi: MateriTopik[] }) {
   // Yang pertama terbuka, sisanya menunggu diketuk. Tiga bingkai Google yang
   // dimuat sekaligus itu berat di HP, dan cuma satu yang benar-benar dibaca
   // lebih dulu.
-  const [terbuka, setTerbuka] = useState<string | null>(materi[0]?.id ?? null)
+  const pertama = materi[0]?.id ?? null
+  const [terbuka, setTerbuka] = useState<string | null>(pertama)
+
+  // Komponen ini ikut terpasang sejak daftarnya masih kosong — centangnya belum
+  // ditekan — jadi `useState` di atas menyimpan null dan tidak pernah menghitung
+  // ulang saat materinya akhirnya datang. Tanpa penyetelan ini kartunya muncul
+  // dengan semua isinya tertutup, dan yang pertama tidak pernah jadi yang
+  // terbuka seperti yang dijanjikan.
+  //
+  // Disetel saat render, bukan lewat useEffect, mengikuti anjuran React untuk
+  // keadaan turunan: satu render lebih hemat daripada render kedua yang
+  // memperbaiki yang pertama.
+  const [pertamaSebelumnya, setPertamaSebelumnya] = useState<string | null>(pertama)
+  if (pertama !== pertamaSebelumnya) {
+    setPertamaSebelumnya(pertama)
+    setTerbuka(pertama)
+  }
 
   // Topik terpilih tidak punya bahan: kartunya tidak muncul sama sekali.
   // "Belum ada materi" adalah kabar yang tidak bisa diperbuat apa-apa oleh anak
