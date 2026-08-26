@@ -20,6 +20,10 @@ type MaterialSourceRow = {
   title: string
   link_url: string | null
   file_path?: string | null
+  // Hanya terisi pada baris `assessments`: penanda bahwa paketnya lahir di
+  // Sora, bukan diketik manual di Tera. Lihat migrasi 071/074 — asesmen buatan
+  // Tera tidak pernah punya `quiz_id`.
+  quiz_id?: string | null
   session_id: string
   created_at: string
   sessions: {
@@ -50,7 +54,13 @@ type SessionCpUrlRow = {
 
 export type TutorResourceRow = {
   id: string
-  kind: 'materi' | 'latihan_soal' | 'asesmen'
+  kind: 'materi' | 'latihan_soal' | 'asesmen' | 'bank_soal'
+  /**
+   * Siapa yang menaruhnya. `sora` berarti barisnya tidak hidup di tabel mana
+   * pun di halaman ini — ia cerminan isi Sora, jadi ia tidak bisa dihapus dari
+   * sini. Baris tanpa nilai ini datang dari tutor, seperti sebelumnya.
+   */
+  source?: 'tutor' | 'sora'
   title: string
   href: string
   sessionId: string
@@ -70,6 +80,7 @@ function toTutorResources(
   rows: MaterialSourceRow[],
   kind: 'materi' | 'asesmen',
   classInfoById: Map<string, { gradeLevel: string | null; semester: number | null }>,
+  soraUrl: string | null,
 ): TutorResourceRow[] {
   return rows
     .filter(r => r.sessions?.subject_id)
@@ -79,9 +90,15 @@ function toTutorResources(
         id: r.id,
         kind,
         title: r.title,
-        // Uploaded files (or assessments without a link) aren't directly
-        // linkable here — send the admin to the session's own tab instead.
-        href: r.link_url ?? `/admin/sessions/${r.session_id}`,
+        // Urutannya: tautan Drive yang diketik tutor, lalu paketnya di Sora
+        // kalau asesmen ini memang lahir di sana, baru halaman sesinya. Sebelum
+        // ini asesmen Sora selalu jatuh ke pilihan terakhir — barisnya muncul
+        // tapi menuju tempat yang bukan paketnya, dan satu-satunya cara membuka
+        // paket itu adalah mencarinya sendiri di Sora.
+        href:
+          r.link_url ??
+          (r.quiz_id && soraUrl ? `${soraUrl}/dashboard/quizzes/${r.quiz_id}/edit` : null) ??
+          `/admin/sessions/${r.session_id}`,
         sessionId: r.session_id,
         subjectId: r.sessions!.subject_id!,
         curriculumTopicId: r.sessions!.curriculum_topic_id,
@@ -129,6 +146,63 @@ function toLatihanSoalResources(
         classSemester: classInfo?.semester ?? null,
       })
     }
+  }
+  return out
+}
+
+/**
+ * Bank Soal Sora sebagai baris katalog: satu baris per topik yang punya soal.
+ *
+ * Halaman ini sebelumnya buta terhadap Sora — sumbernya cuma `materials`,
+ * `assessments`, dan `sessions.cp_urls`, yang semuanya tautan Drive buatan
+ * tutor. Akibatnya sebuah topik terbaca "belum ada latihan soalnya" padahal
+ * di Sora sudah ada belasan butir soal bertanda topik itu. Katalog yang diam
+ * soal isi yang sebenarnya ada lebih menyesatkan daripada katalog yang kosong.
+ *
+ * Tidak perlu memutar lewat sesi seperti baris lain: `question_curriculum_tags`
+ * menandai soal langsung ke `curriculum_topic_groups`, ruang kunci yang sama
+ * dengan `topicByGroupId` di halaman ini.
+ *
+ * Tanpa `NEXT_PUBLIC_SORA_URL` barisnya tidak dibuat sama sekali. Isi baris ini
+ * cuma jumlah dan tautannya; tanpa tautan yang bisa dibuka, ia jadi angka yang
+ * menggantung — beda dengan kartu SORA di portal keluarga, yang masih punya
+ * arti sebagai penanda meski tidak bisa diketuk.
+ */
+function toBankSoalResources(
+  tags: { group_id: string }[],
+  topicByGroupId: Map<string, { topic: string; representativeCpId: string }>,
+  soraUrl: string | null,
+): TutorResourceRow[] {
+  if (!soraUrl) return []
+
+  const jumlah = new Map<string, number>()
+  for (const t of tags) {
+    if (!t.group_id) continue
+    jumlah.set(t.group_id, (jumlah.get(t.group_id) ?? 0) + 1)
+  }
+
+  const out: TutorResourceRow[] = []
+  for (const [groupId, n] of jumlah) {
+    const group = topicByGroupId.get(groupId)
+    // Topik yang tidak punya baris kurikulum tidak punya tempat duduk di tabel
+    // ini. Soalnya tetap ada di Sora — yang hilang cuma barisnya di sini.
+    if (!group) continue
+    out.push({
+      id: `bank__${groupId}`,
+      kind: 'bank_soal',
+      source: 'sora',
+      title: `${n} soal`,
+      href: `${soraUrl}/dashboard/bank/${groupId}`,
+      // Baris ini milik topik, bukan milik sesi mana pun.
+      sessionId: '',
+      subjectId: '',
+      curriculumTopicId: group.representativeCpId,
+      customTheme: null,
+      topicText: null,
+      tutorName: null,
+      classGradeLevel: null,
+      classSemester: null,
+    })
   }
   return out
 }
@@ -185,7 +259,11 @@ async function buildClassInfoMap(
 export default async function MateriLatihanSoalPage() {
   const admin = createAdminClient()
 
-  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: duplicationRows }] = await Promise.all([
+  // Boleh kosong: Sora adalah aplikasi terpisah, dan tanpa alamatnya baris
+  // Bank Soal memang tidak dibuat.
+  const soraUrl = process.env.NEXT_PUBLIC_SORA_URL?.replace(/\/$/, '') ?? null
+
+  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
       .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
@@ -234,12 +312,15 @@ export default async function MateriLatihanSoalPage() {
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('assessments')
-      .select('id, title, link_url, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
+      .select('id, title, link_url, quiz_id, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('sessions')
       .select('id, class_id, subject_id, custom_theme, topic, selected_cp_ids, cp_urls, custom_learning_outcomes, tutor:profiles!tutor_id(full_name, nickname)')
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{ data: SessionCpUrlRow[] | null }>,
+    admin
+      .from('question_curriculum_tags')
+      .select('group_id') as unknown as Promise<{ data: { group_id: string }[] | null }>,
     admin
       .from('curriculum_resource_duplications')
       .select('drive_file_id, duplicated_at') as unknown as Promise<{
@@ -268,9 +349,10 @@ export default async function MateriLatihanSoalPage() {
   }
 
   const tutorResources: TutorResourceRow[] = [
-    ...toTutorResources(materialRows ?? [], 'materi', classInfoById),
-    ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById),
+    ...toTutorResources(materialRows ?? [], 'materi', classInfoById, soraUrl),
+    ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById, soraUrl),
     ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
+    ...toBankSoalResources(bankTagRows ?? [], topicByGroupId, soraUrl),
   ]
 
   const doneFileIds = new Set((duplicationRows ?? []).map(r => r.drive_file_id))

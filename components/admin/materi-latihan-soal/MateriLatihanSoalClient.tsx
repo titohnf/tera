@@ -35,6 +35,8 @@ type Resource = {
 type TutorResourceRow = {
   id: string
   kind: DisplayKind
+  /** Absen berarti dari tutor — lihat `TutorResourceRow` di halamannya. */
+  source?: 'tutor' | 'sora'
   title: string
   href: string
   sessionId: string
@@ -120,7 +122,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         id: r.id, subjectId: t.subject_id, subjectName: subjectNameById.get(t.subject_id) ?? '—',
         gradeLevel: t.grade_level, semester: t.semester,
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a
@@ -137,7 +139,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
         theme: r.customTheme ?? 'Tanpa Tema', topic: r.topicText, topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     } else {
       // Session never had a topic set at all — still surface the entry
@@ -150,7 +152,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
         theme: 'Tanpa Tema', topic: 'Tanpa Topik', topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     }
   }

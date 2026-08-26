@@ -25,7 +25,11 @@ type Topic = {
 // Asesmen (from the `assessments` table) is display-only here — admins add
 // materi/latihan soal via this page, but assessments are always authored by a
 // tutor from the session's own "Asesmen & Latihan Soal" tab.
-export type DisplayKind = ResourceKind | 'asesmen'
+//
+// `bank_soal` juga hanya tampilan, dan asalnya bahkan bukan tabel di database
+// ini melainkan cerminan isi Bank Soal Sora per topik. Ia tidak pernah bisa
+// ditambah atau dihapus dari halaman ini — `ResourceKind` tetap dua nilai.
+export type DisplayKind = ResourceKind | 'asesmen' | 'bank_soal'
 
 export type DisplayRow = {
   id: string
@@ -41,7 +45,10 @@ export type DisplayRow = {
   kind: DisplayKind
   title: string
   href: string
-  source: 'admin' | 'tutor'
+  // `sora` = cerminan isi aplikasi sebelah: dilabeli Admin seperti baris
+  // kurasi admin, tapi tidak punya tombol hapus karena tidak ada baris yang
+  // bisa dihapus.
+  source: 'admin' | 'tutor' | 'sora'
   tutorName: string | null
   // Session this item came from, so admins can open the session's own
   // journal-completeness checklist and reject it if the tema/topik was
@@ -60,7 +67,7 @@ interface Props {
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
 
-const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen' }
+const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal' }
 
 function AddResourceForm({ subjects, allTopics, onSubmit, onCancel }: {
   subjects: { id: string; name: string }[]
@@ -295,6 +302,7 @@ type TopicGroup = {
   materi: DisplayRow[]
   latihanSoal: DisplayRow[]
   asesmen: DisplayRow[]
+  bankSoal: DisplayRow[]
 }
 
 // One row per (topic, contributor) pair — a topic can be touched by several
@@ -305,17 +313,20 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
   for (const r of rows) {
     const topicKey = `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`
-    const tutorLabel = r.source === 'admin' ? 'Admin' : (r.tutorName ?? 'Tutor')
+    // Bank Soal Sora dikurasi admin, jadi ia berdiri di baris Admin yang sama
+    // dengan materi kurasi — bukan di baris tutor mana pun.
+    const tutorLabel = r.source === 'tutor' ? (r.tutorName ?? 'Tutor') : 'Admin'
     const key = `${topicKey}__${tutorLabel}`
     if (!groups.has(key)) {
       groups.set(key, {
         key, topicKey, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
-        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], latihanSoal: [], asesmen: [],
+        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
       })
     }
     const g = groups.get(key)!
     if (r.kind === 'materi') g.materi.push(r)
     else if (r.kind === 'latihan_soal') g.latihanSoal.push(r)
+    else if (r.kind === 'bank_soal') g.bankSoal.push(r)
     else g.asesmen.push(r)
   }
   return Array.from(groups.values()).sort((a, b) =>
@@ -324,7 +335,7 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
   )
 }
 
-type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'latihanSoal'
+type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'latihanSoal' | 'bankSoal'
 type SortDir = 'asc' | 'desc'
 
 // "Kelas 10" should sort after "Kelas 2" — compare the numeric grade, not
@@ -346,6 +357,7 @@ function compareGroups(a: TopicGroup, b: TopicGroup, key: SortKey): number {
     case 'materi': return a.materi.length - b.materi.length
     case 'asesmen': return a.asesmen.length - b.asesmen.length
     case 'latihanSoal': return a.latihanSoal.length - b.latihanSoal.length
+    case 'bankSoal': return a.bankSoal.length - b.bankSoal.length
   }
 }
 
@@ -523,6 +535,7 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
                 <SortableHeader label="Materi" sortKey="materi" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Asesmen" sortKey="asesmen" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Latihan Soal" sortKey="latihanSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Bank Soal" sortKey="bankSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -554,6 +567,9 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
                     <ResourceCell items={g.latihanSoal} onDelete={handleDelete} />
+                  </td>
+                  <td className="px-4 py-2.5 max-w-xs">
+                    <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
                   </td>
                 </tr>
               ))}
