@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import type { HasilJawab, SoalSesi } from '@/lib/belajar/sesi'
 import { periksaJawaban, selesaikanLatihan } from '@/app/belajar/actions'
 import InputSoal from './InputSoal'
-import RumusTeks from './RumusTeks'
+import IsiSoal from './IsiSoal'
 
 /**
  * Mengerjakan satu sesi: satu soal sekaligus, umpan balik seketika, lalu lanjut.
@@ -116,9 +116,10 @@ export default function PelariSesi({
                   : 'Belum tepat'}
             </p>
             {hasil.pembahasan && (
-              <div className="mt-2 text-sm leading-relaxed">
-                <RumusTeks text={hasil.pembahasan} />
-              </div>
+              // `IsiSoal`, bukan `RumusTeks`: pembahasan disusun dengan editor
+              // blok yang sama dengan pertanyaannya, jadi ia bisa memuat tabel
+              // langkah dan gambar bantu — bukan cuma teks dan rumus.
+              <IsiSoal text={hasil.pembahasan} className="mt-2 text-sm leading-relaxed" />
             )}
           </div>
 

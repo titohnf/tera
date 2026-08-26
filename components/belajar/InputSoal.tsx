@@ -8,6 +8,7 @@ import type {
   OpsiUrutan,
 } from '@/lib/belajar/tipe-soal'
 import type { SoalSesi } from '@/lib/belajar/sesi'
+import IsiSoal from './IsiSoal'
 import RumusTeks from './RumusTeks'
 
 /**
@@ -38,27 +39,10 @@ export default function InputSoal({
 
   return (
     <fieldset disabled={terkunci} className="min-w-0">
-      {soal.gambar.length > 0 && (
-        <div className="mb-3 flex flex-col gap-2">
-          {soal.gambar.map((src, i) => (
-            // Sengaja <img> biasa, bukan next/image: berkasnya di Supabase
-            // Storage dengan dimensi yang tidak diketahui saat build, dan
-            // next/image menuntut hostnya didaftarkan lebih dulu.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={src}
-              src={src}
-              alt={soal.gambar.length > 1 ? `Gambar soal ${i + 1}` : 'Gambar soal'}
-              className="max-w-full rounded-lg border border-gray-200"
-            />
-          ))}
-        </div>
-      )}
-
       {soal.tipe !== 'fill_blank' && (
-        <p className="text-[15px] leading-relaxed text-gray-900">
-          <RumusTeks text={soal.prompt} />
-        </p>
+        // Gambar dan tabel ikut di dalam `prompt`, di posisi yang dipilih
+        // penyusun soalnya — lihat `IsiSoal`.
+        <IsiSoal text={soal.prompt} className="text-[15px] leading-relaxed text-gray-900" />
       )}
 
       {soal.tipe === 'mcq_single' && (
@@ -69,7 +53,7 @@ export default function InputSoal({
               terpilih={nilai === pilihan}
               onClick={() => onChange(pilihan)}
             >
-              <RumusTeks text={pilihan} />
+              <IsiSoal text={pilihan} />
             </PilihanKartu>
           ))}
         </div>
@@ -90,7 +74,7 @@ export default function InputSoal({
                   onChange(aktif ? dipilih.filter(p => p !== pilihan) : [...dipilih, pilihan])
                 }
               >
-                <RumusTeks text={pilihan} />
+                <IsiSoal text={pilihan} />
               </PilihanKartu>
             )
           })}
@@ -192,6 +176,7 @@ function KisiPernyataan({
   const opsi = soal.opsi as OpsiPernyataan | null
   const pernyataan = opsi?.statements ?? []
   const [labelBenar, labelSalah] = opsi?.answer_labels ?? ['Benar', 'Salah']
+  const judulBaris = opsi?.statement_label?.trim()
   const jawaban = Array.isArray(nilai) ? (nilai as (boolean | null)[]) : []
 
   // Bentuk jawabannya sama dengan bentuk kuncinya — array sejajar indeks, null
@@ -204,6 +189,13 @@ function KisiPernyataan({
 
   return (
     <div className="mt-4 flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+      {/* Di sini grid-nya berupa kartu bertumpuk, bukan tabel — jadi judul
+          kolom pernyataan tampil sebagai judul daftarnya. */}
+      {judulBaris && (
+        <p className="px-3 pt-3 pb-1 text-xs font-medium text-gray-500">
+          <RumusTeks text={judulBaris} />
+        </p>
+      )}
       {pernyataan.map((p, i) => (
         <div key={i} className="flex flex-col gap-2 p-3">
           <span className="text-sm text-gray-800">

@@ -44,6 +44,8 @@ export interface OpsiPernyataan {
   statements: string[]
   /** Label dua tombolnya, urut [benar, salah]. "Benar"/"Salah" kalau kosong. */
   answer_labels: [string, string]
+  /** Judul kolom pernyataannya, mis. "Peristiwa". Opsional; kerap tidak ada. */
+  statement_label?: string
 }
 
 export type OpsiSoal =
@@ -68,7 +70,6 @@ export interface SoalLatihan {
   prompt: string
   opsi: OpsiSoal
   bobot: number
-  gambar: string[]
 }
 
 /**

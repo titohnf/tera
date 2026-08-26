@@ -273,7 +273,6 @@ export async function keadaanSesi(sesiId: string): Promise<SoalSesi[]> {
       prompt: baris.prompt,
       opsi: baris.options,
       bobot: Number(baris.weight) || 1,
-      gambar: baris.stimulus_images ?? [],
       sudahDijawab: baris.answered,
       benar: baris.is_correct,
       skor: baris.score === null ? null : Number(baris.score),
