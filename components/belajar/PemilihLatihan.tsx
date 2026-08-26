@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import type { MapelLatihan, TopikLatihan } from '@/lib/belajar/sesi'
+import type { MateriTopik } from '@/lib/belajar/sematan'
 import { muatTopik, mulaiLatihan } from '@/app/belajar/actions'
+import Materi from './Materi'
 
 const PILIHAN_JUMLAH = [5, 10, 20]
 const JUMLAH_BAKU = 10
@@ -29,6 +31,7 @@ export default function PemilihLatihan({
 }) {
   const [dipilih, setDipilih] = useState<MapelLatihan | null>(null)
   const [topik, setTopik] = useState<TopikLatihan[]>([])
+  const [materi, setMateri] = useState<MateriTopik[]>([])
   const [terpilih, setTerpilih] = useState<string[]>([])
   const [jumlah, setJumlah] = useState(JUMLAH_BAKU)
   const [galat, setGalat] = useState<string | null>(null)
@@ -38,7 +41,8 @@ export default function PemilihLatihan({
     setGalat(null)
     mulai(async () => {
       const daftar = await muatTopik(anak, m.subject_id)
-      setTopik(daftar)
+      setTopik(daftar.topik)
+      setMateri(daftar.materi)
       setTerpilih([])
       setDipilih(m)
     })
@@ -86,6 +90,13 @@ export default function PemilihLatihan({
   }
 
   const tersedia = topik.filter(t => t.question_count > 0)
+  // Tanpa centang, soalnya diambil dari SELURUH topik mapel ini — dan
+  // menumpahkan seluruh materi mapel ke layar bukan menolong siapa pun, cuma
+  // kebisingan sebelum tombol mulai. Materi baru muncul begitu anaknya
+  // menyebutkan topik yang ia maksud.
+  const materiTerpilih = terpilih.length
+    ? materi.filter(m => terpilih.includes(m.group_id))
+    : []
 
   return (
     <div className="space-y-4">
@@ -137,6 +148,11 @@ export default function PemilihLatihan({
           })}
         </div>
       </div>
+
+      {/* Tepat di bawah daftar topiknya, bukan di ujung layar: mencentang
+          sebuah topik membuat bahannya muncul persis di tempat centangnya
+          ditekan. */}
+      <Materi materi={materiTerpilih} />
 
       <div className="flex items-center gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
         <span className="text-sm text-gray-700">Jumlah soal</span>

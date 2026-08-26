@@ -2,6 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { belajarContext } from '@/lib/belajar/konteks'
+import { materiTopik } from '@/lib/belajar/materi'
+import type { MateriTopik } from '@/lib/belajar/sematan'
 import {
   bukaSesi,
   jawabSoal,
@@ -23,9 +25,27 @@ import {
  * login bisa memanggilnya dengan argumen karangan sendiri.
  */
 
-export async function muatTopik(anak: string | undefined, subjectId: string): Promise<TopikLatihan[]> {
-  const { learnerId } = await belajarContext(anak)
-  return topikLatihan(learnerId, subjectId)
+/**
+ * Topik satu mapel beserta materinya, dalam satu perjalanan.
+ *
+ * Dua aksi terpisah akan terasa lebih rapi tapi justru lebih lambat: server
+ * action di Next berjalan berurutan, jadi `Promise.all` atas dua aksi tetap
+ * menghasilkan dua perjalanan yang saling menunggu. Materi satu mapel cuma
+ * beberapa baris tautan — murah dibawa sekalian, dan menyaringnya ke topik yang
+ * dicentang cukup terjadi di browser, tanpa perjalanan baru tiap kali kotak
+ * centang disentuh.
+ *
+ * Pelanggan langganan pulang dengan materi kosong tanpa query: materi adalah
+ * bahan internal bimbel, dan RLS memang tidak membukanya untuk mereka.
+ */
+export async function muatTopik(
+  anak: string | undefined,
+  subjectId: string
+): Promise<{ topik: TopikLatihan[]; materi: MateriTopik[] }> {
+  const { learnerId, hanyaPublik } = await belajarContext(anak)
+  const topik = await topikLatihan(learnerId, subjectId)
+  if (hanyaPublik) return { topik, materi: [] }
+  return { topik, materi: await materiTopik(topik.map((t) => t.group_id)) }
 }
 
 /**
