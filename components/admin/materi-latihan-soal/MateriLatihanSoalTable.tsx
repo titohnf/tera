@@ -29,7 +29,12 @@ type Topic = {
 // `bank_soal` juga hanya tampilan, dan asalnya bahkan bukan tabel di database
 // ini melainkan cerminan isi Bank Soal Sora per topik. Ia tidak pernah bisa
 // ditambah atau dihapus dari halaman ini — `ResourceKind` tetap dua nilai.
-export type DisplayKind = ResourceKind | 'asesmen' | 'bank_soal'
+//
+// `kosong` bukan sumber daya sama sekali — ia penanda bahwa topiknya ada di
+// kurikulum tapi belum punya apa pun. Tanpa penanda itu topik seperti ini tidak
+// punya baris, dan tabel yang seharusnya menunjukkan pekerjaan justru
+// menyembunyikannya.
+export type DisplayKind = ResourceKind | 'asesmen' | 'bank_soal' | 'kosong'
 
 export type DisplayRow = {
   id: string
@@ -48,7 +53,7 @@ export type DisplayRow = {
   // `sora` = cerminan isi aplikasi sebelah: dilabeli Admin seperti baris
   // kurasi admin, tapi tidak punya tombol hapus karena tidak ada baris yang
   // bisa dihapus.
-  source: 'admin' | 'tutor' | 'sora'
+  source: 'admin' | 'tutor' | 'sora' | 'kurikulum'
   tutorName: string | null
   // Session this item came from, so admins can open the session's own
   // journal-completeness checklist and reject it if the tema/topik was
@@ -57,6 +62,9 @@ export type DisplayRow = {
   // Whether this link's underlying Google Drive file has already been
   // copied into the shared "Materi dan Latihan Soal" Drive folder.
   isDuplicated: boolean
+  /** Hanya pada baris `bank_soal`. */
+  jumlahSoal?: number
+  jumlahPembahasan?: number
 }
 
 interface Props {
@@ -67,7 +75,48 @@ interface Props {
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
 
-const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal' }
+const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal', kosong: '—' }
+
+/**
+ * Keadaan kelengkapan satu topik.
+ *
+ * Urutannya urutan keparahan, dan itu yang dipakai saat mengurutkan kolomnya:
+ * yang paling jauh dari selesai berkumpul di satu ujung.
+ */
+const KELENGKAPAN = ['kosong', 'perlu-materi', 'perlu-soal', 'perlu-pembahasan', 'lengkap'] as const
+type Kelengkapan = (typeof KELENGKAPAN)[number]
+
+const KELENGKAPAN_LABEL: Record<Kelengkapan, string> = {
+  kosong: 'Kosong',
+  'perlu-materi': 'Perlu materi',
+  'perlu-soal': 'Perlu soal',
+  'perlu-pembahasan': 'Pembahasan kurang',
+  lengkap: 'Lengkap',
+}
+
+const KELENGKAPAN_WARNA: Record<Kelengkapan, string> = {
+  kosong: 'text-gray-400',
+  'perlu-materi': 'text-amber-700',
+  'perlu-soal': 'text-amber-700',
+  'perlu-pembahasan': 'text-amber-700',
+  lengkap: 'text-green-700',
+}
+
+/**
+ * Lengkap berarti tiga-tiganya ada: bahan untuk dibaca, soal untuk dikerjakan,
+ * dan pembahasan untuk yang salah menjawab. Soal tanpa pembahasan sengaja TIDAK
+ * dihitung lengkap — murid yang keliru cuma tahu ia keliru, dan tidak belajar
+ * apa pun dari situ.
+ */
+function kelengkapan(g: TopicGroup): Kelengkapan {
+  const adaMateri = g.materi.length > 0
+  const soal = g.bankSoal.reduce((n, r) => n + (r.jumlahSoal ?? 0), 0)
+  const pembahasan = g.bankSoal.reduce((n, r) => n + (r.jumlahPembahasan ?? 0), 0)
+  if (!adaMateri && soal === 0) return 'kosong'
+  if (!adaMateri) return 'perlu-materi'
+  if (soal === 0) return 'perlu-soal'
+  return pembahasan >= soal ? 'lengkap' : 'perlu-pembahasan'
+}
 
 function AddResourceForm({ subjects, allTopics, onSubmit, onCancel }: {
   subjects: { id: string; name: string }[]
@@ -305,37 +354,47 @@ type TopicGroup = {
   bankSoal: DisplayRow[]
 }
 
-// One row per (topic, contributor) pair — a topic can be touched by several
-// tutors (and/or admin) with different materi/latihan soal/asesmen each, so
-// splitting rows this way keeps the "Tutor" column unambiguous instead of
-// having to merge unrelated contributors' items into one cell.
+// SATU baris per topik.
+//
+// Dulu satu baris per (topik, penyumbang): rapi untuk melacak siapa mengunggah
+// apa, tapi membuat "topik ini lengkap belum?" tidak bisa dibaca sekilas —
+// jawabannya tersebar di beberapa baris yang berjauhan. Karena halaman ini
+// sekarang dipakai memeriksa kelengkapan, topiknya yang jadi satuan, dan nama
+// penyumbangnya berkumpul di satu sel. Bank Soal Sora dihitung sebagai
+// sumbangan Admin, bukan tutor mana pun.
 function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
+  const penyumbang = new Map<string, Set<string>>()
   for (const r of rows) {
-    const topicKey = `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`
-    // Bank Soal Sora dikurasi admin, jadi ia berdiri di baris Admin yang sama
-    // dengan materi kurasi — bukan di baris tutor mana pun.
-    const tutorLabel = r.source === 'tutor' ? (r.tutorName ?? 'Tutor') : 'Admin'
-    const key = `${topicKey}__${tutorLabel}`
+    const key = `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`
     if (!groups.has(key)) {
       groups.set(key, {
-        key, topicKey, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
-        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel, materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
+        key, topicKey: key, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
+        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel: '', materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
       })
+      penyumbang.set(key, new Set())
     }
+    // Penanda topik kosong tidak menyumbang apa-apa selain keberadaannya.
+    if (r.kind === 'kosong') continue
+    penyumbang.get(key)!.add(r.source === 'tutor' ? (r.tutorName ?? 'Tutor') : 'Admin')
     const g = groups.get(key)!
     if (r.kind === 'materi') g.materi.push(r)
     else if (r.kind === 'latihan_soal') g.latihanSoal.push(r)
     else if (r.kind === 'bank_soal') g.bankSoal.push(r)
     else g.asesmen.push(r)
   }
+  for (const [key, g] of groups) {
+    const nama = [...(penyumbang.get(key) ?? [])].sort((a, b) =>
+      a === 'Admin' ? -1 : b === 'Admin' ? 1 : a.localeCompare(b),
+    )
+    g.tutorLabel = nama.join(', ')
+  }
   return Array.from(groups.values()).sort((a, b) =>
-    a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic) ||
-    (a.tutorLabel === 'Admin' ? -1 : b.tutorLabel === 'Admin' ? 1 : a.tutorLabel.localeCompare(b.tutorLabel))
+    a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic)
   )
 }
 
-type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'latihanSoal' | 'bankSoal'
+type SortKey = 'subjectName' | 'gradeSemester' | 'theme' | 'topic' | 'topicSource' | 'tutorLabel' | 'materi' | 'asesmen' | 'latihanSoal' | 'bankSoal' | 'status'
 type SortDir = 'asc' | 'desc'
 
 // "Kelas 10" should sort after "Kelas 2" — compare the numeric grade, not
@@ -354,6 +413,7 @@ function compareGroups(a: TopicGroup, b: TopicGroup, key: SortKey): number {
     case 'topic': return a.topic.localeCompare(b.topic)
     case 'topicSource': return a.topicSource.localeCompare(b.topicSource)
     case 'tutorLabel': return a.tutorLabel.localeCompare(b.tutorLabel)
+    case 'status': return KELENGKAPAN.indexOf(kelengkapan(a)) - KELENGKAPAN.indexOf(kelengkapan(b))
     case 'materi': return a.materi.length - b.materi.length
     case 'asesmen': return a.asesmen.length - b.asesmen.length
     case 'latihanSoal': return a.latihanSoal.length - b.latihanSoal.length
@@ -368,8 +428,7 @@ function sortGroups(groups: TopicGroup[], key: SortKey, dir: SortDir): TopicGrou
     const primary = compareGroups(a, b, key)
     const result = primary !== 0
       ? primary
-      : a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic) ||
-        (a.tutorLabel === 'Admin' ? -1 : b.tutorLabel === 'Admin' ? 1 : a.tutorLabel.localeCompare(b.tutorLabel))
+      : a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic)
     return dir === 'asc' ? result : -result
   })
 }
@@ -410,7 +469,15 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
         // Masked label instead of the (often long) real title — "Materi"
         // when it's the only one for this topic/tutor, "Materi 1"/"Materi 2"
         // when there are several. Full title still available on hover.
-        const label = items.length > 1 ? `${RESOURCE_LABEL[r.kind]} ${i + 1}` : RESOURCE_LABEL[r.kind]
+        // Bank Soal memakai judulnya sendiri ("12 soal · 0 pembahasan"):
+        // hanya ada satu baris per topik, dan angkanyalah yang jadi isi kolom
+        // ini. Sisanya tetap dilabeli supaya judul panjang tidak merusak tabel.
+        const label =
+          r.kind === 'bank_soal'
+            ? r.title
+            : items.length > 1
+              ? `${RESOURCE_LABEL[r.kind]} ${i + 1}`
+              : RESOURCE_LABEL[r.kind]
         return (
         <li key={r.id} className="group flex items-center gap-1.5">
           <a
@@ -469,6 +536,7 @@ const PAGE_SIZE = 10
 export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
+  const [saringKelengkapan, setSaringKelengkapan] = useState<'' | 'belum' | Kelengkapan>('')
   const [sortKey, setSortKey] = useState<SortKey>('subjectName')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [prevRows, setPrevRows] = useState(rows)
@@ -497,7 +565,17 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
     }
   }
 
-  const groups = sortGroups(groupByTopic(rows), sortKey, sortDir)
+  const semua = groupByTopic(rows)
+  // "Belum lengkap" adalah yang paling sering dicari — sisanya disediakan satu
+  // per satu supaya pertanyaan "mana yang perlu materi saja" juga terjawab.
+  const tersaring = saringKelengkapan
+    ? semua.filter((g) =>
+        saringKelengkapan === 'belum'
+          ? kelengkapan(g) !== 'lengkap'
+          : kelengkapan(g) === saringKelengkapan,
+      )
+    : semua
+  const groups = sortGroups(tersaring, sortKey, sortDir)
   const topicCount = new Set(groups.map(g => g.topicKey)).size
   const totalPages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -506,7 +584,29 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
   return (
     <>
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-        <p className="text-sm font-semibold text-gray-700">{topicCount} topik</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-semibold text-gray-700">{topicCount} topik</p>
+          <select
+            value={saringKelengkapan}
+            onChange={(e) => {
+              setSaringKelengkapan(e.target.value as '' | 'belum' | Kelengkapan)
+              setPage(1)
+            }}
+            aria-label="Saring kelengkapan"
+            className="px-2 py-1 border border-gray-200 rounded-lg text-xs text-gray-700"
+          >
+            <option value="">Semua kelengkapan</option>
+            <option value="belum">Belum lengkap</option>
+            {KELENGKAPAN.map((k) => (
+              <option key={k} value={k}>
+                {KELENGKAPAN_LABEL[k]}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-gray-400">
+            {semua.filter((g) => kelengkapan(g) === 'lengkap').length} lengkap
+          </span>
+        </div>
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -536,6 +636,7 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
                 <SortableHeader label="Asesmen" sortKey="asesmen" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Latihan Soal" sortKey="latihanSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Bank Soal" sortKey="bankSoal" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Status" sortKey="status" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -570,6 +671,11 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
                     <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
+                  </td>
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <span className={`text-xs font-medium ${KELENGKAPAN_WARNA[kelengkapan(g)]}`}>
+                      {KELENGKAPAN_LABEL[kelengkapan(g)]}
+                    </span>
                   </td>
                 </tr>
               ))}

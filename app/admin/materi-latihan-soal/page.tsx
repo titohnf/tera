@@ -69,6 +69,9 @@ export type TutorResourceRow = {
   customTheme: string | null
   topicText: string | null
   tutorName: string | null
+  /** Hanya pada baris `bank_soal`: bahan kolom kelengkapan. */
+  jumlahSoal?: number
+  jumlahPembahasan?: number
   // Best-effort Kelas/Semester for entries with no formal curriculum link —
   // derived from the session's class (its own `semester` column, and the
   // mode grade of its enrolled students) so the columns aren't just "—".
@@ -169,20 +172,26 @@ function toLatihanSoalResources(
  * arti sebagai penanda meski tidak bisa diketuk.
  */
 function toBankSoalResources(
-  tags: { group_id: string }[],
+  tags: { group_id: string; question_bank_item_id: string }[],
+  adaPembahasan: Set<string>,
   topicByGroupId: Map<string, { topic: string; representativeCpId: string }>,
   soraUrl: string | null,
 ): TutorResourceRow[] {
   if (!soraUrl) return []
 
   const jumlah = new Map<string, number>()
+  const berpembahasan = new Map<string, number>()
   for (const t of tags) {
     if (!t.group_id) continue
     jumlah.set(t.group_id, (jumlah.get(t.group_id) ?? 0) + 1)
+    if (adaPembahasan.has(t.question_bank_item_id)) {
+      berpembahasan.set(t.group_id, (berpembahasan.get(t.group_id) ?? 0) + 1)
+    }
   }
 
   const out: TutorResourceRow[] = []
   for (const [groupId, n] of jumlah) {
+    const p = berpembahasan.get(groupId) ?? 0
     const group = topicByGroupId.get(groupId)
     // Topik yang tidak punya baris kurikulum tidak punya tempat duduk di tabel
     // ini. Soalnya tetap ada di Sora — yang hilang cuma barisnya di sini.
@@ -191,7 +200,11 @@ function toBankSoalResources(
       id: `bank__${groupId}`,
       kind: 'bank_soal',
       source: 'sora',
-      title: `${n} soal`,
+      // Judul yang benar-benar tampil di selnya (lihat `ResourceCell`), bukan
+      // sekadar tooltip: di tabel kelengkapan, angkanyalah isinya.
+      title: `${n} soal · ${p} pembahasan`,
+      jumlahSoal: n,
+      jumlahPembahasan: p,
       href: `${soraUrl}/dashboard/bank/${groupId}`,
       // Baris ini milik topik, bukan milik sesi mana pun.
       sessionId: '',
@@ -263,7 +276,7 @@ export default async function MateriLatihanSoalPage() {
   // Bank Soal memang tidak dibuat.
   const soraUrl = process.env.NEXT_PUBLIC_SORA_URL?.replace(/\/$/, '') ?? null
 
-  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: duplicationRows }] = await Promise.all([
+  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: bankItemRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
       .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
@@ -320,7 +333,14 @@ export default async function MateriLatihanSoalPage() {
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{ data: SessionCpUrlRow[] | null }>,
     admin
       .from('question_curriculum_tags')
-      .select('group_id') as unknown as Promise<{ data: { group_id: string }[] | null }>,
+      .select('group_id, question_bank_item_id') as unknown as Promise<{
+        data: { group_id: string; question_bank_item_id: string }[] | null
+      }>,
+    // Hanya `id` dan `explanation`: cukup untuk menghitung berapa soal yang
+    // sudah punya pembahasan, tanpa menyeret satu pun teks pertanyaan.
+    admin.from('question_bank_items').select('id, explanation') as unknown as Promise<{
+      data: { id: string; explanation: string | null }[] | null
+    }>,
     admin
       .from('curriculum_resource_duplications')
       .select('drive_file_id, duplicated_at') as unknown as Promise<{
@@ -348,11 +368,17 @@ export default async function MateriLatihanSoalPage() {
     }
   }
 
+  // Pembahasan kosong dan pembahasan berisi spasi sama saja bagi murid yang
+  // menjawab salah.
+  const adaPembahasan = new Set(
+    (bankItemRows ?? []).filter((i) => (i.explanation ?? '').trim() !== '').map((i) => i.id),
+  )
+
   const tutorResources: TutorResourceRow[] = [
     ...toTutorResources(materialRows ?? [], 'materi', classInfoById, soraUrl),
     ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById, soraUrl),
     ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
-    ...toBankSoalResources(bankTagRows ?? [], topicByGroupId, soraUrl),
+    ...toBankSoalResources(bankTagRows ?? [], adaPembahasan, topicByGroupId, soraUrl),
   ]
 
   const doneFileIds = new Set((duplicationRows ?? []).map(r => r.drive_file_id))

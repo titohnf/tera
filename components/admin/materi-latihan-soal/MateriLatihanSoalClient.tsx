@@ -47,6 +47,8 @@ type TutorResourceRow = {
   tutorName: string | null
   classGradeLevel: string | null
   classSemester: number | null
+  jumlahSoal?: number
+  jumlahPembahasan?: number
 }
 
 interface Props {
@@ -123,6 +125,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         gradeLevel: t.grade_level, semester: t.semester,
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.href,
         source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan,
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a
@@ -155,6 +158,35 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
       })
     }
+  }
+
+  // Topik yang belum punya materi, soal, maupun asesmen tidak menghasilkan satu
+  // baris pun di atas — dan itulah yang membuat halaman ini dulu tidak bisa
+  // dipakai memeriksa kelengkapan: 427 dari 485 topik tidak kelihatan, padahal
+  // justru merekalah daftar kerjanya. Kesalahan yang sama pernah ada di Bank
+  // Soal Sora dan diperbaiki dengan cara yang sama — barisnya berasal dari
+  // TAKSONOMI, bukan dari isinya.
+  //
+  // `curriculum_topics` datar: satu topik bisa punya banyak baris CP. Yang
+  // dipakai di sini kunci gabungannya, sama persis dengan yang dipakai
+  // `groupByTopic`, jadi topik yang sudah punya isi tidak pernah dobel.
+  const kunciTerisi = new Set(
+    rows.map((r) => `${r.subjectId}__${r.gradeLevel}__${r.semester}__${r.theme}__${r.topic}`),
+  )
+  for (const t of topics) {
+    if (!t.theme || !t.topic) continue
+    if (curriculumFilter && t.curriculum !== curriculumFilter) continue
+    if (gradeFilter && t.grade_level !== gradeFilter) continue
+    if (semesterFilter && t.semester !== semesterFilter) continue
+    const kunci = `${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`
+    if (kunciTerisi.has(kunci)) continue
+    kunciTerisi.add(kunci)
+    rows.push({
+      id: `kosong__${kunci}`, subjectId: t.subject_id, subjectName: subjectNameById.get(t.subject_id) ?? '—',
+      gradeLevel: t.grade_level, semester: t.semester,
+      theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: 'kosong', title: '', href: '',
+      source: 'kurikulum', tutorName: null, sessionId: null, isDuplicated: false,
+    })
   }
 
   const ADMIN_TUTOR_KEY = '__admin__'
