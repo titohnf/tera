@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { adalahVideo } from './sematan'
+import { ALL_GRADES } from '@/lib/curriculum-config'
 import type { OpsiSoal, SoalLatihan, TipeSoal } from './tipe-soal'
 import { TIPE_TANPA_NILAI_OTOMATIS } from './tipe-soal'
 import { nilaiJawaban } from './penilaian'
@@ -23,10 +25,38 @@ import { nilaiJawaban } from './penilaian'
 
 const TANPA_KODE = ''
 
-export interface MapelLatihan {
+/** Soal, materi, dan kemajuan sebuah mapel dalam satu lingkup jenjang. */
+export interface HitunganMapel {
+  question_count: number
+  /** Bahan baca. Bisa nol, dan itu disebutkan. */
+  materi_count: number
+  /** Materi yang berupa video (YouTube). Disebut terpisah, bukan dijumlahkan. */
+  video_count: number
+  /**
+   * Berapa soal berbeda yang sudah pernah dijawab pelajar ini.
+   *
+   * Null berarti BELUM DIKETAHUI, bukan nol — `practice_progress()` gagal atau
+   * belum ada. Layar tidak menggambar cincin kemajuan untuk nilai null;
+   * menggambarnya kosong berarti memberitahu anak bahwa ia belum mengerjakan
+   * apa-apa, dan itu bisa keliru.
+   */
+  answered_count: number | null
+}
+
+export interface MapelLatihan extends HitunganMapel {
   subject_id: string
   subject_name: string
-  question_count: number
+  /** Punya kurikulum di jenjang pelajar. */
+  di_kelas: boolean
+  /**
+   * Hitungan yang sama, tapi UNTUK JENJANG PELAJAR SAJA. Null kalau jenjangnya
+   * tidak diketahui atau angkanya tidak bisa diambil.
+   *
+   * Dua lingkup dibawa sekaligus karena layar memakai keduanya: mapel yang sama
+   * muncul di "Tersedia di Kelasmu" dengan angka kelasnya, dan di "Dari Seluruh
+   * Kelas" dengan angka seluruh jenjang.
+   */
+  kelas: HitunganMapel | null
 }
 
 export interface TopikLatihan {
@@ -192,15 +222,149 @@ export async function sesiTertunda(learnerId: string): Promise<SesiTertunda | nu
 }
 
 /** Mapel yang benar-benar punya soal untuk pelajar ini. Menu kosong tidak pernah disodorkan. */
-export async function mapelLatihan(learnerId: string): Promise<MapelLatihan[]> {
+/**
+ * Mapel yang punya soal, materi, atau keduanya.
+ *
+ * `practice_subjects()` hanya tahu soal — ia menyaring habis mapel yang nol
+ * soal, dan itu benar untuk Sora yang seluruhnya tentang berlatih. Di sini
+ * mapel yang baru punya bahan bacaan tetap harus muncul, karena materi adalah
+ * separuh dari yang dijanjikan permukaan ini. Penggabungannya dikerjakan di
+ * sini, bukan dengan mengubah fungsi bersamanya (lihat migrasi 122).
+ *
+ * `curriculum_resources` dibaca lewat client sesi seperti semua yang lain, jadi
+ * yang memutuskan tetap RLS: keluarga lewat 076, pelanggan lewat 119 —
+ * `kind = 'materi'` saja untuk yang terakhir.
+ */
+export async function mapelLatihan(
+  learnerId: string,
+  /**
+   * Jenjang si pelajar. Kosong berarti tidak diketahui — hanya angka seluruh
+   * jenjang yang dihitung, dan layar tidak memisahkan apa pun.
+   */
+  jenjang: string[] = []
+): Promise<MapelLatihan[]> {
   const supabase = await createClient()
-  const { data } = await supabase.rpc('practice_subjects', {
-    p_access_code: TANPA_KODE,
-    p_learner_id: learnerId,
+  const [
+    { data: bersoal },
+    { data: materi },
+    { data: kelompokKelas },
+    { data: mapelKelas, error: galatKelas },
+    { data: mapelSemua, error: galatSemua },
+  ] = await Promise.all([
+    supabase.rpc('practice_subjects', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
+    supabase
+      .from('curriculum_resources')
+      .select('subject_id, grade_level, link_url, subjects(name)')
+      .eq('kind', 'materi'),
+    // Penanda segmen: mapel yang punya kurikulum di jenjang si anak. Keluarga
+    // boleh membaca tabel ini sejak 076; pelanggan langganan tidak — dan mereka
+    // memang tidak punya kelas, jadi cabang ini tidak berjalan untuk mereka.
+    jenjang.length
+      ? supabase.from('curriculum_topic_groups').select('subject_id').in('grade_level', jenjang)
+      : Promise.resolve({ data: null }),
+    // Soal dan kemajuan DI JENJANG ITU SAJA (migrasi 125).
+    jenjang.length
+      ? supabase.rpc('practice_progress', {
+          p_access_code: TANPA_KODE,
+          p_learner_id: learnerId,
+          p_grade_levels: jenjang,
+        })
+      : Promise.resolve({ data: null, error: null }),
+    supabase.rpc('practice_progress', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
+  ])
+
+  const kelasIni = new Set(
+    ((kelompokKelas as { subject_id: string }[] | null) ?? []).map(r => r.subject_id)
+  )
+  type Kemajuan = { subject_id: string; answered: number; total: number }
+  const petakan = (rows: unknown) =>
+    new Map<string, { answered: number; total: number }>(
+      ((rows as Kemajuan[] | null) ?? []).map(r => [
+        r.subject_id,
+        { answered: Number(r.answered), total: Number(r.total) },
+      ])
+    )
+  const progresKelas = petakan(mapelKelas)
+  const progresSemua = petakan(mapelSemua)
+  // Yang menentukan ADA-TIDAKNYA JAWABAN dari fungsinya, bukan banyaknya baris.
+  // Nol baris adalah jawaban yang sah — sebuah jenjang bisa saja benar-benar
+  // belum punya satu soal pun di mapel mana pun — dan menyamakannya dengan
+  // kegagalan berarti angka seluruh jenjang muncul kembali persis di keadaan
+  // yang paling butuh angka kelasnya.
+  const pakaiKelas = jenjang.length > 0 && !galatKelas
+
+  const gabungan = new Map<string, MapelLatihan>()
+  const baru = (subjectId: string, nama: string, questionCount: number): MapelLatihan => ({
+    subject_id: subjectId,
+    subject_name: nama,
+    question_count: questionCount,
+    materi_count: 0,
+    video_count: 0,
+    answered_count: galatSemua ? null : (progresSemua.get(subjectId)?.answered ?? 0),
+    di_kelas: kelasIni.has(subjectId),
+    kelas: pakaiKelas
+      ? {
+          question_count: progresKelas.get(subjectId)?.total ?? 0,
+          materi_count: 0,
+          video_count: 0,
+          answered_count: progresKelas.get(subjectId)?.answered ?? 0,
+        }
+      : null,
   })
-  return (data as MapelLatihan[] | null) ?? []
+
+  for (const m of (bersoal as { subject_id: string; subject_name: string; question_count: number }[] | null) ?? []) {
+    gabungan.set(m.subject_id, baru(m.subject_id, m.subject_name, m.question_count))
+  }
+  for (const r of (materi as Materi[] | null) ?? []) {
+    // Mapel yang belum punya soal sama sekali. Namanya diambil dari relasi, dan
+    // baris tanpa nama dilewati — mapel tanpa nama tidak bisa ditawarkan.
+    let ada = gabungan.get(r.subject_id)
+    if (!ada) {
+      if (!r.subjects?.name) continue
+      ada = baru(r.subject_id, r.subjects.name, 0)
+      gabungan.set(r.subject_id, ada)
+    }
+    const video = adalahVideo(r.link_url)
+    if (video) ada.video_count++
+    else ada.materi_count++
+    if (ada.kelas && jenjang.includes(r.grade_level)) {
+      if (video) ada.kelas.video_count++
+      else ada.kelas.materi_count++
+    }
+  }
+
+  return [...gabungan.values()].sort((a, b) => a.subject_name.localeCompare(b.subject_name, 'id'))
 }
 
+type Materi = {
+  subject_id: string
+  grade_level: string
+  link_url: string
+  subjects: { name: string } | null
+}
+
+/**
+ * Topik satu mapel, DIURUTKAN SEPERTI DI KURIKULUM.
+ *
+ * `practice_topics()` mengurutkan menurut abjad tema lalu abjad topik —
+ * `curriculum_topic_groups` (migrasi 060) memang tidak menyimpan urutan sama
+ * sekali. Urutan yang disusun admin, lengkap dengan tombol naik-turunnya,
+ * tinggal di `curriculum_topics.sort_order`, dan tidak pernah ikut ke permukaan
+ * belajar. Akibatnya bab pengantar IPA ("Hakikat Sains") jatuh ke urutan
+ * keempat karena huruf H, dan Matematika membuka dengan FPB/KPK padahal
+ * materinya dibangun dari penjumlahan lebih dulu. Untuk anak yang belajar
+ * sendiri, urutan bukan kerapian — ia bagian dari bahannya.
+ *
+ * Penyusunannya dikerjakan di sini, bukan dengan mengubah `practice_topics()`:
+ * fungsi itu dipakai bersama repo `form` (Sora). Disiplin yang sama dengan 092,
+ * 110, 122, dan 125.
+ *
+ * `sort_order` dibaca lewat client sesi seperti yang lain, jadi yang memutuskan
+ * tetap RLS — keluarga sejak 076, pelanggan langganan sejak 126. Kalau
+ * kuerinya tidak mengembalikan apa-apa, urutannya jatuh kembali ke urutan RPC
+ * apa adanya: daftar yang urutannya kurang pas masih jauh lebih baik daripada
+ * daftar yang kosong.
+ */
 export async function topikLatihan(
   learnerId: string,
   subjectId: string
@@ -211,7 +375,38 @@ export async function topikLatihan(
     p_subject_id: subjectId,
     p_learner_id: learnerId,
   })
-  return (data as TopikLatihan[] | null) ?? []
+  const topik = (data as TopikLatihan[] | null) ?? []
+  if (topik.length === 0) return topik
+
+  const { data: urutan } = await supabase
+    .from('curriculum_topics')
+    .select('group_id, sort_order')
+    .in('group_id', topik.map(t => t.group_id))
+
+  // Satu topik adalah SEKUMPULAN baris CP yang berbagi kunci yang sama (lihat
+  // 060), jadi urutannya diambil dari baris paling awal — itu tempat topiknya
+  // muncul pertama kali di kurikulum.
+  const paling = new Map<string, number>()
+  for (const r of (urutan as { group_id: string | null; sort_order: number | null }[] | null) ?? []) {
+    if (!r.group_id || r.sort_order == null) continue
+    const ada = paling.get(r.group_id)
+    if (ada == null || r.sort_order < ada) paling.set(r.group_id, r.sort_order)
+  }
+  if (paling.size === 0) return topik
+
+  // Jenjang dan semester tetap kunci utama: `sort_order` berulang dari nol di
+  // tiap jenjang (Kelas 7 memakai 0-22, Kelas 8 memakai 1-20), jadi mengurutkan
+  // dengan angka itu saja akan menyelang-nyeling kelas. Yang tidak punya urutan
+  // ditaruh di belakang, BUKAN dibuang, dan di antara mereka urutan RPC-nya
+  // dipertahankan (`sort` di JS stabil).
+  const kelas = (t: TopikLatihan) => {
+    const i = ALL_GRADES.indexOf(t.grade_level)
+    return i === -1 ? ALL_GRADES.length : i
+  }
+  const urut = (t: TopikLatihan) => paling.get(t.group_id) ?? Number.MAX_SAFE_INTEGER
+  return [...topik].sort(
+    (a, b) => kelas(a) - kelas(b) || a.semester - b.semester || urut(a) - urut(b)
+  )
 }
 
 export async function rubrikMapel(subjectId: string): Promise<PitaPenguasaan[] | null> {

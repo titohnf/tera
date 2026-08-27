@@ -51,6 +51,23 @@ function idYoutube(u: URL): string | null {
 }
 
 /**
+ * Tautan ini video atau bukan.
+ *
+ * Hanya YouTube yang bisa dijawab dengan pasti. Berkas Drive tidak bisa
+ * dibedakan video atau dokumen tanpa memanggil Drive API (alasan panjangnya di
+ * `sematkan()` di bawah), jadi yang tidak dikenali dihitung sebagai bahan baca
+ * — salah menyebut dokumen sebagai video lebih menyesatkan daripada tidak
+ * menyebutnya sama sekali.
+ */
+export function adalahVideo(url: string): boolean {
+  try {
+    return idYoutube(new URL(url)) !== null
+  } catch {
+    return false
+  }
+}
+
+/**
  * Mengubah tautan materi jadi alamat yang bisa ditaruh di dalam `<iframe>`.
  *
  * DAFTAR-PUTIH, bukan tebak-tebakan, dan itu disengaja karena dua hal.

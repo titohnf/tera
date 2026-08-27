@@ -43,6 +43,19 @@ export interface KonteksBelajar {
   namaPelajar: string
   /** Terisi hanya untuk jalur keluarga — dipakai tautan kembali ke portal. */
   studentId: string | null
+  /**
+   * Kelas pelajar sebagai angka 1-12, atau null kalau belum diisi.
+   *
+   * Null adalah keadaan wajar, bukan kegagalan: `profiles.grade` boleh kosong,
+   * dan untuk role `mandiri` hari ini tidak ada satu pun layar yang mengisinya.
+   * Yang memakainya HARUS punya perilaku penuh saat null — daftar topik tetap
+   * lengkap, cuma tidak ada yang ditonjolkan. Menyaring daftar dengan kelas
+   * yang tidak diketahui berarti layar kosong untuk orang yang tidak berbuat
+   * salah apa pun.
+   */
+  kelas: number | null
+  /** Foto profil pelajarnya, atau null — layar menggantinya dengan inisial. */
+  avatar: string | null
 }
 
 export async function belajarContext(anakDipilih?: string): Promise<KonteksBelajar> {
@@ -53,7 +66,7 @@ export async function belajarContext(anakDipilih?: string): Promise<KonteksBelaj
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, nickname, role')
+    .select('full_name, nickname, role, grade, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -69,7 +82,7 @@ export async function belajarContext(anakDipilih?: string): Promise<KonteksBelaj
 
     const { data: anak } = await supabase
       .from('profiles')
-      .select('full_name, nickname')
+      .select('full_name, nickname, grade, avatar_url')
       .eq('id', anakDipilih)
       .single()
 
@@ -83,6 +96,8 @@ export async function belajarContext(anakDipilih?: string): Promise<KonteksBelaj
           })
         : 'Anak',
       studentId: anakDipilih,
+      kelas: (anak?.grade as number | null) ?? null,
+      avatar: (anak?.avatar_url as string | null) ?? null,
     }
   }
 
@@ -103,6 +118,8 @@ export async function belajarContext(anakDipilih?: string): Promise<KonteksBelaj
         nickname: profile.nickname as string | null,
       }),
       studentId: null,
+      kelas: (profile.grade as number | null) ?? null,
+      avatar: (profile.avatar_url as string | null) ?? null,
     }
   }
 

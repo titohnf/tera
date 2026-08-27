@@ -17,23 +17,19 @@ export default async function BelajarBeranda({
   searchParams: Promise<{ anak?: string }>
 }) {
   const { anak } = await searchParams
-  const { learnerId, namaPelajar, hanyaPublik } = await belajarContext(anak)
+  const { learnerId, namaPelajar, avatar, kelas } = await belajarContext(anak)
+  // Pengecualian jenjang per mapel (migrasi 105) TIDAK ikut di sini: ia
+  // bergantung pada mapel mana yang dibuka, dan yang sedang disusun justru
+  // daftar mapelnya. Yang dipakai kelas aslinya saja; pengecualiannya
+  // menyusul di layar topik, tempat mapelnya sudah diketahui.
+  const jenjang = kelas ? [`Kelas ${kelas}`] : []
   const [mapel, tertunda] = await Promise.all([
-    mapelLatihan(learnerId),
+    mapelLatihan(learnerId, jenjang),
     sesiTertunda(learnerId),
   ])
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
-        <p className="text-sm font-semibold text-gray-900">Berlatih sebagai {namaPelajar}</p>
-        <p className="mt-1 text-sm leading-relaxed text-gray-500">
-          {hanyaPublik
-            ? 'Soal-soal yang terbuka gratis.'
-            : 'Seluruh bank soal bimbel.'}
-        </p>
-      </div>
-
       {/* Satu-satunya pintu menuju sesi yang belum selesai. Undiannya tersimpan
           sejak migrasi 114, tapi rute sesi tidak ditautkan dari mana pun —
           tanpa kartu ini, anak yang menutup tab kehilangan sesinya bukan karena
@@ -59,7 +55,13 @@ export default async function BelajarBeranda({
         </Link>
       )}
 
-      <PemilihLatihan mapel={mapel} anak={anak} />
+      <PemilihLatihan
+        mapel={mapel}
+        anak={anak}
+        nama={namaPelajar}
+        avatar={avatar}
+        labelKelas={jenjang[0] ?? null}
+      />
     </div>
   )
 }

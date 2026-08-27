@@ -2,6 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { belajarContext } from '@/lib/belajar/konteks'
+import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
+import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
 import type { MateriTopik } from '@/lib/belajar/sematan'
 import {
@@ -46,10 +48,31 @@ import {
 export async function muatTopik(
   anak: string | undefined,
   subjectId: string
-): Promise<{ topik: TopikLatihan[]; materi: MateriTopik[] }> {
-  const { learnerId } = await belajarContext(anak)
+): Promise<{ topik: TopikLatihan[]; materi: MateriTopik[]; jenjang: string[] }> {
+  // Jenjang ikut dari sini, bukan dari prop halaman: `belajarContext()` sudah
+  // dipanggil di baris pertama aksi ini, jadi tidak ada perjalanan tambahan —
+  // dan sumbernya tinggal satu tempat, tidak bisa berbeda antara daftar topik
+  // dan jenjang yang dipakai menyorotinya.
+  const { learnerId, kelas, studentId } = await belajarContext(anak)
   const topik = await topikLatihan(learnerId, subjectId)
-  return { topik, materi: await materiTopik(topik.map((t) => t.group_id)) }
+
+  // Penerjemah yang sama dengan halaman sesi tutor dan admin: kelas si anak,
+  // ditambah pengecualian per mapel kalau ada (migrasi 105 — mis. siswa kelas 8
+  // yang IPA-nya dari kurikulum Kelas 7). Sifatnya MENAMBAH: elemen pertama
+  // selalu kelas aslinya, dan itu yang dipakai layar membedakan "kelas kamu"
+  // dari kurikulum tambahan. Null berarti kelasnya tidak diketahui — daftar
+  // kosong, dan tidak ada yang disorot.
+  const jenjang = await allowedCurriculumGradeLevels(await createClient(), {
+    sessionGrade: kelas,
+    subjectId,
+    studentIds: studentId ? [studentId] : [],
+  })
+
+  return {
+    topik,
+    materi: await materiTopik(topik.map((t) => t.group_id)),
+    jenjang: jenjang ?? [],
+  }
 }
 
 /**
