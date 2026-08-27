@@ -13,13 +13,15 @@ import type { MateriTopik } from '@/lib/belajar/sematan'
  * kunci jawaban; fungsi ini menyaringnya juga di query, dan dua lapis itu
  * disengaja — yang di sini menjelaskan maksudnya, yang di RLS menegakkannya.
  *
- * Tautan yang dikembalikan adalah SALINAN di Drive TERA kalau berkasnya sudah
- * pernah disalin ke sana (migrasi 117), bukan berkas sumber milik tutor.
- * Bedanya bukan kerapian: berkas sumber tersebar di Drive macam-macam orang dan
- * kebanyakan tidak dibagikan, jadi yang dilihat anak di dalam bingkainya adalah
- * layar "Anda memerlukan akses" — kegagalan yang tidak menghasilkan error apa
- * pun yang bisa kita tangkap. Salinan di folder bimbel adalah satu-satunya
- * berkas yang aksesnya benar-benar bisa kita atur sendiri.
+ * Yang dipulangkan HANYA materi yang benar-benar bisa dibaca anak — yang PDF-nya
+ * sudah ada di penyimpanan Tera, disajikan `/api/materi/[id]`. Sisanya tidak
+ * disebut sama sekali, bukan disebut dengan tautan yang berakhir di layar "Anda
+ * memerlukan akses" milik Google. Alasannya di dalam badan fungsi.
+ *
+ * Karena itu fungsi ini juga yang menentukan ANGKANYA: berapa materi sebuah
+ * topik, menurut halaman belajar, adalah berapa yang bisa dibuka — bukan berapa
+ * yang tercatat di katalog. `mapelLatihan()` memakai ukuran yang sama supaya
+ * kartu mapel dan isi topiknya tidak pernah menyebut dua angka berbeda.
  */
 export async function materiTopik(groupIds: string[]): Promise<MateriTopik[]> {
   if (groupIds.length === 0) return []
@@ -36,32 +38,36 @@ export async function materiTopik(groupIds: string[]): Promise<MateriTopik[]> {
   const idBerkas = [...new Set(
     materi.map((m) => extractDriveFileId(m.link_url)).filter((v): v is string => !!v),
   )]
-  if (idBerkas.length === 0) return materi
+  if (idBerkas.length === 0) return []
 
-  // Baris tanpa `copy_link` maupun `pdf_path` tetap dibawa: yang menentukan
-  // bukan ada-tidaknya baris, melainkan kolom mana yang terisi. Materi yang
-  // belum punya keduanya jatuh ke tautan sumbernya — keadaan yang sebenarnya,
-  // dan menyembunyikannya tidak membuat berkasnya lebih bisa dibuka.
   const { data: salinan } = await supabase
     .from('curriculum_resource_duplications')
-    .select('drive_file_id, copy_link, pdf_path')
+    .select('drive_file_id, pdf_path')
     .in('drive_file_id', idBerkas)
-  const byFileId = new Map(
-    ((salinan as Baris[] | null) ?? []).map((s) => [s.drive_file_id, s]),
+  const pdfById = new Map(
+    ((salinan as Baris[] | null) ?? [])
+      .filter((s) => s.pdf_path)
+      .map((s) => [s.drive_file_id, s.pdf_path as string]),
   )
-  if (byFileId.size === 0) return materi
 
-  return materi.map((m) => {
-    const fileId = extractDriveFileId(m.link_url)
-    const s = fileId ? byFileId.get(fileId) : undefined
-    if (!s) return m
-    // Urutannya menaik: berkas di penyimpanan Tera, lalu salinan Drive, lalu
-    // berkas sumber apa adanya. Yang pertama satu-satunya yang benar-benar
-    // dijaga identitas Tera; dua sisanya dijaga Google, dan itulah kenapa
-    // keduanya cuma tempat berhenti sementara.
-    if (s.pdf_path) return { ...m, link_url: `/api/materi/${m.id}` }
-    return s.copy_link ? { ...m, link_url: s.copy_link } : m
-  })
+  // Yang tidak bisa dibaca TIDAK dibawa sama sekali.
+  //
+  // Sebelumnya baris tanpa PDF tetap dipulangkan, jatuh ke salinan Drive atau
+  // ke berkas sumber tutornya — "keadaan yang sebenarnya", begitu alasannya.
+  // Tapi yang sampai ke anak bukan keadaan yang sebenarnya melainkan layar
+  // "Anda memerlukan akses" milik Google, dan sebuah angka yang menjanjikan
+  // bahan yang tidak bisa ia buka. Menghitungnya sebagai materi membuat
+  // halaman ini berbohong dua kali: di angkanya, dan di tautannya.
+  //
+  // Jadi ukurannya satu — ada PDF-nya di penyimpanan Tera atau tidak. Materi
+  // yang belum dikonversi tetap ada di katalog dan tetap terlihat admin
+  // sebagai pekerjaan; ia cuma belum pernah disebut kepada anak.
+  return materi
+    .filter((m) => {
+      const fileId = extractDriveFileId(m.link_url)
+      return !!fileId && pdfById.has(fileId)
+    })
+    .map((m) => ({ ...m, link_url: `/api/materi/${m.id}` }))
 }
 
-type Baris = { drive_file_id: string; copy_link: string | null; pdf_path: string | null }
+type Baris = { drive_file_id: string; pdf_path: string | null }
