@@ -72,6 +72,17 @@ function idYoutube(u: URL): string | null {
  * yang benar-benar terganggu.
  */
 export function sematkan(url: string): Sematan {
+  // Berkas yang sudah dipindahkan ke penyimpanan Tera (migrasi 120). Alamatnya
+  // relatif dan sedomain, jadi tidak ada `X-Frame-Options` orang lain yang bisa
+  // mengosongkan bingkainya, dan tidak ada login Google yang diminta di
+  // tengah-tengah — rutenya menjaga dirinya dengan sesi Tera yang sudah dipakai
+  // anak untuk sampai ke halaman ini. Ini satu-satunya cabang yang boleh
+  // meloloskan alamat tanpa membentuknya ulang, karena bentuknya kita sendiri
+  // yang menyusun di `materiTopik()`, bukan orang yang mengetik ke basis data.
+  if (/^\/api\/materi\/[0-9a-f-]{36}$/.test(url)) {
+    return { mode: 'bingkai', src: url, rasio: 'dokumen' }
+  }
+
   let u: URL
   try {
     u = new URL(url)
