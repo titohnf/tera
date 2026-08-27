@@ -56,7 +56,10 @@ interface Props {
   subjects: { id: string; name: string; curriculum: string[]; level: string[] }[]
   resources: Resource[]
   tutorResources: TutorResourceRow[]
-  duplicatedFileIds: string[]
+  /** Satu entri per berkas sumber yang sudah disalin ke Drive TERA. */
+  duplications: { driveFileId: string; copyLink: string | null }[]
+  /** Alamat Sora, dipakai tabel untuk menandai tautan mana yang miliknya. */
+  soraUrl: string | null
   createResourceAction: (ctx: TopicContext, kind: ResourceKind, prevState: ActionState, formData: FormData) => Promise<ActionState>
   deleteResourceAction: (id: string) => Promise<ActionState>
 }
@@ -78,7 +81,7 @@ function extractDriveFileId(url: string): string | null {
   }
 }
 
-export default function MateriLatihanSoalClient({ topics, subjects, resources, tutorResources, duplicatedFileIds, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalClient({ topics, subjects, resources, tutorResources, duplications, soraUrl, createResourceAction, deleteResourceAction }: Props) {
   const [curriculumFilter, setCurriculumFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [semesterFilter, setSemesterFilter] = useState<number | ''>('')
@@ -88,10 +91,23 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
 
   const subjectNameById = new Map(subjects.map(s => [s.id, s.name]))
   const topicsById = new Map(topics.map(t => [t.id, t]))
-  const duplicatedFileIdSet = new Set(duplicatedFileIds)
-  const isHrefDuplicated = (href: string) => {
+  const salinanByFileId = new Map(duplications.map(d => [d.driveFileId, d.copyLink]))
+
+  /**
+   * Tautan yang benar-benar dibuka saat barisnya diklik.
+   *
+   * Kalau berkasnya sudah disalin ke Drive TERA, yang dibuka salinannya —
+   * bukan berkas sumber milik tutor, yang sering meminta izin akses. Baris
+   * yang tercatat sudah disalin tapi belum punya tautan salinannya (peninggalan
+   * sebelum migrasi 117) tetap ditandai tersalin dan tetap menuju sumbernya:
+   * itu keadaan yang sebenarnya, dan menyembunyikannya tidak membuat
+   * berkasnya jadi lebih bisa dibuka.
+   */
+  const tautanUntuk = (href: string): { href: string; isDuplicated: boolean; hrefAsli: string | null } => {
     const fileId = extractDriveFileId(href)
-    return fileId ? duplicatedFileIdSet.has(fileId) : false
+    if (!fileId || !salinanByFileId.has(fileId)) return { href, isDuplicated: false, hrefAsli: null }
+    const salinan = salinanByFileId.get(fileId) ?? null
+    return { href: salinan ?? href, isDuplicated: true, hrefAsli: salinan ? href : null }
   }
 
   // Mapel dropdown offers every subject that has at least one curriculum
@@ -108,8 +124,9 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
     rows.push({
       id: r.id, subjectId: r.subject_id, subjectName: subjectNameById.get(r.subject_id) ?? '—',
       gradeLevel: r.grade_level, semester: r.semester,
-      theme: r.theme, topic: r.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.link_url,
-      source: 'admin', tutorName: null, sessionId: null, isDuplicated: isHrefDuplicated(r.link_url),
+      theme: r.theme, topic: r.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
+      ...tautanUntuk(r.link_url),
+      source: 'admin', tutorName: null, sessionId: null,
     })
   }
 
@@ -123,8 +140,9 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
       rows.push({
         id: r.id, subjectId: t.subject_id, subjectName: subjectNameById.get(t.subject_id) ?? '—',
         gradeLevel: t.grade_level, semester: t.semester,
-        theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title, href: r.href,
-        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
+        ...tautanUntuk(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
         jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan,
       })
     } else if (r.topicText) {
@@ -141,8 +159,9 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
       rows.push({
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
-        theme: r.customTheme ?? 'Tanpa Tema', topic: r.topicText, topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        theme: r.customTheme ?? 'Tanpa Tema', topic: r.topicText, topicSource: 'tutor', kind: r.kind, title: r.title,
+        ...tautanUntuk(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
       })
     } else {
       // Session never had a topic set at all — still surface the entry
@@ -154,8 +173,9 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
       rows.push({
         id: r.id, subjectId: r.subjectId, subjectName: subjectNameById.get(r.subjectId) ?? '—',
         gradeLevel: r.classGradeLevel, semester: r.classSemester,
-        theme: 'Tanpa Tema', topic: 'Tanpa Topik', topicSource: 'tutor', kind: r.kind, title: r.title, href: r.href,
-        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId, isDuplicated: isHrefDuplicated(r.href),
+        theme: 'Tanpa Tema', topic: 'Tanpa Topik', topicSource: 'tutor', kind: r.kind, title: r.title,
+        ...tautanUntuk(r.href),
+        source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
       })
     }
   }
@@ -185,7 +205,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
       id: `kosong__${kunci}`, subjectId: t.subject_id, subjectName: subjectNameById.get(t.subject_id) ?? '—',
       gradeLevel: t.grade_level, semester: t.semester,
       theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: 'kosong', title: '', href: '',
-      source: 'kurikulum', tutorName: null, sessionId: null, isDuplicated: false,
+      source: 'kurikulum', tutorName: null, sessionId: null, isDuplicated: false, hrefAsli: null,
     })
   }
 
@@ -290,6 +310,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
 
       <MateriLatihanSoalTable
         rows={filteredRows}
+        soraUrl={soraUrl}
         allTopics={topics}
         allSubjects={allSubjectsWithTopics}
         createResourceAction={createResourceAction}

@@ -60,8 +60,16 @@ export type DisplayRow = {
   // never filled in properly. Admin-added curriculum_resources have none.
   sessionId: string | null
   // Whether this link's underlying Google Drive file has already been
-  // copied into the shared "Materi dan Latihan Soal" Drive folder.
+  // copied into the shared "Materi dan Latihan Soal" Drive folder. Kalau
+  // sudah, `href` di atas SUDAH menunjuk salinannya (lihat `tautanUntuk` di
+  // MateriLatihanSoalClient).
   isDuplicated: boolean
+  /**
+   * Berkas sumbernya, hanya terisi pada baris yang tautannya sudah dialihkan
+   * ke salinan. Dipakai untuk tetap menyediakan jalan ke aslinya — salinan
+   * tidak ikut berubah kalau tutor menyunting berkasnya sendiri.
+   */
+  hrefAsli: string | null
   /** Hanya pada baris `bank_soal`. */
   jumlahSoal?: number
   jumlahPembahasan?: number
@@ -69,10 +77,47 @@ export type DisplayRow = {
 
 interface Props {
   rows: DisplayRow[]
+  /** Alamat Sora; tanpa ini tautan Sora tidak bisa dibedakan dari web lain. */
+  soraUrl: string | null
   allTopics: Topic[]
   allSubjects: { id: string; name: string }[]
   createResourceAction: (ctx: TopicContext, kind: ResourceKind, prevState: ActionState, formData: FormData) => Promise<ActionState>
   deleteResourceAction: (id: string) => Promise<ActionState>
+}
+
+/**
+ * Dari mana sebuah tautan berasal.
+ *
+ * Kolom ini mencampur empat dunia dalam satu sel — berkas Drive, Google Form,
+ * paket Sora, dan halaman luar seperti Wordwall/Wayground — dan sebelumnya
+ * semuanya digambar dengan ikon rantai yang sama. Satu-satunya cara tahu mana
+ * yang mana adalah mengkliknya.
+ */
+type JenisTautan = 'drive' | 'form' | 'sora' | 'sesi' | 'web'
+
+function jenisTautan(href: string, soraUrl: string | null): JenisTautan {
+  // Tautan ke dalam Tera sendiri: baris asesmen yang tidak punya tautan luar
+  // jatuh ke halaman sesinya (lihat `toTutorResources` di halamannya).
+  if (href.startsWith('/')) return 'sesi'
+  if (soraUrl && href.startsWith(soraUrl)) return 'sora'
+  try {
+    const u = new URL(href)
+    const host = u.hostname.replace(/^www\./, '')
+    if (host === 'forms.gle') return 'form'
+    if (host === 'docs.google.com' && u.pathname.includes('/forms/')) return 'form'
+    if (host === 'docs.google.com' || host === 'drive.google.com') return 'drive'
+  } catch {
+    return 'web'
+  }
+  return 'web'
+}
+
+const JENIS_TAUTAN_GAYA: Record<JenisTautan, { label: string; kelas: string; judul: string }> = {
+  drive: { label: 'Drive', kelas: 'bg-blue-50 text-blue-700 border-blue-200', judul: 'Berkas Google Drive' },
+  form: { label: 'Form', kelas: 'bg-amber-50 text-amber-700 border-amber-200', judul: 'Google Form' },
+  sora: { label: 'Sora', kelas: 'bg-violet-50 text-violet-700 border-violet-200', judul: 'Dibuat di Sora' },
+  sesi: { label: 'Sesi', kelas: 'bg-slate-100 text-slate-600 border-slate-200', judul: 'Tidak ada tautannya; menuju halaman sesi' },
+  web: { label: 'Web', kelas: 'bg-slate-100 text-slate-600 border-slate-200', judul: 'Tautan di luar Google dan Sora' },
 }
 
 const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal', kosong: '—' }
@@ -461,7 +506,7 @@ function SortableHeader({ label, sortKey, activeKey, dir, onSort, first }: {
   )
 }
 
-function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id: string) => void }) {
+function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraUrl: string | null; onDelete: (id: string) => void }) {
   if (items.length === 0) return <span className="text-gray-300">—</span>
   return (
     <ul className="space-y-1">
@@ -478,28 +523,44 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
             : items.length > 1
               ? `${RESOURCE_LABEL[r.kind]} ${i + 1}`
               : RESOURCE_LABEL[r.kind]
+        const jenis = JENIS_TAUTAN_GAYA[jenisTautan(r.href, soraUrl)]
         return (
         <li key={r.id} className="group flex items-center gap-1.5">
+          <span
+            title={jenis.judul}
+            className={`shrink-0 px-1 py-px text-[10px] font-medium leading-4 rounded border ${jenis.kelas}`}
+          >
+            {jenis.label}
+          </span>
           <a
             href={r.href}
             target="_blank"
             rel="noopener noreferrer"
-            title={r.title}
+            title={r.isDuplicated ? `${r.title}\n(membuka salinan di Drive TERA)` : r.title}
             className="flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0"
           >
-            {r.isDuplicated ? (
+            <span className="truncate">{label}</span>
+            {r.isDuplicated && (
               <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <title>Sudah di-duplicate ke Drive</title>
+                <title>Sudah disalin ke Drive TERA — tautan ini membuka salinannya</title>
                 <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.5 12.5l2.5 2.5 4.5-5" />
               </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            )}
+          </a>
+          {r.hrefAsli && (
+            <a
+              href={r.hrefAsli}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+              title="Buka berkas aslinya (milik tutor, mungkin minta izin akses)"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m5.656-5.656l1.5-1.5a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656 0" />
               </svg>
-            )}
-            <span className="truncate">{label}</span>
-          </a>
+            </a>
+          )}
           {r.sessionId && (
             <a
               href={`/admin/sessions/${r.sessionId}`}
@@ -533,7 +594,7 @@ function ResourceCell({ items, onDelete }: { items: DisplayRow[]; onDelete: (id:
 
 const PAGE_SIZE = 10
 
-export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
   const [saringKelengkapan, setSaringKelengkapan] = useState<'' | 'belum' | Kelengkapan>('')
@@ -661,16 +722,16 @@ export default function MateriLatihanSoalTable({ rows, allTopics, allSubjects, c
                   </td>
                   <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{g.tutorLabel}</td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.materi} onDelete={handleDelete} />
+                    <ResourceCell items={g.materi} soraUrl={soraUrl} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.asesmen} onDelete={handleDelete} />
+                    <ResourceCell items={g.asesmen} soraUrl={soraUrl} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.latihanSoal} onDelete={handleDelete} />
+                    <ResourceCell items={g.latihanSoal} soraUrl={soraUrl} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.bankSoal} onDelete={handleDelete} />
+                    <ResourceCell items={g.bankSoal} soraUrl={soraUrl} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <span className={`text-xs font-medium ${KELENGKAPAN_WARNA[kelengkapan(g)]}`}>

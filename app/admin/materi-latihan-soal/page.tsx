@@ -1,9 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { createCurriculumResource, deleteCurriculumResource } from '@/lib/actions/admin/curriculum-resources'
-import { runResourceDuplication } from '@/lib/actions/admin/curriculum-resource-duplication'
-import { collectAllResourceLinks } from '@/lib/curriculum-resource-links'
+import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import MateriLatihanSoalClient from '@/components/admin/materi-latihan-soal/MateriLatihanSoalClient'
-import DuplicationStatusPanel from '@/components/admin/materi-latihan-soal/DuplicationStatusPanel'
+import StatusMateriPanel from '@/components/admin/materi-latihan-soal/StatusMateriPanel'
 
 type TutorRef = { full_name: string; nickname: string | null } | null
 
@@ -343,8 +342,8 @@ export default async function MateriLatihanSoalPage() {
     }>,
     admin
       .from('curriculum_resource_duplications')
-      .select('drive_file_id, duplicated_at') as unknown as Promise<{
-        data: { drive_file_id: string; duplicated_at: string }[] | null
+      .select('drive_file_id, copy_link, pdf_path') as unknown as Promise<{
+        data: { drive_file_id: string; copy_link: string | null; pdf_path: string | null }[] | null
       }>,
   ])
 
@@ -381,13 +380,23 @@ export default async function MateriLatihanSoalPage() {
     ...toBankSoalResources(bankTagRows ?? [], adaPembahasan, topicByGroupId, soraUrl),
   ]
 
-  const doneFileIds = new Set((duplicationRows ?? []).map(r => r.drive_file_id))
-  const allResourceLinks = await collectAllResourceLinks(admin)
-  const pendingCount = [...allResourceLinks.keys()].filter(fileId => !doneFileIds.has(fileId)).length
-  const lastDuplicatedAt = (duplicationRows ?? []).reduce<string | null>((latest, r) => {
-    if (!latest || r.duplicated_at > latest) return r.duplicated_at
-    return latest
-  }, null)
+  // Berapa materi yang benar-benar terbaca di dalam halaman. Dihitung dari
+  // `curriculum_resources` saja — itu satu-satunya sumber yang dibaca
+  // `/belajar` (lihat `materiTopik()`), jadi menghitung yang lain akan
+  // menghasilkan angka yang tidak menjelaskan layar mana pun.
+  const pdfByFileId = new Map((duplicationRows ?? []).map(r => [r.drive_file_id, r.pdf_path]))
+  let terbaca = 0
+  let menungguAkses = 0
+  let tautanLuar = 0
+  for (const r of resources ?? []) {
+    if (r.kind !== 'materi') continue
+    const fileId = extractDriveFileId(r.link_url)
+    // Bukan berkas Drive: folder, Google Form terbitan, atau situs lain.
+    // Ketiganya tidak bisa disemat, dan tidak ada yang bisa kita perbuat.
+    if (!fileId) tautanLuar++
+    else if (pdfByFileId.get(fileId)) terbaca++
+    else menungguAkses++
+  }
 
   return (
     <div className="space-y-6">
@@ -396,18 +405,15 @@ export default async function MateriLatihanSoalPage() {
         <p className="text-sm text-gray-500 mt-0.5">Kumpulan materi, latihan soal, dan asesmen per topik, mengikuti struktur Kurikulum</p>
       </div>
 
-      <DuplicationStatusPanel
-        lastDuplicatedAt={lastDuplicatedAt}
-        pendingCount={pendingCount}
-        runAction={runResourceDuplication}
-      />
+      <StatusMateriPanel terbaca={terbaca} menungguAkses={menungguAkses} tautanLuar={tautanLuar} />
 
       <MateriLatihanSoalClient
         topics={topics ?? []}
         subjects={(subjects ?? []).map(s => ({ ...s, curriculum: s.curriculum ?? [], level: s.level ?? [] }))}
         resources={resources ?? []}
         tutorResources={tutorResources}
-        duplicatedFileIds={(duplicationRows ?? []).map(r => r.drive_file_id)}
+        duplications={(duplicationRows ?? []).map(r => ({ driveFileId: r.drive_file_id, copyLink: r.copy_link }))}
+        soraUrl={soraUrl}
         createResourceAction={createCurriculumResource}
         deleteResourceAction={deleteCurriculumResource}
       />
