@@ -22,6 +22,22 @@ import { google } from 'googleapis'
  */
 function rapikanKunci(mentah: string): string {
   let k = mentah.trim()
+  // 4. Yang tertempel SELURUH berkas JSON kunci, bukan satu fieldnya.
+  //
+  // Ini yang benar-benar terjadi saat memasangnya di dashboard Vercel, dan
+  // wajar: yang diunduh dari Google Cloud memang satu berkas JSON, dan
+  // memisahkan satu field dari dalamnya adalah langkah yang tidak disebut di
+  // mana pun. Mendukungnya lebih baik daripada melarangnya — dan sekalian
+  // menghilangkan peluang keliru menyalin sebagian.
+  if (k.startsWith('{')) {
+    try {
+      const isi = JSON.parse(k) as { private_key?: string }
+      if (isi.private_key) k = isi.private_key.trim()
+    } catch {
+      // Bukan JSON yang sah; biarkan pemeriksaan PEM di bawah yang menolaknya
+      // dengan kalimat yang menyebut bentuknya.
+    }
+  }
   // Kutip pembungkus, tunggal maupun ganda, hanya kalau memang berpasangan.
   if ((k.startsWith('"') && k.endsWith('"')) || (k.startsWith("'") && k.endsWith("'"))) {
     k = k.slice(1, -1)
