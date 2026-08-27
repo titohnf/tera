@@ -102,6 +102,9 @@ export async function GET(
       // kedaluwarsa dalam satu menit, dan pengalihan yang ter-cache akan
       // mengirim pembaca berikutnya ke tautan yang sudah mati.
       'Cache-Control': 'private, no-store',
+      // Jalur cadangan yang terpakai — artinya Drive gagal. Lihat catatan di
+      // `ambilDariDrive()`.
+      'X-Sumber-Materi': 'bucket',
     },
   })
 }
@@ -153,6 +156,14 @@ async function ambilDariDrive(fileId: string): Promise<NextResponse | null> {
       'Content-Disposition': 'inline',
       // Milik satu pembaca, tidak boleh singgah di cache bersama mana pun.
       'Cache-Control': 'private, no-store',
+      // Dari mana byte ini datang, supaya bisa dibaca di DevTools.
+      //
+      // Kedua jalur menghasilkan PDF yang sama di layar, jadi jalur yang gagal
+      // diam-diam TERLIHAT persis seperti jalur yang berhasil — dan justru itu
+      // yang membuatnya berbahaya: kredensial yang tidak terpasang di produksi
+      // tidak akan pernah mengumumkan dirinya. Header ini satu-satunya cara
+      // membedakan keduanya tanpa menebak dari waktu muat.
+      'X-Sumber-Materi': 'drive',
     }
     // Ukurannya hanya diketahui untuk berkas biner; hasil ekspor tidak punya
     // panjang yang bisa disebut di muka, dan menebaknya lebih buruk daripada
