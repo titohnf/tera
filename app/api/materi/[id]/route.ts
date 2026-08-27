@@ -1,9 +1,11 @@
 export const runtime = 'nodejs'
 
+import { Readable } from 'stream'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { extractDriveFileId } from '@/lib/curriculum-resource-links'
+import { getDriveClient } from '@/lib/google-drive'
 
 /**
  * Satu berkas materi, disajikan Tera sendiri.
@@ -50,6 +52,24 @@ export async function GET(
   const fileId = extractDriveFileId(materi.link_url as string)
   if (!fileId) return new NextResponse('Tidak ditemukan', { status: 404 })
 
+  // Drive lebih dulu, penyimpanan Tera sebagai jaring pengaman.
+  //
+  // Sejak materi berkumpul di folder bimbel `Materi Kurikulum/`, folder itulah
+  // satu-satunya tempat berkasnya berada — bukan lagi tautan tersebar di Drive
+  // macam-macam tutor. Membacanya langsung dari sana berarti apa yang dibuka
+  // anak SELALU berkas yang sama dengan yang dipegang admin, tanpa ada salinan
+  // yang bisa tertinggal versi. Dan penyimpanan Supabase berhenti tumbuh, yang
+  // memang jadi alasan seluruh perpindahan ini.
+  //
+  // Yang tidak berubah: byte-nya tidak pernah keluar sebelum RLS di atas
+  // mengizinkan. Service account baru dipakai SESUDAH itu, sama seperti service
+  // role dipakai sesudahnya sebelum ini.
+  const dariDrive = await ambilDariDrive(fileId)
+  if (dariDrive) return dariDrive
+
+  // Belum bisa dibaca dari Drive — berkasnya belum dibagikan ke service
+  // account, atau kredensialnya belum terpasang di lingkungan ini. Selama
+  // salinan PDF-nya masih ada di bucket, anak tidak perlu tahu bedanya.
   const admin = createAdminClient()
   const { data: salinan } = await admin
     .from('curriculum_resource_duplications')
@@ -57,9 +77,6 @@ export async function GET(
     .eq('drive_file_id', fileId)
     .maybeSingle()
 
-  // Belum dipindahkan ke penyimpanan Tera. Bukan kesalahan pemakainya, dan
-  // bukan kesalahan yang bisa ia perbaiki — pemanggilnya sudah tahu ini bisa
-  // terjadi dan tidak pernah menautkan ke sini kalau `pdf_path` kosong.
   const path = (salinan?.pdf_path as string | null) ?? null
   if (!path) return new NextResponse('Materi ini belum tersedia untuk dibaca di halaman', { status: 404 })
 
@@ -69,15 +86,11 @@ export async function GET(
   // tempat ia akan berjalan: fungsi serverless Netlify membatasi respons di
   // sekitar 6 MB, sedangkan materi di sini ada yang 16 MB — dan kegagalannya
   // baru muncul di produksi, tidak pernah di lokal, karena batas itu milik
-  // pembungkusnya dan bukan milik kodenya. Membaca seluruh PDF ke memori
-  // fungsi juga membayar ongkos yang sama dua kali untuk berkas yang toh sudah
-  // duduk di penyimpanan yang bisa menyajikannya sendiri.
+  // pembungkusnya dan bukan milik kodenya.
   //
   // Yang dijaga tetap sama: URL ini baru dibuat SETELAH RLS mengizinkan, dan
   // umurnya satu menit — cukup untuk bingkai yang sedang memuatnya, terlalu
-  // pendek untuk jadi tautan yang beredar. Pola yang sama sudah dipakai
-  // `getSignedUrlAdmin()` untuk materi sesi, hanya dengan umur yang jauh lebih
-  // panjang di sana.
+  // pendek untuk jadi tautan yang beredar.
   const { data: bertanda, error } = await admin.storage
     .from('materi')
     .createSignedUrl(path, 60)
@@ -91,4 +104,65 @@ export async function GET(
       'Cache-Control': 'private, no-store',
     },
   })
+}
+
+/** Jenis Google-native yang harus diekspor jadi PDF; sisanya diambil apa adanya. */
+const EKSPOR_PDF = new Set([
+  'application/vnd.google-apps.document',
+  'application/vnd.google-apps.presentation',
+  'application/vnd.google-apps.spreadsheet',
+])
+
+/**
+ * Berkas Drive sebagai respons PDF, atau null kalau tidak bisa diambil.
+ *
+ * Null BUKAN kesalahan yang perlu diteriakkan: ia berarti "coba jalan yang
+ * lain", dan pemanggilnya memang punya satu. Sebabnya bisa kredensial yang
+ * belum terpasang, berkas yang belum dibagikan ke service account, atau berkas
+ * yang sudah dihapus — ketiganya sama-sama tidak bisa diperbaiki dari sini, dan
+ * ketiganya tidak boleh menjatuhkan permintaan selama masih ada salinan.
+ *
+ * Google Docs/Slides/Sheets diekspor jadi PDF; sisanya (PDF, dan apa pun yang
+ * kelak ditaruh admin di folder itu) disalurkan apa adanya. `.docx` dan `.pptx`
+ * memang akan terunduh alih-alih tampil — itu bukan yang diperbaiki di sini,
+ * melainkan aturan untuk admin: yang ditaruh di `Materi Kurikulum/` harus PDF
+ * atau Google Docs.
+ */
+async function ambilDariDrive(fileId: string): Promise<NextResponse | null> {
+  try {
+    const drive = getDriveClient()
+    const { data: meta } = await drive.files.get({
+      fileId,
+      fields: 'mimeType, name, size',
+      supportsAllDrives: true,
+    })
+    const mime = meta.mimeType ?? ''
+
+    const berkas = EKSPOR_PDF.has(mime)
+      ? await drive.files.export({ fileId, mimeType: 'application/pdf' }, { responseType: 'stream' })
+      : await drive.files.get(
+          { fileId, alt: 'media', supportsAllDrives: true },
+          { responseType: 'stream' },
+        )
+
+    const isi = mime === 'application/pdf' || EKSPOR_PDF.has(mime) ? 'application/pdf' : mime
+    const kepala: Record<string, string> = {
+      'Content-Type': isi,
+      // Bukan lampiran: bingkai di halaman topik menampilkannya di tempat, dan
+      // `attachment` akan memaksa unduhan yang justru sedang ditinggalkan.
+      'Content-Disposition': 'inline',
+      // Milik satu pembaca, tidak boleh singgah di cache bersama mana pun.
+      'Cache-Control': 'private, no-store',
+    }
+    // Ukurannya hanya diketahui untuk berkas biner; hasil ekspor tidak punya
+    // panjang yang bisa disebut di muka, dan menebaknya lebih buruk daripada
+    // membiarkan responsnya mengalir tanpa Content-Length.
+    if (!EKSPOR_PDF.has(mime) && meta.size) kepala['Content-Length'] = String(meta.size)
+
+    return new NextResponse(Readable.toWeb(berkas.data as Readable) as ReadableStream, {
+      headers: kepala,
+    })
+  } catch {
+    return null
+  }
 }

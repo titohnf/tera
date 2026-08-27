@@ -89,16 +89,18 @@ async function folderId(jalur){
   }
   cacheFolder.set(kunci,id); return id
 }
-let pindah=0
+let pindah=0, sudah=0
 for(const x of rencana){
   const tujuan=await folderId(x.jalur)
-  const kini=await drive.files.get({fileId:x.fileId, fields:'parents', supportsAllDrives:true})
+  const kini=await drive.files.get({fileId:x.fileId, fields:'parents,name', supportsAllDrives:true})
+  // Sudah di tempatnya dari jalan sebelumnya — tidak dipindahkan dua kali.
+  if((kini.data.parents??[]).includes(tujuan) && kini.data.name===x.keNama){ sudah++; continue }
   await drive.files.update({ fileId:x.fileId, addParents:tujuan, removeParents:(kini.data.parents??[]).join(','),
     requestBody:{ name:x.keNama }, supportsAllDrives:true })
   pindah++
   if(pindah%10===0) console.log('  dipindahkan',pindah)
 }
-console.log('dipindahkan & dinamai ulang:',pindah)
+console.log('dipindahkan & dinamai ulang:',pindah,'| sudah di tempatnya:',sudah)
 
 // duplications untuk file id baru — supaya /belajar tetap terbaca dari bucket
 const adaDup=new Set(dup.map(d=>d.drive_file_id))
@@ -115,11 +117,31 @@ for(const x of rencana){
 }
 console.log('link_url diarahkan:',ubah)
 
-// sampah
+// Sisa salinan Juli dan sampah macOS.
+//
+// Service account TIDAK BISA membuang: `trashed` menuntut kepemilikan, dan ia
+// cuma punya izin edit. Yang bisa ia lakukan memindahkan — jadi yang tidak bisa
+// dibuang dikumpulkan ke satu folder bernama jelas, dan Anda menghapusnya
+// sekali klik dari sana. Itu lebih baik daripada berhenti di tengah: berkasnya
+// tetap keluar dari akar folder, yang memang tujuannya.
 const sampah=semua.filter(f=>f.name==='.DS_Store')
 const buang=[...akar.values()].filter(f=>!peta.some(p=>p.berkas===f.name) && !f.mimeType.includes('spreadsheet'))
-for(const f of [...sampah,...buang]) await drive.files.update({fileId:f.id, requestBody:{trashed:true}, supportsAllDrives:true})
-console.log('dibuang ke Sampah:', sampah.length+buang.length)
+let dibuang=0, dipinggirkan=0
+let folderSisa=null
+for(const f of [...sampah,...buang]){
+  try{
+    await drive.files.update({fileId:f.id, requestBody:{trashed:true}, supportsAllDrives:true})
+    dibuang++
+  }catch{
+    folderSisa ??= await folderId(['Sisa Salinan Juli - boleh dihapus'])
+    const kini=await drive.files.get({fileId:f.id, fields:'parents', supportsAllDrives:true})
+    if((kini.data.parents??[]).includes(folderSisa)) { dipinggirkan++; continue }
+    await drive.files.update({ fileId:f.id, addParents:folderSisa,
+      removeParents:(kini.data.parents??[]).join(','), supportsAllDrives:true })
+    dipinggirkan++
+  }
+}
+console.log('dibuang ke Sampah:', dibuang, '| dipindahkan ke "Sisa Salinan Juli":', dipinggirkan)
 
 // pohon arsip diberi nama yang jelas
 const pohon=await drive.files.list({ q:`'${ROOT}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'`, fields:'files(id,name)', supportsAllDrives:true })
