@@ -30,7 +30,15 @@ import { namaPendek } from '@/lib/nama'
  */
 export interface KonteksBelajar {
   learnerId: string
-  /** Pelanggan langganan hanya boleh melihat soal bertanda publik. */
+  /**
+   * Hanya boleh mengerjakan soal bertanda gratis.
+   *
+   * Sejak migrasi 121 ini BUKAN lagi "pelanggan langganan": yang membayar
+   * mendapat seluruh bank soal, sama seperti murid bimbel. Nilainya benar hanya
+   * untuk lapisan gratis — yang pintunya belum dibuka, jadi hari ini ia selalu
+   * false. Dibiarkan ada supaya lapisan itu nanti tinggal menyalakannya, bukan
+   * memasang ulang percabangan yang sudah pernah dihapus.
+   */
   hanyaPublik: boolean
   namaPelajar: string
   /** Terisi hanya untuk jalur keluarga — dipakai tautan kembali ke portal. */
@@ -86,7 +94,10 @@ export async function belajarContext(anakDipilih?: string): Promise<KonteksBelaj
 
     return {
       learnerId: learnerId as string,
-      hanyaPublik: true,
+      // Sampai di sini berarti langganannya aktif — `practice_start_as_me()`
+      // memulangkan null kalau tidak, dan null di atas berarti halaman ini tidak
+      // pernah dirender. Jadi tidak ada yang perlu disaring.
+      hanyaPublik: false,
       namaPelajar: namaPendek({
         full_name: (profile.full_name as string) || 'Kamu',
         nickname: profile.nickname as string | null,

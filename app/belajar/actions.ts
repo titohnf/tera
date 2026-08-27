@@ -35,16 +35,20 @@ import {
  * dicentang cukup terjadi di browser, tanpa perjalanan baru tiap kali kotak
  * centang disentuh.
  *
- * Pelanggan langganan pulang dengan materi kosong tanpa query: materi adalah
- * bahan internal bimbel, dan RLS memang tidak membukanya untuk mereka.
+ * Pelanggan langganan ikut membawa materi sejak migrasi 119, dan sejak 121 ia
+ * juga mendapat seluruh bank soal — yang membayar diperlakukan sama dengan
+ * murid bimbel. Tidak ada lagi percabangan "ini pelanggan atau bukan" di sini,
+ * dan itu memang tujuannya: batasnya dijaga RLS dan `practice_only_public()`,
+ * bukan kode pemanggil. Cabang yang lupa dipasang di satu pemanggil adalah cara
+ * termudah membocorkan yang bukan haknya — dan cabang yang lupa DIHAPUS adalah
+ * cara termudah menyembunyikan yang sudah jadi haknya.
  */
 export async function muatTopik(
   anak: string | undefined,
   subjectId: string
 ): Promise<{ topik: TopikLatihan[]; materi: MateriTopik[] }> {
-  const { learnerId, hanyaPublik } = await belajarContext(anak)
+  const { learnerId } = await belajarContext(anak)
   const topik = await topikLatihan(learnerId, subjectId)
-  if (hanyaPublik) return { topik, materi: [] }
   return { topik, materi: await materiTopik(topik.map((t) => t.group_id)) }
 }
 

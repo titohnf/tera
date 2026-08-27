@@ -29,7 +29,7 @@ export default async function BelajarBeranda({
         <p className="text-sm font-semibold text-gray-900">Berlatih sebagai {namaPelajar}</p>
         <p className="mt-1 text-sm leading-relaxed text-gray-500">
           {hanyaPublik
-            ? 'Soal-soal yang terbuka untuk langganan.'
+            ? 'Soal-soal yang terbuka gratis.'
             : 'Seluruh bank soal bimbel.'}
         </p>
       </div>
