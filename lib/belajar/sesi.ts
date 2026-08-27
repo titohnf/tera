@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { adalahVideo } from './sematan'
-import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import { ALL_GRADES } from '@/lib/curriculum-config'
 import type { OpsiSoal, SoalLatihan, TipeSoal } from './tipe-soal'
 import { TIPE_TANPA_NILAI_OTOMATIS } from './tipe-soal'
@@ -248,7 +247,6 @@ export async function mapelLatihan(
   const [
     { data: bersoal },
     { data: materi },
-    { data: salinan },
     { data: kelompokKelas },
     { data: mapelKelas, error: galatKelas },
     { data: mapelSemua, error: galatSemua },
@@ -257,11 +255,10 @@ export async function mapelLatihan(
     supabase
       .from('curriculum_resources')
       .select('subject_id, grade_level, link_url, subjects(name)')
-      .eq('kind', 'materi'),
-    // Materi mana yang PDF-nya sudah ada di penyimpanan Tera. Yang belum tidak
-    // ikut dihitung — ukuran yang sama dengan `materiTopik()`, dan itu yang
-    // membuat angka di kartu mapel sama dengan isi yang terbuka di dalamnya.
-    supabase.from('curriculum_resource_duplications').select('drive_file_id, pdf_path'),
+      .eq('kind', 'materi')
+      // Ukuran yang sama dengan `materiTopik()`, dan itu yang membuat angka di
+      // kartu mapel sama dengan isi yang terbuka begitu mapelnya diketuk.
+      .not('readable_at', 'is', null),
     // Penanda segmen: mapel yang punya kurikulum di jenjang si anak. Keluarga
     // boleh membaca tabel ini sejak 076; pelanggan langganan tidak — dan mereka
     // memang tidak punya kelas, jadi cabang ini tidak berjalan untuk mereka.
@@ -321,23 +318,8 @@ export async function mapelLatihan(
   for (const m of (bersoal as { subject_id: string; subject_name: string; question_count: number }[] | null) ?? []) {
     gabungan.set(m.subject_id, baru(m.subject_id, m.subject_name, m.question_count))
   }
-  // Materi yang belum bisa dibaca anak tidak dihitung sama sekali — lihat
-  // `materiTopik()`. Video tidak lewat penyimpanan Tera dan karena itu tidak
-  // diukur dengan ukuran ini: yang menentukan keterbacaannya YouTube, bukan
-  // kita, dan tautannya memang bisa langsung dibuka.
-  const adaPdf = new Set(
-    ((salinan as { drive_file_id: string; pdf_path: string | null }[] | null) ?? [])
-      .filter(s => s.pdf_path)
-      .map(s => s.drive_file_id)
-  )
-  const terbaca = (url: string) => {
-    const id = extractDriveFileId(url)
-    return !!id && adaPdf.has(id)
-  }
-
   for (const r of (materi as Materi[] | null) ?? []) {
     const video = adalahVideo(r.link_url)
-    if (!video && !terbaca(r.link_url)) continue
     // Mapel yang belum punya soal sama sekali. Namanya diambil dari relasi, dan
     // baris tanpa nama dilewati — mapel tanpa nama tidak bisa ditawarkan.
     let ada = gabungan.get(r.subject_id)

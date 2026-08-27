@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import type { MateriTopik } from '@/lib/belajar/sematan'
 
 /**
@@ -13,10 +12,17 @@ import type { MateriTopik } from '@/lib/belajar/sematan'
  * kunci jawaban; fungsi ini menyaringnya juga di query, dan dua lapis itu
  * disengaja — yang di sini menjelaskan maksudnya, yang di RLS menegakkannya.
  *
- * Yang dipulangkan HANYA materi yang benar-benar bisa dibaca anak — yang PDF-nya
- * sudah ada di penyimpanan Tera, disajikan `/api/materi/[id]`. Sisanya tidak
- * disebut sama sekali, bukan disebut dengan tautan yang berakhir di layar "Anda
- * memerlukan akses" milik Google. Alasannya di dalam badan fungsi.
+ * Yang dipulangkan HANYA yang `readable_at`-nya terisi — materi yang sudah
+ * DIPASTIKAN bisa diambil dan ditampilkan, oleh `scripts/pindai-materi-drive.mjs`
+ * (migrasi 127). Sisanya tidak disebut sama sekali, bukan disebut dengan tautan
+ * yang berakhir di layar "Anda memerlukan akses" milik Google: sebuah angka yang
+ * menjanjikan bahan yang tidak bisa dibuka membuat halaman ini berbohong dua
+ * kali, di angkanya dan di tautannya.
+ *
+ * Ukuran itu dulu "ada PDF-nya di bucket". Diganti karena bucket akan
+ * dikosongkan begitu materi sepenuhnya dilayani dari folder Drive bimbel — dan
+ * ukuran yang menunjuk tempat penyimpanan ikut mati bersama tempat itu.
+ * `readable_at` menunjuk keadaan, bukan tempat.
  *
  * Karena itu fungsi ini juga yang menentukan ANGKANYA: berapa materi sebuah
  * topik, menurut halaman belajar, adalah berapa yang bisa dibuka — bukan berapa
@@ -30,44 +36,16 @@ export async function materiTopik(groupIds: string[]): Promise<MateriTopik[]> {
     .from('curriculum_resources')
     .select('id, group_id, title, link_url')
     .eq('kind', 'materi')
+    .not('readable_at', 'is', null)
     .in('group_id', groupIds)
     .order('title')
-  const materi = (data as MateriTopik[] | null) ?? []
-  if (materi.length === 0) return []
-
-  const idBerkas = [...new Set(
-    materi.map((m) => extractDriveFileId(m.link_url)).filter((v): v is string => !!v),
-  )]
-  if (idBerkas.length === 0) return []
-
-  const { data: salinan } = await supabase
-    .from('curriculum_resource_duplications')
-    .select('drive_file_id, pdf_path')
-    .in('drive_file_id', idBerkas)
-  const pdfById = new Map(
-    ((salinan as Baris[] | null) ?? [])
-      .filter((s) => s.pdf_path)
-      .map((s) => [s.drive_file_id, s.pdf_path as string]),
-  )
-
-  // Yang tidak bisa dibaca TIDAK dibawa sama sekali.
-  //
-  // Sebelumnya baris tanpa PDF tetap dipulangkan, jatuh ke salinan Drive atau
-  // ke berkas sumber tutornya — "keadaan yang sebenarnya", begitu alasannya.
-  // Tapi yang sampai ke anak bukan keadaan yang sebenarnya melainkan layar
-  // "Anda memerlukan akses" milik Google, dan sebuah angka yang menjanjikan
-  // bahan yang tidak bisa ia buka. Menghitungnya sebagai materi membuat
-  // halaman ini berbohong dua kali: di angkanya, dan di tautannya.
-  //
-  // Jadi ukurannya satu — ada PDF-nya di penyimpanan Tera atau tidak. Materi
-  // yang belum dikonversi tetap ada di katalog dan tetap terlihat admin
-  // sebagai pekerjaan; ia cuma belum pernah disebut kepada anak.
-  return materi
-    .filter((m) => {
-      const fileId = extractDriveFileId(m.link_url)
-      return !!fileId && pdfById.has(fileId)
-    })
-    .map((m) => ({ ...m, link_url: `/api/materi/${m.id}` }))
+  // Tautannya TIDAK dipakai di sini, dan itu disengaja: yang dibuka anak selalu
+  // `/api/materi/[id]`, yang memeriksa haknya lebih dulu lalu memutuskan sendiri
+  // dari mana byte-nya diambil. Halaman ini tidak perlu tahu berkasnya sedang
+  // duduk di Drive atau di bucket, dan tidak boleh jadi tempat kedua yang harus
+  // ikut diubah setiap kali jawabannya bergeser.
+  return ((data as MateriTopik[] | null) ?? []).map((m) => ({
+    ...m,
+    link_url: `/api/materi/${m.id}`,
+  }))
 }
-
-type Baris = { drive_file_id: string; pdf_path: string | null }
