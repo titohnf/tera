@@ -117,6 +117,35 @@ export async function GET(
   })
 }
 
+/**
+ * Bentuk nilai kredensial, tanpa nilainya.
+ *
+ * Panjang dan awalannya cukup menunjuk sebabnya: kunci yang benar 1700-an
+ * karakter dan diawali `-----BEGIN`, sedangkan alamat service account cuma
+ * puluhan karakter — kalau keduanya tertukar saat ditempel, angkanya yang
+ * memberi tahu, bukan tebakan. Tidak ada potongan isinya yang dikembalikan.
+ */
+function bentukKredensial() {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ?? ''
+  const k = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? '').trim()
+  const diawali = k.startsWith('-----BEGIN')
+    ? 'PEM'
+    : k.startsWith('{')
+      ? 'JSON'
+      : k.startsWith('"') || k.startsWith("'")
+        ? 'tanda kutip'
+        : k
+          ? 'lainnya'
+          : 'kosong'
+  return {
+    email: email || '(kosong)',
+    panjang_kunci: k.length,
+    diawali,
+    memuat_private_key: k.includes('PRIVATE KEY'),
+    memuat_escape_n: k.includes('\\n'),
+  }
+}
+
 /** Jenis Google-native yang harus diekspor jadi PDF; sisanya diambil apa adanya. */
 const EKSPOR_PDF = new Set([
   'application/vnd.google-apps.document',
@@ -232,6 +261,11 @@ async function laporkanSumber(fileId: string, judul: string): Promise<NextRespon
     {
       judul,
       sumber,
+      // Bentuk nilai kredensialnya, BUKAN isinya. Cukup untuk membedakan
+      // "tertukar dengan email", "terpotong", dan "bukan berkas kunci sama
+      // sekali" — tiga sebab yang menghasilkan galat PEM yang sama persis, dan
+      // yang tanpa ini hanya bisa ditebak satu per satu lewat coba-coba deploy.
+      kredensial: bentukKredensial(),
       arti:
         sumber === 'drive'
           ? 'Dilayani langsung dari folder Drive bimbel. Bucket tidak dipakai.'
