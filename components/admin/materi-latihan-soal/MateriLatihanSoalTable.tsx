@@ -393,6 +393,16 @@ type TopicGroup = {
   topic: string
   topicSource: 'kurikulum' | 'tutor'
   tutorLabel: string
+  /**
+   * Letak topik ini di dalam kurikulumnya — `sort_order` terkecil milik
+   * baris-baris CP-nya, urutan yang dirapikan admin lewat tombol naik-turun di
+   * menu Kurikulum.
+   *
+   * Topik bebas yang diketik tutor tidak punya baris kurikulum, jadi tidak
+   * punya urutan. Nilainya `MAX_SAFE_INTEGER` — mereka turun ke bawah
+   * kelompoknya, BUKAN dibuang dan bukan mengambang di puncak.
+   */
+  urutan: number
   materi: DisplayRow[]
   latihanSoal: DisplayRow[]
   asesmen: DisplayRow[]
@@ -407,7 +417,7 @@ type TopicGroup = {
 // sekarang dipakai memeriksa kelengkapan, topiknya yang jadi satuan, dan nama
 // penyumbangnya berkumpul di satu sel. Bank Soal Sora dihitung sebagai
 // sumbangan Admin, bukan tutor mana pun.
-function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
+function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
   const penyumbang = new Map<string, Set<string>>()
   for (const r of rows) {
@@ -415,7 +425,9 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
     if (!groups.has(key)) {
       groups.set(key, {
         key, topicKey: key, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
-        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel: '', materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
+        theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel: '',
+        urutan: urutanByKunci.get(key) ?? Number.MAX_SAFE_INTEGER,
+        materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
       })
       penyumbang.set(key, new Set())
     }
@@ -434,8 +446,34 @@ function groupByTopic(rows: DisplayRow[]): TopicGroup[] {
     )
     g.tutorLabel = nama.join(', ')
   }
-  return Array.from(groups.values()).sort((a, b) =>
-    a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic)
+  return Array.from(groups.values()).sort(urutKurikulum)
+}
+
+/**
+ * Urutan kurikulum: mapel, lalu kelas, semester, dan letak topiknya di dalam
+ * kurikulum itu.
+ *
+ * Sebelumnya tema dan topik diadu menurut abjad, dan itu membuat tabel ini
+ * membaca kurikulum dengan urutan yang bukan urutan siapa pun: "Aljabar"
+ * mendahului "Bilangan" hanya karena huruf A, padahal Bilangan diajarkan lebih
+ * dulu. Kelas pun tidak ikut, jadi Kelas 1 dan Kelas 7 berselang-seling menurut
+ * nama temanya. Yang dipakai sekarang urutan yang sama dengan menu Kurikulum,
+ * halaman `/belajar`, dan Bank Soal Sora — satu urutan untuk semua permukaan
+ * yang menampilkan taksonomi yang sama.
+ *
+ * Tema tidak ikut diadu: `sort_order` sudah menyusun tema sekaligus topik dalam
+ * satu deret, dan mengadu nama tema lebih dulu justru memecah deret itu.
+ */
+function urutKurikulum(a: TopicGroup, b: TopicGroup): number {
+  return (
+    a.subjectName.localeCompare(b.subjectName) ||
+    gradeLevelValue(a.gradeLevel) - gradeLevelValue(b.gradeLevel) ||
+    (a.semester ?? -1) - (b.semester ?? -1) ||
+    a.urutan - b.urutan ||
+    // Topik bebas tutor semuanya berbagi `MAX_SAFE_INTEGER`; tanpa baris ini
+    // urutan mereka di antara sesama bergantung pada urutan baris yang datang.
+    a.theme.localeCompare(b.theme) ||
+    a.topic.localeCompare(b.topic)
   )
 }
 
@@ -466,14 +504,12 @@ function compareGroups(a: TopicGroup, b: TopicGroup, key: SortKey): number {
   }
 }
 
-// Default (subject/tema/topik/tutor) order kept as tie-breaker so sorting by
-// a column with lots of repeated values (e.g. SM) doesn't scramble the rest.
+// Urutan kurikulum tetap jadi pemutus seri, jadi mengurutkan menurut kolom yang
+// isinya banyak berulang (mis. SM) tidak mengacak sisanya.
 function sortGroups(groups: TopicGroup[], key: SortKey, dir: SortDir): TopicGroup[] {
   return [...groups].sort((a, b) => {
     const primary = compareGroups(a, b, key)
-    const result = primary !== 0
-      ? primary
-      : a.subjectName.localeCompare(b.subjectName) || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic)
+    const result = primary !== 0 ? primary : urutKurikulum(a, b)
     return dir === 'asc' ? result : -result
   })
 }
@@ -626,7 +662,19 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
     }
   }
 
-  const semua = groupByTopic(rows)
+  // Letak tiap topik di kurikulumnya, dikunci sama persis dengan `groupByTopic`
+  // supaya keduanya bertemu. Satu topik adalah SEKUMPULAN baris CP (lihat
+  // migrasi 060), jadi yang dipakai `sort_order` paling kecil — tempat topiknya
+  // muncul pertama kali.
+  const urutanByKunci = new Map<string, number>()
+  for (const t of allTopics) {
+    if (!t.theme || !t.topic) continue
+    const kunci = `${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`
+    const ada = urutanByKunci.get(kunci)
+    if (ada == null || t.sort_order < ada) urutanByKunci.set(kunci, t.sort_order)
+  }
+
+  const semua = groupByTopic(rows, urutanByKunci)
   // "Belum lengkap" adalah yang paling sering dicari — sisanya disediakan satu
   // per satu supaya pertanyaan "mana yang perlu materi saja" juga terjawab.
   const tersaring = saringKelengkapan
