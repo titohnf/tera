@@ -85,6 +85,24 @@ const BISA_TAMPIL = new Set([
   'application/vnd.google-apps.spreadsheet',
 ])
 
+/**
+ * Nama yang dikenali manusia untuk sebuah mimeType.
+ *
+ * Laporan ini adalah daftar kerja, dan "document" bisa berarti `.docx` maupun
+ * Google Docs — dua hal yang nasibnya berlawanan di sini. Menyebutnya dengan
+ * nama yang dipakai orang saat membicarakannya menghilangkan tebakan itu.
+ */
+const NAMA_JENIS = {
+  'application/pdf': 'PDF',
+  'application/vnd.google-apps.document': 'Google Docs',
+  'application/vnd.google-apps.presentation': 'Google Slides',
+  'application/vnd.google-apps.spreadsheet': 'Google Sheets',
+  'application/vnd.google-apps.folder': 'folder Drive, bukan berkas',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+}
+
 const { data: materi, error } = await sb
   .from('curriculum_resources')
   .select('id, title, link_url, readable_at')
@@ -100,7 +118,10 @@ const belum = []
 for (const r of materi) {
   const fileId = idBerkas(r.link_url)
   if (!fileId) {
-    belum.push({ r, sebab: 'bukan tautan berkas Drive' })
+    // Tautan folder, Google Form, atau situs luar seperti Wordwall. Ketiganya
+    // tidak bisa disajikan `/api/materi/[id]`, dan yang mana persisnya cuma
+    // bisa dilihat dari tautannya sendiri.
+    belum.push({ r, sebab: 'bukan tautan berkas Drive', tautan: r.link_url })
     continue
   }
   try {
@@ -113,7 +134,8 @@ for (const r of materi) {
     // menyesatkan: ia akan hilang sendiri dalam 30 hari tanpa ada yang tahu.
     if (meta.trashed) belum.push({ r, sebab: 'ada di Sampah Drive' })
     else if (!BISA_TAMPIL.has(meta.mimeType ?? '')) {
-      belum.push({ r, sebab: `${(meta.mimeType ?? '?').split('.').pop()} — akan terunduh, bukan tampil` })
+      const jenis = NAMA_JENIS[meta.mimeType ?? ''] ?? (meta.mimeType ?? 'jenis tak dikenal')
+      belum.push({ r, sebab: `${jenis} — akan terunduh, bukan tampil di halaman` })
     } else siap.push(r)
   } catch (e) {
     const sebab = e?.code === 404 ? 'berkasnya tidak ada' : 'service account tidak boleh membaca'
@@ -127,10 +149,12 @@ console.log(`  belum           : ${belum.length}`)
 if (belum.length) {
   console.log('\nyang belum siap:')
   const perSebab = {}
-  for (const b of belum) (perSebab[b.sebab] ??= []).push(b.r.title)
+  for (const b of belum) {
+    (perSebab[b.sebab] ??= []).push(b.tautan ? `${b.r.title}\n          ${b.tautan.slice(0, 90)}` : b.r.title)
+  }
   for (const [sebab, judul] of Object.entries(perSebab).sort((a, b) => b[1].length - a[1].length)) {
     console.log(`  ${judul.length}× ${sebab}`)
-    for (const j of judul) console.log(`      - ${j.slice(0, 72)}`)
+    for (const j of judul) console.log(`      - ${j}`)
   }
 }
 
