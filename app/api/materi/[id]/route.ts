@@ -212,7 +212,12 @@ async function laporkanSumber(fileId: string, judul: string): Promise<NextRespon
         ? 'siap'
         : `bentuknya ${mime} — akan terunduh, bukan tampil`
   } catch (e) {
-    drive = `tidak bisa diambil (${(e as { code?: number }).code ?? 'galat'})`
+    // Pesannya ikut, bukan cuma kodenya. `ERR_OSSL_UNSUPPORTED` sendirian
+    // pernah membuat kami mengira kredensialnya tidak sampai ke server,
+    // padahal ia sampai dan cuma bentuknya yang rusak.
+    const kode = (e as { code?: number | string }).code
+    const pesan = (e as Error).message?.split('\n')[0] ?? ''
+    drive = `tidak bisa diambil${kode ? ` (${kode})` : ''}${pesan ? ` — ${pesan.slice(0, 120)}` : ''}`
   }
 
   const admin = createAdminClient()
