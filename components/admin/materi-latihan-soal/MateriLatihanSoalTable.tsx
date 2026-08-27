@@ -34,7 +34,13 @@ type Topic = {
 // kurikulum tapi belum punya apa pun. Tanpa penanda itu topik seperti ini tidak
 // punya baris, dan tabel yang seharusnya menunjukkan pekerjaan justru
 // menyembunyikannya.
-export type DisplayKind = ResourceKind | 'asesmen' | 'bank_soal' | 'kosong'
+// `lampiran` = berkas yang ditempelkan tutor di jurnal sesinya. Ia BUKAN
+// materi kurikulum, dan sejak materi berkumpul di `Materi Kurikulum/` bedanya
+// jadi penting: yang menentukan sebuah topik sudah punya bahan adalah berkas di
+// folder itu, bukan lampiran yang tinggal di Drive pribadi seorang tutor dan
+// menempel pada satu sesi milik satu rombongan belajar. Tetap ditampilkan —
+// keberadaannya justru daftar kerja: bahan yang sudah ada tapi belum diangkat.
+export type DisplayKind = ResourceKind | 'asesmen' | 'bank_soal' | 'lampiran' | 'kosong'
 
 export type DisplayRow = {
   id: string
@@ -120,7 +126,7 @@ const JENIS_TAUTAN_GAYA: Record<JenisTautan, { label: string; kelas: string; jud
   web: { label: 'Web', kelas: 'bg-slate-100 text-slate-600 border-slate-200', judul: 'Tautan di luar Google dan Sora' },
 }
 
-const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal', kosong: '—' }
+const RESOURCE_LABEL: Record<DisplayKind, string> = { materi: 'Materi', latihan_soal: 'Latihan Soal', asesmen: 'Asesmen', bank_soal: 'Bank Soal', lampiran: 'Lampiran sesi', kosong: '—' }
 
 /**
  * Keadaan kelengkapan satu topik.
@@ -404,6 +410,8 @@ type TopicGroup = {
    */
   urutan: number
   materi: DisplayRow[]
+  /** Lampiran jurnal tutor. Ditampilkan bersama materi, TIDAK ikut dihitung. */
+  lampiran: DisplayRow[]
   latihanSoal: DisplayRow[]
   asesmen: DisplayRow[]
   bankSoal: DisplayRow[]
@@ -427,7 +435,7 @@ function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): T
         key, topicKey: key, subjectName: r.subjectName, gradeLevel: r.gradeLevel, semester: r.semester,
         theme: r.theme, topic: r.topic, topicSource: r.topicSource, tutorLabel: '',
         urutan: urutanByKunci.get(key) ?? Number.MAX_SAFE_INTEGER,
-        materi: [], latihanSoal: [], asesmen: [], bankSoal: [],
+        materi: [], lampiran: [], latihanSoal: [], asesmen: [], bankSoal: [],
       })
       penyumbang.set(key, new Set())
     }
@@ -436,6 +444,7 @@ function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): T
     penyumbang.get(key)!.add(r.source === 'tutor' ? (r.tutorName ?? 'Tutor') : 'Admin')
     const g = groups.get(key)!
     if (r.kind === 'materi') g.materi.push(r)
+    else if (r.kind === 'lampiran') g.lampiran.push(r)
     else if (r.kind === 'latihan_soal') g.latihanSoal.push(r)
     else if (r.kind === 'bank_soal') g.bankSoal.push(r)
     else g.asesmen.push(r)
@@ -546,18 +555,25 @@ function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraU
   if (items.length === 0) return <span className="text-gray-300">—</span>
   return (
     <ul className="space-y-1">
-      {items.map((r, i) => {
+      {items.map((r) => {
         // Masked label instead of the (often long) real title — "Materi"
         // when it's the only one for this topic/tutor, "Materi 1"/"Materi 2"
         // when there are several. Full title still available on hover.
         // Bank Soal memakai judulnya sendiri ("12 soal · 0 pembahasan"):
         // hanya ada satu baris per topik, dan angkanyalah yang jadi isi kolom
         // ini. Sisanya tetap dilabeli supaya judul panjang tidak merusak tabel.
+        // Nomornya dihitung DI DALAM jenisnya sendiri. Sel materi kini memuat
+        // dua jenis sekaligus — materi kurikulum dan lampiran sesi — dan
+        // menomori keduanya dalam satu deret menghasilkan "Lampiran sesi 2"
+        // untuk lampiran pertama, yang membuatnya terbaca seperti bagian dari
+        // hitungan materi. Justru pemisahan itu yang sedang ditegakkan.
+        const sejenis = items.filter(x => x.kind === r.kind)
+        const nomor = sejenis.indexOf(r) + 1
         const label =
           r.kind === 'bank_soal'
             ? r.title
-            : items.length > 1
-              ? `${RESOURCE_LABEL[r.kind]} ${i + 1}`
+            : sejenis.length > 1
+              ? `${RESOURCE_LABEL[r.kind]} ${nomor}`
               : RESOURCE_LABEL[r.kind]
         const jenis = JENIS_TAUTAN_GAYA[jenisTautan(r.href, soraUrl)]
         return (
@@ -770,7 +786,7 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
                   </td>
                   <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{g.tutorLabel}</td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.materi} soraUrl={soraUrl} onDelete={handleDelete} />
+                    <ResourceCell items={[...g.materi, ...g.lampiran]} soraUrl={soraUrl} onDelete={handleDelete} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
                     <ResourceCell items={g.asesmen} soraUrl={soraUrl} onDelete={handleDelete} />

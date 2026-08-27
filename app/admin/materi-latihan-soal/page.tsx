@@ -53,7 +53,7 @@ type SessionCpUrlRow = {
 
 export type TutorResourceRow = {
   id: string
-  kind: 'materi' | 'latihan_soal' | 'asesmen' | 'bank_soal'
+  kind: 'lampiran' | 'latihan_soal' | 'asesmen' | 'bank_soal'
   /**
    * Siapa yang menaruhnya. `sora` berarti barisnya tidak hidup di tabel mana
    * pun di halaman ini — ia cerminan isi Sora, jadi ia tidak bisa dihapus dari
@@ -80,7 +80,7 @@ export type TutorResourceRow = {
 
 function toTutorResources(
   rows: MaterialSourceRow[],
-  kind: 'materi' | 'asesmen',
+  kind: 'lampiran' | 'asesmen',
   classInfoById: Map<string, { gradeLevel: string | null; semester: number | null }>,
   soraUrl: string | null,
 ): TutorResourceRow[] {
@@ -374,7 +374,8 @@ export default async function MateriLatihanSoalPage() {
   )
 
   const tutorResources: TutorResourceRow[] = [
-    ...toTutorResources(materialRows ?? [], 'materi', classInfoById, soraUrl),
+    // Lampiran jurnal, bukan materi kurikulum — lihat `DisplayKind` di tabelnya.
+    ...toTutorResources(materialRows ?? [], 'lampiran', classInfoById, soraUrl),
     ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById, soraUrl),
     ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
     ...toBankSoalResources(bankTagRows ?? [], adaPembahasan, topicByGroupId, soraUrl),
