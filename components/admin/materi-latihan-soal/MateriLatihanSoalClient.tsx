@@ -30,6 +30,8 @@ type Resource = {
   title: string
   link_url: string
   created_at: string
+  /** Terisi = sudah dipastikan bisa dibuka anak. Lihat migrasi 127. */
+  readable_at: string | null
 }
 
 type TutorResourceRow = {
@@ -126,6 +128,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
       gradeLevel: r.grade_level, semester: r.semester,
       theme: r.theme, topic: r.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
       ...tautanUntuk(r.link_url),
+      terjangkau: !!r.readable_at,
       source: 'admin', tutorName: null, sessionId: null,
     })
   }

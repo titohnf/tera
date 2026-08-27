@@ -302,7 +302,7 @@ export default async function MateriLatihanSoalPage() {
     }>,
     admin
       .from('curriculum_resources')
-      .select('id, subject_id, curriculum, grade_level, semester, theme, topic, kind, title, link_url, created_at')
+      .select('id, subject_id, curriculum, grade_level, semester, theme, topic, kind, title, link_url, created_at, readable_at')
       .order('created_at') as unknown as Promise<{
         data: {
           id: string
@@ -316,6 +316,7 @@ export default async function MateriLatihanSoalPage() {
           title: string
           link_url: string
           created_at: string
+          readable_at: string | null
         }[] | null
       }>,
     admin

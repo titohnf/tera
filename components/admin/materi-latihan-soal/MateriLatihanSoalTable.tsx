@@ -72,6 +72,12 @@ export type DisplayRow = {
   // MateriLatihanSoalClient).
   isDuplicated: boolean
   /**
+   * Sudah dipastikan bisa dibuka anak di `/belajar` — berkasnya ada di folder
+   * bimbel, terbaca service account, dan berbentuk yang tampil di halaman
+   * (migrasi 127). Hanya terisi pada baris materi katalog.
+   */
+  terjangkau?: boolean
+  /**
    * Berkas sumbernya, hanya terisi pada baris yang tautannya sudah dialihkan
    * ke salinan. Dipakai untuk tetap menyediakan jalan ke aslinya — salinan
    * tidak ikut berubah kalau tutor menyunting berkasnya sendiri.
@@ -620,16 +626,30 @@ function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraU
             href={r.href}
             target="_blank"
             rel="noopener noreferrer"
-            title={r.isDuplicated ? `${r.title}\n(membuka salinan di Drive TERA)` : r.title}
+            title={r.title}
             className="flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0"
           >
             <span className="truncate">{label}</span>
-            {r.isDuplicated && (
-              <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <title>Sudah disalin ke Drive TERA — tautan ini membuka salinannya</title>
-                <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.5 12.5l2.5 2.5 4.5-5" />
-              </svg>
+            {/* Centang = BISA DIBUKA ANAK, bukan lagi "sudah disalin ke Drive".
+                Yang lama membaca `copy_link` — penanda penyalinan Juli, dari masa
+                ketika materi masih tersebar di Drive tutor dan salinan di folder
+                bimbel adalah kemajuan. Sejak materi HIDUP di folder itu, penanda
+                tersebut menyala untuk berkas yang kebetulan pernah disalin dan
+                mati untuk yang justru sudah benar tempatnya — persis terbalik. */}
+            {r.kind === 'materi' && (
+              r.terjangkau ? (
+                <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <title>Bisa dibuka anak di /belajar</title>
+                  <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.5 12.5l2.5 2.5 4.5-5" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <title>Belum bisa dibuka anak — berkasnya belum di folder bimbel, tidak terbaca, atau bentuknya akan terunduh alih-alih tampil</title>
+                  <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4.5M12 16h.01" />
+                </svg>
+              )
             )}
           </a>
           {r.hrefAsli && (
