@@ -20,7 +20,14 @@ import Link from 'next/link'
  * pembacanya membaca keempat labelnya setiap kali.
  */
 
-const PINTASAN = [
+const PINTASAN: {
+  ke: string
+  /** Tujuan di luar `/keluarga/[id]`; tanpa ini, `ke` yang dipakai. */
+  href?: (id: string) => string
+  judul: string
+  warna: string
+  ikon: React.ReactNode
+}[] = [
   {
     ke: 'tagihan',
     judul: 'Tagihan',
@@ -38,7 +45,20 @@ const PINTASAN = [
     ),
   },
   {
+    // Satu-satunya pintasan yang keluar dari `/keluarga/[id]`, karena materi
+    // memang tidak lagi tinggal di sana. Halaman materi milik portal keluarga
+    // dulu menyaring katalog ke topik yang benar-benar dibahas anak — berguna,
+    // tapi ia membaca sumber yang sama dengan `/belajar` dan berakhir sebagai
+    // daftar tautan tanpa lanjutan. `/belajar` menawarkan bahan yang sama plus
+    // soal untuk dikerjakan sesudah membacanya.
+    //
+    // Penyaringan "topik yang sudah dibahas" tidak hilang, ia pindah ke tempat
+    // yang lebih tepat: kartu sesi di Jadwal, yang menyebut topik pertemuan itu
+    // beserta materinya dan menuju `/belajar` di topik yang tepat. Itu jawaban
+    // yang lebih baik atas "kemarin anak saya belajar apa" daripada satu daftar
+    // panjang tanpa tanggal.
     ke: 'materi',
+    href: (id: string) => `/belajar?anak=${id}`,
     judul: 'Materi',
     warna: 'bg-amber-50 text-amber-600',
     ikon: (
@@ -62,7 +82,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}
-            href={`/keluarga/${studentId}/${p.ke}`}
+            href={p.href ? p.href(studentId) : `/keluarga/${studentId}/${p.ke}`}
             className="flex flex-col items-center gap-1.5 rounded-lg py-1 active:bg-slate-50 transition-colors"
           >
             <span
