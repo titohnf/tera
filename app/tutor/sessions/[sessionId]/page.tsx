@@ -5,6 +5,7 @@ import Link from 'next/link'
 import SessionTabs from '@/components/sessions/SessionTabs'
 import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
 import MaterialUploader from '@/components/materials/MaterialUploader'
+import { materiKurikulumSesi } from '@/lib/materi-sesi'
 import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
 import { createAssessment, submitGrades, deleteAssessment, updateAssessment } from '@/lib/actions/assessments'
@@ -282,6 +283,15 @@ export default async function SessionPage({
   const materials = materialsResult.data ?? []
   const assessments = assessmentsResult.data ?? []
   const tutorName = (profileResult.data as { full_name: string } | null)?.full_name ?? null
+
+  // Materi topik sesi ini dari folder bimbel. Kalau ada, kolom lampiran materi
+  // terisi otomatis dan terkunci — lihat `MaterialUploader`. Dibaca lewat klien
+  // sesi yang sama dengan sisa halaman ini, jadi RLS tetap yang memutuskan.
+  const materiKurikulum = await materiKurikulumSesi(
+    supabase,
+    session.curriculum_topic_id ?? null,
+    session.selected_cp_ids ?? [],
+  )
   const curriculumTopics = (curriculumTopicsResult.data ?? []) as {
     id: string; group_id: string | null; grade_level: string; semester: number
     theme: string | null; topic: string; learning_outcomes: string | null
@@ -415,6 +425,7 @@ export default async function SessionPage({
                   sessionId={sessionId}
                   tutorId={user.id}
                   classId={session.class_id}
+                  materiKurikulum={materiKurikulum}
                 />
               }
               saveTopicAction={updateSessionTopicTutor}
