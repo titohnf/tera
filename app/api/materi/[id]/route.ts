@@ -32,10 +32,16 @@ import { getDriveClient } from '@/lib/google-drive'
  * selalu berhasil diambil.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
+  // `?periksa=1` menjawab "siapa yang akan melayani ini" tanpa memindahkan satu
+  // byte pun. Ada karena jawabannya tidak bisa dilihat dari layar: kedua jalur
+  // menghasilkan PDF yang sama, dan header penandanya hilang dari pandangan
+  // begitu browser mengikuti pengalihan ke bucket. Membaca DevTools bukan
+  // syarat yang pantas untuk pertanyaan sesederhana ini.
+  const periksa = new URL(request.url).searchParams.has('periksa')
 
   const supabase = await createClient()
   const { data: materi } = await supabase
@@ -51,6 +57,8 @@ export async function GET(
 
   const fileId = extractDriveFileId(materi.link_url as string)
   if (!fileId) return new NextResponse('Tidak ditemukan', { status: 404 })
+
+  if (periksa) return await laporkanSumber(fileId, materi.title as string)
 
   // Drive lebih dulu, penyimpanan Tera sebagai jaring pengaman.
   //
@@ -176,4 +184,58 @@ async function ambilDariDrive(fileId: string): Promise<NextResponse | null> {
   } catch {
     return null
   }
+}
+
+/**
+ * Siapa yang akan melayani berkas ini, dinyatakan dalam kalimat.
+ *
+ * Memakai pemeriksaan yang sama dengan jalur sungguhan — metadata Drive, lalu
+ * `pdf_path` di bucket — tapi berhenti sebelum mengambil isinya. Jadi ia murah,
+ * dan jawabannya tetap jawaban yang benar.
+ *
+ * Tidak menyebut apa pun yang belum berhak dilihat pemanggilnya: ia baru
+ * dipanggil SETELAH RLS meluluskan barisnya, sama seperti dua jalur lainnya.
+ */
+async function laporkanSumber(fileId: string, judul: string): Promise<NextResponse> {
+  let drive: string
+  try {
+    const { data: meta } = await getDriveClient().files.get({
+      fileId,
+      fields: 'mimeType, trashed',
+      supportsAllDrives: true,
+    })
+    const mime = meta.mimeType ?? ''
+    const bisa = mime === 'application/pdf' || EKSPOR_PDF.has(mime)
+    drive = meta.trashed
+      ? 'ada tapi di Sampah Drive'
+      : bisa
+        ? 'siap'
+        : `bentuknya ${mime} — akan terunduh, bukan tampil`
+  } catch (e) {
+    drive = `tidak bisa diambil (${(e as { code?: number }).code ?? 'galat'})`
+  }
+
+  const admin = createAdminClient()
+  const { data: salinan } = await admin
+    .from('curriculum_resource_duplications')
+    .select('pdf_path')
+    .eq('drive_file_id', fileId)
+    .maybeSingle()
+
+  const sumber = drive === 'siap' ? 'drive' : salinan?.pdf_path ? 'bucket' : 'tidak ada'
+  return NextResponse.json(
+    {
+      judul,
+      sumber,
+      arti:
+        sumber === 'drive'
+          ? 'Dilayani langsung dari folder Drive bimbel. Bucket tidak dipakai.'
+          : sumber === 'bucket'
+            ? 'Drive TIDAK terpakai — masih ditolong salinan di bucket Supabase. Jangan kosongkan bucket.'
+            : 'Tidak ada satu pun sumber yang bisa melayani berkas ini.',
+      drive,
+      bucket: salinan?.pdf_path ? 'ada salinannya' : 'tidak ada salinan',
+    },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  )
 }
