@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { ResourceKind, TopicContext, ActionState } from '@/lib/actions/admin/curriculum-resources'
+import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 
 type Topic = {
   id: string
@@ -410,7 +411,15 @@ type TopicGroup = {
    */
   urutan: number
   materi: DisplayRow[]
-  /** Lampiran jurnal tutor. Ditampilkan bersama materi, TIDAK ikut dihitung. */
+  /**
+   * Lampiran jurnal tutor yang BELUM terwakili di Materi Kurikulum.
+   *
+   * Yang sudah terwakili dibuang, bukan diredupkan: dari 57 lampiran pada topik
+   * yang sudah bermateri, 55 adalah dokumen yang sama dengan materi katalognya —
+   * menampilkan semuanya menggandakan hampir setiap baris demi satu-dua baris
+   * yang benar-benar baru. Yang tersisa di sini justru pekerjaan: bahan yang
+   * dipegang tutor dan belum ada di folder bimbel.
+   */
   lampiran: DisplayRow[]
   latihanSoal: DisplayRow[]
   asesmen: DisplayRow[]
@@ -425,6 +434,11 @@ type TopicGroup = {
 // sekarang dipakai memeriksa kelengkapan, topiknya yang jadi satuan, dan nama
 // penyumbangnya berkumpul di satu sel. Bank Soal Sora dihitung sebagai
 // sumbangan Admin, bukan tutor mana pun.
+/** Judul tanpa beda yang tidak berarti: huruf besar-kecil, tanda baca, spasi ganda. */
+function bakuJudul(t: string): string {
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
 function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
   const penyumbang = new Map<string, Set<string>>()
@@ -449,6 +463,24 @@ function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): T
     else if (r.kind === 'bank_soal') g.bankSoal.push(r)
     else g.asesmen.push(r)
   }
+  // Lampiran yang sudah terwakili materi katalog di topik yang sama disingkirkan.
+  //
+  // Dua ukuran, keduanya murah dan tanpa memanggil Drive: berkas Drive yang sama
+  // persis, atau judul yang sama setelah dinormalkan. Judul yang berbeda tipis
+  // ("Metode Ilmiah" vs "Metode Penelitian") lolos dan tetap tampil — dan itu
+  // arah salah yang benar: menampilkan pekerjaan yang ternyata sudah selesai
+  // hanya membuang waktu sebentar, sedangkan menyembunyikan yang belum selesai
+  // membuatnya tidak pernah dikerjakan.
+  for (const g of groups.values()) {
+    if (g.lampiran.length === 0 || g.materi.length === 0) continue
+    const berkas = new Set(g.materi.map(m => extractDriveFileId(m.href)).filter(Boolean))
+    const judul = new Set(g.materi.map(m => bakuJudul(m.title)))
+    g.lampiran = g.lampiran.filter(l => {
+      const f = extractDriveFileId(l.href)
+      return !(f && berkas.has(f)) && !judul.has(bakuJudul(l.title))
+    })
+  }
+
   for (const [key, g] of groups) {
     const nama = [...(penyumbang.get(key) ?? [])].sort((a, b) =>
       a === 'Admin' ? -1 : b === 'Admin' ? 1 : a.localeCompare(b),
