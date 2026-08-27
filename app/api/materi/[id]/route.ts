@@ -137,8 +137,18 @@ function bentukKredensial() {
         : k
           ? 'lainnya'
           : 'kosong'
+  // Alamatnya TIDAK dikembalikan apa adanya.
+  //
+  // Awalnya ia dianggap tidak rahasia — memang begitu, kalau isinya memang
+  // alamat. Tapi variabel bisa tertukar isi, dan di sini benar-benar tertukar:
+  // yang tersimpan di sana adalah badan kunci privat, dan menampilkannya apa
+  // adanya mencetak kunci itu ke sebuah halaman web. Yang menentukan rahasia
+  // atau tidak bukan NAMA variabelnya melainkan isinya, dan isinya tidak bisa
+  // dipastikan dari sini. Jadi tidak ada nilai kredensial yang keluar utuh —
+  // bentuknya saja, untuk semuanya.
+  const alamatWajar = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)
   return {
-    email: email || '(kosong)',
+    email: email ? (alamatWajar ? email : `(bukan alamat — ${email.length} karakter)`) : '(kosong)',
     panjang_kunci: k.length,
     diawali,
     memuat_private_key: k.includes('PRIVATE KEY'),
