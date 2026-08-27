@@ -303,6 +303,7 @@ export default function SesiKartuList({
         {terbuka && (
           <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3">
             <RincianSesi
+              anakId={studentId}
               detail={memuat && detail[s.id] === undefined ? undefined : detail[s.id]}
               sessionId={s.id}
               topikSesi={s.topic}

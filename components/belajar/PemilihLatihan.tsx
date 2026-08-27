@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { HitunganMapel, MapelLatihan, TopikLatihan } from '@/lib/belajar/sesi'
 import { adalahVideo, type MateriTopik } from '@/lib/belajar/sematan'
 import { muatTopik, mulaiLatihan } from '@/app/belajar/actions'
@@ -53,6 +53,7 @@ export default function PemilihLatihan({
   nama,
   avatar,
   labelKelas,
+  awal,
 }: {
   mapel: MapelLatihan[]
   /** Diteruskan apa adanya ke aksi; yang memeriksa haknya tetap database. */
@@ -63,6 +64,16 @@ export default function PemilihLatihan({
   avatar: string | null
   /** Kelas si anak sebagai teks ('Kelas 7'), atau null kalau belum diisi. */
   labelKelas: string | null
+  /**
+   * Topik yang harus langsung terbuka, dari `?topik=` — dipakai rincian sesi di
+   * portal keluarga supaya "Materi" di sana menuju bahannya, bukan sekadar ke
+   * daftar mapel yang menyuruh anak mencarinya sendiri.
+   *
+   * Mapelnya ikut karena daftar topik baru dimuat setelah mapel diketahui;
+   * halaman yang menautkan sudah menelusurinya, jadi layar ini tidak perlu
+   * menebak.
+   */
+  awal?: { subjectId: string; groupId: string } | null
 }) {
   const [dipilih, setDipilih] = useState<MapelLatihan | null>(null)
   const [topik, setTopik] = useState<TopikLatihan[]>([])
@@ -164,7 +175,7 @@ export default function PemilihLatihan({
     )
   }
 
-  function pilihMapel(m: MapelLatihan, hanyaKelas = false) {
+  function pilihMapel(m: MapelLatihan, hanyaKelas = false, bukaGroupId?: string) {
     setGalat(null)
     mulai(async () => {
       const daftar = await muatTopik(anak, m.subject_id)
@@ -176,12 +187,35 @@ export default function PemilihLatihan({
       // semuanya dibuka. Lewat katalog seluruh kelas, TIDAK ADA yang dibuka
       // lebih dulu: di sana kelas si anak bukan kelas istimewa, dan membukanya
       // sendiri berarti katalog yang seharusnya netral tetap berpihak.
-      setKelasTerbuka(hanyaKelas ? [...new Set(daftar.topik.map(t => t.grade_level))] : [])
-      setTerpilih(null)
+      setKelasTerbuka(
+        bukaGroupId
+          ? [...new Set(daftar.topik.map(t => t.grade_level))]
+          : hanyaKelas
+            ? [...new Set(daftar.topik.map(t => t.grade_level))]
+            : []
+      )
+      // Topik yang diminta `?topik=` dibuka langsung. Kalau ia tidak ada di
+      // daftar — sudah dihapus dari kurikulum, atau tidak berhak dibaca — yang
+      // terjadi cuma layar berhenti di daftar topik. Itu keadaan yang wajar
+      // untuk tautan lama, dan tidak pantas jadi pesan galat.
+      setTerpilih(bukaGroupId ? (daftar.topik.find(t => t.group_id === bukaGroupId) ?? null) : null)
       setLingkupKelas(hanyaKelas)
       setDipilih(m)
     })
   }
+
+  // Sekali jalan, saat halaman dibuka dengan `?topik=`. `useRef` menjaganya
+  // tidak berulang: `pilihMapel` memanggil `startTransition`, dan tanpa penjaga
+  // ini setiap render berikutnya akan memuat ulang daftar topik yang sama.
+  const sudahBuka = useRef(false)
+  useEffect(() => {
+    if (!awal || sudahBuka.current) return
+    const m = mapel.find(x => x.subject_id === awal.subjectId)
+    if (!m) return
+    sudahBuka.current = true
+    pilihMapel(m, m.di_kelas && !!m.kelas, awal.groupId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awal, mapel])
 
   function mulaiSesi() {
     if (!dipilih || !terpilih) return

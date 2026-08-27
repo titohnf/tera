@@ -31,12 +31,16 @@ export default function RincianSesi({
   sessionId,
   topikSesi,
   tutor,
+  anakId,
   showAdminLinks = false,
 }: {
   /** `undefined` = belum diambil, `null` = gagal. */
   detail: JadwalSessionDetail | null | undefined
   sessionId: string
   topikSesi: string | null
+  /** Dipakai menautkan materi ke `/belajar` anak yang benar. Kosong di layar
+   *  siswa sendiri, yang memang tidak memerlukannya. */
+  anakId?: string
   /**
    * Nama tutor, kalau pemanggilnya memang ingin ia muncul di sini. Datangnya
    * sebagai prop, bukan dari `getJadwalSessionDetail`: pemanggilnya sudah
@@ -73,46 +77,47 @@ export default function RincianSesi({
         </div>
       ),
     })
-  const latihanSoalTopics = detail.latihan_soal_list ?? []
   const soalAsesmenList = (detail.assessments ?? []).filter(a => a.link_url)
   const chipCls = "inline-flex items-center gap-1 text-xs text-blue-600 border border-blue-200 bg-white px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors"
 
-  if ((detail.materials?.length ?? 0) > 0)
+  // Materi menuju `/belajar`, bukan ke berkasnya langsung.
+  //
+  // Di sana ia punya tempat: topiknya, materi lain di topik yang sama, dan soal
+  // untuk dikerjakan sesudah membacanya. Membuka PDF telanjang di tab baru
+  // memutus semua itu — anak selesai membaca lalu berhenti, karena tidak ada
+  // apa pun di halaman itu yang menawarkan langkah berikutnya.
+  if ((detail.materi_list?.length ?? 0) > 0)
     items.push({
       label: 'Materi',
       node: (
         <div className="flex flex-wrap gap-1.5">
-          {detail.materials.map(m => {
-            const href = m.link_url ?? (m.file_path ? `/api/materials/${m.id}` : null)
-            if (!href) return <span key={m.id} className="text-sm text-gray-700">{m.title}</span>
-            return (
-              <Link key={m.id} href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                {m.title}
-              </Link>
-            )
-          })}
+          {detail.materi_list.map(m => (
+            <Link
+              key={m.id}
+              href={`/belajar?topik=${m.groupId}${anakId ? `&anak=${anakId}` : ''}`}
+              onClick={e => e.stopPropagation()}
+              className={chipCls}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+              {m.title}
+            </Link>
+          ))}
         </div>
       ),
     })
-  if (latihanSoalTopics.length > 0 || soalAsesmenList.length > 0)
+  // Latihan soal dilepas dari sini; `/belajar` yang menyediakannya, disusun per
+  // topik kurikulum alih-alih per pertemuan. Yang tinggal cuma tautan asesmen —
+  // itu dikerjakan murid SAAT KELAS dan nilainya masuk ke baris di bawah, jadi
+  // ia bagian dari catatan pertemuan ini, bukan bahan belajar mandiri.
+  if (soalAsesmenList.length > 0)
     items.push({
-      label: 'Latihan Soal',
+      label: 'Asesmen',
       node: (
         <div className="flex flex-wrap gap-1.5">
           {soalAsesmenList.map((a, i) => (
             <Link key={a.id} href={a.link_url!} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-              {`Asesmen ${i + 1}`}
-            </Link>
-          ))}
-          {/* Satu chip per topik, dilabeli nama topiknya — dulu
-              per CP dan dilabeli "CP 1", "CP 2", yang tidak
-              memberi tahu apa pun tentang isinya. */}
-          {latihanSoalTopics.map(topic => (
-            <Link key={topic.key} href={topic.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-              {latihanSoalTopics.length > 1 ? topic.label : 'Latihan Soal'}
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              {soalAsesmenList.length > 1 ? `Asesmen ${i + 1}` : 'Asesmen'}
             </Link>
           ))}
         </div>

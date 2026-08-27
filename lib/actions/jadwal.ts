@@ -7,11 +7,21 @@ export type JadwalSessionDetail = {
   tema: string | null
   topik: string | null
   cp_list: { id: string; label: string }[]
-  // Terpisah dari `cp_list` sejak migrasi 080: latihan soal satu per TOPIK,
-  // sementara satu topik bisa punya beberapa CP. Menempelkannya ke cp_list
-  // berarti URL yang sama muncul sebagai beberapa chip identik.
-  latihan_soal_list: { key: string; label: string; url: string }[]
-  materials: { id: string; title: string; link_url: string | null; file_path: string | null }[]
+  /**
+   * Materi topik sesi ini, DARI PERPUSTAKAAN — bukan dari lampiran jurnal.
+   *
+   * Sebelumnya baris ini datang dari `materials`: tautan yang ditempel tutor
+   * sendiri di jurnalnya. Itu berarti materi diurus di dua tempat, dan yang
+   * kedua menghasilkan tautan ke Drive pribadi tutor — berakhir di layar "Anda
+   * memerlukan akses" bagi keluarga yang mengetuknya. 96% di antaranya pun
+   * ternyata dokumen yang sama dengan materi katalognya.
+   *
+   * Sekarang ditelusuri dari topik sesi ke `curriculum_resources`, dan hanya
+   * yang `readable_at`-nya terisi. Tutor tidak perlu menempel apa pun; materi
+   * yang ditaruh admin di folder bimbel muncul dengan sendirinya di sesi mana
+   * pun yang membahas topik itu.
+   */
+  materi_list: { id: string; title: string; groupId: string }[]
   assessments: { id: string; title: string; score: number | null; max_score: number; link_url: string | null; level: string | null }[]
   catatan: string | null
   attendance_notes: string | null
@@ -23,8 +33,7 @@ const DETAIL_KOSONG: JadwalSessionDetail = {
   tema: null,
   topik: null,
   cp_list: [],
-  latihan_soal_list: [],
-  materials: [],
+  materi_list: [],
   assessments: [],
   catatan: null,
   attendance_notes: null,
@@ -51,7 +60,7 @@ export async function getJadwalSessionDetail(
 
   const admin = createAdminClient()
 
-  const [sessionRes, attendanceRes, noteRes, materialsRes] = await Promise.all([
+  const [sessionRes, attendanceRes, noteRes] = await Promise.all([
     admin
       .from('sessions')
       .select('curriculum_topic_id, selected_cp_ids, topic, custom_theme, custom_learning_outcomes')
@@ -78,13 +87,6 @@ export async function getJadwalSessionDetail(
       .eq('session_id', sessionId)
       .eq('student_id', studentId)
       .maybeSingle() as unknown as Promise<{ data: { body: string } | null }>,
-    admin
-      .from('materials')
-      .select('id, title, link_url, file_path')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true }) as unknown as Promise<{
-        data: { id: string; title: string; link_url: string | null; file_path: string | null }[] | null
-      }>,
   ])
 
   type AssessmentRow = { id: string; title: string; max_score: number; link_url: string | null }
@@ -97,18 +99,11 @@ export async function getJadwalSessionDetail(
 
   const session = sessionRes.data
 
-  // cp_urls may not exist yet (migration 034) — fetch separately and ignore if missing
-  let cp_urls: Record<string, string> = {}
-  try {
-    const { data: urlData, error: urlError } = await (admin
-      .from('sessions')
-      .select('cp_urls')
-      .eq('id', sessionId)
-      .maybeSingle() as unknown as Promise<{ data: { cp_urls: Record<string, string> | null } | null; error: unknown }>)
-    if (!urlError && urlData?.cp_urls) cp_urls = urlData.cp_urls
-  } catch {
-    // column not yet migrated — skip silently
-  }
+  // Latihan soal tidak lagi ditampilkan di rincian sesi. `sessions.cp_urls`
+  // tetap ada dan tetap diisi tutor — halaman admin masih membacanya — tapi
+  // keluarga membukanya lewat `/belajar`, yang menyusunnya per topik kurikulum
+  // dan bukan per pertemuan. Dua pintu ke bahan yang sama, satu di antaranya
+  // menuntut tutor menempel tautan, adalah pekerjaan yang tidak perlu ada.
 
   const selectedIds: string[] = session?.selected_cp_ids ?? []
 
@@ -120,7 +115,7 @@ export async function getJadwalSessionDetail(
   let tema: string | null = null
   let topik: string | null = null
   let cp_list: JadwalSessionDetail['cp_list'] = []
-  const latihan_soal_list: JadwalSessionDetail['latihan_soal_list'] = []
+  const grupTopik = new Set<string>()
 
   if (allCurriculumIds.length > 0) {
     const { data: ctRows } = await admin
@@ -145,17 +140,10 @@ export async function getJadwalSessionDetail(
       return { id, label: row?.learning_outcomes ?? row?.topic ?? id }
     })
 
-    // Satu chip per topik, bukan per CP. Baris tanpa `group_id` dikunci id
-    // CP-nya sendiri — kunci yang sama dengan yang ditulis LatihanSoalTab.
-    const seen = new Set<string>()
-    for (const id of selectedIds) {
-      const row = ctMap.get(id)
-      const key = row?.group_id ?? id
-      if (seen.has(key)) continue
-      seen.add(key)
-      const url = cp_urls[key]
-      if (!url?.trim()) continue
-      latihan_soal_list.push({ key, label: row?.topic ?? 'Latihan Soal', url })
+    // Topik sesi ini, sebagai kunci ke perpustakaan.
+    for (const id of allCurriculumIds) {
+      const g = ctMap.get(id)?.group_id
+      if (g) grupTopik.add(g)
     }
   } else if (session && (session.custom_theme || (session.custom_learning_outcomes?.length ?? 0) > 0)) {
     // Kelas privat — tutor-authored tema/topik/CP, not linked to curriculum_topics
@@ -166,11 +154,6 @@ export async function getJadwalSessionDetail(
       label: text,
     }))
 
-    // Topik bebas: satu latihan soal untuk seluruh sesi, dikunci `custom`.
-    const customUrl = cp_urls['custom']
-    if (customUrl?.trim()) {
-      latihan_soal_list.push({ key: 'custom', label: session.topic ?? 'Latihan Soal', url: customUrl })
-    }
   }
 
   const assessmentList = assessmentRows ?? []
@@ -195,12 +178,29 @@ export async function getJadwalSessionDetail(
     }))
   }
 
+  // Materi topik sesi ini, dari perpustakaan. Hanya yang `readable_at`-nya
+  // terisi: yang belum terjangkau tidak pantas disebut kepada keluarga, sama
+  // seperti di `/belajar` — sebuah tautan yang berakhir di layar "Anda
+  // memerlukan akses" lebih buruk daripada tidak ada tautan.
+  let materi_list: JadwalSessionDetail['materi_list'] = []
+  if (grupTopik.size > 0) {
+    const { data: mRows } = await (admin
+      .from('curriculum_resources')
+      .select('id, title, group_id')
+      .eq('kind', 'materi')
+      .not('readable_at', 'is', null)
+      .in('group_id', [...grupTopik])
+      .order('title') as unknown as Promise<{ data: { id: string; title: string; group_id: string | null }[] | null }>)
+    materi_list = (mRows ?? [])
+      .filter(r => r.group_id)
+      .map(r => ({ id: r.id, title: r.title, groupId: r.group_id as string }))
+  }
+
   return {
     tema,
     topik,
     cp_list,
-    latihan_soal_list,
-    materials: materialsRes.data ?? [],
+    materi_list,
     assessments,
     catatan: noteRes.data?.body ?? null,
     attendance_notes: attendanceRes.data?.notes ?? null,

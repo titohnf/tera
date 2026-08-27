@@ -438,6 +438,7 @@ function ClassSessionTable({ sekarangIso, showAdminLinks, cls, sessions, subject
                             <p className="text-sm text-gray-400 py-1">Memuat...</p>
                           ) : (
                             <RincianSesi
+                              anakId={studentId}
                               detail={detail}
                               sessionId={s.id}
                               topikSesi={s.topic}
