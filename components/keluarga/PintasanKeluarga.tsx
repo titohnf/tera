@@ -9,7 +9,7 @@ import Link from 'next/link'
  * setiap kunjungan ke Tagihan lewat dua ketukan dan satu halaman yang sama
  * sekali tidak dicari.
  *
- * Di sini ketiganya jadi petak ikon di beranda: satu baris, satu ketukan.
+ * Di sini keempatnya jadi petak ikon di beranda: satu baris, satu ketukan.
  * Kalimat penjelasnya sengaja dilepas — pada nama-nama sependek ini ia lebih
  * banyak menambah tinggi daripada kejelasan, dan orang tua yang sudah pernah
  * membukanya mengenali petaknya dari warna dan bentuk, bukan dari kalimatnya.
@@ -43,6 +43,14 @@ const PINTASAN = [
     ),
   },
   {
+    ke: 'jadwal',
+    judul: 'Riwayat Kelas',
+    warna: 'bg-amber-50 text-amber-600',
+    ikon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    ),
+  },
+  {
     ke: 'penguasaan',
     judul: 'Penguasaan',
     warna: 'bg-emerald-50 text-emerald-600',
@@ -55,7 +63,7 @@ const PINTASAN = [
 export default function PintasanKeluarga({ studentId }: { studentId: string }) {
   return (
     <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}

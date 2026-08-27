@@ -6,12 +6,20 @@ import JadwalTable from '@/components/siswa/JadwalTable'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 
 /**
- * Jadwal dan riwayat sesi seorang anak.
+ * Riwayat kelas seorang anak: jadwal sesi dan apa yang terjadi di tiap sesi.
  *
- * Dulu ini tab "Kelas" di beranda. Isinya tidak berubah — daftar sesi kelas
- * aktif, lalu ringkasan kelas yang sudah selesai — yang berubah cuma tempatnya:
- * ia sekarang punya rutenya sendiri, jadi orang tua bisa mengirim tautannya dan
- * tombol kembali di ponsel berperilaku seperti yang mereka harapkan.
+ * Dulu ini tab "Kelas" di beranda, lalu naik jadi salah satu dari empat tombol
+ * bilah bawah, dan kini turun lagi jadi petak ikon di beranda. Perpindahan
+ * terakhir mengikuti apa yang sebenarnya dicari orang tua: bilah bawah untuk
+ * yang dibuka tiap hari — beranda, kabar, profil — sedangkan riwayat dibuka
+ * saat ada yang ingin ditelusuri, dan itu perilaku petak, bukan tab.
+ *
+ * Namanya ikut berubah jadi "Riwayat Kelas". "Jadwal" menjanjikan yang akan
+ * datang, padahal isi halaman ini sebagian besar yang sudah lewat: kehadiran,
+ * topik yang dibahas, materinya, nilai asesmen, dan catatan tutor.
+ *
+ * Rutenya tetap `/jadwal` — tautan yang sudah beredar tidak dipatahkan demi
+ * nama, dan tidak ada seorang pun membaca alamat ini sebagai kalimat.
  *
  * Kelas yang sudah selesai tetap diringkas di bawah, bukan dibuang: anak yang
  * pindah kelas di tengah tahun akan kehilangan seluruh sejarahnya kalau

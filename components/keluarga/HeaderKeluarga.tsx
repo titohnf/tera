@@ -47,12 +47,15 @@ type Layar = {
 }
 
 const LAYAR: Record<string, Layar> = {
-  jadwal: { judul: 'Jadwal' },
+  // `kembali: ''` ikut sejak Jadwal turun dari bilah bawah jadi petak di
+  // beranda: pintu masuknya sekarang beranda, jadi panah kembali harus pulang
+  // ke sana. Tanpa itu, layar yang dibuka dari sebuah petak tidak punya jalan
+  // mundur ke petak-petaknya.
+  jadwal: { judul: 'Riwayat Kelas', kembali: '' },
   notifikasi: { judul: 'Notifikasi' },
   profil: { judul: 'Profil' },
   tagihan: { judul: 'Tagihan', kembali: '' },
   laporan: { judul: 'Laporan Bulanan', kembali: '' },
-  materi: { judul: 'Materi', kembali: '' },
   penguasaan: { judul: 'Penguasaan', kembali: '' },
 }
 
