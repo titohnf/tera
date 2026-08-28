@@ -1,10 +1,12 @@
 import { anakOrRedirect } from '@/lib/keluarga'
+import { kodeReferal } from '@/lib/referal'
 import { createClient } from '@/lib/supabase/server'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { hitungKehadiran } from '@/lib/kehadiran'
 import SiswaHeaderCard from '@/components/siswa/SiswaHeaderCard'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import KartuAkun from '@/components/apps/KartuAkun'
+import KartuReferal from '@/components/keluarga/KartuReferal'
 
 /**
  * Profil anak: identitasnya, ringkasan angkanya, dan akun keluarganya.
@@ -29,6 +31,10 @@ import KartuAkun from '@/components/apps/KartuAkun'
  * halaman ini sejak menu avatar di pojok kanan atas dilepas. Halaman ini yang
  * menampungnya karena "Profil" di bilah navigasi bawah memang tempat orang
  * mencari hal-hal tentang dirinya.
+ *
+ * Kode referal keluarga duduk tepat di atasnya, dengan alasan yang sama: ia
+ * milik akun, bukan milik anak yang sedang dibuka. Banner di dasar beranda
+ * menawarkannya; yang kembali mencari kodenya akan mencarinya di sini.
  */
 
 export default async function ProfilAnak({
@@ -89,6 +95,8 @@ export default async function ProfilAnak({
         studentId={studentId}
         tampilkanId={false}
       />
+
+      <KartuReferal kode={kodeReferal(user.id)} />
 
       <KartuAkun nama={namaKeluarga} email={user.email ?? ''} />
     </div>
