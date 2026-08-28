@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { anakOrRedirect } from '@/lib/keluarga'
-import { sesiBerikutnya, sisaTagihan } from '@/lib/keluarga-anak'
+import { ringkasanTagihan, sesiBerikutnya } from '@/lib/keluarga-anak'
+import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
 import { sekarangIso } from '@/lib/waktu'
+import { todayWib } from '@/lib/daily-message'
 import BannerPromosi from '@/components/keluarga/BannerPromosi'
 import PintasanKeluarga from '@/components/keluarga/PintasanKeluarga'
-import KartuAplikasi, { IKON_GAMA, IKON_SORA } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda seorang anak — layar pertama yang dilihat orang tua.
@@ -18,8 +19,44 @@ import KartuAplikasi, { IKON_GAMA, IKON_SORA } from '@/components/apps/KartuApli
  *
  * Sisa tagihan tetap ikut, meski Tagihan sudah punya halaman sendiri: ia satu-
  * satunya hal di portal ini yang menuntut tindakan, dan hal yang menuntut
- * tindakan tidak boleh menunggu diketuk untuk terlihat. Ia hilang sendiri
- * begitu lunas.
+ * tindakan tidak boleh menunggu diketuk untuk terlihat.
+ *
+ * Tapi ia TIDAK berdiri di sini sepanjang semester. Invoice diterbitkan satu
+ * semester sekaligus, jadi "masih ada sisa" adalah keadaan normal berbulan-
+ * bulan — dan pengingat yang selalu ada berhenti dibaca jauh sebelum ia jadi
+ * relevan. Kapan ia muncul diputuskan `ringkasanTagihan`, dan `tampil` itulah
+ * syaratnya, bukan `sisa > 0`.
+ *
+ * Kartunya TIDAK lagi selalu merah dan tidak lagi berbunyi "Belum dibayar".
+ * Invoice kelas reguler diterbitkan satu semester sekaligus sementara hampir
+ * semua orang tua membayarnya bulanan — jadi keadaan yang paling lazim di
+ * portal ini adalah tagihan yang belum lunas dan memang belum waktunya lunas.
+ * Menandainya merah dan menyebutnya belum dibayar menuduh keluarga yang justru
+ * sedang menepati kesepakatannya, dan itu berbalik jadi protes ke admin.
+ *
+ * Yang merah tinggal satu keadaan: lewat jatuh tempo tanpa pembayaran sama
+ * sekali. Pembedaan itu bukan karangan halaman ini — ia aturan yang sama persis
+ * dengan lencana di halaman Tagihan (`lib/tagihan.ts`), tempat tagihan yang
+ * sudah dicicil disebut "Angsuran", bukan tunggakan.
+ *
+ * Kartu "Lanjutkan latihan" datang dari puncak `/belajar`, tempat ia ikut
+ * terbawa ke setiap langkah pemilihan mapel dan topik — menawarkan sesi lain
+ * tepat selagi seseorang menyusun sesi baru. Di sini ia berdiri sekali, dan di
+ * layar yang memang dibuka untuk memutuskan mau apa. Ia hilang sendiri begitu
+ * sesinya diselesaikan, sama seperti sisa tagihan.
+ *
+ * Kartu SORA pernah ada di sini, di bawah petak pintasan, menautkan ke
+ * `/belajar?anak=`. Ia sekarang tab "Latihan" di bilah bawah: latihan soal
+ * adalah salah satu dari dua alasan anak membuka portal ini sendiri, dan
+ * sebuah kartu di ujung beranda menuntut gulir untuk sesuatu yang dituju
+ * langsung. Nama produknya ikut ditinggalkan — "SORA" tidak memberi tahu
+ * siapa pun apa yang ada di baliknya.
+ *
+ * Kartu GAMA menyusul turun, dan dengan itu halaman ini tidak lagi memakai
+ * `KartuAplikasi` sama sekali. Ia sebuah janji tanpa tanggal — "Segera hadir"
+ * untuk sesuatu yang pengerjaannya belum dimulai — dan janji semacam itu makin
+ * lama makin terbaca sebagai bagian aplikasi yang rusak. Ia dipasang lagi kalau
+ * GAMA benar-benar dikerjakan; bentuk kartunya masih utuh di riwayat git.
  *
  * Empat pintasan — Tagihan, Laporan, Materi, Penguasaan — pindah ke sini dari
  * dalam halaman Profil. Sebagai petak ikon keempatnya cuma memakan satu baris,
@@ -44,29 +81,70 @@ export default async function AnakBeranda({
   const { anak } = await anakOrRedirect(studentId)
 
   const sekarang = await sekarangIso()
-  const [sesi, belumBayar] = await Promise.all([
+  const [sesi, tagihan, learnerId] = await Promise.all([
     sesiBerikutnya(studentId, sekarang),
-    sisaTagihan(studentId),
+    // Hari WIB yang sama dengan halaman Tagihan dan halaman admin: keterlambatan
+    // yang berbeda sehari di pagi buta berujung telepon yang tidak perlu.
+    ringkasanTagihan(studentId, todayWib()),
+    learnerAnak(studentId),
   ])
+  // Menyusul, bukan sebarisan: id pelajarnya baru diketahui dari kueri di atas.
+  // Anak yang belum pernah berlatih tidak punya baris `learners`, dan tidak
+  // punya apa-apa untuk dilanjutkan — kueri keduanya dilewati sama sekali.
+  const tertunda = learnerId ? await sesiTertunda(learnerId) : null
 
   return (
     <div className="space-y-4">
       <BannerPromosi />
 
-      {belumBayar > 0 && (
+      {tagihan.tampil && (
         <Link
           href={`/keluarga/${studentId}/tagihan`}
-          className="flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-red-200 active:bg-slate-50 transition"
+          className={`flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow ring-1 active:bg-slate-50 transition ${
+            tagihan.terlambat ? 'ring-red-200' : 'ring-gray-900/5'
+          }`}
         >
           <span>
             <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Belum dibayar
+              {tagihan.terlambat ? 'Terlambat' : 'Belum lunas'}
             </span>
-            <span className="block text-lg font-bold text-red-600 tabular-nums mt-0.5">
-              {rupiah(belumBayar)}
+            <span
+              className={`block text-lg font-bold tabular-nums mt-0.5 ${
+                tagihan.terlambat ? 'text-red-600' : 'text-gray-900'
+              }`}
+            >
+              {rupiah(tagihan.sisa)}
             </span>
           </span>
           <span className="text-sm font-medium text-blue-600 shrink-0">Lihat →</span>
+        </Link>
+      )}
+
+      {/* Satu-satunya pintu menuju sesi yang belum selesai. Undiannya tersimpan
+          sejak migrasi 114, tapi rute sesi tidak ditautkan dari mana pun —
+          tanpa kartu ini, anak yang menutup tab kehilangan sesinya bukan karena
+          datanya hilang melainkan karena tidak ada jalan kembali.
+
+          `?anak=` tidak perlu di sini: `/belajar/[sesiId]` tahu sendiri sesi itu
+          milik siapa, dan justru menolak ditanyai dua kali. */}
+      {tertunda && (
+        <Link
+          href={`/belajar/${tertunda.sesiId}`}
+          className="flex items-center gap-3 rounded-xl bg-blue-50 p-4 shadow ring-1 ring-blue-200 transition hover:ring-blue-300 active:bg-blue-100"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-blue-900">
+              {tertunda.tinggalHasil ? 'Lihat hasil latihan terakhir' : 'Lanjutkan latihan'}
+            </span>
+            <span className="block text-sm text-blue-700/80">
+              {tertunda.tinggalHasil
+                ? `${tertunda.jumlahSoal} soal sudah dijawab, hasilnya belum dibuka.`
+                : `${tertunda.sudahDijawab} dari ${tertunda.jumlahSoal} soal sudah dijawab.`}
+            </span>
+          </span>
+          <span className="shrink-0 text-blue-600" aria-hidden>
+            →
+          </span>
         </Link>
       )}
 
@@ -102,35 +180,7 @@ export default async function AnakBeranda({
         )}
       </Link>
 
-      {/* Sesudah "jadwal berikutnya", sebelum kartu aplikasi: keempatnya bagian
-          dari halaman ini, sementara SORA dan GAMA adalah tempat lain. */}
       <PintasanKeluarga studentId={studentId} />
-
-      {/* SORA dulu menautkan keluar ke `NEXT_PUBLIC_SORA_URL` — aplikasi latihan
-          di repo `form`. Latihannya sekarang ada di `/belajar` milik repo ini,
-          permukaan yang sama yang dipakai pelanggan langganan. Itu menutup
-          perbedaan yang paling sulit dijelaskan: kartu yang sama membawa
-          keluarga ke aplikasi lain dan pelanggan ke halaman sendiri.
-
-          `?anak=` wajib untuk jalur keluarga — `belajarContext()` perlu tahu
-          atas nama siapa, dan memeriksanya lagi lewat `practice_start_as_child()`
-          di database, jadi id yang dikarang tidak menghasilkan apa pun. */}
-      <KartuAplikasi
-        nama="SORA"
-        teks="Latihan soal per topik, dengan pembahasan langsung."
-        href={`/belajar?anak=${studentId}`}
-        warna="bg-blue-50 text-blue-600"
-        ikon={IKON_SORA}
-      />
-
-      <KartuAplikasi
-        nama="GAMA"
-        keterangan="Segera hadir"
-        teks="Game matematika."
-        href={null}
-        warna="bg-slate-100 text-slate-400"
-        ikon={IKON_GAMA}
-      />
     </div>
   )
 }

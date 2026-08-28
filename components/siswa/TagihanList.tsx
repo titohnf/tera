@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { statusTagihan, warnaBilahTagihan } from '@/lib/tagihan'
+import { statusTagihan, tanggalBayarTerakhir, warnaBilahTagihan } from '@/lib/tagihan'
 import {
   KemajuanBayar,
   RiwayatPembayaran,
@@ -87,7 +87,11 @@ function KartuTagihan({
   untuk: 'admin' | 'keluarga'
 }) {
   const [terbuka, setTerbuka] = useState(false)
-  const st = statusTagihan(invoice.status, invoice.due_date, hariIni)
+  /* Angsuran dinilai dari diamnya, bukan dari jatuh temponya — lihat
+     `tagihanTerlambat`. Tanpa tanggal ini, angsuran yang berhenti berbulan-
+     bulan tetap berlencana kuning "Angsuran". */
+  const terakhir = tanggalBayarTerakhir(pembayaran)
+  const st = statusTagihan(invoice.status, invoice.due_date, hariIni, terakhir)
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -192,7 +196,7 @@ function KartuTagihan({
           <KemajuanBayar
             totalDue={invoice.total_due}
             pembayaran={pembayaran}
-            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, hariIni)}
+            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, hariIni, terakhir)}
           />
           <RiwayatPembayaran
             pembayaran={pembayaran}

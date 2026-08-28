@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { coversSession } from '@/lib/enrollment'
+import { tagihanTerlambat, tanggalBayarTerakhir } from '@/lib/tagihan'
 
 /**
  * Kelas dan sesi seorang anak, dirakit sekali untuk dipakai beberapa halaman
@@ -172,19 +173,128 @@ export async function sesiBerikutnya(studentId: string, sekarangIso: string) {
   }
 }
 
+/** Sisa tagihan anak ini, beserta apakah ada yang benar-benar terlambat. */
+export interface RingkasanTagihan {
+  /** Yang masih harus dibayar — sudah dikurangi pembayaran yang tercatat. */
+  sisa: number
+  /**
+   * Ada tagihan yang lewat jatuh tempo tanpa pembayaran sama sekali, ATAU
+   * angsuran yang berhenti lebih dari `MACET_HARI`. Aturannya milik
+   * `tagihanTerlambat()`, sama dengan lencana di halaman Tagihan.
+   */
+  terlambat: boolean
+  /**
+   * Layak ditampilkan di beranda. Lihat `ringkasanTagihan` — sisa yang belum
+   * nol tidak dengan sendirinya berarti ada yang perlu dikerjakan hari ini.
+   */
+  tampil: boolean
+}
+
+
 /**
- * Sisa tagihan anak ini: yang sudah terbit, belum lunas, belum dibatalkan.
- * Aturan yang sama dipakai di halaman Tagihan dan Profil.
+ * Sisa tagihan anak ini: yang sudah terbit, belum lunas, belum dibatalkan —
+ * DIKURANGI pembayaran yang sudah tercatat.
+ *
+ * Pengurangan itu dulu tidak ada, dan akibatnya berat sebelah. Invoice kelas
+ * reguler diterbitkan satu semester sekaligus, sementara hampir semua orang tua
+ * membayarnya bulanan; keluarga yang sudah menyicil empat dari enam bulan tetap
+ * membaca angka enam bulan penuh di berandanya, di bawah tulisan "Belum
+ * dibayar" berbingkai merah. Angkanya keliru, dan kalimatnya menuduh.
+ *
+ * `tampil` menjawab pertanyaan yang berbeda dari `sisa`: bukan "masih ada yang
+ * belum dibayar" melainkan "ada yang perlu dikerjakan sekarang". Keduanya
+ * hampir selalu berbeda di sini. Invoice diterbitkan satu semester sekaligus,
+ * jadi sisa yang belum nol adalah keadaan NORMAL selama berbulan-bulan — dan
+ * kartu yang berdiri di beranda selama itu bukan pengingat lagi, cuma perabot
+ * yang berhenti dibaca.
+ *
+ * Yang menurunkannya satu hal saja: PEMBAYARAN DI BULAN BERJALAN. Selama bulan
+ * ini belum ada setoran, kartunya berdiri; begitu ada satu, ia hilang sampai
+ * bulan berikutnya. Itu mengikuti kebiasaan yang sebenarnya — invoicenya
+ * semesteran, bayarnya bulanan — tanpa memerlukan jadwal angsuran yang memang
+ * tidak ada di basis data.
+ *
+ * `due_date` sengaja TIDAK dipakai untuk menentukan ini. Ia satu tanggal untuk
+ * seluruh semester, jadi ia tidak berulang tiap bulan dan tidak bisa menjawab
+ * "apakah setoran bulan ini sudah masuk" — pertanyaan yang justru sedang
+ * dijawab kartu ini. Perannya tinggal di `terlambat`, tempat ia memang berarti.
+ *
+ * `terlambat` ikut karena warna kartunya bergantung padanya. Aturannya sengaja
+ * dipinjam dari `lib/tagihan.ts` alih-alih ditulis ulang: yang menyicil ditunggu,
+ * yang diam saja dihubungi — dan beranda tidak boleh mengatakan hal yang berbeda
+ * dari lencana di halaman Tagihan untuk tagihan yang sama.
  */
-export async function sisaTagihan(studentId: string): Promise<number> {
+export async function ringkasanTagihan(
+  studentId: string,
+  hariIni: string,
+): Promise<RingkasanTagihan> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('invoices')
-    .select('total_due, status')
+    .select('id, total_due, status, due_date')
     .eq('student_id', studentId)
     .neq('status', 'draft')
 
-  return ((data ?? []) as { total_due: number; status: string }[])
-    .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
-    .reduce((s, i) => s + Number(i.total_due), 0)
+  const belumLunas = ((data ?? []) as {
+    id: string
+    total_due: number
+    status: string
+    due_date: string | null
+  }[]).filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
+
+  if (belumLunas.length === 0) return { sisa: 0, terlambat: false, tampil: false }
+
+  // Kebijakan "Families read own payments" di migrasi 076 — klien ber-RLS,
+  // seperti halaman Tagihan yang membaca tabel yang sama.
+  const { data: bayarRows } = await supabase
+    .from('invoice_payments')
+    .select('invoice_id, amount, paid_at')
+    .in('invoice_id', belumLunas.map((i) => i.id))
+
+  const bayar = (bayarRows ?? []) as { invoice_id: string; amount: number; paid_at: string }[]
+
+  const dibayar = new Map<string, number>()
+  for (const b of bayar) {
+    dibayar.set(b.invoice_id, (dibayar.get(b.invoice_id) ?? 0) + Number(b.amount))
+  }
+
+  const terlambat = belumLunas.some((i) =>
+    tagihanTerlambat(
+      i.status,
+      i.due_date,
+      hariIni,
+      // Angsuran yang berhenti dinilai dari tanggal bayar terakhirnya. Tanpa
+      // argumen ini ia tidak akan pernah disebut terlambat — lihat
+      // `tagihanTerlambat`.
+      tanggalBayarTerakhir(bayar.filter((b) => b.invoice_id === i.id)),
+    ),
+  )
+
+  // Bulan kalender yang sama, dibandingkan sebagai teks `YYYY-MM`. Cukup untuk
+  // maksudnya — "sudah setor bulan ini" — dan tidak menyeret zona waktu.
+  const bayarBulanIni = bayar.some((b) => b.paid_at.slice(0, 7) === hariIni.slice(0, 7))
+
+  // `max(0, …)`: pembayaran lebih dari tagihannya bukan hal yang mustahil
+  // dicatat, dan kelebihan di satu invoice tidak boleh mengurangi sisa invoice
+  // lain — itu akan menyembunyikan tagihan yang benar-benar ada.
+  const sisa = belumLunas.reduce(
+    (s, i) => s + Math.max(0, Number(i.total_due) - (dibayar.get(i.id) ?? 0)),
+    0,
+  )
+
+  return {
+    sisa,
+    terlambat,
+    // `sisa > 0` jadi syarat pertama, bukan sekadar bawaan: sebuah invoice bisa
+    // sudah tertutup pembayarannya tanpa statusnya sempat diubah jadi `paid`,
+    // dan kartu "Belum lunas Rp 0" adalah kekeliruan yang paling terang.
+    //
+    // `terlambat` TIDAK ikut sebagai syarat kedua meski ia harus selalu
+    // terlihat: yang terlambat pasti belum menyetor bulan ini juga. Jarak
+    // terjauh antara dua tanggal di bulan yang sama adalah 30 hari, sementara
+    // angsuran baru disebut macet di atas 30 — jadi `terlambat` tidak pernah
+    // bisa benar bersamaan dengan `bayarBulanIni`, dan menuliskannya cuma akan
+    // jadi cabang yang tidak pernah dilewati.
+    tampil: sisa > 0 && !bayarBulanIni,
+  }
 }

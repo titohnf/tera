@@ -1,8 +1,10 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { belajarContext } from '@/lib/belajar/konteks'
-import { mapelLatihan, sesiTertunda } from '@/lib/belajar/sesi'
+import { mapelLatihan } from '@/lib/belajar/sesi'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
+import BilahKeluarga from '@/components/belajar/BilahKeluarga'
+import { notifikasiAnak } from '@/lib/keluarga-notifikasi'
+import { keluargaContext } from '@/lib/keluarga'
 
 /**
  * Pintu masuk permukaan belajar: memilih apa yang mau dilatih.
@@ -11,6 +13,13 @@ import PemilihLatihan from '@/components/belajar/PemilihLatihan'
  * halaman ini dibuka, dan ia pula yang memulangkan orang yang tidak berhak.
  * Sesi belum dibuat di sini; itu terjadi saat tombol "Mulai Latihan" ditekan,
  * dan sejak detik itu tempatnya pindah ke `/belajar/[sesiId]`.
+ *
+ * Kartu "Lanjutkan latihan" pernah berdiri di puncak layar ini. Ia pindah ke
+ * beranda portal keluarga. Langkah-langkah memilih mapel dan topik seluruhnya
+ * hidup di browser, di dalam halaman yang sama — jadi kartu itu tidak
+ * menyingkir saat mapel dipilih melainkan ikut ke setiap langkahnya, menawarkan
+ * sesi LAIN tepat selagi seseorang sedang menyusun sesi yang baru. Di beranda
+ * ia muncul sekali, di layar tempat orang belum memutuskan apa-apa.
  */
 export default async function BelajarBeranda({
   searchParams,
@@ -18,16 +27,13 @@ export default async function BelajarBeranda({
   searchParams: Promise<{ anak?: string; topik?: string }>
 }) {
   const { anak, topik } = await searchParams
-  const { learnerId, namaPelajar, avatar, kelas } = await belajarContext(anak)
+  const { learnerId, namaPelajar, avatar, kelas, studentId } = await belajarContext(anak)
   // Pengecualian jenjang per mapel (migrasi 105) TIDAK ikut di sini: ia
   // bergantung pada mapel mana yang dibuka, dan yang sedang disusun justru
   // daftar mapelnya. Yang dipakai kelas aslinya saja; pengecualiannya
   // menyusul di layar topik, tempat mapelnya sudah diketahui.
   const jenjang = kelas ? [`Kelas ${kelas}`] : []
-  const [mapel, tertunda] = await Promise.all([
-    mapelLatihan(learnerId, jenjang),
-    sesiTertunda(learnerId),
-  ])
+  const mapel = await mapelLatihan(learnerId, jenjang)
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
   // portal keluarga. Yang dibutuhkan layar cuma MAPELNYA — daftar topik dimuat
@@ -53,33 +59,20 @@ export default async function BelajarBeranda({
     }
   }
 
+  // Perabot portal keluarga ikut dirender di layar ini — lihat `BilahKeluarga`.
+  // `studentId` terisi hanya untuk jalur keluarga, jadi pelanggan langganan
+  // melewati kedua kueri ini sama sekali; `keluargaContext()` bahkan akan
+  // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
+  //
+  // Dari notifikasi yang diturunkan cuma DAFTAR ID, dengan alasan yang sama
+  // seperti di rangka portal: mana yang sudah dibaca tersimpan di perangkat
+  // masing-masing, jadi server tidak bisa menghitungnya.
+  const keluarga = studentId
+    ? await Promise.all([notifikasiAnak(studentId), keluargaContext()])
+    : null
+
   return (
     <div className="space-y-4">
-      {/* Satu-satunya pintu menuju sesi yang belum selesai. Undiannya tersimpan
-          sejak migrasi 114, tapi rute sesi tidak ditautkan dari mana pun —
-          tanpa kartu ini, anak yang menutup tab kehilangan sesinya bukan karena
-          datanya hilang melainkan karena tidak ada jalan kembali. */}
-      {tertunda && (
-        <Link
-          href={`/belajar/${tertunda.sesiId}`}
-          className="flex items-center gap-3 rounded-xl bg-blue-50 p-4 shadow ring-1 ring-blue-200 transition hover:ring-blue-300 active:bg-blue-100"
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-blue-900">
-              {tertunda.tinggalHasil ? 'Lihat hasil latihan terakhir' : 'Lanjutkan latihan'}
-            </span>
-            <span className="block text-sm text-blue-700/80">
-              {tertunda.tinggalHasil
-                ? `${tertunda.jumlahSoal} soal sudah dijawab, hasilnya belum dibuka.`
-                : `${tertunda.sudahDijawab} dari ${tertunda.jumlahSoal} soal sudah dijawab.`}
-            </span>
-          </span>
-          <span className="shrink-0 text-blue-600" aria-hidden>
-            →
-          </span>
-        </Link>
-      )}
-
       <PemilihLatihan
         mapel={mapel}
         anak={anak}
@@ -88,6 +81,14 @@ export default async function BelajarBeranda({
         avatar={avatar}
         labelKelas={jenjang[0] ?? null}
       />
+
+      {studentId && keluarga && (
+        <BilahKeluarga
+          studentId={studentId}
+          idNotifikasi={keluarga[0].items.map((n) => n.id)}
+          anak={keluarga[1].anak}
+        />
+      )}
     </div>
   )
 }

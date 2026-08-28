@@ -15,19 +15,21 @@ import HeaderKeluarga from '@/components/keluarga/HeaderKeluarga'
  * (`components/apps/KartuAkun`) — ia satu-satunya pemanggil `signOut()`
  * yang tersisa untuk keluarga, jadi ia tidak boleh ikut hilang.
  *
- * `keluargaContext()` tetap dipanggil meski namanya tidak lagi ditampilkan: ia
- * yang memastikan yang membuka rute ini memang akun ber-role `parent`.
+ * `keluargaContext()` tetap dipanggil meski nama keluarganya tidak lagi
+ * ditampilkan: ia yang memastikan yang membuka rute ini memang akun ber-role
+ * `parent`, dan sejak pemilih anak pindah ke pojok kanan header, ia pula yang
+ * memasok daftar anaknya.
  */
 export default async function KeluargaLayout({ children }: { children: React.ReactNode }) {
-  await keluargaContext()
+  const { anak } = await keluargaContext()
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <HeaderKeluarga />
-      {/* Tanpa `main` di sini: bilah pemilih anak dan bilah navigasi bawah
-          menempel ke tepi layar, jadi yang memasang lebar dan padding isi
-          adalah `app/keluarga/[studentId]/layout.tsx` — di dalam bilah-bilah
-          itu, bukan di luarnya. */}
+      <HeaderKeluarga anak={anak} />
+      {/* Tanpa `main` di sini: bilah navigasi bawah menempel ke tepi layar,
+          jadi yang memasang lebar dan padding isi adalah
+          `app/keluarga/[studentId]/layout.tsx` — di dalam bilah itu, bukan di
+          luarnya. */}
       {children}
     </div>
   )

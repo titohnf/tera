@@ -19,12 +19,28 @@ import { langganan, snapshotServer, snapshotTerbaca, urai } from '@/lib/notif-te
  * lebih kabur daripada isinya — yang ada di sana adalah jadwal sesi, dan
  * kelas yang sudah selesai diringkas di dasarnya.
  *
- * Tagihan, Laporan, Materi, dan Penguasaan tidak cukup sering dibuka untuk
- * mendapat tempatnya sendiri di sini; keempatnya dijangkau dari petak ikon di
- * beranda, jadi "Beranda"-lah yang menyala saat salah satunya terbuka. Sebelum
- * petak itu ada keempatnya bernaung di bawah "Profil". Karena satu item bisa
- * menaungi beberapa halaman, yang menyala ditentukan oleh daftar `cocok`,
- * bukan oleh perbandingan persis dengan `href`.
+ * "Latihan" keluar dari portal ini — ia menuju `/belajar`, permukaan yang
+ * dipakai bersama pelanggan langganan. Sebelumnya ia sebuah kartu bernama
+ * "SORA" di beranda, di bawah jadwal dan petak pintasan; nama produknya tidak
+ * memberi tahu anak apa yang ada di baliknya, dan letaknya menuntut satu
+ * gulir. Sebagai tab ia sejajar dengan hal-hal yang paling sering dibuka, dan
+ * namanya menyebut kegiatannya.
+ *
+ * Karena tujuannya di luar `/keluarga/[id]`, ia tidak bisa memakai `cocok`
+ * yang diukur dari awalan itu; `luar` yang menyalakannya. Bilah ini ikut
+ * dirender di sana (lihat `components/belajar/BilahKeluarga`) supaya tab yang
+ * terbuka tidak menghilangkan tab-tab lainnya — pindah ke latihan adalah
+ * pindah tab, bukan meninggalkan portal.
+ *
+ * Tagihan, Laporan, Riwayat Kelas, dan Penguasaan tidak punya tempat di sini;
+ * keempatnya dijangkau dari petak ikon di beranda, dan bilah ini tidak dirender
+ * sama sekali di sana (lihat `RangkaAnak`) — keempatnya sudah membawa panah
+ * kembali ke beranda di kepala layar. Karena itu tidak ada satu pun sub-path
+ * mereka di daftar `cocok`; kalau suatu saat salah satunya kembali berbilah,
+ * sub-pathnya perlu ditambahkan ke "Beranda" supaya ada yang menyala.
+ *
+ * Karena satu item bisa menaungi beberapa halaman, yang menyala ditentukan oleh
+ * daftar `cocok`, bukan oleh perbandingan persis dengan `href`.
  */
 
 type Item = {
@@ -32,6 +48,11 @@ type Item = {
   href: (id: string) => string
   /** Sub-path (setelah `/keluarga/[id]`) yang membuat item ini menyala. */
   cocok: string[]
+  /**
+   * Awalan path PENUH di luar portal yang membuat item ini menyala — untuk
+   * tujuan yang tidak hidup di bawah `/keluarga/[id]`.
+   */
+  luar?: string
   /** Item yang membawa angka kabar belum dibaca. Hanya lonceng. */
   lencana?: true
   ikon: React.ReactNode
@@ -41,9 +62,20 @@ const ITEMS: Item[] = [
   {
     label: 'Beranda',
     href: (id) => `/keluarga/${id}`,
-    cocok: ['', '/tagihan', '/laporan', '/penguasaan', '/jadwal'],
+    cocok: [''],
     ikon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+    ),
+  },
+  {
+    label: 'Latihan',
+    /* `?anak=` wajib: `belajarContext()` perlu tahu atas nama siapa, dan
+       memeriksanya lagi lewat `practice_start_as_child()` di database. */
+    href: (id) => `/belajar?anak=${id}`,
+    cocok: [],
+    luar: '/belajar',
+    ikon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     ),
   },
   {
@@ -80,7 +112,8 @@ export default function BottomNav({
     ? 0
     : idNotifikasi.filter((id) => !terbaca.has(id)).length
   const awalan = `/keluarga/${studentId}`
-  const sisa = pathname.startsWith(awalan) ? pathname.slice(awalan.length) : ''
+  const diPortal = pathname.startsWith(awalan)
+  const sisa = diPortal ? pathname.slice(awalan.length) : ''
 
   return (
     <nav
@@ -89,9 +122,14 @@ export default function BottomNav({
          geser iPhone; tanpa itu label paling bawah tertutup separuh. */
       className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="max-w-5xl mx-auto grid grid-cols-3">
+      <div className="max-w-5xl mx-auto grid grid-cols-4">
         {ITEMS.map((it) => {
-          const aktif = it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
+          /* `diPortal` menjaga agar di luar portal TIDAK ada yang menyala
+             lewat `cocok`: `sisa` di sana kosong, dan "Beranda" cocok dengan
+             sisa kosong — tanpa syarat ini ia ikut menyala di /belajar. */
+          const aktif = it.luar
+            ? pathname.startsWith(it.luar)
+            : diPortal && it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
           return (
             <Link
               key={it.label}

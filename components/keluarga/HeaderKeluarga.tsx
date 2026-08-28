@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import PemilihAnak from '@/components/keluarga/PemilihAnak'
+import type { Anak } from '@/lib/keluarga'
 
 /**
  * Bilah atas portal keluarga: logo di beranda, nama layar di halaman lain.
@@ -35,6 +37,13 @@ import { usePathname } from 'next/navigation'
  * Ujung kanannya adalah slot kosong `#aksi-layar`: halaman boleh menaruh satu
  * aksi miliknya sendiri sejajar dengan judul lewat `createPortal` (lihat
  * `components/keluarga/SaringSheet`).
+ *
+ * Paling kanan lagi — sesudah slot itu — duduk pemilih anak, untuk keluarga
+ * yang anaknya lebih dari satu. Ia dulu sebuah bilah tab tersendiri di bawah
+ * header; alasan pemindahannya ditulis di `PemilihAnak`. Tempatnya di header
+ * TERLUAR, bukan di rangka `[studentId]`, supaya ia tidak ikut dipasang ulang
+ * setiap kali anaknya berganti — dan karena itu satu-satunya alasan daftar
+ * anaknya diturunkan sampai ke sini.
  */
 
 type Layar = {
@@ -59,11 +68,15 @@ const LAYAR: Record<string, Layar> = {
   penguasaan: { judul: 'Penguasaan', kembali: '' },
 }
 
-export default function HeaderKeluarga() {
+export default function HeaderKeluarga({ anak }: { anak: Anak[] }) {
   const pathname = usePathname()
   const cocok = pathname.match(/^\/keluarga\/([^/]+)\/([^/]+)/)
   const studentId = cocok?.[1]
   const layar = cocok ? LAYAR[cocok[2]] : undefined
+  /* Beranda anak (`/keluarga/<id>`) tidak punya sub-path, jadi `cocok` di atas
+     tidak menangkapnya — sementara pemilih anak justru paling sering dipakai
+     dari sana. Id-nya ditelusuri sendiri. */
+  const anakDibuka = pathname.match(/^\/keluarga\/([^/]+)/)?.[1]
 
   return (
     <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center px-4 sm:px-6">
@@ -110,6 +123,14 @@ export default function HeaderKeluarga() {
           ini dirakit di layout terluar, sementara yang tahu aksi apa yang
           pantas di sini adalah halaman yang sedang dibuka. */}
       <div id="aksi-layar" className="ml-auto flex items-center" />
+
+      {anak.length > 1 && anakDibuka && (
+        /* `ml-1` hanya kalau ada tetangga; slot aksi di atas sudah memakai
+           `ml-auto`, jadi jarak ini yang memisahkan keduanya. */
+        <div className="ml-1 flex items-center">
+          <PemilihAnak anak={anak} aktif={anakDibuka} />
+        </div>
+      )}
     </header>
   )
 }

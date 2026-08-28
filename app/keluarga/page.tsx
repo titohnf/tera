@@ -10,7 +10,7 @@ import KartuAkun from '@/components/apps/KartuAkun'
  * bukan tujuan kunjungan, ia saklar yang dipakai berulang kali dalam satu
  * kunjungan — dan sebagai layar tersendiri ia memaksa orang tua beranak dua
  * kembali ke sini setiap kali ingin membandingkan sesuatu. Saklarnya kini jadi
- * bilah tab di puncak setiap halaman (`components/keluarga/AnakTabs.tsx`), dan
+ * tombol di pojok kanan bilah atas (`components/keluarga/PemilihAnak.tsx`), dan
  * ringkasan yang dulu ada di kartu-kartu itu pindah ke beranda masing-masing
  * anak, di tempat yang bisa ditindaklanjuti.
  *

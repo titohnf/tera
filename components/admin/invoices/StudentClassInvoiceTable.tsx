@@ -7,7 +7,7 @@ import { stripClassUniqueTag } from '@/lib/format-class-name'
 import { getMonthlyBreakdown, getInstallmentPlan, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment, type BillingLineItem } from '@/lib/billing-message'
 import { KemajuanBayar, RiwayatPembayaran, urutkanPembayaran } from '@/components/invoices/PembayaranBlok'
 import MenuTitikTiga from '@/components/invoices/MenuTitikTiga'
-import { statusTagihan, warnaBilahTagihan } from '@/lib/tagihan'
+import { statusTagihan, tanggalBayarTerakhir, warnaBilahTagihan } from '@/lib/tagihan'
 import { todayWib } from '@/lib/daily-message'
 
 // Pakai label dari rincian tagihan bila bulannya ada di sana (supaya ikut
@@ -117,7 +117,10 @@ function InvoiceCard({
   // keluarga. Peta lokal yang dulu di sini punya dua lubang: `cancelled` tidak
   // terdaftar sehingga jatuh ke fallback dan berlencana "Terkirim", dan
   // keterlambatan tidak pernah tampil sama sekali di kartu ini.
-  const lencana = statusTagihan(invoice.status, invoice.due_date, today)
+  // Angsuran yang berhenti lebih dari sebulan ikut merah — ukurannya tanggal
+  // pembayaran terakhir, bukan jatuh tempo. Lihat `tagihanTerlambat`.
+  const terakhirBayar = tanggalBayarTerakhir(invoice.payments)
+  const lencana = statusTagihan(invoice.status, invoice.due_date, today, terakhirBayar)
 
   // Urutan yang SAMA dengan yang dirender RiwayatPembayaran, supaya nomor
   // "Tahap" di pesan WhatsApp cocok dengan yang dibaca admin di layar.
@@ -412,7 +415,7 @@ function InvoiceCard({
           <KemajuanBayar
             totalDue={invoice.total_due}
             pembayaran={invoice.payments}
-            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, today)}
+            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, today, terakhirBayar)}
           />
 
           {/* Riwayat pembayaran — komponen yang sama dipakai tab Tagihan di

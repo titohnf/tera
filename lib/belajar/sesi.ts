@@ -154,11 +154,35 @@ export interface SesiTertunda {
 }
 
 /**
+ * Id pelajar milik seorang anak — null kalau ia belum pernah berlatih.
+ *
+ * Dipakai beranda portal keluarga, yang menawarkan sesi tertunda tanpa pernah
+ * membuka permukaan belajar. `belajarContext()` TIDAK dipakai di sana dengan
+ * sengaja: RPC-nya, `practice_start_as_child()`, bersifat volatile — ia
+ * MEMBUAT baris `learners` kalau belum ada. Memanggilnya dari beranda berarti
+ * setiap anak yang berandanya pernah dibuka mendapat identitas latihan, padahal
+ * migrasi 092 menaruh kelahiran baris itu tepat di saat anaknya benar-benar
+ * mulai berlatih.
+ *
+ * `practice_children()` cuma membaca (left join, `learner_id` null kalau
+ * belum ada) dan bergerbang `my_students()` — jadi id anak yang dikarang tidak
+ * menghasilkan apa pun. Null di sini berarti belum pernah ada sesi sama sekali,
+ * yang memang tidak punya apa-apa untuk dilanjutkan.
+ */
+export async function learnerAnak(studentId: string): Promise<string | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.rpc('practice_children')
+  const baris = (data as { student_id: string; learner_id: string | null }[] | null) ?? []
+  return baris.find(b => b.student_id === studentId)?.learner_id ?? null
+}
+
+/**
  * Sesi yang ditinggalkan di tengah jalan, kalau ada.
  *
  * Tanpa ini, kemampuan melanjutkan sesi yang dibangun migrasi 114 TIDAK BISA
  * DIJANGKAU: rute sesi tidak ditautkan dari mana pun, jadi satu-satunya jalan
  * kembali adalah alamat yang kebetulan masih tersimpan di riwayat peramban.
+ * Kartunya berdiri di beranda portal keluarga — lihat `learnerAnak`.
  *
  * Yang dicari BUKAN sekadar sesi terbaru yang belum selesai. Menekan "Mulai
  * Latihan" lalu berubah pikiran meninggalkan sesi kosong, dan sesi kosong
