@@ -60,7 +60,7 @@ const LAYAR: Record<string, Layar> = {
   // beranda: pintu masuknya sekarang beranda, jadi panah kembali harus pulang
   // ke sana. Tanpa itu, layar yang dibuka dari sebuah petak tidak punya jalan
   // mundur ke petak-petaknya.
-  jadwal: { judul: 'Riwayat Kelas', kembali: '' },
+  jadwal: { judul: 'Kelas', kembali: '' },
   notifikasi: { judul: 'Notifikasi' },
   profil: { judul: 'Profil' },
   tagihan: { judul: 'Tagihan', kembali: '' },
@@ -79,7 +79,7 @@ export default function HeaderKeluarga({ anak }: { anak: Anak[] }) {
   const anakDibuka = pathname.match(/^\/keluarga\/([^/]+)/)?.[1]
 
   return (
-    <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center px-4 sm:px-6">
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 sm:px-6">
       {layar ? (
         <div className="flex items-center gap-1">
           {layar.kembali !== undefined && (

@@ -89,7 +89,12 @@ export default function PemilihAnak({
         aria-label={`Anak yang dibuka: ${ini.full_name}. Ganti anak`}
         className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-slate-100 active:bg-slate-200"
       >
-        <Avatar name={ini.full_name} avatarUrl={ini.avatar_url} size={28} />
+        {/* Avatar disuapi nama pendek, bukan nama lengkap: `getInitials`
+            memulangkan dua huruf untuk nama berkata banyak — "MA" untuk
+            "Muhammad Alif" — sementara tulisan di sebelahnya cuma "Muhammad".
+            Satu kata masuk, satu huruf keluar, dan keduanya bercerita hal yang
+            sama. Nama lengkapnya tetap dibawa `aria-label` di tombol ini. */}
+        <Avatar name={ini.nama_pendek} avatarUrl={ini.avatar_url} size={28} />
         {/* `max-w-24 truncate`: nama panggilan biasanya sependek "Nadia", tapi
             yang belum mengisi panggilan memakai kata pertama nama lengkapnya,
             dan satu kata pun bisa panjang. */}
@@ -112,7 +117,11 @@ export default function PemilihAnak({
           role="menu"
           aria-label="Pilih anak"
           /* Melebar ke KIRI dari tepi kanan (`right-0`): tombolnya menempel di
-             tepi layar, jadi popup yang melebar ke kanan akan terpotong. */
+             tepi layar, jadi popup yang melebar ke kanan akan terpotong.
+
+             Berbayang, meski kartu-kartu di portal ini tidak: bayangnya yang
+             mengatakan popup ini berada DI ATAS halaman, bukan bagian darinya.
+             Lihat aturannya di `app/keluarga/layout.tsx`. */
           className="absolute right-0 top-full z-50 mt-1 w-60 overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-gray-900/10"
         >
           {anak.map((a) => {
@@ -132,7 +141,7 @@ export default function PemilihAnak({
                   dibuka ? 'bg-blue-50/60' : 'hover:bg-slate-50'
                 }`}
               >
-                <Avatar name={a.full_name} avatarUrl={a.avatar_url} size={36} />
+                <Avatar name={a.nama_pendek} avatarUrl={a.avatar_url} size={36} />
                 <span className="min-w-0 flex-1">
                   <span
                     className={`block truncate text-sm font-semibold ${

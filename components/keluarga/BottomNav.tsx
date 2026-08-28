@@ -32,7 +32,7 @@ import { langganan, snapshotServer, snapshotTerbaca, urai } from '@/lib/notif-te
  * terbuka tidak menghilangkan tab-tab lainnya — pindah ke latihan adalah
  * pindah tab, bukan meninggalkan portal.
  *
- * Tagihan, Laporan, Riwayat Kelas, dan Penguasaan tidak punya tempat di sini;
+ * Tagihan, Laporan, Kelas, dan Penguasaan tidak punya tempat di sini;
  * keempatnya dijangkau dari petak ikon di beranda, dan bilah ini tidak dirender
  * sama sekali di sana (lihat `RangkaAnak`) — keempatnya sudah membawa panah
  * kembali ke beranda di kepala layar. Karena itu tidak ada satu pun sub-path
