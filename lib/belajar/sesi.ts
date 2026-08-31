@@ -3,7 +3,6 @@ import { adalahVideo } from './sematan'
 import { ALL_GRADES } from '@/lib/curriculum-config'
 import type { OpsiSoal, SoalLatihan, TipeSoal } from './tipe-soal'
 import { TIPE_TANPA_NILAI_OTOMATIS } from './tipe-soal'
-import { nilaiJawaban } from './penilaian'
 
 /**
  * Satu-satunya tempat RPC `practice_*` dipanggil dari repo ini.
@@ -112,12 +111,16 @@ interface BarisKeadaanSesi {
   max_score: number | string | null
 }
 
-interface BarisKunci {
-  type: TipeSoal
-  options: OpsiSoal
-  correct_answer: unknown
-  weight: number | string
-  explanation: string | null
+/**
+ * Kembalian `practice_record_answer()` sesudah migrasi 137. Angkanya datang
+ * sebagai string dari PostgREST (numeric tidak dipetakan ke number JavaScript
+ * yang bisa kehilangan presisi), jadi pemanggilnya yang mengubahnya.
+ */
+interface BarisJawabTercatat {
+  skor: number | string
+  skor_maks: number | string
+  benar: boolean
+  pembahasan: string | null
 }
 
 export interface PemilikSesi {
@@ -505,54 +508,48 @@ export async function keadaanSesi(sesiId: string): Promise<SoalSesi[]> {
 /**
  * Menilai satu jawaban lalu mencatatnya.
  *
- * Kuncinya diambil di sini, di server, dan tidak pernah sampai ke browser
- * sebelum pemakainya menjawab — itulah kenapa penilaian tidak bisa dipindah ke
- * komponen klien betapapun terasa lebih gesit.
+ * Penilaiannya TIDAK lagi terjadi di sini. Sejak migrasi 137,
+ * `practice_record_answer()` membaca kuncinya sendiri dan menghitung sendiri
+ * lewat `nilai_jawaban()` — satu-satunya definisi aturan skoring, dipakai
+ * bersama oleh Tera dan Sora yang tidak berbagi paket npm, hanya database ini.
+ *
+ * Dua akibat yang disengaja. Pertama, kunci jawabannya tidak pernah lagi keluar
+ * dari database untuk keperluan menilai. Kedua, skornya tidak bisa dikarang
+ * pemanggil: sebelumnya fungsi itu menerima angka jadi, dan siapa pun yang
+ * memegang anon key bisa menuliskan nilai sempurna untuk sesinya sendiri tanpa
+ * menjawab apa pun.
+ *
+ * Satu perjalanan, bukan dua: pembahasannya ikut pulang bersama skornya.
  */
 export async function jawabSoal(
-  learnerId: string,
   sesiId: string,
   itemId: string,
   jawaban: unknown
 ): Promise<HasilJawab | null> {
   const supabase = await createClient()
 
-  const { data: kunciRows } = await supabase.rpc('practice_answer_key', {
-    p_access_code: TANPA_KODE,
-    p_item_id: itemId,
-    p_learner_id: learnerId,
-  })
-  const kunci = (kunciRows as BarisKunci[] | null)?.[0]
-  if (!kunci) return null
-
-  const bobot = Number(kunci.weight) || 1
-  const { nilai } = nilaiJawaban(
-    { tipe: kunci.type, opsi: kunci.options, bobot, kunci: kunci.correct_answer },
-    jawaban
-  )
-  // Tipe tanpa nilai otomatis tidak pernah diundi ke sini; kalau toh sampai,
-  // yang benar adalah menolak mencatat, bukan mencatat nol.
-  if (nilai === null) return null
-
-  const { data: tercatat, error } = await supabase.rpc('practice_record_answer', {
+  const { data, error } = await supabase.rpc('practice_record_answer', {
     p_session_id: sesiId,
     p_item_id: itemId,
     p_response: jawaban ?? null,
-    p_is_correct: nilai >= bobot,
-    p_score: nilai,
-    p_max_score: bobot,
     p_access_code: TANPA_KODE,
   })
-  if (error || tercatat === false) {
+  if (error) {
     console.error('[belajar] gagal mencatat jawaban:', error)
     return null
   }
 
+  // Nol baris berarti fungsinya menolak: sesinya bukan milik orang ini, soalnya
+  // tidak diundi untuk sesi ini, atau tipenya tidak bisa dinilai mesin. Ketiganya
+  // sama-sama "tidak tercatat", dan tidak satu pun boleh terbaca sebagai nol.
+  const hasil = (data as BarisJawabTercatat[] | null)?.[0]
+  if (!hasil) return null
+
   return {
-    benar: nilai >= bobot,
-    skor: nilai,
-    skorMaks: bobot,
-    pembahasan: kunci.explanation,
+    benar: hasil.benar,
+    skor: Number(hasil.skor),
+    skorMaks: Number(hasil.skor_maks),
+    pembahasan: hasil.pembahasan,
   }
 }
 

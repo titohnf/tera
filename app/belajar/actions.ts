@@ -113,7 +113,10 @@ export async function periksaJawaban(
   //
   // Tidak ada yang hilang dengan menghapusnya: rute sesi selalu dinamis, jadi
   // muat ulang sungguhan tetap membaca keadaan terbaru dari database.
-  return jawabSoal(pemilik.learnerId, sesiId, itemId, jawaban)
+  // `learnerId` tidak lagi ikut: sejak migrasi 137 database yang menurunkannya
+  // dari sesinya sendiri, sekalian dengan skornya. Meneruskannya dari sini cuma
+  // membuka jalan agar keduanya berbeda.
+  return jawabSoal(sesiId, itemId, jawaban)
 }
 
 export async function selesaikanLatihan(sesiId: string): Promise<void> {
