@@ -113,6 +113,14 @@ as $$
       -- sesudah akan membuat paket berisi sembilan soal tanpa alasan yang bisa
       -- dilihat, dan keanggotaannya bergeser begitu satu soal esai ditambahkan.
       and b.type not in ('essay', 'upload_file')
+      -- Hanya butir `aktif` yang sampai ke murid (PRD Tahap 0 FR1, migrasi
+      -- 141). Disaring SEBELUM dinomori, dengan alasan yang sama persis yang
+      -- sudah ditulis di `practice_paket_items` untuk esai: menyaringnya
+      -- sesudah membuat paket berisi sembilan soal tanpa sebab yang terlihat.
+      -- Akibatnya keanggotaan paket bergeser saat sebuah butir dinaikkan ke
+      -- `aktif` — itu memang harganya, dan lebih murah daripada menyajikan
+      -- butir yang kunci jawabannya belum diverifikasi siapa pun.
+      and b.status_verifikasi = 'aktif'
       and (b.is_public or not practice_only_public(coalesce(p_access_code, ''), p_learner_id))
   )
   select ((rn - 1) / 10 + 1)::integer,
@@ -364,6 +372,14 @@ as $$
     where (select learner from me) is not null
       and (p_subject_id is null or g.subject_id = p_subject_id)
       and b.type not in ('essay', 'upload_file')
+      -- Hanya butir `aktif` yang sampai ke murid (PRD Tahap 0 FR1, migrasi
+      -- 141). Disaring SEBELUM dinomori, dengan alasan yang sama persis yang
+      -- sudah ditulis di `practice_paket_items` untuk esai: menyaringnya
+      -- sesudah membuat paket berisi sembilan soal tanpa sebab yang terlihat.
+      -- Akibatnya keanggotaan paket bergeser saat sebuah butir dinaikkan ke
+      -- `aktif` — itu memang harganya, dan lebih murah daripada menyajikan
+      -- butir yang kunci jawabannya belum diverifikasi siapa pun.
+      and b.status_verifikasi = 'aktif'
       and (b.is_public or not practice_only_public(coalesce(p_access_code, ''), p_learner_id))
   ),
   -- Hanya dari putaran yang selesai, sejalan dengan `practice_paket_state`.
