@@ -24,9 +24,9 @@ import { keluargaContext } from '@/lib/keluarga'
 export default async function BelajarBeranda({
   searchParams,
 }: {
-  searchParams: Promise<{ anak?: string; topik?: string }>
+  searchParams: Promise<{ anak?: string; topik?: string; mapel?: string; lingkup?: string }>
 }) {
-  const { anak, topik } = await searchParams
+  const { anak, topik, mapel: mapelDiminta, lingkup } = await searchParams
   const { learnerId, namaPelajar, avatar, kelas, studentId } = await belajarContext(anak)
   // Pengecualian jenjang per mapel (migrasi 105) TIDAK ikut di sini: ia
   // bergantung pada mapel mana yang dibuka, dan yang sedang disusun justru
@@ -36,14 +36,26 @@ export default async function BelajarBeranda({
   const mapel = await mapelLatihan(learnerId, jenjang)
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
-  // portal keluarga. Yang dibutuhkan layar cuma MAPELNYA — daftar topik dimuat
-  // di browser begitu mapelnya diketahui, dan topiknya dipilih dari situ.
+  // portal keluarga dan tombol "Ulangi Topik Ini" di halaman hasil. Yang
+  // dibutuhkan layar cuma MAPELNYA — daftar topik dimuat di browser begitu
+  // mapelnya diketahui, dan topiknya dipilih dari situ.
+  //
+  // `?mapel=` datang dari tempat lain: langkah-langkah di browser mencatat
+  // dirinya ke alamat (lihat `PemilihLatihan`), jadi alamat yang dibuka ulang
+  // atau dibagikan harus mendarat di langkah yang sama. Tanpa ini, satu kali
+  // muat ulang di daftar topik melempar orang kembali ke daftar mapel.
+  //
+  // `?lingkup=kelas` menandai lewat pintu mana mapelnya dibuka — segmen
+  // "Tersedia di Kelasmu" atau katalog seluruh kelas. Isi layarnya berbeda,
+  // jadi ia ikut disimpan; tanpa itu muat ulang bisa membuka daftar yang lebih
+  // panjang daripada yang tadi ditinggalkan.
   //
   // Ditelusuri di sini, bukan di browser: `curriculum_topic_groups` dibaca
   // lewat client sesi, jadi RLS tetap yang memutuskan (076 untuk keluarga, 126
   // untuk pelanggan). Topik yang tidak berhak dibaca pulang kosong, dan
   // halamannya cuma terbuka seperti biasa — bukan gagal.
-  let awal: { subjectId: string; groupId: string } | null = null
+  let awal: { subjectId: string; groupId?: string; kelas?: boolean } | null = null
+  const lewatKelas = lingkup === 'kelas' ? true : lingkup ? false : undefined
   if (topik) {
     const { data } = await (await createClient())
       .from('curriculum_topic_groups')
@@ -55,8 +67,13 @@ export default async function BelajarBeranda({
     // sebuah tautan lama bisa membuka mapel yang sudah tidak punya apa-apa
     // untuknya, dan layarnya berhenti di daftar topik kosong tanpa penjelasan.
     if (baris && mapel.some(m => m.subject_id === baris.subject_id)) {
-      awal = { subjectId: baris.subject_id, groupId: baris.id }
+      awal = { subjectId: baris.subject_id, groupId: baris.id, kelas: lewatKelas }
     }
+  } else if (mapelDiminta && mapel.some(m => m.subject_id === mapelDiminta)) {
+    // Syaratnya sama dengan jalur `?topik=`: hanya mapel yang memang
+    // ditawarkan ke pelajar ini. Alamat lama yang menunjuk mapel yang sudah
+    // tidak punya apa-apa untuknya cuma terbuka di daftar mapel, bukan gagal.
+    awal = { subjectId: mapelDiminta, kelas: lewatKelas }
   }
 
   // Perabot portal keluarga ikut dirender di layar ini — lihat `BilahKeluarga`.

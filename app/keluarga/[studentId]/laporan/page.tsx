@@ -103,7 +103,7 @@ export default async function LaporanAnak({
       </div>
 
       {!report ? (
-        <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
+        <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">
           Belum ada data untuk bulan ini.
         </p>
       ) : (

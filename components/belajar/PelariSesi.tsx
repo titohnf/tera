@@ -1,23 +1,36 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import type { HasilJawab, SoalSesi } from '@/lib/belajar/sesi'
+import type { SoalSesi } from '@/lib/belajar/sesi'
 import { periksaJawaban, selesaikanLatihan } from '@/app/belajar/actions'
 import InputSoal from './InputSoal'
-import IsiSoal from './IsiSoal'
 
 /**
- * Mengerjakan satu sesi: satu soal sekaligus, umpan balik seketika, lalu lanjut.
+ * Mengerjakan satu sesi: satu soal sekaligus, sampai habis, baru nilainya.
  *
- * Dimulai dari soal PERTAMA YANG BELUM DIJAWAB, bukan dari soal pertama.
- * Itulah gunanya sesi disimpan (migrasi 114): anak yang menutup tab di soal
- * keenam membukanya lagi di soal keenam, bukan mengulang dari awal atau
- * mendapat undian yang sama sekali berbeda.
+ * TIDAK ADA umpan balik per soal, dan itu berubah dengan sengaja. Dulu tiap
+ * jawaban langsung dibalas "Benar"/"Belum tepat" beserta pembahasannya, dan
+ * bentuk itu punya dua akibat yang baru terlihat setelah dipakai: anak
+ * mengerjakan sepuluh soal sambil terus-menerus diberi tahu jawabannya, jadi
+ * tidak pernah ada satu titik pun ia menghadapi sepuluh soal dengan kepalanya
+ * sendiri; dan kesempatan MENGERJAKAN ULANG soal yang salah jadi tidak ada
+ * artinya, karena kuncinya sudah lewat di layar.
+ *
+ * Sekarang sepuluh soal dikerjakan tanpa balasan, nilainya dibuka di akhir, dan
+ * kuncinya baru sesudah anaknya memilih untuk melihatnya. Lihat
+ * `PilihanSesudahSkor`.
+ *
+ * Jawabannya tetap DICATAT satu per satu, tidak ditumpuk sampai akhir: sesi
+ * yang ditinggalkan di tengah harus bisa dilanjutkan dari tempatnya berhenti
+ * (migrasi 114), dan itu cuma mungkin kalau tiap jawaban sudah mendarat di
+ * database. Yang ditahan cuma HASILNYA, di layar.
+ *
+ * Dimulai dari soal PERTAMA YANG BELUM DIJAWAB, bukan dari soal pertama:
+ * anak yang menutup tab di soal keenam membukanya lagi di soal keenam.
  *
  * Penilaian tidak pernah terjadi di sini. `periksaJawaban` mengambil kuncinya
- * di server dan hanya memulangkan hasilnya, jadi kunci jawaban tidak pernah ada
- * di dalam bundel yang dikirim ke browser — termasuk untuk soal yang belum
- * dijawab.
+ * di server, jadi kunci jawaban tidak pernah ada di dalam bundel yang dikirim
+ * ke browser — termasuk untuk soal yang belum dijawab.
  */
 export default function PelariSesi({
   sesiId,
@@ -32,38 +45,33 @@ export default function PelariSesi({
   )
   const [indeks, setIndeks] = useState(mulaiDari)
   const [jawaban, setJawaban] = useState<unknown>(undefined)
-  const [hasil, setHasil] = useState<HasilJawab | null>(null)
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
 
   const sekarang = soal[indeks]
   const terakhir = indeks + 1 >= soal.length
 
-  function periksa() {
+  /**
+   * Mencatat jawaban lalu maju. Hasil penilaiannya dibuang di sini dengan
+   * sengaja — yang dibutuhkan cuma kepastian bahwa jawabannya TERCATAT, dan
+   * null dari server berarti tidak tercatat.
+   */
+  function lanjut() {
     setGalat(null)
     mulai(async () => {
-      const nilai = await periksaJawaban(sesiId, sekarang.id, jawaban ?? null)
-      if (!nilai) {
+      const tercatat = await periksaJawaban(sesiId, sekarang.id, jawaban ?? null)
+      if (!tercatat) {
         setGalat('Jawabanmu belum tersimpan. Coba tekan sekali lagi.')
         return
       }
-      setHasil(nilai)
-    })
-  }
-
-  function lanjut() {
-    if (!terakhir) {
-      setIndeks(indeks + 1)
-      setJawaban(undefined)
-      setHasil(null)
-      return
-    }
-    mulai(async () => {
+      if (!terakhir) {
+        setIndeks(indeks + 1)
+        setJawaban(undefined)
+        return
+      }
       await selesaikanLatihan(sesiId)
     })
   }
-
-  const selesai = indeks + (hasil ? 1 : 0)
 
   return (
     <div className="space-y-4">
@@ -72,23 +80,18 @@ export default function PelariSesi({
           <p className="text-sm font-medium text-gray-700">
             Soal {indeks + 1} dari {soal.length}
           </p>
-          <p className="text-xs text-gray-400">{Math.round((selesai / soal.length) * 100)}%</p>
+          <p className="text-xs text-gray-400">{Math.round((indeks / soal.length) * 100)}%</p>
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-200">
           <div
             className="h-full rounded-full bg-blue-600 transition-all"
-            style={{ width: `${(selesai / soal.length) * 100}%` }}
+            style={{ width: `${(indeks / soal.length) * 100}%` }}
           />
         </div>
       </div>
 
-      <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
-        <InputSoal
-          soal={sekarang}
-          nilai={jawaban}
-          onChange={setJawaban}
-          terkunci={hasil !== null}
-        />
+      <div className="rounded-xl bg-white p-4 shadow-kartu">
+        <InputSoal soal={sekarang} nilai={jawaban} onChange={setJawaban} />
       </div>
 
       {galat && (
@@ -97,56 +100,15 @@ export default function PelariSesi({
         </p>
       )}
 
-      {hasil ? (
-        <>
-          <div
-            className={`rounded-xl p-4 ring-1 ${
-              hasil.benar
-                ? 'bg-emerald-50 text-emerald-900 ring-emerald-100'
-                : hasil.skor > 0
-                  ? 'bg-amber-50 text-amber-900 ring-amber-100'
-                  : 'bg-rose-50 text-rose-900 ring-rose-100'
-            }`}
-          >
-            <p className="text-sm font-semibold">
-              {hasil.benar
-                ? 'Benar'
-                : hasil.skor > 0
-                  ? `Sebagian benar — ${bulat(hasil.skor)} dari ${bulat(hasil.skorMaks)}`
-                  : 'Belum tepat'}
-            </p>
-            {hasil.pembahasan && (
-              // `IsiSoal`, bukan `RumusTeks`: pembahasan disusun dengan editor
-              // blok yang sama dengan pertanyaannya, jadi ia bisa memuat tabel
-              // langkah dan gambar bantu — bukan cuma teks dan rumus.
-              <IsiSoal text={hasil.pembahasan} className="mt-2 text-sm leading-relaxed" />
-            )}
-          </div>
-
-          <button
-            type="button"
-            disabled={sibuk}
-            onClick={lanjut}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            {terakhir ? 'Selesai & Lihat Hasil' : 'Lanjut'}
-          </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          disabled={sibuk || jawaban === undefined}
-          onClick={periksa}
-          className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-300"
-        >
-          {sibuk ? 'Memeriksa…' : 'Periksa Jawaban'}
-        </button>
-      )}
+      <button
+        type="button"
+        disabled={sibuk || jawaban === undefined}
+        onClick={lanjut}
+        className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+      >
+        {sibuk ? 'Menyimpan…' : terakhir ? 'Selesai & Lihat Nilai' : 'Lanjut'}
+      </button>
     </div>
   )
 }
 
-/** Skor parsial bisa pecahan panjang (bobot 3 dibagi 7 pernyataan). Dibulatkan untuk dibaca. */
-function bulat(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1)
-}

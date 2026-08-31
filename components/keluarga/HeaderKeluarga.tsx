@@ -68,11 +68,43 @@ const LAYAR: Record<string, Layar> = {
   penguasaan: { judul: 'Penguasaan', kembali: '' },
 }
 
+/**
+ * Layar yang berada SATU tingkat di dalam salah satu layar di atas — rincian
+ * satu topik, misalnya. Panah kembalinya menuju daftarnya, bukan beranda:
+ * mundur dari sebuah rincian ke daftar tempat ia diketuk adalah satu-satunya
+ * arah yang tidak menuntut pembacanya mencari lagi dari awal.
+ */
+const LAYAR_RINCI: Record<string, Layar> = {
+  penguasaan: { judul: 'Rincian Topik', kembali: '/penguasaan' },
+}
+
+/**
+ * Layar DUA tingkat di dalam: satu soal, di dalam rincian sebuah topik. Panah
+ * kembalinya menuju TOPIKNYA, bukan daftar topik — mundur dari sebuah soal
+ * langsung ke daftar seluruh topik melewatkan justru layar yang baru saja
+ * ditinggalkan, dan orang tua yang sedang memeriksa soal kedua dari empat harus
+ * menelusuri lagi dari awal untuk tiap soal berikutnya.
+ *
+ * Tujuannya bergantung pada topik yang sedang dibuka, jadi ia fungsi — tidak
+ * seperti dua peta di atas yang tujuannya tetap.
+ */
+const LAYAR_DALAM: Record<string, { judul: string; kembali: (topik: string) => string }> = {
+  penguasaan: { judul: 'Soal', kembali: topik => `/penguasaan/${topik}` },
+}
+
 export default function HeaderKeluarga({ anak }: { anak: Anak[] }) {
   const pathname = usePathname()
-  const cocok = pathname.match(/^\/keluarga\/([^/]+)\/([^/]+)/)
+  const cocok = pathname.match(/^\/keluarga\/([^/]+)\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?/)
   const studentId = cocok?.[1]
-  const layar = cocok ? LAYAR[cocok[2]] : undefined
+  const bagian = cocok?.[2]
+  const dalam = bagian && cocok?.[4] ? LAYAR_DALAM[bagian] : undefined
+  const layar: Layar | undefined = !bagian
+    ? undefined
+    : dalam
+      ? { judul: dalam.judul, kembali: dalam.kembali(cocok![3]!) }
+      : cocok![3]
+        ? (LAYAR_RINCI[bagian] ?? LAYAR[bagian])
+        : LAYAR[bagian]
   /* Beranda anak (`/keluarga/<id>`) tidak punya sub-path, jadi `cocok` di atas
      tidak menangkapnya — sementara pemilih anak justru paling sering dipakai
      dari sana. Id-nya ditelusuri sendiri. */

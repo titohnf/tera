@@ -43,7 +43,7 @@ export default function Materi({ materi }: { materi: MateriTopik[] }) {
   if (materi.length === 0) return null
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
+    <div className="rounded-xl bg-white p-4 shadow-kartu">
       <p className="font-semibold tracking-tight text-gray-900">
         Materi{materi.length > 1 ? ` (${materi.length})` : ''}
       </p>

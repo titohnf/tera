@@ -8,11 +8,13 @@ import type { Anak } from '@/lib/keluarga'
 /**
  * Kepala permukaan belajar, beserta tombol kembalinya.
  *
- * Tombol kembali tinggal di header, bukan di badan halaman: langkah-langkah
- * memilih latihan seluruhnya hidup di browser (`PemilihLatihan`), jadi tidak
- * ada URL yang bisa ditautkan — dan "← Ganti mapel" yang menumpang di atas
- * daftar adalah kendali navigasi yang berpura-pura jadi isi. Di header ia
- * berada di tempat yang sama untuk setiap langkah.
+ * Tombol kembali tinggal di header, bukan di badan halaman: "← Ganti mapel"
+ * yang menumpang di atas daftar adalah kendali navigasi yang berpura-pura jadi
+ * isi. Di header ia berada di tempat yang sama untuk setiap langkah.
+ *
+ * Yang dipanggilnya `history.back()` — langkah-langkah `PemilihLatihan` punya
+ * alamat sendiri (`?mapel=`, `?topik=`) meski tidak berpindah halaman. Tombol
+ * ini dan tombol kembali perangkat karena itu menempuh jalan yang sama.
  *
  * Header dirender oleh layout, sedangkan yang tahu ada tidaknya langkah untuk
  * dimundurkan adalah komponen jauh di bawahnya. Konteks ini jembatannya: yang
@@ -36,8 +38,8 @@ import type { Anak } from '@/lib/keluarga'
  * ke sini (`BilahKeluarga`) — di layar itu tautan keluar di header adalah
  * kendali kedua menuju tempat yang sama, di pojok yang justru dipakai untuk
  * mundur selangkah. `useTanpaPulang()` melepasnya; tombol MUNDUR tidak pernah
- * ikut dilepas, karena langkah-langkah `PemilihLatihan` tidak punya alamat
- * sendiri dan bilah bawah tidak bisa memundurkannya.
+ * ikut dilepas, karena bilah bawah menuju halaman lain — ia tidak bisa
+ * memundurkan langkah di dalam permukaan ini.
  */
 type Kembali = (() => void) | null
 
@@ -129,8 +131,31 @@ export function usePemilihKepala(anak: Anak[], aktif: string) {
   }, [pasangPemilih, anak, aktif])
 }
 
+// 44px: ukuran sasaran sentuh terkecil yang masih nyaman di ponsel, dan ini
+// satu-satunya jalan mundur di seluruh permukaan. Sebelumnya 36px — cukup
+// besar untuk kursor, tidak untuk ibu jari anak yang sedang memegang HP-nya
+// dengan satu tangan.
 const GAYA_KEMBALI =
-  '-ml-2 flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-slate-100 hover:text-gray-900'
+  '-ml-2.5 flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition hover:bg-slate-100 hover:text-gray-900'
+
+/** Panah kiri. SVG, bukan '‹': glyph kurung tunggal tebalnya ikut fon
+    perangkat, dan di sebagian ponsel Android ia tampil setipis garis rambut. */
+function PanahKiri() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+      aria-hidden
+    >
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  )
+}
 
 /**
  * Mengganti judul header selama komponen terpasang.
@@ -151,18 +176,14 @@ export function useJudulKepala(judul: string | null) {
 export function KepalaBelajar() {
   const { kembali, judul, pulang, pemilih } = useContext(KonteksKepala)
   return (
-    <header className="flex h-14 items-center gap-1 border-b border-gray-100 bg-white px-4 shadow-sm sm:px-6">
+    <header className="flex h-14 items-center gap-1 border-b border-gray-200 bg-white px-4 sm:px-6">
       {kembali ? (
         <button type="button" onClick={kembali} aria-label="Kembali" className={GAYA_KEMBALI}>
-          <span className="text-xl leading-none" aria-hidden>
-            ‹
-          </span>
+          <PanahKiri />
         </button>
       ) : pulang ? (
         <Link href="/" aria-label="Keluar dari latihan" className={GAYA_KEMBALI}>
-          <span className="text-xl leading-none" aria-hidden>
-            ‹
-          </span>
+          <PanahKiri />
         </Link>
       ) : null}
       <h1 className="truncate text-base font-semibold text-gray-900">

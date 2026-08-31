@@ -30,7 +30,7 @@ export default async function KeluargaHome() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-      <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
+      <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">
         Belum ada anak yang tertaut ke akun ini. Hubungi admin Tera.
       </p>
 
