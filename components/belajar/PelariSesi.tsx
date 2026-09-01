@@ -48,9 +48,12 @@ import InputSoal from './InputSoal'
 export default function PelariSesi({
   sesiId,
   soal,
+  batasWaktu,
 }: {
   sesiId: string
   soal: SoalSesi[]
+  /** ISO, hanya untuk paket ujian. Null berarti sesi ini tidak berbatas waktu. */
+  batasWaktu?: string | null
 }) {
   const mulaiDari = Math.max(
     soal.findIndex(s => !s.sudahDijawab),
@@ -141,6 +144,8 @@ export default function PelariSesi({
         </div>
       </div>
 
+      {batasWaktu && <HitungMundur batas={batasWaktu} />}
+
       <div className="rounded-xl bg-white p-4 shadow-kartu">
         <InputSoal soal={tampil} nilai={jawaban} onChange={setJawaban} />
       </div>
@@ -163,3 +168,56 @@ export default function PelariSesi({
   )
 }
 
+/**
+ * Sisa waktu paket ujian (FR4).
+ *
+ * MEMBERI TAHU, TIDAK MEMAKSA. Waktu habis tidak mengirim jawaban, tidak
+ * mengunci tombol, dan tidak memindahkan halaman — PRD FR4 menetapkan itu untuk
+ * Tahap 0 dengan alasan yang eksplisit, dan ada alasan kedua yang lebih
+ * mendesak: pilot ini sedang mengumpulkan berapa lama sebuah soal dikerjakan
+ * (FR6), dan submit paksa di tengah kalimat merusak angka yang justru sedang
+ * diukur.
+ *
+ * Dihitung ulang dari `batas` tiap detik, bukan dengan mengurangi satu dari
+ * angka sebelumnya. Penghitung yang mengurangi dirinya sendiri akan melenceng
+ * setiap kali tab-nya tidak aktif — dan tab yang tidak aktif justru hal yang
+ * paling sering terjadi pada layar yang dibuka anak.
+ */
+function HitungMundur({ batas }: { batas: string }) {
+  const akhir = new Date(batas).getTime()
+  const [sisa, setSisa] = useState(() => akhir - Date.now())
+
+  useEffect(() => {
+    const jam = setInterval(() => setSisa(akhir - Date.now()), 1000)
+    return () => clearInterval(jam)
+  }, [akhir])
+
+  const habis = sisa <= 0
+  const detik = Math.max(0, Math.floor(sisa / 1000))
+  const menit = Math.floor(detik / 60)
+  const mendesak = !habis && sisa < 5 * 60 * 1000
+
+  return (
+    <p
+      aria-live="off"
+      className={`rounded-xl px-3 py-2 text-sm ring-1 ${
+        habis
+          ? 'bg-amber-50 text-amber-800 ring-amber-100'
+          : mendesak
+            ? 'bg-amber-50 text-amber-700 ring-amber-100'
+            : 'bg-white text-gray-600 shadow-kartu ring-transparent'
+      }`}
+    >
+      {habis ? (
+        <>Waktu ujiannya sudah habis. Jawabanmu tetap tersimpan — selesaikan saja.</>
+      ) : (
+        <>
+          Sisa waktu{' '}
+          <span className="font-semibold tabular-nums">
+            {String(menit).padStart(2, '0')}:{String(detik % 60).padStart(2, '0')}
+          </span>
+        </>
+      )}
+    </p>
+  )
+}

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
+import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import PelariSesi from '@/components/belajar/PelariSesi'
 
 /**
@@ -35,7 +35,11 @@ export default async function SesiLatihan({
   // cukup untuk keduanya.
   const kembali = pemilik.profileId ? `/belajar?anak=${pemilik.profileId}` : '/belajar'
 
-  const [soal, paket] = await Promise.all([keadaanSesi(sesiId), paketSesi(sesiId)])
+  const [soal, paket, batasWaktu] = await Promise.all([
+    keadaanSesi(sesiId),
+    paketSesi(sesiId),
+    batasWaktuSesi(sesiId),
+  ])
   if (soal.length === 0) redirect('/belajar')
 
   // Semua soal sudah terjawab — yang tersisa memang halaman hasilnya. Ini jalur
@@ -63,7 +67,7 @@ export default async function SesiLatihan({
         </Link>
       </div>
 
-      <PelariSesi sesiId={sesiId} soal={soal} />
+      <PelariSesi sesiId={sesiId} soal={soal} batasWaktu={batasWaktu} />
     </div>
   )
 }

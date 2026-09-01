@@ -1071,6 +1071,26 @@ export async function jawabSoal(
   }
 }
 
+/**
+ * Batas waktu sebuah sesi, atau null kalau ia tidak berbatas (FR4).
+ *
+ * Hanya paket ujian yang punya batas. Angkanya dari `pengaturan`, dan
+ * penghitungannya dari `started_at` sesi — bukan dari kapan halaman dibuka,
+ * supaya menutup tab tidak jadi cara memulai ulang jamnya.
+ */
+export async function batasWaktuSesi(sesiId: string): Promise<string | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('sesi_batas_waktu', {
+    p_session_id: sesiId,
+    p_access_code: TANPA_KODE,
+  })
+  if (error) {
+    console.error('[belajar] gagal membaca batas waktu:', error)
+    return null
+  }
+  return (data as string | null) ?? null
+}
+
 export async function tutupSesi(sesiId: string): Promise<void> {
   const supabase = await createClient()
   const { error } = await supabase.rpc('practice_finish_session', {
