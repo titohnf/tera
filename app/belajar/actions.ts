@@ -24,9 +24,8 @@ import {
   bukaPaketTopik,
   keadaanPaketTopik,
   kunciPaketTopik,
-  petaTopik,
+  paketTopikSesi,
   type PaketPeta,
-  type TopikPeta,
 } from '@/lib/belajar/topik-peta'
 
 /**
@@ -201,8 +200,15 @@ export async function bukaKunciJawaban(sesiId: string): Promise<never> {
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) redirect('/belajar')
 
+  // Kedua jalur dikunci dari SATU tempat. Halaman hasil memanggil aksi ini apa
+  // pun asal sesinya, dan cabang yang hanya mengurus jalur grup berarti anak
+  // jalur peta mendapat kunci jawaban tanpa membayar apa pun — taruhannya
+  // hilang diam-diam, justru pada jalur yang seluruh gunanya mengukur.
   const paket = await paketSesi(sesiId)
   if (paket) await kunciPaket(pemilik.learnerId, paket.groupId, paket.nomor)
+
+  const petaPaket = await paketTopikSesi(sesiId)
+  if (petaPaket) await kunciPaketTopik(pemilik.learnerId, petaPaket.paketId)
 
   redirect(`/belajar/${sesiId}/hasil?kunci=1`)
 }
@@ -214,11 +220,6 @@ export async function bukaKunciJawaban(sesiId: string): Promise<never> {
  * `belajarContext()` yang memutuskan atas nama siapa, dan learner id tidak
  * pernah datang dari browser.
  * ------------------------------------------------------------------------- */
-
-export async function muatPeta(anak: string | undefined): Promise<TopikPeta[]> {
-  const { learnerId } = await belajarContext(anak)
-  return petaTopik(learnerId)
-}
 
 export async function muatPaketPeta(
   anak: string | undefined,

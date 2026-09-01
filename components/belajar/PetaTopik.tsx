@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import type { TopikPeta } from '@/lib/belajar/topik-peta'
-import { muatPeta } from '@/app/belajar/actions'
+import { useState } from 'react'
+import type { PaketPeta, TopikPeta } from '@/lib/belajar/topik-peta'
 import DaftarPaket from './DaftarPaket'
 
 /**
@@ -14,6 +13,18 @@ import DaftarPaket from './DaftarPaket'
  * bertanya "mau latihan bab yang mana", peta ini bertanya "kamu siap belajar
  * apa". Bab menyusul jadwal les dan berbeda antar program; kesiapan tidak.
  *
+ * DAFTARNYA DATANG DARI SERVER, bukan dijemput sendiri sesudah komponennya
+ * hidup. Versi pertama memanggil `muatPeta()` di dalam `useEffect`, dan itu
+ * punya dua akibat yang cuma kelihatan setelah dipakai: petanya baru muncul
+ * satu perjalanan jaringan sesudah sisa halaman — sering terbaca sebagai "harus
+ * dimuat ulang dulu baru muncul" — dan setiap kegagalan panggilan berakhir
+ * sebagai layar yang diam, karena tidak adanya topik dan gagalnya pertanyaan
+ * menghasilkan tampilan yang sama persis: tidak ada apa-apa.
+ *
+ * Halaman `/belajar` sudah tahu atas nama siapa ia dibuka, jadi ia pula yang
+ * bertanya. Yang tersisa di browser cuma yang memang milik browser: topik mana
+ * yang sedang dibentangkan.
+ *
  * PRASYARAT MEMBERI TAHU, BUKAN MEMBLOKIR. Topik yang prasyaratnya belum
  * tuntas tetap bisa diketuk, cuma disertai keterangan. Tanpa placement test,
  * satu-satunya yang sistem tahu adalah apa yang sudah pernah ia ukur sendiri —
@@ -21,37 +32,21 @@ import DaftarPaket from './DaftarPaket'
  * karena kita belum sempat mengukurnya, adalah menghukum orang atas kekurangan
  * kita sendiri.
  */
-export default function PetaTopik({ anak }: { anak: string | undefined }) {
-  const [topik, setTopik] = useState<TopikPeta[] | null>(null)
-  const [terbuka, setTerbuka] = useState<string | null>(null)
-
-  useEffect(() => {
-    let hidup = true
-    muatPeta(anak)
-      .then(d => {
-        if (!hidup) return
-        setTopik(d)
-        // Satu topik saja: tidak ada yang perlu dipilih, jadi jangan menyuruh
-        // orang mengetuk untuk membuka satu-satunya pintu yang ada.
-        if (d.length === 1) setTerbuka(d[0].id)
-      })
-      .catch(() => {
-        if (hidup) setTopik([])
-      })
-    return () => {
-      hidup = false
-    }
-  }, [anak])
-
-  if (topik === null) {
-    return (
-      <div className="space-y-2">
-        {[0, 1].map(i => (
-          <div key={i} className="h-[76px] animate-pulse rounded-xl bg-white shadow-kartu" />
-        ))}
-      </div>
-    )
-  }
+export default function PetaTopik({
+  anak,
+  topik,
+  paketAwal,
+}: {
+  anak: string | undefined
+  topik: TopikPeta[]
+  /** Paket topik yang terbentang sejak awal, dibawa server bersama halamannya. */
+  paketAwal?: PaketPeta[]
+}) {
+  // Satu topik saja: tidak ada yang perlu dipilih, jadi jangan menyuruh orang
+  // mengetuk untuk membuka satu-satunya pintu yang ada.
+  const [terbuka, setTerbuka] = useState<string | null>(
+    topik.length === 1 ? topik[0].id : null
+  )
 
   // Tidak ada topik berisi: layar ini tidak punya apa pun untuk ditawarkan, dan
   // yang benar adalah tidak muncul sama sekali — bukan menampilkan kerangka
@@ -101,6 +96,7 @@ export default function PetaTopik({ anak }: { anak: string | undefined }) {
                     anak={anak}
                     sumber={{ jenis: 'peta', topikId: t.id }}
                     jumlahSoal={t.jumlahPaket * 8}
+                    awal={topik.length === 1 ? paketAwal : undefined}
                   />
                 </div>
               )}

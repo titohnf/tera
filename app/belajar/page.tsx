@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { mapelLatihan } from '@/lib/belajar/sesi'
+import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
 import PetaTopik from '@/components/belajar/PetaTopik'
 import BilahKeluarga from '@/components/belajar/BilahKeluarga'
@@ -34,7 +35,19 @@ export default async function BelajarBeranda({
   // daftar mapelnya. Yang dipakai kelas aslinya saja; pengecualiannya
   // menyusul di layar topik, tempat mapelnya sudah diketahui.
   const jenjang = kelas ? [`Kelas ${kelas}`] : []
-  const mapel = await mapelLatihan(learnerId, jenjang)
+  // Peta dan daftar mapel ditanyakan bersamaan: keduanya untuk layar yang sama,
+  // dan menanyakannya berurutan berarti yang kedua menunggu yang pertama tanpa
+  // alasan.
+  const [mapel, peta] = await Promise.all([
+    mapelLatihan(learnerId, jenjang),
+    petaTopik(learnerId),
+  ])
+
+  // Satu topik saja berarti ia terbentang sejak halaman dibuka, jadi isinya
+  // ikut dibawa sekarang. Kalau topiknya lebih dari satu, tidak ada yang
+  // terbentang, dan menjemput isi ketiganya di muka berarti membayar untuk dua
+  // yang tidak dilihat siapa pun.
+  const paketAwal = peta.length === 1 ? await keadaanPaketTopik(learnerId, peta[0].id) : undefined
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
   // portal keluarga dan tombol "Ulangi Topik Ini" di halaman hasil. Yang
@@ -103,7 +116,7 @@ export default async function BelajarBeranda({
 
           Komponennya sendiri tidak menampilkan apa pun kalau petanya belum
           punya topik berisi. */}
-      <PetaTopik anak={anak} />
+      <PetaTopik anak={anak} topik={peta} paketAwal={paketAwal} />
 
       <PemilihLatihan
         mapel={mapel}

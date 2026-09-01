@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
+import type { PaketPeta } from '@/lib/belajar/topik-peta'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import { mulaiPaket, mulaiPaketPeta, muatPaket, muatPaketPeta } from '@/app/belajar/actions'
 import { persenDari } from '@/lib/belajar/penilaian'
@@ -43,45 +44,62 @@ interface Baris extends PaketTopik {
   judul: string
 }
 
+/** Satu paket peta jadi baris layar. Dipakai dua kali: dari server, dan dari browser. */
+function dariPeta(p: PaketPeta): Baris {
+  return {
+    nomor: p.nomor,
+    total: p.total,
+    benar: p.benar,
+    sebagian: p.sebagian,
+    salah: p.salah,
+    belum: p.belum,
+    skor: p.skor,
+    maks: p.maks,
+    putaran: p.putaran,
+    terkunci: p.terkunci,
+    kunci: p.paketId,
+    judul: namaPaket(p),
+  }
+}
+
 export default function DaftarPaket({
   anak,
   sumber,
   jumlahSoal,
+  awal,
 }: {
   anak: string | undefined
   sumber: Sumber
   /** Soal di topik ini — dipakai menggambar kerangka sebelum datanya datang. */
   jumlahSoal: number
+  /**
+   * Daftar paket yang sudah dibawa server, kalau ada.
+   *
+   * Topik yang terbentang sejak halaman dibuka tidak perlu menjemput isinya
+   * sendiri: menjemput berarti kerangka abu-abu dulu, lalu satu perjalanan
+   * jaringan, lalu isinya — dan setiap kegagalan perjalanan itu berakhir
+   * sebagai kartu kosong yang tidak bisa dibedakan dari topik yang memang belum
+   * punya soal. Topik yang dibuka dengan ketukan tetap menjemput sendiri, dan
+   * di situ jeda memang wajar: orangnya baru saja meminta.
+   */
+  awal?: PaketPeta[]
 }) {
-  const [paket, setPaket] = useState<Baris[] | null>(null)
+  const [paket, setPaket] = useState<Baris[] | null>(awal ? awal.map(dariPeta) : null)
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
 
   const kunciSumber = sumber.jenis === 'grup' ? sumber.groupId : sumber.topikId
 
   useEffect(() => {
+    // Sudah dibawa server; tidak ada yang perlu dijemput.
+    if (awal) return
     let hidup = true
     const muat: Promise<Baris[]> =
       sumber.jenis === 'grup'
         ? muatPaket(anak, sumber.groupId).then(d =>
             d.map(p => ({ ...p, kunci: String(p.nomor), judul: `Paket ${p.nomor}` }))
           )
-        : muatPaketPeta(anak, sumber.topikId).then(d =>
-            d.map(p => ({
-              nomor: p.nomor,
-              total: p.total,
-              benar: p.benar,
-              sebagian: p.sebagian,
-              salah: p.salah,
-              belum: p.belum,
-              skor: p.skor,
-              maks: p.maks,
-              putaran: p.putaran,
-              terkunci: p.terkunci,
-              kunci: p.paketId,
-              judul: namaPaket(p),
-            }))
-          )
+        : muatPaketPeta(anak, sumber.topikId).then(d => d.map(dariPeta))
 
     muat
       .then(d => {

@@ -12,6 +12,12 @@ import {
   tutupSesi,
   type PitaPenguasaan,
 } from '@/lib/belajar/sesi'
+import {
+  isiPaketTopik,
+  keadaanPaketTopik,
+  paketTopikSesi,
+} from '@/lib/belajar/topik-peta'
+import { namaPaket } from '@/lib/belajar/nama-paket'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
@@ -54,10 +60,11 @@ export default async function HasilSesi({
   // Sesudah `tutupSesi`, tidak sebelumnya: `practice_session_review` cuma
   // membuka sesi yang `finished_at`-nya terisi, dan syarat itulah yang menjaga
   // kunci jawaban di dalamnya (migrasi 131).
-  const [rincian, tinjauan, paket] = await Promise.all([
+  const [rincian, tinjauan, paket, petaPaket] = await Promise.all([
     ringkasanSesi(pemilik.learnerId, sesiId),
     tinjauanSesi(sesiId),
     paketSesi(sesiId),
+    paketTopikSesi(sesiId),
   ])
 
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
@@ -65,13 +72,32 @@ export default async function HasilSesi({
   // Ini yang dinilai, bukan putaran yang barusan: putaran kedua yang berisi
   // empat soal dan benar semua bukan "100%", melainkan paket yang naik dari
   // 6/10 jadi 10/10.
+  //
+  // DUA JALUR, SATU BENTUK. Paket grup dan paket peta menjawab pertanyaan yang
+  // sama untuk halaman ini — berapa nilai paketnya sekarang, berapa soal yang
+  // masih salah, kuncinya sudah dibuka atau belum — jadi keduanya diperas jadi
+  // satu bentuk di sini, dan sisa halaman tidak perlu tahu sesi ini datang dari
+  // mana. Cabang yang menyebar ke seluruh berkas adalah cabang yang suatu hari
+  // lupa dipasang di satu tempat.
   const [semuaPaket, isi] = paket
     ? await Promise.all([
         keadaanPaket(pemilik.learnerId, paket.groupId),
         isiPaket(pemilik.learnerId, paket.groupId),
       ])
-    : [[], []]
-  const paketIni = paket ? (semuaPaket.find(p => p.nomor === paket.nomor) ?? null) : null
+    : petaPaket
+      ? await Promise.all([
+          keadaanPaketTopik(pemilik.learnerId, petaPaket.topikId),
+          isiPaketTopik(pemilik.learnerId, petaPaket.paketId),
+        ])
+      : [[], []]
+
+  const paketIni = paket
+    ? (semuaPaket.find(p => p.nomor === paket.nomor) ?? null)
+    : petaPaket
+      ? ((semuaPaket as { paketId?: string }[]).find(
+          p => p.paketId === petaPaket.paketId,
+        ) as (typeof semuaPaket)[number] | undefined) ?? null
+      : null
 
   // Nomor soal DI DALAM PAKETNYA, bukan di dalam putaran ini.
   //
@@ -172,7 +198,7 @@ export default async function HasilSesi({
   //
   // Sesi tanpa paket (lahir sebelum migrasi 134) dibiarkan terbuka: tidak ada
   // paket yang bisa dikunci, jadi tidak ada yang bisa dipertaruhkan.
-  const kunciBoleh = !paket || (paketIni?.terkunci ?? false)
+  const kunciBoleh = (!paket && !petaPaket) || (paketIni?.terkunci ?? false)
   const kunciTerbuka = kunciBoleh && (kunciDiminta === '1' || terpilih !== null)
 
   // Alamatnya ikut diluruskan, bukan cuma isinya: `?kunci=1` yang menampilkan
@@ -184,12 +210,19 @@ export default async function HasilSesi({
   // yang berisi empat soal dan benar semua tidak berarti paketnya selesai —
   // yang menentukan tinggal berapa dari kesepuluh soal itu yang masih salah.
   const sisa = paketIni ? paketIni.total - paketIni.benar : jumlahSalah
+  // Jalur peta tidak punya `?topik=`: petanya berdiri di halaman `/belajar` itu
+  // sendiri, dan komponennya membuka satu-satunya topik berisi dengan
+  // sendirinya. Jadi tautannya cukup `kembali` — bukan null, yang akan
+  // menghilangkan tombol "pilih paket lain" dari layar anak yang baru saja
+  // selesai satu paket.
   const daftarPaket =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
-        : null
+        : petaPaket
+          ? kembali
+          : null
 
   const pilihan = (
     <PilihanSesudahSkor
@@ -273,7 +306,7 @@ export default async function HasilSesi({
               harus angka yang sama dengan yang dibawa pulang ke daftar paket. */}
           <p className="text-sm text-gray-500">
             <span className="font-medium text-gray-700">
-              {paket ? `Paket ${paket.nomor}` : 'Latihan'}
+              {paket ? `Paket ${paket.nomor}` : petaPaket ? namaPaket(petaPaket) : 'Latihan'}
             </span>{' '}
             · {pemilik.nama}
           </p>
@@ -307,7 +340,28 @@ export default async function HasilSesi({
         )}
       </div>
 
-      {rincian.length === 0 ? (
+      {/* Rincian per topik KURIKULUM — sesi jalur peta tidak punya satu pun,
+          karena butirnya sengaja tidak bertag bab sejak migrasi 148. Untuk sesi
+          itu yang ditampilkan topik petanya, satu baris, dengan angka yang sama
+          dengan nilai di atas: bukan pengulangan tanpa guna, melainkan satu-
+          satunya tempat nama topiknya muncul di layar hasil. */}
+      {petaPaket && paketIni ? (
+        <div className="overflow-hidden rounded-xl bg-white shadow-kartu">
+          <div className="flex items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900">{petaPaket.topikNama}</p>
+              <p className="text-xs text-gray-400">
+                {petaPaket.topikId} · {namaPaket(petaPaket)}
+              </p>
+              <p className="text-xs text-gray-400">{paketIni.total} soal</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-sm font-semibold text-gray-900">{persen}%</p>
+              {label && <p className="text-xs text-gray-500">{label}</p>}
+            </div>
+          </div>
+        </div>
+      ) : rincian.length === 0 ? (
         <div className="rounded-xl bg-white p-4 shadow-kartu">
           <p className="text-sm leading-relaxed text-gray-500">
             Tidak ada rincian topik untuk sesi ini.

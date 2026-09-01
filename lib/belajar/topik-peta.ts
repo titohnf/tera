@@ -203,6 +203,77 @@ export async function bukaPaketTopik(
   return { sesiId: (data as string | null) ?? null, galat: null }
 }
 
+/** Paket peta sebuah sesi, atau null kalau sesi itu jalur grup. */
+export interface PaketSesiPeta {
+  paketId: string
+  topikId: string
+  topikNama: string
+  jenis: 'latihan' | 'ujian'
+  levelBloom: number | null
+  nomor: number
+}
+
+/**
+ * Sesi ini paket peta yang mana.
+ *
+ * Dipakai halaman hasil untuk memilih jalur: `paketSesi()` di `sesi.ts`
+ * menjawab pertanyaan yang sama untuk jalur grup, dan keduanya tidak pernah
+ * terisi bersamaan.
+ */
+export async function paketTopikSesi(sesiId: string): Promise<PaketSesiPeta | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('sesi_paket_topik', {
+    p_session_id: sesiId,
+    p_access_code: TANPA_KODE,
+  })
+  if (error) {
+    console.error('[peta] gagal membaca paket sesi:', error)
+    return null
+  }
+
+  const b = (data as
+    | {
+        paket_id: string
+        topik_id: string
+        topik_nama: string
+        jenis: 'latihan' | 'ujian'
+        level_bloom: number | null
+        nomor: number | string
+      }[]
+    | null)?.[0]
+  if (!b) return null
+
+  return {
+    paketId: b.paket_id,
+    topikId: b.topik_id,
+    topikNama: b.topik_nama,
+    jenis: b.jenis,
+    levelBloom: b.level_bloom,
+    nomor: angka(b.nomor),
+  }
+}
+
+/** Isi sebuah paket peta beserta urutannya — untuk menomori soal di layar hasil. */
+export async function isiPaketTopik(
+  learnerId: string,
+  paketId: string
+): Promise<{ itemId: string; ord: number }[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('topik_paket_items', {
+    p_paket_id: paketId,
+    p_access_code: TANPA_KODE,
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    console.error('[peta] gagal membaca isi paket:', error)
+    return []
+  }
+  return ((data as { item_id: string; ord: number | string }[] | null) ?? []).map(b => ({
+    itemId: b.item_id,
+    ord: angka(b.ord),
+  }))
+}
+
 /** Membuka kunci jawaban sebuah paket — sesudah ini nilainya berhenti di situ. */
 export async function kunciPaketTopik(learnerId: string, paketId: string): Promise<boolean> {
   const supabase = await createClient()

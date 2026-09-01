@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
+import { paketTopikSesi } from '@/lib/belajar/topik-peta'
+import { namaPaket } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
 
 /**
@@ -35,9 +37,10 @@ export default async function SesiLatihan({
   // cukup untuk keduanya.
   const kembali = pemilik.profileId ? `/belajar?anak=${pemilik.profileId}` : '/belajar'
 
-  const [soal, paket, batasWaktu] = await Promise.all([
+  const [soal, paket, petaPaket, batasWaktu] = await Promise.all([
     keadaanSesi(sesiId),
     paketSesi(sesiId),
+    paketTopikSesi(sesiId),
     batasWaktuSesi(sesiId),
   ])
   if (soal.length === 0) redirect('/belajar')
@@ -55,7 +58,7 @@ export default async function SesiLatihan({
             nilainya masing-masing yang tidak akan terhapus. */}
         <p className="text-sm text-gray-500">
           <span className="font-medium text-gray-700">
-            {paket ? `Paket ${paket.nomor}` : 'Latihan'}
+            {paket ? `Paket ${paket.nomor}` : petaPaket ? namaPaket(petaPaket) : 'Latihan'}
           </span>{' '}
           · {pemilik.nama}
         </p>
