@@ -240,7 +240,13 @@ export async function mulaiPaketPeta(
   paketId: string
 ): Promise<{ error: string } | never> {
   const { learnerId } = await belajarContext(anak)
-  const sesiId = await bukaPaketTopik(learnerId, paketId)
+  const { sesiId, galat } = await bukaPaketTopik(learnerId, paketId)
+
+  // Alasan dari database didahulukan. Kalimat umum di bawahnya cuma benar untuk
+  // paket yang memang sudah tuntas — dipakai untuk penolakan lain, ia berbohong
+  // dengan meyakinkan.
+  if (galat) return { error: galat }
+
   if (!sesiId) {
     return {
       error:

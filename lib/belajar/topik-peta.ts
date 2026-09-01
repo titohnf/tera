@@ -157,21 +157,50 @@ export async function keadaanPaketTopik(
  * sudah benar semua, paket ujian yang sudah pernah dikerjakan, atau bukan
  * miliknya.
  */
+/**
+ * Hasil membuka paket: id sesinya, atau alasan yang bisa dibaca orang.
+ *
+ * Keduanya bisa kosong sekaligus — itu keadaan "tidak bisa dibuka" yang biasa
+ * (sudah benar semua, kuncinya sudah dibuka, ujiannya sudah dikerjakan), dan
+ * pemanggilnya yang tahu kalimat apa yang pantas untuk itu.
+ */
+export interface HasilBukaPaket {
+  sesiId: string | null
+  galat: string | null
+}
+
 export async function bukaPaketTopik(
   learnerId: string,
   paketId: string
-): Promise<string | null> {
+): Promise<HasilBukaPaket> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('topik_open_paket_session', {
     p_paket_id: paketId,
     p_access_code: TANPA_KODE,
     p_learner_id: learnerId,
   })
+
   if (error) {
     console.error('[peta] gagal membuka paket:', error)
-    return null
+    // 23514 = check_violation, kode yang dipakai gerbang-gerbang kita sendiri
+    // (penanggung jawab pengukuran di migrasi 149, peruntukan butir di 145).
+    // Pesannya memang ditulis untuk dibaca manusia, dan MENYEMBUNYIKANNYA di
+    // balik kalimat umum adalah cara paling mahal menghabiskan waktu orang:
+    // layar berkata "paket ini sudah selesai" untuk paket yang belum pernah
+    // disentuh, dan tidak ada satu pun petunjuk menuju sebabnya yang sebenarnya.
+    //
+    // Galat lain tidak diteruskan apa adanya — isinya nama kolom dan potongan
+    // SQL, yang bukan kalimat untuk anak.
+    return {
+      sesiId: null,
+      galat:
+        error.code === '23514'
+          ? error.message
+          : 'Paketnya gagal dibuka karena gangguan sistem. Coba lagi sebentar.',
+    }
   }
-  return (data as string | null) ?? null
+
+  return { sesiId: (data as string | null) ?? null, galat: null }
 }
 
 /** Membuka kunci jawaban sebuah paket — sesudah ini nilainya berhenti di situ. */
