@@ -50,6 +50,22 @@ export interface PaketPengukuran {
   skorPutaran1: number | null
   /** 0–1. Null kalau belum ada jawaban sama sekali. */
   skorAkhir: number | null
+  /**
+   * Rata-rata waktu efektif per butir, detik — sudah dikurangi jeda (FR6).
+   *
+   * Null untuk paket yang butirnya dijawab sebelum waktu mulai dicatat. Ini
+   * angka yang diminta Protokol Uji Coba Bagian 6 untuk memproyeksikan beban
+   * produksi konten, bukan angka untuk menilai cepat-lambatnya anak.
+   */
+  detikPerButir: number | null
+  /**
+   * Butir yang berakhir "menyerah, lihat kunci" (FR3).
+   *
+   * Diturunkan, bukan dicatat: butir yang belum penuh nilainya saat kunci paket
+   * dibuka. Dibedakan dari butir yang dijawab salah karena keduanya kabar yang
+   * berbeda — yang satu berhenti mencoba, yang lain masih mencoba.
+   */
+  butirMenyerah: number
 }
 
 /** Satu eskalasi beserta status SLA-nya. */
@@ -87,6 +103,8 @@ interface BarisPaket {
   butir_terjawab_putaran_1: number | string
   skor_putaran_1: number | string | null
   skor_akhir: number | string | null
+  detik_per_butir: number | string | null
+  butir_menyerah: number | string | null
 }
 
 interface BarisEskalasi {
@@ -144,6 +162,8 @@ export async function paketPengukuran(learnerId: string): Promise<PaketPengukura
     butirTerjawabPutaran1: angka(b.butir_terjawab_putaran_1),
     skorPutaran1: angkaAtauNull(b.skor_putaran_1),
     skorAkhir: angkaAtauNull(b.skor_akhir),
+    detikPerButir: angkaAtauNull(b.detik_per_butir),
+    butirMenyerah: angka(b.butir_menyerah),
   }))
 }
 

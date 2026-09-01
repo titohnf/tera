@@ -17,6 +17,14 @@ function labelPaket(p: PaketPengukuran): string {
 
 const persen = (n: number | null) => (n === null ? '—' : `${Math.round(n * 100)}%`)
 
+/** "45 dtk" atau "1 mnt 20 dtk". Detik bulat: presisi di bawah itu palsu. */
+function durasi(detik: number | null): string {
+  if (detik === null) return '—'
+  const d = Math.round(detik)
+  if (d < 60) return `${d} dtk`
+  return `${Math.floor(d / 60)} mnt ${d % 60} dtk`
+}
+
 /**
  * Rapor pengukuran satu murid: satu baris per paket, dua kolom skor
  * berdampingan.
@@ -78,6 +86,8 @@ export default function RaporPaket({ paket }: { paket: PaketPengukuran[] }) {
                     <th className="px-5 py-2 font-medium">Putaran</th>
                     <th className="px-5 py-2 font-medium">Putaran 1</th>
                     <th className="px-5 py-2 font-medium">Skor akhir</th>
+                    <th className="px-5 py-2 font-medium">Waktu/butir</th>
+                    <th className="px-5 py-2 font-medium">Menyerah</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -96,6 +106,20 @@ export default function RaporPaket({ paket }: { paket: PaketPengukuran[] }) {
                         {persen(p.skorPutaran1)}
                       </td>
                       <td className="px-5 py-2.5 text-gray-700">{persen(p.skorAkhir)}</td>
+                      <td className="px-5 py-2.5 text-gray-500">{durasi(p.detikPerButir)}</td>
+                      {/* Butir yang berhenti di kunci, dipisahkan dari butir yang
+                          dijawab salah. Ditandai kuning, bukan merah: berhenti
+                          mencoba adalah kabar yang perlu dilihat tutor, bukan
+                          pelanggaran. */}
+                      <td className="px-5 py-2.5">
+                        {p.butirMenyerah === 0 ? (
+                          <span className="text-gray-400">—</span>
+                        ) : (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                            {p.butirMenyerah} butir
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

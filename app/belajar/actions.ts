@@ -17,6 +17,7 @@ import {
   topikLatihan,
   tutupSesi,
   type HasilJawab,
+  type JejakButir,
   type TopikLatihan,
 } from '@/lib/belajar/sesi'
 import {
@@ -94,7 +95,8 @@ export async function muatTopik(
 export async function periksaJawaban(
   sesiId: string,
   itemId: string,
-  jawaban: unknown
+  jawaban: unknown,
+  jejak: JejakButir = {}
 ): Promise<HasilJawab | null> {
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) return null
@@ -112,7 +114,7 @@ export async function periksaJawaban(
   // `learnerId` tidak lagi ikut: sejak migrasi 137 database yang menurunkannya
   // dari sesinya sendiri, sekalian dengan skornya. Meneruskannya dari sini cuma
   // membuka jalan agar keduanya berbeda.
-  return jawabSoal(sesiId, itemId, jawaban)
+  return jawabSoal(sesiId, itemId, jawaban, jejak)
 }
 
 export async function selesaikanLatihan(sesiId: string): Promise<void> {

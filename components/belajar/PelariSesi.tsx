@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import type { SoalSesi } from '@/lib/belajar/sesi'
+import { acakOpsi } from '@/lib/belajar/acak-opsi'
 import { periksaJawaban, selesaikanLatihan } from '@/app/belajar/actions'
 import InputSoal from './InputSoal'
 
@@ -31,6 +32,18 @@ import InputSoal from './InputSoal'
  * Penilaian tidak pernah terjadi di sini. `periksaJawaban` mengambil kuncinya
  * di server, jadi kunci jawaban tidak pernah ada di dalam bundel yang dikirim
  * ke browser — termasuk untuk soal yang belum dijawab.
+ *
+ * WAKTU DAN JEDA (FR6). Tiap butir membawa kapan ia mulai terlihat dan berapa
+ * lama halamannya sempat tidak terlihat selagi terbuka. Yang kedua itu yang
+ * membuat angkanya berarti: tanpa memotong jeda, satu anak yang ditinggal
+ * makan siang dengan layar menyala akan tercatat mengerjakan satu soal selama
+ * empat puluh menit, dan Protokol Uji Coba memakai rata-rata ini untuk
+ * memperkirakan beban produksi konten.
+ *
+ * Yang TIDAK dihitung sebagai jeda: layar yang menyala tapi tidak disentuh.
+ * Anak yang menatap soal selama tiga menit memang sedang mengerjakan soal itu,
+ * dan menebak kapan ia "sebenarnya berhenti berpikir" bukan hal yang bisa
+ * diketahui browser mana pun.
  */
 export default function PelariSesi({
   sesiId,
@@ -47,9 +60,34 @@ export default function PelariSesi({
   const [jawaban, setJawaban] = useState<unknown>(undefined)
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
+  const [mulaiButir, setMulaiButir] = useState(() => new Date().toISOString())
+
+  // Ref, bukan state: keduanya berubah karena peristiwa di luar render dan tidak
+  // satu pun mengubah tampilan. Menyimpannya sebagai state cuma membuat halaman
+  // dirender ulang setiap kali anak berpindah tab.
+  const jedaMs = useRef(0)
+  const hilangSejak = useRef<number | null>(null)
+
+  useEffect(() => {
+    function ubah() {
+      if (document.hidden) {
+        hilangSejak.current = Date.now()
+      } else if (hilangSejak.current !== null) {
+        jedaMs.current += Date.now() - hilangSejak.current
+        hilangSejak.current = null
+      }
+    }
+    document.addEventListener('visibilitychange', ubah)
+    return () => document.removeEventListener('visibilitychange', ubah)
+  }, [])
 
   const sekarang = soal[indeks]
   const terakhir = indeks + 1 >= soal.length
+
+  // Diacak sekali per butir, bukan tiap render: daftar yang berubah urutan di
+  // bawah jari yang sedang memilihnya adalah cara tercepat membuat anak salah
+  // menekan.
+  const { soal: tampil, urutan } = useMemo(() => acakOpsi(sekarang), [sekarang])
 
   /**
    * Mencatat jawaban lalu maju. Hasil penilaiannya dibuang di sini dengan
@@ -59,7 +97,17 @@ export default function PelariSesi({
   function lanjut() {
     setGalat(null)
     mulai(async () => {
-      const tercatat = await periksaJawaban(sesiId, sekarang.id, jawaban ?? null)
+      // Jeda yang sedang berjalan ikut dihitung: anak yang menjawab lalu
+      // langsung berpindah tab meninggalkan `hilangSejak` terisi, dan tanpa ini
+      // waktu itu menempel ke butir BERIKUTNYA.
+      const jedaBerjalan =
+        hilangSejak.current === null ? 0 : Date.now() - hilangSejak.current
+
+      const tercatat = await periksaJawaban(sesiId, sekarang.id, jawaban ?? null, {
+        waktuMulai: mulaiButir,
+        jedaMs: jedaMs.current + jedaBerjalan,
+        urutanOpsi: urutan,
+      })
       if (!tercatat) {
         setGalat('Jawabanmu belum tersimpan. Coba tekan sekali lagi.')
         return
@@ -67,6 +115,9 @@ export default function PelariSesi({
       if (!terakhir) {
         setIndeks(indeks + 1)
         setJawaban(undefined)
+        setMulaiButir(new Date().toISOString())
+        jedaMs.current = 0
+        hilangSejak.current = null
         return
       }
       await selesaikanLatihan(sesiId)
@@ -91,7 +142,7 @@ export default function PelariSesi({
       </div>
 
       <div className="rounded-xl bg-white p-4 shadow-kartu">
-        <InputSoal soal={sekarang} nilai={jawaban} onChange={setJawaban} />
+        <InputSoal soal={tampil} nilai={jawaban} onChange={setJawaban} />
       </div>
 
       {galat && (

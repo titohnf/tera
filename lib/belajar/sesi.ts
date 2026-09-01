@@ -1019,10 +1019,27 @@ export async function tinjauanSesi(sesiId: string): Promise<SoalTinjauan[]> {
  *
  * Satu perjalanan, bukan dua: pembahasannya ikut pulang bersama skornya.
  */
+/**
+ * Jejak pengerjaan satu butir, dari browser (FR3 & FR6).
+ *
+ * Ketiganya boleh kosong: sesi lama, dan permukaan mana pun yang belum
+ * mengirimkannya, tetap bisa mencatat jawaban. Yang hilang cuma angka waktunya
+ * — bukan jawabannya.
+ */
+export interface JejakButir {
+  /** Kapan butir ini mulai terlihat. Jam browser; database menolak yang mustahil. */
+  waktuMulai?: string
+  /** Lama halaman tidak terlihat selagi butir ini terbuka, milidetik. */
+  jedaMs?: number
+  /** Urutan opsi seperti yang dilihat anaknya. Jejak saja — penilaian membandingkan teks. */
+  urutanOpsi?: string[]
+}
+
 export async function jawabSoal(
   sesiId: string,
   itemId: string,
-  jawaban: unknown
+  jawaban: unknown,
+  jejak: JejakButir = {}
 ): Promise<HasilJawab | null> {
   const supabase = await createClient()
 
@@ -1031,6 +1048,9 @@ export async function jawabSoal(
     p_item_id: itemId,
     p_response: jawaban ?? null,
     p_access_code: TANPA_KODE,
+    p_waktu_mulai: jejak.waktuMulai ?? null,
+    p_jeda_ms: jejak.jedaMs ?? null,
+    p_urutan_opsi: jejak.urutanOpsi ?? null,
   })
   if (error) {
     console.error('[belajar] gagal mencatat jawaban:', error)
