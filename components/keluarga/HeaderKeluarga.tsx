@@ -63,9 +63,10 @@ const LAYAR: Record<string, Layar> = {
   jadwal: { judul: 'Kelas', kembali: '' },
   notifikasi: { judul: 'Notifikasi' },
   profil: { judul: 'Profil' },
+  x: { judul: 'x' },
   tagihan: { judul: 'Tagihan', kembali: '' },
-  laporan: { judul: 'Laporan Bulanan', kembali: '' },
-  penguasaan: { judul: 'Penguasaan', kembali: '' },
+  laporan: { judul: 'Laporan', kembali: '' },
+  penguasaan: { judul: 'Laporan', kembali: '' },
 }
 
 /**

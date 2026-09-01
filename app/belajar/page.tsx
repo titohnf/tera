@@ -1,12 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { mapelLatihan } from '@/lib/belajar/sesi'
-import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
-import PemilihLatihan from '@/components/belajar/PemilihLatihan'
-import PetaTopik from '@/components/belajar/PetaTopik'
-import BilahKeluarga from '@/components/belajar/BilahKeluarga'
-import { notifikasiAnak } from '@/lib/keluarga-notifikasi'
 import { keluargaContext } from '@/lib/keluarga'
+import PemilihLatihan from '@/components/belajar/PemilihLatihan'
+import PulangKe from '@/components/belajar/PulangKe'
 
 /**
  * Pintu masuk permukaan belajar: memilih apa yang mau dilatih.
@@ -35,19 +32,8 @@ export default async function BelajarBeranda({
   // daftar mapelnya. Yang dipakai kelas aslinya saja; pengecualiannya
   // menyusul di layar topik, tempat mapelnya sudah diketahui.
   const jenjang = kelas ? [`Kelas ${kelas}`] : []
-  // Peta dan daftar mapel ditanyakan bersamaan: keduanya untuk layar yang sama,
-  // dan menanyakannya berurutan berarti yang kedua menunggu yang pertama tanpa
-  // alasan.
-  const [mapel, peta] = await Promise.all([
-    mapelLatihan(learnerId, jenjang),
-    petaTopik(learnerId),
-  ])
-
-  // Satu topik saja berarti ia terbentang sejak halaman dibuka, jadi isinya
-  // ikut dibawa sekarang. Kalau topiknya lebih dari satu, tidak ada yang
-  // terbentang, dan menjemput isi ketiganya di muka berarti membayar untuk dua
-  // yang tidak dilihat siapa pun.
-  const paketAwal = peta.length === 1 ? await keadaanPaketTopik(learnerId, peta[0].id) : undefined
+  // Daftar mapel untuk layar pertama.
+  const mapel = await mapelLatihan(learnerId, jenjang)
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
   // portal keluarga dan tombol "Ulangi Topik Ini" di halaman hasil. Yang
@@ -90,33 +76,21 @@ export default async function BelajarBeranda({
     awal = { subjectId: mapelDiminta, kelas: lewatKelas }
   }
 
-  // Perabot portal keluarga ikut dirender di layar ini — lihat `BilahKeluarga`.
+  // Perabot portal keluarga ikut dirender di layar ini — lihat `PulangKe`.
   // `studentId` terisi hanya untuk jalur keluarga, jadi pelanggan langganan
-  // melewati kedua kueri ini sama sekali; `keluargaContext()` bahkan akan
+  // melewati kueri ini sama sekali; `keluargaContext()` bahkan akan
   // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
-  //
-  // Dari notifikasi yang diturunkan cuma DAFTAR ID, dengan alasan yang sama
-  // seperti di rangka portal: mana yang sudah dibaca tersimpan di perangkat
-  // masing-masing, jadi server tidak bisa menghitungnya.
-  const keluarga = studentId
-    ? await Promise.all([notifikasiAnak(studentId), keluargaContext()])
-    : null
+  const keluarga = studentId ? await keluargaContext() : null
 
   return (
     <div className="space-y-4">
-      {/* Peta kompetensi berdiri DI ATAS pemilih lama, dan tanpa percabangan
-          "ini Matematika atau bukan" di sini.
-
-          Yang memindahkannya bukan kode ini melainkan data: sejak migrasi 148,
-          butir yang punya topik pengukuran tidak lagi ditandai ke grup
-          kurikulum, dan seluruh keluarga `practice_*` berpangkal pada tag itu.
-          Jadi Matematika keluar sendiri dari pemilih lama begitu soalnya masuk
-          peta — tidak ada saklar yang bisa lupa dinyalakan di satu tempat dan
-          tidak di tempat lain.
-
-          Komponennya sendiri tidak menampilkan apa pun kalau petanya belum
-          punya topik berisi. */}
-      <PetaTopik anak={anak} topik={peta} paketAwal={paketAwal} />
+      {studentId && keluarga && (
+        <PulangKe
+          href={`/keluarga/${studentId}`}
+          anak={keluarga.anak}
+          aktif={studentId}
+        />
+      )}
 
       <PemilihLatihan
         mapel={mapel}
@@ -126,14 +100,6 @@ export default async function BelajarBeranda({
         avatar={avatar}
         labelKelas={jenjang[0] ?? null}
       />
-
-      {studentId && keluarga && (
-        <BilahKeluarga
-          studentId={studentId}
-          idNotifikasi={keluarga[0].items.map((n) => n.id)}
-          anak={keluarga[1].anak}
-        />
-      )}
     </div>
   )
 }

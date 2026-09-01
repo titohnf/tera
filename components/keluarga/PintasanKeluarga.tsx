@@ -1,7 +1,19 @@
 import Link from 'next/link'
 
 /**
- * Empat pintasan di beranda: Kelas, Laporan, Penguasaan, Tagihan.
+ * Empat pintasan di beranda: Belajar, Laporan, Jadwal, Tagihan.
+ *
+ * Belajar dulu tinggal di bilah bawah, sejajar dengan Beranda dan Profil.
+ * Ia permukaan yang dibuka hampir setiap kunjungan, jadi satu layar lagi
+ * bukan penghalang, dan meninggalkannya di bilah menyesakkan layar 390px
+ * dengan tujuan yang justru dibuka sesekali. Mencuri satu kolom baris ini
+ * mengembalikan bilah bawah ke empat tujuan portal — lihat `BottomNav`.
+ *
+ * Tautannya bukan di bawah `/keluarga/[id]`: permukaan belajar dipakai
+ * bersama pelanggan langganan, jadi ia membuka `/belajar?anak=`. Di beranda
+ * ia pintu TETAP permukaan itu; kartu "Lanjutkan latihan" di bawah hanya
+ * muncul saat ada sesi yang belum selesai, dan menuntut kartu itulah yang
+ * dulu membuat petak sejenis terasa pengulangan.
  *
  * Keempatnya sebelumnya berupa daftar bertumpuk di dalam halaman Profil —
  * ikon, judul, dan satu kalimat penjelas per baris. Susunan itu memakan hampir
@@ -9,7 +21,10 @@ import Link from 'next/link'
  * setiap kunjungan ke Tagihan lewat dua ketukan dan satu halaman yang sama
  * sekali tidak dicari.
  *
- * Di sini keempatnya jadi petak ikon di beranda: satu baris, satu ketukan.
+ * Laporan dan Penguasaan dahulu dua pintasan terpisah; kini satu menu
+ * "Laporan" yang membuka halaman bertab (Aktivitas Kelas dan Kompetensi).
+ *
+ * Di sini semuanya jadi petak ikon di beranda: satu baris, satu ketukan.
  * Kalimat penjelasnya sengaja dilepas — pada nama-nama sependek ini ia lebih
  * banyak menambah tinggi daripada kejelasan, dan orang tua yang sudah pernah
  * membukanya mengenali petaknya dari bentuk ikonnya, bukan dari kalimatnya.
@@ -18,9 +33,9 @@ import Link from 'next/link'
  * `public/logo-icon.png`, dicampur putih pada empat kadar — 0%, 50%
  * (`#80b5fa`), 80% (`#cce1fd`), dan 92% (`#eaf3fe`, warna lingkaran petak).
  *
- * Laporan, Penguasaan, dan Tagihan digambar sebagai siluet: badannya biru merek
- * penuh, detailnya `#cce1fd` — pucat, tapi masih jelas biru. Ketiganya ikon
- * benda — kotak statistik, lingkaran, gulungan — yang seluruh detailnya berada
+ * Laporan dan Tagihan digambar sebagai siluet: badannya biru merek
+ * penuh, detailnya `#cce1fd` — pucat, tapi masih jelas biru. Keduanya ikon
+ * benda — kotak statistik, gulungan — yang seluruh detailnya berada
  * di dalam badan, jadi nada pucat itu selalu punya alas biru dan tidak pernah
  * hilang ke lingkaran.
  *
@@ -39,7 +54,7 @@ import Link from 'next/link'
  *
  * Sebelumnya empat ikon garis dengan empat warna berlainan: ungu, amber,
  * emerald, biru. Baris pelangi itu jadi bagian paling ramai di beranda yang
- * sudah berisi kartu Jadwal, Latihan, dan Tagihan. Sekarang keempatnya satu
+ * sudah berisi kartu Jadwal, Latihan, dan Tagihan. Sekarang semuanya satu
  * keluarga warna, dan yang membedakan petak adalah bentuk ikonnya.
  *
  * Ikonnya dari set Streamline "Plump color" (varian flat), berlisensi CC BY 4.0
@@ -47,24 +62,34 @@ import Link from 'next/link'
  * ditukar ke palet merek: bentuknya sama sekali tidak disentuh, cuma dua nada
  * birunya yang digeser dari biru bawaan Streamline ke biru Tera. Disalin inline
  * ke sini alih-alih lewat
- * paket ikon: cuma empat gambar, dan menariknya dari CDN saat render berarti
+ * paket ikon: cuma beberapa gambar, dan menariknya dari CDN saat render berarti
  * petak kosong di detik pertama tiap kunjungan.
  *
- * Materi dilepas dari sini. Ia tidak lagi punya halaman di portal keluarga —
- * bahannya hidup di `/belajar`, yang sudah punya kartunya sendiri di beranda
- * ini dan sudah ditautkan dari tiap kartu sesi di Jadwal, di topik yang tepat.
- * Petak keempat yang menuju tempat yang sama dengan kartu di bawahnya bukan
- * pintasan, cuma pengulangan.
+ * Materi pernah tinggal di sini dan pergi sebelum Belajar datang: isinya
+ * hidup di `/belajar` dan ditautkan dari tiap kartu sesi di Jadwal, di topik
+ * yang tepat — dan petak Materi yang menuju tempat yang sama dengan kartu
+ * lanjutan di bawah memang pengulangan. Belajar berbedanya ada dua: petaknya
+ * yang ini pintu permukaannya, dan kartu di beranda cuma muncul kalau ada
+ * yang belum selesai.
  */
 
 const PINTASAN = [
   {
-    ke: 'jadwal',
-    judul: 'Kelas',
+    ke: 'belajar',
+    judul: 'Belajar',
+    /* Bukan sub-path portal: permukaan belajar dipakai bersama pelanggan
+       langganan, jadi jalannya keluar lewat `?anak=`. */
+    to: (id: string) => `/belajar?anak=${id}`,
     ikon: (
       <>
-        <path fill="#80b5fa" d="m22.985 31.499l.308-4.415l5.412-.736c2.072-.281 4.115-1.813 4.567-4.287c.34-1.856.261-3.344.012-4.481c-.583-2.665-2.956-3.645-4.545-3.736a213 213 0 0 0-8.184-.305A9.46 9.46 0 0 0 22 8.5c0-3.33-1.714-6.26-4.307-7.956A429 429 0 0 1 24 .5c8.57 0 14.298.227 17.6.418c2.747.158 5.064 2.137 5.395 4.98c.259 2.23.505 5.549.505 10.102s-.246 7.871-.505 10.102c-.33 2.843-2.648 4.822-5.395 4.98c-3.302.191-9.03.418-17.6.418l-1.014-.001Z"/>
-        <path fill="#026bf5" d="M6 8.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 0 0-13 0m.506 8.23c6.975-.34 14.874-.303 22.062.11c.766.043 1.589.48 1.786 1.381c.16.725.24 1.81-.032 3.3c-.187 1.022-1.048 1.723-2.02 1.855l-7.428 1.01a.5.5 0 0 0-.431.46l-1.281 18.361c-.111 1.592-1.296 2.933-2.923 3.098q-.478.049-1.021.09a1.48 1.48 0 0 1-1.585-1.425l-.345-8.99a.5.5 0 0 0-.5-.48h-.575a.5.5 0 0 0-.5.48l-.345 8.975a1.48 1.48 0 0 1-1.593 1.425a41 41 0 0 1-.943-.088c-1.665-.175-2.86-1.575-2.92-3.21l-.377-10.15a.52.52 0 0 0-.484-.492a29 29 0 0 1-1.688-.174c-1.138-.154-1.872-1.14-1.843-2.237c.104-3.894.596-7.462 1.003-9.823c.339-1.968 2.006-3.38 3.983-3.477Z"/>
+        <path fill="#80b5fa" d="M24 21.5C19.5 18 14.5 16.8 10.5 17.8 7.6 18.6 5.5 20.6 5.5 22.7L5.5 31.8C5.5 35.2 8.3 37.8 11.7 37.7 15 37.6 18.2 38.7 20.9 40.5 22.4 41.4 24 40.4 24 38.8Z"/>
+        <path fill="#80b5fa" d="M24 21.5C28.5 18 33.5 16.8 37.5 17.8 40.4 18.6 42.5 20.6 42.5 22.7L42.5 31.8C42.5 35.2 39.7 37.8 36.3 37.7 33 37.6 29.8 38.7 27.1 40.5 25.6 41.4 24 40.4 24 38.8Z"/>
+        <path fill="#026bf5" d="M23.6 22.4c.2 0 .4.2.4.4v6c0 .2-.2.4-.4.4s-.4-.2-.4-.4v-6c0-.2.2-.4.4-.4z"/>
+        <path fill="#026bf5" d="M10 24.3h8.4c.7 0 1.3.6 1.3 1.3s-.6 1.3-1.3 1.3H10c-.7 0-1.3-.6-1.3-1.3s.6-1.3 1.3-1.3z"/>
+        <path fill="#026bf5" d="M10 29.6h6c.7 0 1.3.6 1.3 1.3s-.6 1.3-1.3 1.3h-6c-.7 0-1.3-.6-1.3-1.3s.6-1.3 1.3-1.3z"/>
+        <path fill="#026bf5" d="M38 24.3h-8.4c-.7 0-1.3.6-1.3 1.3s.6 1.3 1.3 1.3H38c.7 0 1.3-.6 1.3-1.3s-.6-1.3-1.3-1.3z"/>
+        <path fill="#026bf5" d="M38 29.6h-6c-.7 0-1.3.6-1.3 1.3s.6 1.3 1.3 1.3h6c.7 0 1.3-.6 1.3-1.3s-.6-1.3-1.3-1.3z"/>
+        <path fill="#026bf5" d="M21.6 40.6h4.8v4.2c0 .8-.9 1.3-1.6.8l-.8-.6-.8.6c-.7.5-1.6 0-1.6-.8v-4.2z"/>
       </>
     ),
   },
@@ -80,14 +105,12 @@ const PINTASAN = [
     ),
   },
   {
-    ke: 'penguasaan',
-    judul: 'Penguasaan',
+    ke: 'jadwal',
+    judul: 'Jadwal',
     ikon: (
       <>
-        <g fill="none" fillRule="evenodd" clipRule="evenodd">
-          <path fill="#026bf5" d="M24 1.5C11.574 1.5 1.5 11.574 1.5 24S11.574 46.5 24 46.5S46.5 36.426 46.5 24S36.426 1.5 24 1.5"/>
-          <path fill="#cce1fd" d="m28.586 17.841l-2.81-5.418c-.747-1.439-2.805-1.439-3.552 0l-2.81 5.418l-5.958 1.174c-1.523.3-2.139 2.145-1.101 3.3l4.225 4.698l-.776 6.288c-.196 1.584 1.45 2.747 2.878 2.035L24 32.68l5.318 2.655c1.427.712 3.073-.451 2.878-2.035l-.776-6.288l4.225-4.699c1.038-1.154.422-3-1.1-3.3l-5.96-1.173Z"/>
-        </g>
+        <path fill="#80b5fa" d="m22.985 31.499l.308-4.415l5.412-.736c2.072-.281 4.115-1.813 4.567-4.287c.34-1.856.261-3.344.012-4.481c-.583-2.665-2.956-3.645-4.545-3.736a213 213 0 0 0-8.184-.305A9.46 9.46 0 0 0 22 8.5c0-3.33-1.714-6.26-4.307-7.956A429 429 0 0 1 24 .5c8.57 0 14.298.227 17.6.418c2.747.158 5.064 2.137 5.395 4.98c.259 2.23.505 5.549.505 10.102s-.246 7.871-.505 10.102c-.33 2.843-2.648 4.822-5.395 4.98c-3.302.191-9.03.418-17.6.418l-1.014-.001Z"/>
+        <path fill="#026bf5" d="M6 8.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 0 0-13 0m.506 8.23c6.975-.34 14.874-.303 22.062.11c.766.043 1.589.48 1.786 1.381c.16.725.24 1.81-.032 3.3c-.187 1.022-1.048 1.723-2.02 1.855l-7.428 1.01a.5.5 0 0 0-.431.46l-1.281 18.361c-.111 1.592-1.296 2.933-2.923 3.098q-.478.049-1.021.09a1.48 1.48 0 0 1-1.585-1.425l-.345-8.99a.5.5 0 0 0-.5-.48h-.575a.5.5 0 0 0-.5.48l-.345 8.975a1.48 1.48 0 0 1-1.593 1.425a41 41 0 0 1-.943-.088c-1.665-.175-2.86-1.575-2.92-3.21l-.377-10.15a.52.52 0 0 0-.484-.492a29 29 0 0 1-1.688-.174c-1.138-.154-1.872-1.14-1.843-2.237c.104-3.894.596-7.462 1.003-9.823c.339-1.968 2.006-3.38 3.983-3.477Z"/>
       </>
     ),
   },
@@ -106,7 +129,7 @@ const PINTASAN = [
 
 export default function PintasanKeluarga({ studentId }: { studentId: string }) {
   return (
-    /* Tanpa kotak: empat ikon berlingkaran warna sudah merupakan bentuk utuh,
+    /* Tanpa kotak: tiga ikon berlingkaran warna sudah merupakan bentuk utuh,
        dan membungkusnya lagi dengan kartu berbayang berarti dua bingkai untuk
        satu benda. Yang tersisa cuma jaraknya. */
     <div className="px-1 py-1">
@@ -114,7 +137,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}
-            href={`/keluarga/${studentId}/${p.ke}`}
+            href={p.to ? p.to(studentId) : `/keluarga/${studentId}/${p.ke}`}
             className="flex flex-col items-center gap-1.5 rounded-lg py-1 active:bg-slate-50 transition-colors"
           >
             {/* Lingkaran, bukan petak bersudut: ikonnya sendiri sudah penuh
@@ -129,7 +152,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
                 satu baris di lebar 375px, dan label yang terpotong lebih buruk
                 daripada label dua baris.
 
-                Petak pertama bernama "Kelas", bukan "Riwayat Kelas": halaman itu
+                Petak Kelas bernama "Kelas", bukan "Riwayat Kelas": halaman itu
                 memuat sesi yang akan datang sekaligus yang sudah lewat, dan
                 "Riwayat" mengunci ke belakang. Nama ini juga sama dengan tab
                 untuk rute yang sama di portal admin. */}

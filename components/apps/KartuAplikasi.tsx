@@ -8,8 +8,8 @@ import Link from 'next/link'
  * memakai kartu yang sama persis — dua salinan yang pelan-pelan menyimpang akan
  * membuat SORA terlihat seperti dua hal berbeda tergantung siapa yang
  * membukanya. Beranda keluarga sejak itu berhenti memakainya sama sekali:
- * SORA-nya turun jadi tab "Latihan" di bilah bawah, GAMA-nya dilepas sampai
- * pengerjaannya dimulai. Yang tersisa satu pemanggil, dan alasan di atas tetap
+ * SORA-nya jadi permukaan "Belajar", dijangkau dari petak beranda; GAMA-nya
+ * dilepas sampai pengerjaannya dimulai. Yang tersisa satu pemanggil, dan alasan di atas tetap
  * berlaku begitu ada yang kedua.
  *
  * `href` null berarti kartunya tampil tapi tidak bisa diketuk — dipakai kartu

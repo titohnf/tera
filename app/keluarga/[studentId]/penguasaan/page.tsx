@@ -10,6 +10,7 @@ import {
 import BilahJawaban, { KeteranganJawaban } from '@/components/belajar/BilahJawaban'
 import { persenDari } from '@/lib/belajar/penilaian'
 import Keyakinan from '@/components/belajar/Keyakinan'
+import TabLaporan from '@/components/keluarga/TabLaporan'
 
 /**
  * Penguasaan per topik untuk satu anak.
@@ -187,6 +188,8 @@ export default async function PenguasaanPage({
 
   return (
     <div className="space-y-6">
+      <TabLaporan studentId={studentId} aktif="kompetensi" />
+
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
       <p className="text-sm leading-relaxed text-gray-500">
         Menampilkan persentase penguasaan siswa terhadap suatu topik pelajaran.

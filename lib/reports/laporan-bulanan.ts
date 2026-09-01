@@ -47,25 +47,42 @@ export type LaporanSession = {
   custom_learning_outcomes: string[] | null
   attendance_status: string | null
   attitude_note: string | null
+  subject_name: string | null
+  tutor_name: string | null
 }
 
 export type LaporanAssessment = {
   id: string
+  /** Sesi tempat asesmen digelar; pemaut catatan performanya. */
+  session_id: string | null
   title: string
   class_name: string
   scheduled_at: string | null
   max_score: number
   score: number | null
   feedback: string | null
+  subject_name: string | null
 }
 
 export type LaporanNote = {
   id: string
+  session_id: string
   category: string
   body: string
   tutor_name: string | null
   scheduled_at: string | null
   created_at: string
+}
+
+/** Nama kategori catatan performa di basis data (bahasa Inggris) → label tampilan Indonesia. */
+export const LABEL_KATEGORI_CATATAN: Record<string, string> = {
+  Attitude: 'Sikap',
+  Progress: 'Perkembangan',
+  Recommendation: 'Rekomendasi',
+}
+
+export function labelKategori(kategori: string): string {
+  return LABEL_KATEGORI_CATATAN[kategori] ?? kategori
 }
 
 export type LaporanReportNotes = {
@@ -89,6 +106,8 @@ export type LaporanBulananData = {
     pct: number | null
   }
   assessments: LaporanAssessment[]
+  /** Rekap nilai asesmen per mapel: rata-rata, tertinggi, dan terendah — semuanya persen. */
+  nilaiByMapel: { mapel: string; rataRata: number; tertinggi: number; terendah: number; jumlah: number }[]
   /** Tutor performance notes, excluding Attitude (shown inline on sessions instead). Web-only — not rendered in the PDF. */
   performanceNotes: LaporanNote[]
   reportNotes: LaporanReportNotes | null
@@ -166,12 +185,15 @@ export async function getLaporanBulananData(studentId: string, month: string): P
     topic: string | null
     custom_theme: string | null
     custom_learning_outcomes: string[] | null
+    subject_id: string | null
+    subjects: { name: string } | null
+    profiles: { full_name: string } | null
   }
 
   const { data: sessionData } = classIds.length > 0
     ? await admin
       .from('sessions')
-      .select('id, class_id, scheduled_at, topic, custom_theme, custom_learning_outcomes')
+      .select('id, class_id, scheduled_at, topic, custom_theme, custom_learning_outcomes, subject_id, subjects(name), profiles!tutor_id(full_name)')
       .in('class_id', classIds)
       .eq('status', 'completed')
       .gte('scheduled_at', startIso)
@@ -231,6 +253,8 @@ export async function getLaporanBulananData(studentId: string, month: string): P
     custom_learning_outcomes: s.custom_learning_outcomes,
     attendance_status: attendanceMap.get(s.id) ?? null,
     attitude_note: attitudeBySession.get(s.id) ?? null,
+    subject_name: s.subjects?.name ?? null,
+    tutor_name: s.profiles?.full_name ?? null,
   }))
 
   const attendanceStatuses = sessions.map(s => s.attendance_status)
@@ -250,7 +274,12 @@ export async function getLaporanBulananData(studentId: string, month: string): P
     session_id: string
     title: string
     max_score: number
-    sessions: { scheduled_at: string; class_id: string } | null
+    sessions: {
+      scheduled_at: string
+      class_id: string
+      subject_id: string | null
+      subjects: { name: string } | null
+    } | null
   }
   type AssessmentResultRow = { assessment_id: string; score: number | null; feedback: string | null }
 
@@ -258,7 +287,7 @@ export async function getLaporanBulananData(studentId: string, month: string): P
   if (sessionIds.length > 0) {
     const { data: assessmentData } = await admin
       .from('assessments')
-      .select('id, session_id, title, max_score, sessions(scheduled_at, class_id)')
+      .select('id, session_id, title, max_score, sessions(scheduled_at, class_id, subject_id, subjects(name))')
       .in('session_id', sessionIds)
       .order('created_at', { ascending: true }) as unknown as { data: AssessmentRow[] | null }
 
@@ -277,19 +306,49 @@ export async function getLaporanBulananData(studentId: string, month: string): P
 
     assessments = assessmentRows.map(a => ({
       id: a.id,
+      session_id: a.session_id,
       title: a.title,
       class_name: classNameMap.get(a.sessions?.class_id ?? '') ?? '—',
       scheduled_at: a.sessions?.scheduled_at ?? null,
       max_score: a.max_score,
       score: resultMap.get(a.id)?.score ?? null,
       feedback: resultMap.get(a.id)?.feedback ?? null,
+      subject_name: a.sessions?.subjects?.name ?? null,
     }))
+  }
+
+  const nilaiByMapel: { mapel: string; rataRata: number; tertinggi: number; terendah: number; jumlah: number }[] = []
+  {
+    const perMapel = new Map<string, { total: number; jumlah: number; tertinggi: number; terendah: number }>()
+    for (const a of assessments) {
+      if (a.score === null || a.max_score === 0) continue
+      const pct = (a.score / a.max_score) * 100
+      const mapel = a.subject_name ?? 'Tanpa mapel'
+      const cur = perMapel.get(mapel) ?? { total: 0, jumlah: 0, tertinggi: pct, terendah: pct }
+      cur.total += pct
+      cur.jumlah += 1
+      if (pct > cur.tertinggi) cur.tertinggi = pct
+      if (pct < cur.terendah) cur.terendah = pct
+      perMapel.set(mapel, cur)
+    }
+    for (const [mapel, cur] of perMapel) {
+      if (cur.jumlah === 0) continue
+      nilaiByMapel.push({
+        mapel,
+        rataRata: Math.round(cur.total / cur.jumlah),
+        tertinggi: Math.round(cur.tertinggi),
+        terendah: Math.round(cur.terendah),
+        jumlah: cur.jumlah,
+      })
+    }
+    nilaiByMapel.sort((x, y) => x.mapel.localeCompare(y.mapel, 'id'))
   }
 
   const performanceNotes: LaporanNote[] = allNotes
     .filter(n => n.category !== 'Attitude')
     .map(n => ({
       id: n.id,
+      session_id: n.session_id,
       category: n.category,
       body: n.body,
       tutor_name: n.profiles?.full_name ?? null,
@@ -312,6 +371,7 @@ export async function getLaporanBulananData(studentId: string, month: string): P
     sessions,
     attendanceSummary,
     assessments,
+    nilaiByMapel,
     performanceNotes,
     reportNotes: reportNotesData ?? null,
   }

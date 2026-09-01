@@ -140,7 +140,7 @@ export default function PemilihLatihan({
   awal?: { subjectId: string; groupId?: string; kelas?: boolean } | null
 }) {
   const [dipilih, setDipilih] = useState<MapelLatihan | null>(null)
-  const [topik, setTopik] = useState<TopikLatihan[]>([])
+  const [daftarTopik, setDaftarTopik] = useState<TopikLatihan[]>([])
   const [materi, setMateri] = useState<MateriTopik[]>([])
   /**
    * Jenjang kurikulum yang berlaku untuk pelajar ini, dari `muatTopik()`.
@@ -214,7 +214,7 @@ export default function PemilihLatihan({
 
   /** Memasang isi sebuah mapel ke layar, tanpa menyentuh riwayat. */
   const terapkan = useCallback((m: MapelLatihan, d: Daftar, l: Langkah) => {
-    setTopik(d.topik)
+    setDaftarTopik(d.topik)
     setMateri(d.materi)
     setJenjang(d.jenjang)
     const dibuka = l.topik ? d.topik.find(t => t.group_id === l.topik) : null
@@ -585,7 +585,7 @@ export default function PemilihLatihan({
   // kejutannya ke orang tua. Topik tanpa soal tidak ikut saringan status —
   // lihat `lolos()` — jadi yang mencari sesuatu untuk dikerjakan tidak
   // tersandung padanya, dan yang mencari bahan bacaan tetap menemukannya.
-  const tersedia = topik
+  const tersedia = daftarTopik
   const materiPerTopik = new Map<string, { materi: number; video: number }>()
   for (const m of materi) {
     const hitung = materiPerTopik.get(m.group_id) ?? { materi: 0, video: 0 }

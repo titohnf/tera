@@ -1,9 +1,10 @@
-import Link from 'next/link'
 import { anakOrRedirect } from '@/lib/keluarga'
 import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import LaporanBulananView from '@/components/laporan/LaporanBulananView'
 import { createClient } from '@/lib/supabase/server'
 import { bulanIni } from '@/lib/waktu'
+import TabLaporan from '@/components/keluarga/TabLaporan'
+import MonthSelect from '@/components/admin/attendance/MonthSelect'
 
 /**
  * Laporan bulanan yang dilihat keluarga — laporan yang SAMA dengan yang dibuka
@@ -44,7 +45,7 @@ export default async function LaporanAnak({
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
   })
 
-  const bulanDipilih = bulanOpsi.includes(month ?? '') ? (month as string) : bulanOpsi[0]
+  const bulanDipilih = bulanOpsi.includes(month ?? '') ? (month as string) : bulanOpsi[1]
 
   const { data: catatanRow } = await supabase
     .from('monthly_report_notes')
@@ -72,11 +73,19 @@ export default async function LaporanAnak({
 
   return (
     <div className="space-y-6">
+      <TabLaporan studentId={studentId} aktif="aktivitas" />
+
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`).
           Barisnya sendiri hanya lahir kalau ada yang bisa diunduh — pembungkus
-          kosong tetap memakan satu jarak `space-y-6` di puncak halaman. */}
+          kosong tetap memakan satu jarak `space-y-6` di puncak halaman.
+          Pemilih bulan sejajar dengan tombol unduh; bulan yang muncul lebih
+          dulu adalah bulan lalu (`bulanOpsi[1]`). */}
       {report && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <MonthSelect
+            options={bulanOpsi.map(b => ({ value: b, label: namaBulan(b) }))}
+            value={bulanDipilih}
+          />
           <a
             href={`/api/laporan-bulanan/${studentId}/pdf?month=${bulanDipilih}`}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
@@ -85,22 +94,6 @@ export default async function LaporanAnak({
           </a>
         </div>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        {bulanOpsi.map((b) => (
-          <Link
-            key={b}
-            href={`/keluarga/${studentId}/laporan?month=${b}`}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium ring-1 ${
-              b === bulanDipilih
-                ? 'bg-blue-600 text-white ring-blue-600'
-                : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            {namaBulan(b)}
-          </Link>
-        ))}
-      </div>
 
       {!report ? (
         <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">

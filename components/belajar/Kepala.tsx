@@ -20,10 +20,10 @@ import type { Anak } from '@/lib/keluarga'
  * dimundurkan adalah komponen jauh di bawahnya. Konteks ini jembatannya: yang
  * punya langkah memanggil `useTombolKembali(fn)`, dan header menampilkannya.
  *
- * Tanpa langkah, tombolnya TIDAK hilang melainkan berubah jadi tautan keluar.
- * Ia satu-satunya jalan pulang sejak tombol "Selesai" dihapus, dan header yang
- * kosong di layar pertama berarti anak yang membuka permukaan ini terkurung di
- * dalamnya.
+ * Tanpa langkah, tombolnya TIDAK hilang melainkan berubah jadi tautan kembali
+ * ke halaman sebelumnya. Ia satu-satunya jalan pulang sejak tombol "Selesai"
+ * dihapus, dan header yang kosong di layar pertama berarti anak yang membuka
+ * permukaan ini terkurung di dalamnya.
  *
  * Ujung kanannya menampung pemilih anak, untuk keluarga beranak lebih dari
  * satu — pemilih yang sama persis dengan yang ada di header portal. Permukaan
@@ -34,12 +34,10 @@ import type { Anak } from '@/lib/keluarga'
  * dipakai pelanggan langganan juga, yang `keluargaContext()`-nya akan menolak.
  *
  * Kecuali kalau ada jalan pulang lain di layar. Keluarga bimbel membuka
- * permukaan ini lewat tab "Latihan", dan bilah navigasi portalnya ikut terbawa
- * ke sini (`BilahKeluarga`) — di layar itu tautan keluar di header adalah
- * kendali kedua menuju tempat yang sama, di pojok yang justru dipakai untuk
- * mundur selangkah. `useTanpaPulang()` melepasnya; tombol MUNDUR tidak pernah
- * ikut dilepas, karena bilah bawah menuju halaman lain — ia tidak bisa
- * memundurkan langkah di dalam permukaan ini.
+ * permukaan ini dari beranda portal, dan tombol kembali harus mengembalikan
+ * ke sana — bukan ke "/". `usePulangKe(href)` mengarahkannya; tombol MUNDUR
+ * tidak pernah ikut dilepas, karena bilah bawah menuju halaman lain — ia
+ * tidak bisa memundurkan langkah di dalam permukaan ini.
  */
 type Kembali = (() => void) | null
 
@@ -51,8 +49,8 @@ const KonteksKepala = createContext<{
   pasang: (fn: Kembali) => void
   judul: string | null
   pasangJudul: (judul: string | null) => void
-  pulang: boolean
-  pasangPulang: (ada: boolean) => void
+  pulang: string | boolean
+  pasangPulang: (v: string | boolean) => void
   pemilih: Pemilih
   pasangPemilih: (p: Pemilih) => void
 }>({
@@ -69,13 +67,13 @@ const KonteksKepala = createContext<{
 export function PenyediaKepala({ children }: { children: React.ReactNode }) {
   const [kembali, setKembali] = useState<Kembali>(null)
   const [judul, setJudul] = useState<string | null>(null)
-  const [pulang, setPulang] = useState(true)
+  const [pulang, setPulang] = useState<string | boolean>(true)
   const [pemilih, setPemilih] = useState<Pemilih>(null)
   // Pembungkus fungsi: `setState` menganggap fungsi sebagai pembaru, jadi
   // menyimpan fungsi harus lewat satu lapis lagi.
   const pasang = useCallback((fn: Kembali) => setKembali(() => fn), [])
   const pasangJudul = useCallback((j: string | null) => setJudul(j), [])
-  const pasangPulang = useCallback((ada: boolean) => setPulang(ada), [])
+  const pasangPulang = useCallback((v: string | boolean) => setPulang(v), [])
   const pasangPemilih = useCallback((p: Pemilih) => setPemilih(p), [])
   return (
     <KonteksKepala
@@ -114,6 +112,18 @@ export function useTanpaPulang() {
     pasangPulang(false)
     return () => pasangPulang(true)
   }, [pasangPulang])
+}
+
+/**
+ * Mengarahkan tautan kembali di header ke halaman tertentu selama komponen
+ * terpasang — misalnya beranda portal untuk keluarga bimbel.
+ */
+export function usePulangKe(href: string) {
+  const { pasangPulang } = useContext(KonteksKepala)
+  useEffect(() => {
+    pasangPulang(href)
+    return () => pasangPulang(true)
+  }, [pasangPulang, href])
 }
 
 /**
@@ -182,7 +192,7 @@ export function KepalaBelajar() {
           <PanahKiri />
         </button>
       ) : pulang ? (
-        <Link href="/" aria-label="Keluar dari latihan" className={GAYA_KEMBALI}>
+        <Link href={typeof pulang === 'string' ? pulang : '/'} aria-label="Kembali ke beranda" className={GAYA_KEMBALI}>
           <PanahKiri />
         </Link>
       ) : null}

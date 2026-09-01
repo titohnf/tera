@@ -8,8 +8,8 @@ import { usePemilihKepala, useTanpaPulang } from './Kepala'
  * Perabot portal keluarga yang dibawa ke permukaan belajar: bilah navigasi di
  * dasar layar, pemilih anak di ujung kanan header.
  *
- * Permukaan ini dipakai dua kalangan: keluarga bimbel, yang tiba dari tab
- * "Latihan" di portalnya, dan pelanggan langganan, yang tidak punya portal
+ * Permukaan ini dipakai dua kalangan: keluarga bimbel, yang tiba dari petak
+ * "Belajar" di berandanya, dan pelanggan langganan, yang tidak punya portal
  * semacam itu. Bilahnya karena itu dirender oleh HALAMAN, bukan oleh layout —
  * layout tidak menerima `?anak=`, dan hanya `belajarContext()` yang tahu jalur
  * mana yang sedang dibuka. Untuk pelanggan langganan komponen ini tidak pernah

@@ -8,7 +8,7 @@ import DaftarPaket from './DaftarPaket'
  * Peta kompetensi: topik yang boleh dikerjakan anak ini, berurut menurut
  * prasyarat — bukan menurut bab buku teks.
  *
- * Ini permukaan yang menggantikan pemilihan lewat topik kurikulum untuk
+ * Permukaan yang menggantikan pemilihan lewat topik kurikulum untuk
  * Matematika. Bedanya bukan tampilan melainkan pertanyaannya: pemilih lama
  * bertanya "mau latihan bab yang mana", peta ini bertanya "kamu siap belajar
  * apa". Bab menyusul jadwal les dan berbeda antar program; kesiapan tidak.
@@ -54,12 +54,9 @@ export default function PetaTopik({
   if (topik.length === 0) return null
 
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Matematika</h2>
-        <p className="mt-0.5 text-sm text-gray-500">
-          Urutannya mengikuti apa yang perlu dikuasai lebih dulu, bukan urutan bab di sekolah.
-        </p>
+    <section className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3 pt-4 pb-1">
+        <h2 className="font-semibold tracking-tight text-gray-900">Paket Topik</h2>
       </div>
 
       <div className="space-y-2">
@@ -75,7 +72,7 @@ export default function PetaTopik({
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-gray-900">{t.nama}</span>
                   <span className="mt-0.5 block text-xs text-gray-400">
-                    Kelas {t.jenjangKelas} · {t.jumlahPaket} paket
+                    {t.jumlahPaket} paket
                   </span>
                   {!t.prasyaratTerpenuhi && (
                     // Kalimatnya sengaja tidak melarang. Yang disampaikan

@@ -19,22 +19,16 @@ import { langganan, snapshotServer, snapshotTerbaca, urai } from '@/lib/notif-te
  * lebih kabur daripada isinya — yang ada di sana adalah jadwal sesi, dan
  * kelas yang sudah selesai diringkas di dasarnya.
  *
- * "Latihan" keluar dari portal ini — ia menuju `/belajar`, permukaan yang
- * dipakai bersama pelanggan langganan. Sebelumnya ia sebuah kartu bernama
- * "SORA" di beranda, di bawah jadwal dan petak pintasan; nama produknya tidak
- * memberi tahu anak apa yang ada di baliknya, dan letaknya menuntut satu
- * gulir. Sebagai tab ia sejajar dengan hal-hal yang paling sering dibuka, dan
- * namanya menyebut kegiatannya.
+ * "Belajar" pernah tinggal di sini sebagai tab, menuju `/belajar`, permukaan
+ * yang dipakai bersama pelanggan langganan. Dari bawah dua layar (Beranda
+ * dan Profil) ia pindah ke sebuah petak di beranda — lihat
+ * `PintasanKeluarga` — dan bilah ini berhenti menyala di `/belajar`. Bilahnya
+ * sendiri tetap dirender di sana (lihat `components/belajar/BilahKeluarga`)
+ * supaya siapa yang tiba dari petak punya jalan pulang ke portal tanpa jauh.
  *
- * Karena tujuannya di luar `/keluarga/[id]`, ia tidak bisa memakai `cocok`
- * yang diukur dari awalan itu; `luar` yang menyalakannya. Bilah ini ikut
- * dirender di sana (lihat `components/belajar/BilahKeluarga`) supaya tab yang
- * terbuka tidak menghilangkan tab-tab lainnya — pindah ke latihan adalah
- * pindah tab, bukan meninggalkan portal.
- *
- * Tagihan, Laporan, Kelas, dan Penguasaan tidak punya tempat di sini;
+ * Tagihan, Laporan, Kelas, dan Belajar tidak punya tempat di sini;
  * keempatnya dijangkau dari petak ikon di beranda, dan bilah ini tidak dirender
- * sama sekali di sana (lihat `RangkaAnak`) — keempatnya sudah membawa panah
+ * sama sekali di sana (lihat `RangkaAnak`) — semuanya sudah membawa panah
  * kembali ke beranda di kepala layar. Karena itu tidak ada satu pun sub-path
  * mereka di daftar `cocok`; kalau suatu saat salah satunya kembali berbilah,
  * sub-pathnya perlu ditambahkan ke "Beranda" supaya ada yang menyala.
@@ -48,11 +42,6 @@ type Item = {
   href: (id: string) => string
   /** Sub-path (setelah `/keluarga/[id]`) yang membuat item ini menyala. */
   cocok: string[]
-  /**
-   * Awalan path PENUH di luar portal yang membuat item ini menyala — untuk
-   * tujuan yang tidak hidup di bawah `/keluarga/[id]`.
-   */
-  luar?: string
   /** Item yang membawa angka kabar belum dibaca. Hanya lonceng. */
   lencana?: true
   ikon: React.ReactNode
@@ -68,14 +57,11 @@ const ITEMS: Item[] = [
     ),
   },
   {
-    label: 'Latihan',
-    /* `?anak=` wajib: `belajarContext()` perlu tahu atas nama siapa, dan
-       memeriksanya lagi lewat `practice_start_as_child()` di database. */
-    href: (id) => `/belajar?anak=${id}`,
-    cocok: [],
-    luar: '/belajar',
+    label: 'x',
+    href: (id) => `/keluarga/${id}/x`,
+    cocok: ['/x'],
     ikon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
     ),
   },
   {
@@ -127,9 +113,7 @@ export default function BottomNav({
           /* `diPortal` menjaga agar di luar portal TIDAK ada yang menyala
              lewat `cocok`: `sisa` di sana kosong, dan "Beranda" cocok dengan
              sisa kosong — tanpa syarat ini ia ikut menyala di /belajar. */
-          const aktif = it.luar
-            ? pathname.startsWith(it.luar)
-            : diPortal && it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
+          const aktif = diPortal && it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
           return (
             <Link
               key={it.label}

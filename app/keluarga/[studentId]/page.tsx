@@ -26,7 +26,7 @@ import KartuTagihan from '@/components/keluarga/beranda/KartuTagihan'
  *      Satu-satunya kartu berwarna penuh di halaman, supaya ada yang memimpin.
  *   2. Tagihan, kalau memang sedang perlu ditagih.
  *   3. Latihan yang tertinggal, kalau ada.
- *   4. Petak pintasan — pintu ke empat layar yang dibuka sesekali.
+ *   4. Petak pintasan — pintu ke Belajar plus tiga layar yang dibuka sesekali.
  *   5. Banner referal, lalu kartu kritik & saran — dua isi halaman ini yang
  *      tidak ditanyakan siapa pun, jadi keduanya paling bawah.
  *
@@ -38,11 +38,12 @@ import KartuTagihan from '@/components/keluarga/beranda/KartuTagihan'
  * di sini: yang perlu dijawab halaman ini cuma "apa saja yang tampil, dalam
  * urutan apa".
  *
- * Kartu SORA dan GAMA pernah ada di sini. SORA turun jadi tab "Latihan" di
- * bilah bawah — nama produknya tidak memberi tahu siapa pun apa yang ada di
- * baliknya, dan sebuah kartu di ujung beranda menuntut gulir untuk sesuatu yang
- * dituju langsung. GAMA dilepas sampai pengerjaannya benar-benar dimulai;
- * bentuk kartunya masih utuh di riwayat git.
+ * Kartu SORA dan GAMA pernah ada di sini. SORA sekarang permukaan
+ * "Belajar" — ` /belajar?anak=` — yang dijangkau dari petak beranda; nama
+ * produknya tidak memberi tahu orang tua apa yang ada di baliknya, dan sebuah
+ * kartu di ujung beranda menuntut gulir untuk sesuatu yang dituju langsung.
+ * GAMA dilepas sampai pengerjaannya benar-benar dimulai; bentuk kartunya masih
+ * utuh di riwayat git.
  */
 
 export default async function AnakBeranda({
