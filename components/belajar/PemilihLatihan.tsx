@@ -721,7 +721,11 @@ export default function PemilihLatihan({
             potongan bank soal topik ini, sepuluh-sepuluh — jadi yang dipilih
             anak bukan "sepuluh soal entah yang mana" melainkan bagian mana dari
             topik ini yang mau ia hadapi, dan bagian mana yang sudah selesai. */}
-        <DaftarPaket anak={anak} groupId={terpilih.group_id} jumlahSoal={terpilih.question_count} />
+        <DaftarPaket
+          anak={anak}
+          sumber={{ jenis: 'grup', groupId: terpilih.group_id }}
+          jumlahSoal={terpilih.question_count}
+        />
       </div>
     )
   }

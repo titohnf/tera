@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
-import { mulaiPaket, muatPaket } from '@/app/belajar/actions'
+import { namaPaket } from '@/lib/belajar/topik-peta'
+import { mulaiPaket, mulaiPaketPeta, muatPaket, muatPaketPeta } from '@/app/belajar/actions'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
 
@@ -24,24 +25,65 @@ import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
  *
  * Paket yang sudah benar semua juga tidak bisa diketuk lagi, dan itu bukan
  * hukuman melainkan kabar baik yang tidak perlu diulang.
+ *
+ * MELAYANI DUA JALUR. `sumber` menentukan paket ini milik topik kurikulum
+ * (latihan bebas) atau topik peta kompetensi. Yang berbeda cuma dari mana
+ * datanya datang dan bagaimana barisnya dinamai — "Paket 3" versus "Paket C2 —
+ * Memahami" — sedangkan aturan apa yang boleh diketuk sama persis untuk
+ * keduanya. Menyalin komponen ini demi perbedaan sebesar itu berarti dua tempat
+ * yang harus diingat bersamaan setiap kali aturannya berubah.
  */
+/** Kunci sebuah baris paket: nomor untuk jalur grup, id untuk jalur peta. */
+type Sumber = { jenis: 'grup'; groupId: string } | { jenis: 'peta'; topikId: string }
+
+/** Bentuk seragam yang dirender layar ini, apa pun jalurnya. */
+interface Baris extends PaketTopik {
+  /** Yang diteruskan ke aksi pembuka — nomor paket, atau id paket. */
+  kunci: string
+  judul: string
+}
+
 export default function DaftarPaket({
   anak,
-  groupId,
+  sumber,
   jumlahSoal,
 }: {
   anak: string | undefined
-  groupId: string
+  sumber: Sumber
   /** Soal di topik ini — dipakai menggambar kerangka sebelum datanya datang. */
   jumlahSoal: number
 }) {
-  const [paket, setPaket] = useState<PaketTopik[] | null>(null)
+  const [paket, setPaket] = useState<Baris[] | null>(null)
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
 
+  const kunciSumber = sumber.jenis === 'grup' ? sumber.groupId : sumber.topikId
+
   useEffect(() => {
     let hidup = true
-    muatPaket(anak, groupId)
+    const muat: Promise<Baris[]> =
+      sumber.jenis === 'grup'
+        ? muatPaket(anak, sumber.groupId).then(d =>
+            d.map(p => ({ ...p, kunci: String(p.nomor), judul: `Paket ${p.nomor}` }))
+          )
+        : muatPaketPeta(anak, sumber.topikId).then(d =>
+            d.map(p => ({
+              nomor: p.nomor,
+              total: p.total,
+              benar: p.benar,
+              sebagian: p.sebagian,
+              salah: p.salah,
+              belum: p.belum,
+              skor: p.skor,
+              maks: p.maks,
+              putaran: p.putaran,
+              terkunci: p.terkunci,
+              kunci: p.paketId,
+              judul: namaPaket(p),
+            }))
+          )
+
+    muat
       .then(d => {
         if (hidup) setPaket(d)
       })
@@ -51,12 +93,16 @@ export default function DaftarPaket({
     return () => {
       hidup = false
     }
-  }, [anak, groupId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anak, sumber.jenis, kunciSumber])
 
-  function buka(nomor: number) {
+  function buka(kunci: string) {
     setGalat(null)
     mulai(async () => {
-      const hasil = await mulaiPaket(anak, groupId, nomor)
+      const hasil =
+        sumber.jenis === 'grup'
+          ? await mulaiPaket(anak, sumber.groupId, Number(kunci))
+          : await mulaiPaketPeta(anak, kunci)
       if (hasil && 'error' in hasil) setGalat(hasil.error)
     })
   }
@@ -100,7 +146,7 @@ export default function DaftarPaket({
           <>
             <span className="min-w-0 flex-1">
               <span className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold text-gray-900">Paket {p.nomor}</span>
+                <span className="text-sm font-semibold text-gray-900">{p.judul}</span>
                 <span className="text-xs text-gray-400">{p.total} soal</span>
               </span>
               <span className="mt-0.5 block text-sm text-gray-500">
@@ -131,10 +177,10 @@ export default function DaftarPaket({
 
         return bisa ? (
           <button
-            key={p.nomor}
+            key={p.kunci}
             type="button"
             disabled={sibuk}
-            onClick={() => buka(p.nomor)}
+            onClick={() => buka(p.kunci)}
             className={`${gaya} transition hover:bg-slate-50 disabled:opacity-60`}
           >
             {isi}
@@ -143,7 +189,7 @@ export default function DaftarPaket({
           // Bukan tombol mati melainkan bukan tombol sama sekali: sasaran ketuk
           // yang tidak melakukan apa-apa membuat orang mengetuknya berkali-kali
           // untuk memastikan.
-          <div key={p.nomor} className={`${gaya} opacity-70`}>
+          <div key={p.kunci} className={`${gaya} opacity-70`}>
             {isi}
           </div>
         )

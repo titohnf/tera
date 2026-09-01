@@ -19,6 +19,14 @@ import {
   type HasilJawab,
   type TopikLatihan,
 } from '@/lib/belajar/sesi'
+import {
+  bukaPaketTopik,
+  keadaanPaketTopik,
+  kunciPaketTopik,
+  petaTopik,
+  type PaketPeta,
+  type TopikPeta,
+} from '@/lib/belajar/topik-peta'
 
 /**
  * Aksi permukaan belajar — tipis dengan sengaja.
@@ -195,4 +203,55 @@ export async function bukaKunciJawaban(sesiId: string): Promise<never> {
   if (paket) await kunciPaket(pemilik.learnerId, paket.groupId, paket.nomor)
 
   redirect(`/belajar/${sesiId}/hasil?kunci=1`)
+}
+
+/* ---------------------------------------------------------------------------
+ * Jalur peta kompetensi
+ *
+ * Kembaran tiga aksi paket di atas, berkunci topik. Gerbangnya sama persis —
+ * `belajarContext()` yang memutuskan atas nama siapa, dan learner id tidak
+ * pernah datang dari browser.
+ * ------------------------------------------------------------------------- */
+
+export async function muatPeta(anak: string | undefined): Promise<TopikPeta[]> {
+  const { learnerId } = await belajarContext(anak)
+  return petaTopik(learnerId)
+}
+
+export async function muatPaketPeta(
+  anak: string | undefined,
+  topikId: string
+): Promise<PaketPeta[]> {
+  const { learnerId } = await belajarContext(anak)
+  return keadaanPaketTopik(learnerId, topikId)
+}
+
+/**
+ * Membuka satu putaran paket peta.
+ *
+ * Yang boleh datang dari browser cuma id paketnya; siapa pemiliknya, soal mana
+ * yang masih perlu dikerjakan, dan boleh-tidaknya dibuka semuanya diputuskan di
+ * database.
+ */
+export async function mulaiPaketPeta(
+  anak: string | undefined,
+  paketId: string
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+  const sesiId = await bukaPaketTopik(learnerId, paketId)
+  if (!sesiId) {
+    return {
+      error:
+        'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, kuncinya sudah dibuka, atau ujiannya sudah pernah dikerjakan.',
+    }
+  }
+  redirect(`/belajar/${sesiId}`)
+}
+
+export async function bukaKunciPaketPeta(
+  anak: string | undefined,
+  paketId: string
+): Promise<boolean> {
+  const { learnerId } = await belajarContext(anak)
+  return kunciPaketTopik(learnerId, paketId)
 }

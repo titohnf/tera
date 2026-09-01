@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { mapelLatihan } from '@/lib/belajar/sesi'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
+import PetaTopik from '@/components/belajar/PetaTopik'
 import BilahKeluarga from '@/components/belajar/BilahKeluarga'
 import { notifikasiAnak } from '@/lib/keluarga-notifikasi'
 import { keluargaContext } from '@/lib/keluarga'
@@ -90,6 +91,20 @@ export default async function BelajarBeranda({
 
   return (
     <div className="space-y-4">
+      {/* Peta kompetensi berdiri DI ATAS pemilih lama, dan tanpa percabangan
+          "ini Matematika atau bukan" di sini.
+
+          Yang memindahkannya bukan kode ini melainkan data: sejak migrasi 148,
+          butir yang punya topik pengukuran tidak lagi ditandai ke grup
+          kurikulum, dan seluruh keluarga `practice_*` berpangkal pada tag itu.
+          Jadi Matematika keluar sendiri dari pemilih lama begitu soalnya masuk
+          peta — tidak ada saklar yang bisa lupa dinyalakan di satu tempat dan
+          tidak di tempat lain.
+
+          Komponennya sendiri tidak menampilkan apa pun kalau petanya belum
+          punya topik berisi. */}
+      <PetaTopik anak={anak} />
+
       <PemilihLatihan
         mapel={mapel}
         anak={anak}
