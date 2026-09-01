@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
-import { namaPaket } from '@/lib/belajar/topik-peta'
+import { namaPaket } from '@/lib/belajar/nama-paket'
 import { mulaiPaket, mulaiPaketPeta, muatPaket, muatPaketPeta } from '@/app/belajar/actions'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
