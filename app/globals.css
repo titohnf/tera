@@ -5,6 +5,27 @@
 /* Disable system dark mode — use class-based only (we never add .dark) */
 @variant dark (&:where(.dark, .dark *));
 
+/**
+ * Bayang kartu portal keluarga dan permukaan belajar.
+ *
+ * Offset x DAN y-nya nol, jadi bayangnya rata di keempat sisi. `shadow-sm`
+ * bawaan Tailwind bergeser 1px ke bawah — masuk akal di atas latar abu, tempat
+ * kartunya memang meniru kertas yang disinari dari atas, tapi di atas latar
+ * putih hasilnya tepi atas yang nyaris tak terlihat sementara tepi bawah tegas.
+ * Kartu jadi tampak melorot alih-alih terangkat.
+ *
+ * Dua lapis, keduanya tanpa offset: yang rapat (2px) menggantikan tugas garis
+ * tepi, yang lebar (10px) memberi kedalaman. Satu lapis saja memaksa memilih
+ * antara tepi yang kabur atau bayang yang menggumpal.
+ *
+ * `naik` untuk keadaan hover — perbedaannya kedalaman, bukan arah, supaya
+ * kartunya terbaca naik lurus ke arah pembaca.
+ */
+@theme {
+  --shadow-kartu: 0 0 2px rgba(15, 23, 42, 0.06), 0 0 10px rgba(15, 23, 42, 0.06);
+  --shadow-kartu-naik: 0 0 3px rgba(15, 23, 42, 0.08), 0 0 18px rgba(15, 23, 42, 0.1);
+}
+
 body {
   background-color: #ffffff;
   color: #171717;

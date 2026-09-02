@@ -27,18 +27,19 @@ export default function InputSoal({
   soal,
   nilai,
   onChange,
-  terkunci,
 }: {
   soal: SoalSesi
   nilai: unknown
   onChange: (nilai: unknown) => void
-  /** Sesudah diperiksa, jawabannya tidak bisa diubah lagi. */
-  terkunci: boolean
 }) {
   const opsiPilihan = (soal.opsi as OpsiPilihan | null)?.choices ?? []
 
+  // `fieldset` tanpa `disabled`: dulu ia mengunci jawaban sesudah diperiksa,
+  // dan sejak umpan balik per soal dihapus tidak ada lagi keadaan "sudah
+  // diperiksa tapi masih di layar". Yang tersisa dari fieldset cuma
+  // pengelompokannya, dan itu memang yang dibutuhkan pembaca layar.
   return (
-    <fieldset disabled={terkunci} className="min-w-0">
+    <fieldset className="min-w-0">
       {soal.tipe !== 'fill_blank' && (
         // Gambar dan tabel ikut di dalam `prompt`, di posisi yang dipilih
         // penyusun soalnya — lihat `IsiSoal`.

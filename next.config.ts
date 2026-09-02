@@ -34,6 +34,17 @@ const nextConfig: NextConfig = {
         destination: '/admin/materi-latihan-soal',
         permanent: false,
       },
+      // Tab bilah bawah keluarga sempat tayang bernama "x" — nama sementara
+      // yang ikut terbawa ke alamatnya. Hidup satu hari saja, dan hanya
+      // dicapai dari bilah, jadi nyaris tidak ada tautan beredar. Yang
+      // ditolong pengalihan ini adalah tab yang masih terbuka di ponsel:
+      // sebuah 404 tepat di bilah navigasi terbaca sebagai "aplikasinya
+      // rusak". Boleh dihapus setelah satu rilis.
+      {
+        source: '/keluarga/:studentId/x',
+        destination: '/keluarga/:studentId/misi',
+        permanent: false,
+      },
     ]
   },
   experimental: {

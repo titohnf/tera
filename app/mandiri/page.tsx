@@ -1,5 +1,5 @@
 import { mandiriContext } from '@/lib/mandiri'
-import KartuAplikasi, { IKON_GAMA, IKON_SORA } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi, { IKON_SORA } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda pelanggan langganan: kartu produk yang sadar hak pakai.
@@ -9,10 +9,17 @@ import KartuAplikasi, { IKON_GAMA, IKON_SORA } from '@/components/apps/KartuApli
  * janji: SORA harus terlihat seperti satu produk yang sama, siapa pun yang
  * membukanya.
  *
- * Kartu yang belum aktif tetap TAMPIL, tidak disembunyikan — pembaca yang tidak
- * melihat GAMA sama sekali tidak tahu ada yang bisa ditunggu, dan pembaca yang
- * tidak melihat SORA tidak tahu ada yang bisa dibeli. Yang berubah cuma
+ * Kartu SORA yang belum aktif tetap TAMPIL, tidak disembunyikan — pembaca yang
+ * tidak melihatnya tidak tahu ada yang bisa dibeli. Yang berubah cuma
  * tujuannya: ke halaman langganan, bukan ke latihan.
+ *
+ * GAMA turun dari sini bersamaan dengan turunnya dari beranda keluarga, dan
+ * memang harus bersamaan: kedua beranda menampilkan produk yang sama, dan satu
+ * kartu "Segera hadir" yang cuma terlihat oleh separuh pemakainya adalah
+ * persis kembaran yang menyimpang, yang `KartuAplikasi` ada untuk mencegahnya.
+ * Bedanya dengan SORA yang belum aktif: SORA sudah ada dan bisa dibeli hari
+ * ini, sementara GAMA belum mulai dikerjakan — janji tanpa tanggal yang makin
+ * lama makin terbaca sebagai bagian aplikasi yang rusak.
  */
 export default async function BerandaMandiri() {
   const { namaPendek, produk } = await mandiriContext()
@@ -35,15 +42,6 @@ export default async function BerandaMandiri() {
         href={produk.sora ? '/belajar' : '/mandiri/langganan'}
         warna={produk.sora ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}
         ikon={IKON_SORA}
-      />
-
-      <KartuAplikasi
-        nama="GAMA"
-        keterangan="Segera hadir"
-        teks="Game matematika."
-        href={null}
-        warna="bg-slate-100 text-slate-400"
-        ikon={IKON_GAMA}
       />
     </div>
   )

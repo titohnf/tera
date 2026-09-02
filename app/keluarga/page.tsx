@@ -10,7 +10,7 @@ import KartuAkun from '@/components/apps/KartuAkun'
  * bukan tujuan kunjungan, ia saklar yang dipakai berulang kali dalam satu
  * kunjungan — dan sebagai layar tersendiri ia memaksa orang tua beranak dua
  * kembali ke sini setiap kali ingin membandingkan sesuatu. Saklarnya kini jadi
- * bilah tab di puncak setiap halaman (`components/keluarga/AnakTabs.tsx`), dan
+ * tombol di pojok kanan bilah atas (`components/keluarga/PemilihAnak.tsx`), dan
  * ringkasan yang dulu ada di kartu-kartu itu pindah ke beranda masing-masing
  * anak, di tempat yang bisa ditindaklanjuti.
  *
@@ -30,7 +30,7 @@ export default async function KeluargaHome() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-      <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
+      <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">
         Belum ada anak yang tertaut ke akun ini. Hubungi admin Tera.
       </p>
 

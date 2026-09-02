@@ -3,6 +3,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import PemilihAnak from '@/components/keluarga/PemilihAnak'
+import { adalahKodeTopik } from '@/lib/belajar/kode-topik'
+import type { Anak } from '@/lib/keluarga'
 
 /**
  * Bilah atas portal keluarga: logo di beranda, nama layar di halaman lain.
@@ -23,11 +26,11 @@ import { usePathname } from 'next/navigation'
  * judul yang sama, bertumpuk, adalah harga yang tidak perlu dibayar di layar
  * setinggi 640px.
  *
- * Empat halaman yang dibuka dari petak ikon di beranda — Tagihan, Laporan,
- * Materi, Penguasaan — membawa panah kembali ke beranda di sebelah judulnya.
- * Panahnya sendirian, tanpa tulisan: yang ditinggalkan sudah jelas karena cuma
- * dari sanalah keempatnya bisa dibuka, dan panah bertulisan di puncak layar
- * bersaing dengan judul yang berdiri tepat di sebelahnya. Keempatnya tidak
+ * Halaman yang dibuka dari petak ikon di beranda — Tagihan, Jadwal, dan
+ * Laporan dengan ketiga tabnya — membawa panah kembali ke beranda di sebelah
+ * judulnya. Panahnya sendirian, tanpa tulisan: yang ditinggalkan sudah jelas
+ * karena cuma dari sanalah semuanya bisa dibuka, dan panah bertulisan di puncak
+ * layar bersaing dengan judul yang berdiri tepat di sebelahnya. Semuanya tidak
  * punya tempat di bilah navigasi bawah, jadi tanpa panah ini satu-satunya
  * jalan pulang adalah tombol kembali milik browser — yang di ponsel berarti
  * gerakan geser dari tepi, dan tidak semua orang memakainya.
@@ -35,6 +38,13 @@ import { usePathname } from 'next/navigation'
  * Ujung kanannya adalah slot kosong `#aksi-layar`: halaman boleh menaruh satu
  * aksi miliknya sendiri sejajar dengan judul lewat `createPortal` (lihat
  * `components/keluarga/SaringSheet`).
+ *
+ * Paling kanan lagi — sesudah slot itu — duduk pemilih anak, untuk keluarga
+ * yang anaknya lebih dari satu. Ia dulu sebuah bilah tab tersendiri di bawah
+ * header; alasan pemindahannya ditulis di `PemilihAnak`. Tempatnya di header
+ * TERLUAR, bukan di rangka `[studentId]`, supaya ia tidak ikut dipasang ulang
+ * setiap kali anaknya berganti — dan karena itu satu-satunya alasan daftar
+ * anaknya diturunkan sampai ke sini.
  */
 
 type Layar = {
@@ -51,22 +61,73 @@ const LAYAR: Record<string, Layar> = {
   // beranda: pintu masuknya sekarang beranda, jadi panah kembali harus pulang
   // ke sana. Tanpa itu, layar yang dibuka dari sebuah petak tidak punya jalan
   // mundur ke petak-petaknya.
-  jadwal: { judul: 'Riwayat Kelas', kembali: '' },
+  jadwal: { judul: 'Jadwal', kembali: '' },
   notifikasi: { judul: 'Notifikasi' },
   profil: { judul: 'Profil' },
+  misi: { judul: 'Misi' },
   tagihan: { judul: 'Tagihan', kembali: '' },
-  laporan: { judul: 'Laporan Bulanan', kembali: '' },
-  penguasaan: { judul: 'Penguasaan', kembali: '' },
+  laporan: { judul: 'Laporan', kembali: '' },
+  penguasaan: { judul: 'Laporan', kembali: '' },
+  ketuntasan: { judul: 'Laporan', kembali: '' },
 }
 
-export default function HeaderKeluarga() {
+/**
+ * Layar yang berada SATU tingkat di dalam salah satu layar di atas — rincian
+ * satu topik, misalnya. Panah kembalinya menuju daftarnya, bukan beranda:
+ * mundur dari sebuah rincian ke daftar tempat ia diketuk adalah satu-satunya
+ * arah yang tidak menuntut pembacanya mencari lagi dari awal.
+ *
+ * Tujuannya fungsi dari kuncinya, karena `/penguasaan/[kunci]` melayani DUA
+ * daftar: kunci berbentuk uuid diketuk dari tab Latihan Mandiri, kode topik
+ * peta (`D-01`) dari tab Ketuntasan Materi. Dulu tujuannya dipatok
+ * `/penguasaan` — benar selama seksi Misi masih menumpang di layar itu, dan
+ * salah sejak ia pindah ke tabnya sendiri: pembacanya mundur ke tab yang bukan
+ * tab yang ia tinggalkan.
+ */
+const LAYAR_RINCI: Record<string, { judul: string; kembali: (kunci: string) => string }> = {
+  penguasaan: {
+    judul: 'Rincian Topik',
+    kembali: kunci => (adalahKodeTopik(kunci) ? '/ketuntasan' : '/penguasaan'),
+  },
+}
+
+/**
+ * Layar DUA tingkat di dalam: satu soal, di dalam rincian sebuah topik. Panah
+ * kembalinya menuju TOPIKNYA, bukan daftar topik — mundur dari sebuah soal
+ * langsung ke daftar seluruh topik melewatkan justru layar yang baru saja
+ * ditinggalkan, dan orang tua yang sedang memeriksa soal kedua dari empat harus
+ * menelusuri lagi dari awal untuk tiap soal berikutnya.
+ *
+ * Tujuannya bergantung pada topik yang sedang dibuka, jadi ia fungsi — sama
+ * seperti `LAYAR_RINCI`, dan tidak seperti `LAYAR` yang tujuannya tetap.
+ */
+const LAYAR_DALAM: Record<string, { judul: string; kembali: (topik: string) => string }> = {
+  penguasaan: { judul: 'Soal', kembali: topik => `/penguasaan/${topik}` },
+}
+
+export default function HeaderKeluarga({ anak }: { anak: Anak[] }) {
   const pathname = usePathname()
-  const cocok = pathname.match(/^\/keluarga\/([^/]+)\/([^/]+)/)
+  const cocok = pathname.match(/^\/keluarga\/([^/]+)\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?/)
   const studentId = cocok?.[1]
-  const layar = cocok ? LAYAR[cocok[2]] : undefined
+  const bagian = cocok?.[2]
+  const dalam = bagian && cocok?.[4] ? LAYAR_DALAM[bagian] : undefined
+  const rinci = bagian && !dalam && cocok?.[3] ? LAYAR_RINCI[bagian] : undefined
+  const layar: Layar | undefined = !bagian
+    ? undefined
+    : dalam
+      ? { judul: dalam.judul, kembali: dalam.kembali(cocok![3]!) }
+      : cocok![3]
+        ? (rinci
+            ? { judul: rinci.judul, kembali: rinci.kembali(cocok![3]!) }
+            : LAYAR[bagian])
+        : LAYAR[bagian]
+  /* Beranda anak (`/keluarga/<id>`) tidak punya sub-path, jadi `cocok` di atas
+     tidak menangkapnya — sementara pemilih anak justru paling sering dipakai
+     dari sana. Id-nya ditelusuri sendiri. */
+  const anakDibuka = pathname.match(/^\/keluarga\/([^/]+)/)?.[1]
 
   return (
-    <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center px-4 sm:px-6">
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 sm:px-6">
       {layar ? (
         <div className="flex items-center gap-1">
           {layar.kembali !== undefined && (
@@ -110,6 +171,14 @@ export default function HeaderKeluarga() {
           ini dirakit di layout terluar, sementara yang tahu aksi apa yang
           pantas di sini adalah halaman yang sedang dibuka. */}
       <div id="aksi-layar" className="ml-auto flex items-center" />
+
+      {anak.length > 1 && anakDibuka && (
+        /* `ml-1` hanya kalau ada tetangga; slot aksi di atas sudah memakai
+           `ml-auto`, jadi jarak ini yang memisahkan keduanya. */
+        <div className="ml-1 flex items-center">
+          <PemilihAnak anak={anak} aktif={anakDibuka} />
+        </div>
+      )}
     </header>
   )
 }

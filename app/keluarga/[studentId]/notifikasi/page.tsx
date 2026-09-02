@@ -29,7 +29,7 @@ export default async function NotifikasiAnak({
     <div className="space-y-5">
       {/* Judulnya ada di bilah atas (`HeaderKeluarga`), tidak diulang di sini. */}
       {items.length === 0 ? (
-        <div className="rounded-xl bg-white p-8 text-center shadow ring-1 ring-gray-900/5">
+        <div className="rounded-xl bg-white p-8 text-center shadow-kartu">
           <svg
             className="w-10 h-10 mx-auto text-gray-300"
             fill="none"
@@ -51,7 +51,7 @@ export default async function NotifikasiAnak({
         </div>
       ) : (
         <>
-          <div className="rounded-xl bg-white shadow ring-1 ring-gray-900/5 overflow-hidden">
+          <div className="rounded-xl bg-white shadow-kartu overflow-hidden">
             <NotifikasiList items={items} sekarangIso={sekarang} />
           </div>
           <p className="text-xs text-gray-400 text-center leading-relaxed">

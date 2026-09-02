@@ -1,18 +1,22 @@
 import Link from 'next/link'
 
 /**
- * Kartu satu aplikasi — SORA, GAMA — di beranda.
+ * Kartu satu aplikasi di beranda — hari ini cuma SORA, di beranda pelanggan
+ * langganan.
  *
- * Diangkat dari dalam `app/keluarga/[studentId]/page.tsx` supaya beranda
- * pelanggan langganan (`app/mandiri`) memakai kartu yang sama persis. Keduanya
- * menampilkan tiga produk yang sama; dua salinan yang pelan-pelan menyimpang
- * akan membuat SORA terlihat seperti dua hal berbeda tergantung siapa yang
- * membukanya.
+ * Diangkat dari dalam `app/keluarga/[studentId]/page.tsx` supaya kedua beranda
+ * memakai kartu yang sama persis — dua salinan yang pelan-pelan menyimpang akan
+ * membuat SORA terlihat seperti dua hal berbeda tergantung siapa yang
+ * membukanya. Beranda keluarga sejak itu berhenti memakainya sama sekali:
+ * SORA-nya jadi permukaan "Belajar", dijangkau dari petak beranda; GAMA-nya
+ * dilepas sampai pengerjaannya dimulai. Yang tersisa satu pemanggil, dan alasan di atas tetap
+ * berlaku begitu ada yang kedua.
  *
- * `href` null berarti kartunya tampil tapi tidak bisa diketuk — dipakai untuk
- * GAMA yang belum ada, dan dulu untuk SORA saat `NEXT_PUBLIC_SORA_URL` kosong.
- * Lebih jujur daripada menyembunyikan kartunya (pembaca tidak tahu ada apa yang
- * belum datang) atau menautkannya ke alamat tebakan yang berujung 404.
+ * `href` null berarti kartunya tampil tapi tidak bisa diketuk — dipakai kartu
+ * GAMA selama ia masih "Segera hadir", dan dulu untuk SORA saat
+ * `NEXT_PUBLIC_SORA_URL` kosong. Lebih jujur daripada menautkannya ke alamat
+ * tebakan yang berujung 404. Tidak ada yang memakainya hari ini; ia ditahan
+ * karena kartu produk berikutnya akan melewati keadaan yang sama.
  *
  * Tautan internal memakai `Link`, tautan keluar memakai `<a>` biasa: prefetch
  * milik Next hanya berlaku untuk rute aplikasi ini, dan memaksanya ke alamat
@@ -78,12 +82,13 @@ export default function KartuAplikasi({
   )
 }
 
-/** Ikon SORA — buku terbuka. Dipakai kedua beranda, jadi ia tinggal di sini. */
+/**
+ * Ikon SORA — buku terbuka. Bentuk yang sama juga dipakai tab "Latihan" di
+ * bilah bawah portal keluarga, ditulis ulang di sana: yang ini sebuah simpul
+ * React siap pakai, sementara `BottomNav` menyimpan ikon-ikonnya sebaris dalam
+ * satu daftar dan tidak memungut simpul dari luar.
+ */
 export const IKON_SORA = (
   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
 )
 
-/** Ikon GAMA — stik game. */
-export const IKON_GAMA = (
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm2.498-6.75h.007v.008h-.007V6.75zm-2.498 0h.008v.008H8.25V6.75zM12 12h.008v.008H12V12zm0 2.25h.008v.008H12v-.008zM9.75 18h.008v.008H9.75V18zm-2.25-2.25h.008v.008H7.5v-.008zM12 6.75V4.5m-7.5 15h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003 6v12a1.5 1.5 0 001.5 1.5z" />
-)

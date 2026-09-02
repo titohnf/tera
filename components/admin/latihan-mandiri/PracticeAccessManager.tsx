@@ -7,6 +7,7 @@ import {
   revokeCode,
   createExternalLearner,
   deleteExternalLearner,
+  setTutorPenanggungJawab,
 } from '@/lib/actions/admin/practice-access'
 
 export type LearnerRow = {
@@ -14,7 +15,14 @@ export type LearnerRow = {
   profile_id: string | null
   name: string
   access_code: string | null
+  /** Tutor yang menerima eskalasi murid ini (PRD FR9). */
+  tutor_penanggung_jawab_id: string | null
   finishedSessions: number
+}
+
+export type TutorRow = {
+  id: string
+  full_name: string
 }
 
 export type StudentRow = {
@@ -34,9 +42,11 @@ export type StudentRow = {
 export default function PracticeAccessManager({
   learners,
   unlinkedStudents,
+  tutors,
 }: {
   learners: LearnerRow[]
   unlinkedStudents: StudentRow[]
+  tutors: TutorRow[]
 }) {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
@@ -82,8 +92,10 @@ export default function PracticeAccessManager({
             key={learner.id}
             learner={learner}
             pending={pending}
+            tutors={tutors}
             onReissue={() => run(() => reissueCode(learner.id))}
             onRevoke={() => run(() => revokeCode(learner.id))}
+            onPenanggungJawab={id => run(() => setTutorPenanggungJawab(learner.id, id))}
           />
         ))}
       </div>
@@ -169,8 +181,10 @@ export default function PracticeAccessManager({
             key={learner.id}
             learner={learner}
             pending={pending}
+            tutors={tutors}
             onReissue={() => run(() => reissueCode(learner.id))}
             onRevoke={() => run(() => revokeCode(learner.id))}
+            onPenanggungJawab={id => run(() => setTutorPenanggungJawab(learner.id, id))}
             onDelete={() => run(() => deleteExternalLearner(learner.id))}
           />
         ))}
@@ -182,14 +196,18 @@ export default function PracticeAccessManager({
 function LearnerRowView({
   learner,
   pending,
+  tutors,
   onReissue,
   onRevoke,
+  onPenanggungJawab,
   onDelete,
 }: {
   learner: LearnerRow
   pending: boolean
+  tutors: TutorRow[]
   onReissue: () => void
   onRevoke: () => void
+  onPenanggungJawab: (tutorId: string | null) => void
   onDelete?: () => void
 }) {
   return (
@@ -201,6 +219,33 @@ function LearnerRowView({
             ? 'belum pernah latihan'
             : `${learner.finishedSessions} sesi selesai`}
         </p>
+        {/*
+          Penanggung jawab pengukuran (FR9). Ditaruh di sini, bukan di layar
+          sendiri, karena inilah satu-satunya halaman tempat baris `learners`
+          benar-benar dikelola — dan penanggung jawab yang kosong bukan
+          kekurangan kecil: tanpanya murid ini akan ditolak saat membuka paket
+          pengukuran pertamanya.
+        */}
+        <label className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+          <span>Penanggung jawab</span>
+          <select
+            value={learner.tutor_penanggung_jawab_id ?? ''}
+            disabled={pending}
+            onChange={e => onPenanggungJawab(e.target.value || null)}
+            className={`rounded border px-1.5 py-0.5 text-xs disabled:opacity-50 ${
+              learner.tutor_penanggung_jawab_id
+                ? 'border-slate-200 text-gray-700'
+                : 'border-amber-300 bg-amber-50 text-amber-700'
+            }`}
+          >
+            <option value="">— belum ditetapkan —</option>
+            {tutors.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="flex items-center gap-3">

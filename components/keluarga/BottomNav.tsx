@@ -19,12 +19,27 @@ import { langganan, snapshotServer, snapshotTerbaca, urai } from '@/lib/notif-te
  * lebih kabur daripada isinya — yang ada di sana adalah jadwal sesi, dan
  * kelas yang sudah selesai diringkas di dasarnya.
  *
- * Tagihan, Laporan, Materi, dan Penguasaan tidak cukup sering dibuka untuk
- * mendapat tempatnya sendiri di sini; keempatnya dijangkau dari petak ikon di
- * beranda, jadi "Beranda"-lah yang menyala saat salah satunya terbuka. Sebelum
- * petak itu ada keempatnya bernaung di bawah "Profil". Karena satu item bisa
- * menaungi beberapa halaman, yang menyala ditentukan oleh daftar `cocok`,
- * bukan oleh perbandingan persis dengan `href`.
+ * "Belajar" pernah tinggal di sini sebagai tab, menuju `/belajar`, permukaan
+ * yang dipakai bersama pelanggan langganan. Ia pindah ke sebuah petak di
+ * beranda — lihat `PintasanKeluarga` — dan bilah ini berhenti menyala di
+ * `/belajar`. Bilahnya juga tidak dirender di sana: yang membawa orang pulang
+ * ke portal adalah `components/belajar/PulangKe` di kepala layar.
+ *
+ * Tempat yang ditinggalkannya diisi "Misi", peta kompetensi berkunci topik
+ * pengukuran. Bukan penggantinya melainkan tetangganya: Belajar menyusun
+ * dunia menurut bab kurikulum bimbel, Misi menurut apa yang diukur, dan
+ * migrasi 148 memisahkan butir keduanya dengan trigger. Keduanya memang
+ * berdampingan permanen.
+ *
+ * Tagihan, Laporan, Kelas, dan Belajar tidak punya tempat di sini;
+ * keempatnya dijangkau dari petak ikon di beranda, dan bilah ini tidak dirender
+ * sama sekali di sana (lihat `RangkaAnak`) — semuanya sudah membawa panah
+ * kembali ke beranda di kepala layar. Karena itu tidak ada satu pun sub-path
+ * mereka di daftar `cocok`; kalau suatu saat salah satunya kembali berbilah,
+ * sub-pathnya perlu ditambahkan ke "Beranda" supaya ada yang menyala.
+ *
+ * Karena satu item bisa menaungi beberapa halaman, yang menyala ditentukan oleh
+ * daftar `cocok`, bukan oleh perbandingan persis dengan `href`.
  */
 
 type Item = {
@@ -41,9 +56,17 @@ const ITEMS: Item[] = [
   {
     label: 'Beranda',
     href: (id) => `/keluarga/${id}`,
-    cocok: ['', '/tagihan', '/laporan', '/penguasaan', '/jadwal'],
+    cocok: [''],
     ikon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+    ),
+  },
+  {
+    label: 'Misi',
+    href: (id) => `/keluarga/${id}/misi`,
+    cocok: ['/misi'],
+    ikon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
     ),
   },
   {
@@ -80,7 +103,8 @@ export default function BottomNav({
     ? 0
     : idNotifikasi.filter((id) => !terbaca.has(id)).length
   const awalan = `/keluarga/${studentId}`
-  const sisa = pathname.startsWith(awalan) ? pathname.slice(awalan.length) : ''
+  const diPortal = pathname.startsWith(awalan)
+  const sisa = diPortal ? pathname.slice(awalan.length) : ''
 
   return (
     <nav
@@ -89,9 +113,12 @@ export default function BottomNav({
          geser iPhone; tanpa itu label paling bawah tertutup separuh. */
       className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="max-w-5xl mx-auto grid grid-cols-3">
+      <div className="max-w-5xl mx-auto grid grid-cols-4">
         {ITEMS.map((it) => {
-          const aktif = it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
+          /* `diPortal` menjaga agar di luar portal TIDAK ada yang menyala
+             lewat `cocok`: `sisa` di sana kosong, dan "Beranda" cocok dengan
+             sisa kosong — tanpa syarat ini ia ikut menyala di /belajar. */
+          const aktif = diPortal && it.cocok.some((c) => (c === '' ? sisa === '' : sisa.startsWith(c)))
           return (
             <Link
               key={it.label}

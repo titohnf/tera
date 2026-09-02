@@ -25,10 +25,32 @@
  * "Terlambat" menghukum keluarga yang justru sudah mulai membayar, dan di layar
  * admin ia menenggelamkan kabar bahwa uangnya sebagian sudah masuk.
  *
- * Yang merah hanya tagihan yang lewat jatuh tempo TANPA pembayaran sama sekali.
- * Itu pembedaan yang benar-benar dipakai saat menagih: yang menyicil ditunggu,
- * yang diam saja dihubungi.
+ * Yang merah ada dua: tagihan yang lewat jatuh tempo TANPA pembayaran sama
+ * sekali, dan angsuran yang berhenti — pembayaran terakhirnya lebih dari 30
+ * hari lalu. Itu pembedaan yang benar-benar dipakai saat menagih: yang menyicil
+ * ditunggu, yang diam saja dihubungi.
+ *
+ * Ambang 30 hari itu bukan angka bulat yang dikarang: invoice kelas reguler
+ * diterbitkan satu semester sekaligus sementara hampir semua orang tua
+ * membayarnya bulanan, jadi jeda satu bulan antar-angsuran adalah irama yang
+ * normal. Yang melewatinya berarti benar-benar berhenti, bukan sedang menunggu
+ * tanggal gajian berikutnya.
  */
+
+/** Batas diamnya sebuah angsuran sebelum ia disebut terlambat. */
+export const MACET_HARI = 30
+
+/**
+ * Selisih hari antara dua tanggal. Menerima
+ * `YYYY-MM-DD` maupun cap waktu ISO penuh — `paid_at` bertipe timestamp,
+ * `due_date` bertipe date, dan keduanya bertemu di fungsi ini.
+ */
+function selisihHari(dari: string, ke: string): number {
+  return Math.round(
+    (Date.parse(`${ke.slice(0, 10)}T00:00:00Z`) - Date.parse(`${dari.slice(0, 10)}T00:00:00Z`)) /
+      86_400_000,
+  )
+}
 
 export type TagihanStatus = {
   label: string
@@ -51,25 +73,48 @@ const DASAR: Record<string, TagihanStatus> = {
   overdue:        { label: 'Terlambat',  cls: 'bg-red-100 text-red-600' },
 }
 
+/**
+ * Tanggal pembayaran terakhir dari sederet pembayaran, atau null kalau belum
+ * ada satu pun. Dipusatkan di sini supaya setiap layar yang menilai angsuran
+ * macet membacanya dengan cara yang sama.
+ */
+export function tanggalBayarTerakhir(daftar: { paid_at: string }[]): string | null {
+  return daftar.reduce<string | null>(
+    (t, p) => (t === null || p.paid_at > t ? p.paid_at : t),
+    null,
+  )
+}
+
 /** Status yang tagihannya sudah selesai — tidak bisa disebut terlambat. */
 function sudahSelesai(status: string): boolean {
   return status === 'paid' || status === 'cancelled' || status === 'draft'
 }
 
 /**
- * Lewat jatuh tempo dan belum dibayar sepeser pun.
+ * Terlambat — dalam dua bentuk yang berbeda ukurannya.
  *
- * `partially_paid` sengaja TIDAK ikut: begitu ada pembayaran masuk, tagihannya
- * berjalan sebagai angsuran, dan tanggal jatuh tempo aslinya bukan lagi ukuran
- * yang adil. Untuk menyorot angsuran yang macet, pakai tanggal pembayaran
- * terakhir — bukan fungsi ini.
+ * Untuk tagihan yang belum dibayar sepeser pun, ukurannya jatuh tempo. Untuk
+ * ANGSURAN, tanggal jatuh tempo asli bukan lagi ukuran yang adil begitu
+ * pembayaran pertama masuk — invoicenya satu semester, cicilannya bulanan, jadi
+ * ia akan lewat tempo sepanjang sisa semester meski uangnya mengalir tiap bulan.
+ * Yang diukur adalah DIAMNYA: lebih dari `MACET_HARI` sejak pembayaran terakhir.
+ *
+ * `bayarTerakhir` opsional, dan tanpa ia angsuran tidak pernah disebut
+ * terlambat. Itu disengaja: pemanggil yang tidak punya data pembayaran lebih
+ * baik diam daripada menebak, dan tidak ada layar yang mendadak memerah karena
+ * seseorang lupa meneruskan satu argumen.
  */
 export function tagihanTerlambat(
   status: string,
   dueDate: string | null,
   hariIni: string,
+  /** Tanggal pembayaran TERAKHIR yang tercatat, kalau ada. */
+  bayarTerakhir?: string | null,
 ): boolean {
-  if (sudahSelesai(status) || status === 'partially_paid') return false
+  if (sudahSelesai(status)) return false
+  if (status === 'partially_paid') {
+    return !!bayarTerakhir && selisihHari(bayarTerakhir, hariIni) > MACET_HARI
+  }
   return !!dueDate && dueDate < hariIni
 }
 
@@ -82,8 +127,9 @@ export function statusTagihan(
   status: string,
   dueDate: string | null,
   hariIni: string,
+  bayarTerakhir?: string | null,
 ): TagihanStatus {
-  if (tagihanTerlambat(status, dueDate, hariIni)) return DASAR.overdue
+  if (tagihanTerlambat(status, dueDate, hariIni, bayarTerakhir)) return DASAR.overdue
   return DASAR[status] ?? { label: status, cls: 'bg-gray-100 text-gray-500' }
 }
 
@@ -100,7 +146,8 @@ export function warnaBilahTagihan(
   status: string,
   dueDate: string | null,
   hariIni: string,
+  bayarTerakhir?: string | null,
 ): string {
-  if (tagihanTerlambat(status, dueDate, hariIni)) return 'bg-red-400'
+  if (tagihanTerlambat(status, dueDate, hariIni, bayarTerakhir)) return 'bg-red-400'
   return BILAH[status] ?? 'bg-slate-200'
 }

@@ -20,6 +20,8 @@ import ResolvedNoticeBanner from '@/components/tutor/ResolvedNoticeBanner'
 import RequestPayrollReReview from '@/components/tutor/RequestPayrollReReview'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { rosterForSession } from '@/lib/enrollment'
+import { kesiapanTopikSesi } from '@/lib/pengukuran/kesiapan'
+import KesiapanTopik from '@/components/pengukuran/KesiapanTopik'
 import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import { splitClassName } from '@/lib/format-class-name'
 import type { AttendanceStatus } from '@/lib/types/database'
@@ -287,6 +289,14 @@ export default async function SessionPage({
   // Materi topik sesi ini dari folder bimbel. Kalau ada, kolom lampiran materi
   // terisi otomatis dan terkunci — lihat `MaterialUploader`. Dibaca lewat klien
   // sesi yang sama dengan sisa halaman ini, jadi RLS tetap yang memutuskan.
+  // Kesiapan peta kompetensi murid untuk bab yang diajarkan hari ini. Dibaca
+  // lewat klien sesi di dalamnya, bukan `supabase` service role halaman ini —
+  // gerbangnya bersandar pada `auth.uid()`.
+  const kesiapan = await kesiapanTopikSesi(
+    sessionId,
+    enrolledStudents.map(e => e.student_id as string),
+  )
+
   const materiKurikulum = await materiKurikulumSesi(
     supabase,
     session.curriculum_topic_id ?? null,
@@ -519,6 +529,8 @@ export default async function SessionPage({
             subjects={session.subjects?.name ?? null}
             displayStatus={session.status}
           />
+
+          <KesiapanTopik kesiapan={kesiapan} />
 
           {completionCheck && session.status !== 'cancelled' && (
             <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">

@@ -161,3 +161,48 @@ export async function deleteExternalLearner(learnerId: string): Promise<ActionSt
   revalidatePath('/admin/latihan-mandiri')
   return null
 }
+
+/**
+ * Menetapkan tutor penanggung jawab seorang murid (PRD FR9).
+ *
+ * Bukan "tutor yang mengajarnya". Relasi tutor–murid yang sudah ada di Tera
+ * semuanya lewat kelas (`classes.tutor_id`, `sessions.tutor_id`) dan menjawab
+ * pertanyaan berbeda — siapa yang mengajar pertemuan ini — serta bisa berganti
+ * tiap minggu. Yang dibutuhkan eskalasi adalah satu nama yang tetap: kepada
+ * siapa sistem mengadu ketika seorang anak dua kali berturut-turut kesulitan
+ * (migrasi tera 139 Bagian 1).
+ *
+ * Wajib terisi sebelum murid bisa membuka paket pengukuran — ditegakkan
+ * trigger di database (migrasi 149), bukan oleh layar ini. Jadi mengosongkan
+ * kembali penanggung jawab bukan tindakan tanpa akibat: murid itu langsung
+ * tidak bisa memulai paket berikutnya.
+ */
+export async function setTutorPenanggungJawab(
+  learnerId: string,
+  tutorId: string | null,
+): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  if (tutorId) {
+    const { data: tutor } = await ctx.admin
+      .from('profiles')
+      .select('role')
+      .eq('id', tutorId)
+      .single()
+    // Peran diperiksa di sini karena kolomnya sendiri tidak bisa memeriksanya:
+    // FK-nya menunjuk `profiles`, yang memuat admin dan murid juga.
+    if (tutor?.role !== 'tutor' && tutor?.role !== 'admin') {
+      return { error: 'Penanggung jawab harus tutor atau admin' }
+    }
+  }
+
+  const { error } = await ctx.admin
+    .from('learners')
+    .update({ tutor_penanggung_jawab_id: tutorId })
+    .eq('id', learnerId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/latihan-mandiri')
+  return null
+}

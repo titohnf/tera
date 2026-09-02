@@ -8,11 +8,13 @@ export interface Anak {
   full_name: string
   /**
    * Panggilannya, atau kata pertama namanya kalau belum diisi — lihat
-   * `namaPendek`. Dipakai bilah pemilih anak, yang harus memuat dua sampai tiga
-   * nama dalam satu baris selebar 390px; nama lengkap di sana membuat tabnya
-   * harus digeser mendatar untuk melihat anak yang terakhir.
+   * `namaPendek`. Dipakai pemilih anak di pojok kanan bilah atas, tempat nama
+   * lengkap tidak muat sama sekali; nama lengkapnya tetap ikut, dan tampil di
+   * dalam popup pilihannya.
    */
   nama_pendek: string
+  /** Foto profilnya, atau null — `Avatar` menggantinya dengan inisial. */
+  avatar_url: string | null
 }
 
 /**
@@ -41,15 +43,25 @@ export async function keluargaContext() {
 
   const { data: links } = await supabase
     .from('family_students')
-    .select('student_id, profiles!family_students_student_id_fkey(id, full_name, nickname)')
+    .select('student_id, profiles!family_students_student_id_fkey(id, full_name, nickname, avatar_url)')
     .order('student_id')
 
   const anak = ((links ?? []) as unknown as {
-    profiles: { id: string; full_name: string; nickname: string | null } | null
+    profiles: {
+      id: string
+      full_name: string
+      nickname: string | null
+      avatar_url: string | null
+    } | null
   }[])
     .map((l) => l.profiles)
     .filter((p) => p !== null)
-    .map((p) => ({ id: p.id, full_name: p.full_name, nama_pendek: namaPendek(p) }))
+    .map((p) => ({
+      id: p.id,
+      full_name: p.full_name,
+      nama_pendek: namaPendek(p),
+      avatar_url: p.avatar_url,
+    }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
   return { user, namaKeluarga: profile.full_name as string, anak }

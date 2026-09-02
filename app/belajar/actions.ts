@@ -7,14 +7,26 @@ import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
 import type { MateriTopik } from '@/lib/belajar/sematan'
 import {
-  bukaSesi,
+  bukaPaket,
+  keadaanPaket,
   jawabSoal,
+  kunciPaket,
+  paketSesi,
+  type PaketTopik,
   pemilikSesi,
   topikLatihan,
   tutupSesi,
   type HasilJawab,
+  type JejakButir,
   type TopikLatihan,
 } from '@/lib/belajar/sesi'
+import {
+  bukaPaketTopik,
+  keadaanPaketTopik,
+  kunciPaketTopik,
+  paketTopikSesi,
+  type PaketPeta,
+} from '@/lib/belajar/topik-peta'
 
 /**
  * Aksi permukaan belajar — tipis dengan sengaja.
@@ -54,6 +66,10 @@ export async function muatTopik(
   // dan sumbernya tinggal satu tempat, tidak bisa berbeda antara daftar topik
   // dan jenjang yang dipakai menyorotinya.
   const { learnerId, kelas, studentId } = await belajarContext(anak)
+  // Rubriknya TIDAK ikut. Daftar topik menyebutkan persentase, bukan label
+  // penilaiannya — menilai adalah pekerjaan halaman Penguasaan, dan mengambil
+  // rubrik untuk sesuatu yang tidak ditampilkan cuma satu perjalanan yang
+  // dibayar tanpa ditagih siapa pun.
   const topik = await topikLatihan(learnerId, subjectId)
 
   // Penerjemah yang sama dengan halaman sesi tutor dan admin: kelas si anak,
@@ -75,30 +91,11 @@ export async function muatTopik(
   }
 }
 
-/**
- * Membuka sesi lalu berpindah ke rutenya. Sesi yang tidak jadi terbuka —
- * topiknya habis, atau isinya bertipe yang tidak dinilai otomatis —
- * mengembalikan kalimat, bukan lemparan: yang terjadi bukan kesalahan siapa pun.
- */
-export async function mulaiLatihan(
-  anak: string | undefined,
-  subjectId: string,
-  groupIds: string[],
-  jumlah: number
-): Promise<{ error: string } | never> {
-  const { learnerId } = await belajarContext(anak)
-  const sesiId = await bukaSesi(learnerId, subjectId, groupIds, jumlah)
-
-  if (!sesiId) {
-    return { error: 'Belum ada soal yang bisa dilatih untuk pilihan itu. Coba topik lain.' }
-  }
-  redirect(`/belajar/${sesiId}`)
-}
-
 export async function periksaJawaban(
   sesiId: string,
   itemId: string,
-  jawaban: unknown
+  jawaban: unknown,
+  jejak: JejakButir = {}
 ): Promise<HasilJawab | null> {
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) return null
@@ -113,7 +110,10 @@ export async function periksaJawaban(
   //
   // Tidak ada yang hilang dengan menghapusnya: rute sesi selalu dinamis, jadi
   // muat ulang sungguhan tetap membaca keadaan terbaru dari database.
-  return jawabSoal(pemilik.learnerId, sesiId, itemId, jawaban)
+  // `learnerId` tidak lagi ikut: sejak migrasi 137 database yang menurunkannya
+  // dari sesinya sendiri, sekalian dengan skornya. Meneruskannya dari sini cuma
+  // membuka jalan agar keduanya berbeda.
+  return jawabSoal(sesiId, itemId, jawaban, jejak)
 }
 
 export async function selesaikanLatihan(sesiId: string): Promise<void> {
@@ -122,4 +122,234 @@ export async function selesaikanLatihan(sesiId: string): Promise<void> {
 
   await tutupSesi(sesiId)
   redirect(`/belajar/${sesiId}/hasil`)
+}
+
+/** Keadaan seluruh paket sebuah topik, untuk layar pemilih. */
+export async function muatPaket(
+  anak: string | undefined,
+  groupId: string
+): Promise<PaketTopik[]> {
+  const { learnerId } = await belajarContext(anak)
+  return keadaanPaket(learnerId, groupId)
+}
+
+/**
+ * Membuka satu putaran sebuah paket.
+ *
+ * Yang menentukan SOAL MANA adalah database: putaran pertama memuat seluruh isi
+ * paket, putaran berikutnya hanya yang masih salah. Pemanggil cuma menyebut
+ * topik dan nomor paketnya — dua angka yang boleh datang dari browser karena
+ * keduanya diperiksa ulang di sana, tidak seperti daftar id soal yang tidak
+ * punya cara diperiksa sama sekali.
+ */
+export async function mulaiPaket(
+  anak: string | undefined,
+  groupId: string,
+  nomor: number
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+  const sesiId = await bukaPaket(learnerId, groupId, nomor)
+  if (!sesiId) {
+    return {
+      error: 'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, atau kuncinya sudah dibuka.',
+    }
+  }
+  redirect(`/belajar/${sesiId}`)
+}
+
+/**
+ * Mengerjakan lagi paket yang barusan dinilai — putaran berikutnya, isinya soal
+ * yang masih salah.
+ *
+ * Topik dan nomor paketnya dibaca dari SESINYA, tidak diterima dari browser:
+ * sesi sudah tahu ia paket yang mana, dan menanyakannya lagi ke pemanggil cuma
+ * membuka kemungkinan dua jawaban yang berbeda.
+ */
+export async function ulangiPaket(sesiId: string): Promise<{ error: string } | never> {
+  const pemilik = await pemilikSesi(sesiId)
+  if (!pemilik) redirect('/belajar')
+
+  const paket = await paketSesi(sesiId)
+  if (!paket) {
+    return { error: 'Latihan ini bukan bagian dari sebuah paket, jadi tidak bisa diulang di sini.' }
+  }
+
+  const baru = await bukaPaket(pemilik.learnerId, paket.groupId, paket.nomor)
+  if (!baru) {
+    return {
+      error: 'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, atau kuncinya sudah dibuka.',
+    }
+  }
+  redirect(`/belajar/${baru}`)
+}
+
+/**
+ * Membuka kunci jawaban sebuah paket — dan MENGUNCI paketnya.
+ *
+ * Satu aksi, bukan dua, dan itu inti taruhannya: tidak ada jalan melihat kunci
+ * tanpa menyerahkan kesempatan memperbaikinya. Kalau keduanya bisa dipisah,
+ * "lihat kunci lalu ulangi" jadi jalan pintas menuju seratus persen yang tidak
+ * mengajarkan apa pun.
+ *
+ * Penguncian yang gagal TIDAK menghalangi kuncinya terbuka: yang sudah terjadi
+ * di layar sesudah ini tidak bisa ditarik kembali, dan menolak menampilkan
+ * kunci karena satu baris gagal ditulis cuma menghukum orang yang salah.
+ * Kegagalannya tercatat di log.
+ */
+export async function bukaKunciJawaban(sesiId: string): Promise<never> {
+  const pemilik = await pemilikSesi(sesiId)
+  if (!pemilik) redirect('/belajar')
+
+  // Kedua jalur dikunci dari SATU tempat. Halaman hasil memanggil aksi ini apa
+  // pun asal sesinya, dan cabang yang hanya mengurus jalur grup berarti anak
+  // jalur peta mendapat kunci jawaban tanpa membayar apa pun — taruhannya
+  // hilang diam-diam, justru pada jalur yang seluruh gunanya mengukur.
+  const paket = await paketSesi(sesiId)
+  if (paket) await kunciPaket(pemilik.learnerId, paket.groupId, paket.nomor)
+
+  const petaPaket = await paketTopikSesi(sesiId)
+  if (petaPaket) await kunciPaketTopik(pemilik.learnerId, petaPaket.paketId)
+
+  redirect(`/belajar/${sesiId}/hasil?kunci=1`)
+}
+
+/* ---------------------------------------------------------------------------
+ * Jalur peta kompetensi
+ *
+ * Kembaran tiga aksi paket di atas, berkunci topik. Gerbangnya sama persis —
+ * `belajarContext()` yang memutuskan atas nama siapa, dan learner id tidak
+ * pernah datang dari browser.
+ * ------------------------------------------------------------------------- */
+
+export async function muatPaketPeta(
+  anak: string | undefined,
+  topikId: string
+): Promise<PaketPeta[]> {
+  const { learnerId } = await belajarContext(anak)
+  return keadaanPaketTopik(learnerId, topikId)
+}
+
+/**
+ * Membuka satu putaran paket peta.
+ *
+ * Yang boleh datang dari browser cuma id paketnya; siapa pemiliknya, soal mana
+ * yang masih perlu dikerjakan, dan boleh-tidaknya dibuka semuanya diputuskan di
+ * database.
+ */
+export async function mulaiPaketPeta(
+  anak: string | undefined,
+  paketId: string
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+  const { sesiId, galat } = await bukaPaketTopik(learnerId, paketId)
+
+  // Alasan dari database didahulukan. Kalimat umum di bawahnya cuma benar untuk
+  // paket yang memang sudah tuntas — dipakai untuk penolakan lain, ia berbohong
+  // dengan meyakinkan.
+  if (galat) return { error: galat }
+
+  if (!sesiId) {
+    return {
+      error:
+        'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, kuncinya sudah dibuka, atau ujiannya sudah pernah dikerjakan.',
+    }
+  }
+  redirect(`/belajar/${sesiId}`)
+}
+
+export async function bukaKunciPaketPeta(
+  anak: string | undefined,
+  paketId: string
+): Promise<boolean> {
+  const { learnerId } = await belajarContext(anak)
+  return kunciPaketTopik(learnerId, paketId)
+}
+
+/**
+ * Membuka satu sesi retest (FR11).
+ *
+ * Seluruh syaratnya dijaga `retest_buka_sesi` (migrasi 164) — jatuh tempo,
+ * kepemilikan, kolam probe yang cukup, dan satu probe berjalan pada satu waktu.
+ * Aksi ini tidak mengulang satu pun pemeriksaan itu: yang diulang di sisi React
+ * adalah yang akan tertinggal saat aturannya berubah.
+ *
+ * Null dari sana berarti "belum waktunya, atau belum bisa" — tiga sebab yang
+ * sengaja tidak dibedakan di layar, sama seperti seluruh jalur peta lain.
+ */
+export async function mulaiRetest(
+  topikId: string,
+  anak?: string,
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('retest_buka_sesi', {
+    p_topik_id: topikId,
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    console.error('[belajar] gagal membuka sesi retest:', error)
+    return { error: 'Retestnya belum bisa dibuka sekarang. Coba lagi sebentar lagi.' }
+  }
+  if (!data) {
+    return {
+      error: 'Retest topik ini belum bisa dibuka — belum jatuh tempo, atau soal probenya belum cukup.',
+    }
+  }
+  redirect(`/belajar/${data as string}`)
+}
+
+/**
+ * Membuka satu probe pemanasan sesudah jeda panjang (FR12).
+ *
+ * TIDAK MENGUBAH APA PUN. Hasilnya tidak menggerakkan status topik maupun
+ * interval retest — penjaganya kolom `probe_pemanasan` yang dibaca trigger
+ * retest, bukan kesopanan aksi ini. Yang ditawarkan memang cuma alat bantu
+ * mengingat, dan tawaran yang diam-diam menilai adalah tawaran yang berbohong.
+ */
+export async function mulaiPemanasan(anak?: string): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('pemanasan_buka_sesi', {
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    console.error('[belajar] gagal membuka pemanasan:', error)
+    return { error: 'Pemanasannya belum bisa dibuka sekarang.' }
+  }
+  if (!data) {
+    return { error: 'Belum ada soal pemanasan untuk topik terakhirmu.' }
+  }
+  redirect(`/belajar/${data as string}`)
+}
+
+/**
+ * Mencatat bahwa satu nudge beban belajar benar-benar sampai ke layar (FR10).
+ *
+ * Terpisah dari pembacanya karena pembacanya `stable` dan boleh dipanggil dari
+ * komponen server mana pun. Sebuah nudge yang tercatat karena halamannya
+ * kebetulan dirender ulang akan menghabiskan jatah dua-per-hari tanpa satu pun
+ * kalimat sampai ke anaknya.
+ *
+ * Kegagalan ditelan: yang gagal cuma penghitungnya, dan menolak menampilkan
+ * kalimat yang sudah terlanjur berguna karena satu baris log gagal ditulis
+ * menghukum orang yang salah.
+ */
+export async function catatNudge(
+  kategori: 'ringan' | 'formal',
+  sinyal: string,
+  anak?: string,
+): Promise<void> {
+  const { learnerId } = await belajarContext(anak)
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('catat_nudge', {
+    p_kategori: kategori,
+    p_sinyal: sinyal,
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) console.error('[belajar] gagal mencatat nudge:', error)
 }

@@ -15,6 +15,10 @@ import 'katex/dist/katex.min.css'
  * mencegah. Penjagaannya tetap ada di setiap halaman di bawah rute ini, yang
  * memanggil `belajarContext()` sebagai baris pertamanya.
  *
+ * Latar putih dan kartu bergaris-rambut mengikuti portal keluarga; aturannya
+ * ditulis lengkap di `app/keluarga/layout.tsx`. Permukaan ini dibuka dari tab
+ * "Latihan" milik portal itu, jadi keduanya harus tampak satu aplikasi.
+ *
  * Bukan kelalaian, dan pola yang sama sudah dipakai portal keluarga:
  * `app/keluarga/[studentId]/layout.tsx` pun tidak diandalkan sendirian —
  * tiap halamannya memanggil `anakOrRedirect()` sendiri, dengan alasan yang
@@ -24,7 +28,7 @@ import 'katex/dist/katex.min.css'
 export default function BelajarLayout({ children }: { children: React.ReactNode }) {
   return (
     <PenyediaKepala>
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-white">
         <KepalaBelajar />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">{children}</main>
       </div>

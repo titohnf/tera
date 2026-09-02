@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer, Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
-import { getLaporanBulananData, type LaporanBulananData } from '@/lib/reports/laporan-bulanan'
+import { getLaporanBulananData, labelKategori, type LaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import { denyUnlessCanReadStudent } from '@/lib/api-auth'
 
 const logoPath = path.join(process.cwd(), 'public', 'logo-tera.png')
@@ -70,7 +70,7 @@ function LaporanPDF({ data }: { data: LaporanBulananData }) {
         <View style={[s.row, { marginBottom: 12 }]}>
           <View style={{ flex: 1 }}>
             <Text style={s.label}>Nama Siswa</Text>
-            <Text style={s.bold}>{data.student.full_name}</Text>
+            <Text style={s.bold}>{data.student.nickname ?? data.student.full_name}</Text>
             {data.student.grade && <Text style={{ marginTop: 2, color: '#555' }}>Kelas {data.student.grade}</Text>}
           </View>
           <View style={{ flex: 1 }}>
@@ -124,7 +124,7 @@ function LaporanPDF({ data }: { data: LaporanBulananData }) {
                   <View style={s.colMain}>
                     <Text>{sess.topic ?? sess.custom_theme ?? '—'}</Text>
                     {sess.attitude_note && (
-                      <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>Attitude: {sess.attitude_note}</Text>
+                      <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>{labelKategori('Attitude')}: {sess.attitude_note}</Text>
                     )}
                   </View>
                   <Text style={s.colStatus}>{sess.attendance_status ? ATTENDANCE_LABEL[sess.attendance_status] ?? sess.attendance_status : '—'}</Text>
@@ -209,7 +209,7 @@ export async function GET(
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="Laporan-${data.student.full_name ?? 'Siswa'}-${month}.pdf"`,
+      'Content-Disposition': `attachment; filename="Laporan-${data.student.nickname ?? data.student.full_name ?? 'Siswa'}-${month}.pdf"`,
     },
   })
 }

@@ -47,7 +47,7 @@ export default async function TagihanAnak({
       <p className="text-sm text-gray-500">
         Tagihan yang sudah diterbitkan, beserta pembayaran yang tercatat.
       </p>
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
+      <div className="bg-white rounded-xl shadow-kartu p-4 sm:p-5">
         <TagihanList
           tagihan={invoices as unknown as TagihanRow[]}
           pembayaran={(pembayaranRows ?? []) as unknown as PembayaranRow[]}

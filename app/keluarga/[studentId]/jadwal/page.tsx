@@ -2,7 +2,7 @@ import { anakOrRedirect } from '@/lib/keluarga'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { sekarangIso } from '@/lib/waktu'
 import SesiKartuList from '@/components/keluarga/SesiKartuList'
-import JadwalTable from '@/components/siswa/JadwalTable'
+import SesiTable from '@/components/keluarga/SesiTable'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 
 /**
@@ -14,9 +14,12 @@ import RiwayatKelas from '@/components/siswa/RiwayatKelas'
  * yang dibuka tiap hari — beranda, kabar, profil — sedangkan riwayat dibuka
  * saat ada yang ingin ditelusuri, dan itu perilaku petak, bukan tab.
  *
- * Namanya ikut berubah jadi "Riwayat Kelas". "Jadwal" menjanjikan yang akan
- * datang, padahal isi halaman ini sebagian besar yang sudah lewat: kehadiran,
- * topik yang dibahas, materinya, nilai asesmen, dan catatan tutor.
+ * Namanya ikut berubah jadi "Belajar bukan kelas". "Jadwal" menjanjikan yang
+ * akan datang, padahal separuh isi halaman ini yang sudah lewat: kehadiran,
+ * topik yang dibahas, materinya, nilai asesmen, dan catatan tutor. "Riwayat
+ * Kelas" — nama antara yang sempat dipakai — memihak ke arah sebaliknya.
+ * "Belajar bukan kelas" menegaskan bahwa yang tertera di sini adalah kegiatan
+ * belajar, bukan sekadar nama kelas.
  *
  * Rutenya tetap `/jadwal` — tautan yang sudah beredar tidak dipatahkan demi
  * nama, dan tidak ada seorang pun membaca alamat ini sebagai kalimat.
@@ -78,31 +81,26 @@ export default async function JadwalAnak({
           subjectNameMap={subjectNameMap}
           attendanceMap={attendanceMap}
           sessionTutorMap={sessionTutorMap}
-          studentId={studentId}
           sekarangIso={waktuSekarang}
         />
       </div>
 
-      <div className="hidden lg:block bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
-        <JadwalTable
-          sekarangIso={waktuSekarang}
+      <div className="hidden lg:block bg-white rounded-xl shadow-kartu p-4 sm:p-5">
+        <SesiTable
           sessions={sesiAktif}
           enrolledClasses={kelasAktif.map((k) => ({
             id: k.class_id,
             name: k.classes?.name ?? null,
             is_active: k.is_active,
-            subject_name: null,
-            tutor: null,
           }))}
           subjectNameMap={subjectNameMap}
           attendanceMap={attendanceMap}
           sessionTutorMap={sessionTutorMap}
-          studentId={studentId}
         />
       </div>
 
       {ringkasanLampau.length > 0 && (
-        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-4 sm:p-5">
+        <div className="bg-white rounded-xl shadow-kartu p-4 sm:p-5">
           <RiwayatKelas kelas={ringkasanLampau} garisPemisah={false} />
         </div>
       )}
