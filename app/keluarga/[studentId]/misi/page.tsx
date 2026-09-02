@@ -2,7 +2,9 @@ import { belajarContext } from '@/lib/belajar/konteks'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import PetaTopik from '@/components/belajar/PetaTopik'
 import KartuRetest from '@/components/belajar/KartuRetest'
+import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
+import { catatKunjungan, sapaanKunjungan } from '@/lib/belajar/kunjungan'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -42,6 +44,14 @@ export default async function PaketTopikPage({
   const { studentId } = await params
   const { learnerId } = await belajarContext(studentId)
 
+  // `catatKunjungan` MENULIS, jadi ia berdiri sendiri dan hanya di sini:
+  // halaman inilah permukaan tempat anak mendarat (FR12). Memanggilnya dari
+  // layar rapor orang tua akan membuat kunjungan orang tua terhitung sebagai
+  // kunjungan anaknya, dan sapaan "sudah seminggu" tidak pernah muncul untuk
+  // anak yang memang belum datang seminggu.
+  const hariSejakKunjungan = await catatKunjungan(learnerId)
+  const sapaan = sapaanKunjungan(hariSejakKunjungan)
+
   const [peta, retest] = await Promise.all([
     petaTopik(learnerId),
     retestJatuhTempo(learnerId),
@@ -58,6 +68,10 @@ export default async function PaketTopikPage({
           hal di layar ini yang punya waktunya sendiri, dan menaruhnya sesudah
           daftar topik berarti ia ditemukan oleh anak yang sudah selesai memilih
           hal lain. */}
+      {/* Sapaan lebih dulu dari apa pun yang menuntut keputusan: yang baru
+          kembali sesudah dua minggu perlu dibaca dulu bahwa kembalinya
+          disambut, bukan langsung disodori daftar yang harus dipilih. */}
+      {sapaan && <SapaanKunjungan sapaan={sapaan} anak={studentId} />}
       <KartuRetest retest={retest} anak={studentId} />
       <PetaTopik anak={studentId} topik={peta} paketAwal={paketAwal} />
     </div>

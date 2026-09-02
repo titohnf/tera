@@ -299,3 +299,29 @@ export async function mulaiRetest(
   }
   redirect(`/belajar/${data as string}`)
 }
+
+/**
+ * Membuka satu probe pemanasan sesudah jeda panjang (FR12).
+ *
+ * TIDAK MENGUBAH APA PUN. Hasilnya tidak menggerakkan status topik maupun
+ * interval retest — penjaganya kolom `probe_pemanasan` yang dibaca trigger
+ * retest, bukan kesopanan aksi ini. Yang ditawarkan memang cuma alat bantu
+ * mengingat, dan tawaran yang diam-diam menilai adalah tawaran yang berbohong.
+ */
+export async function mulaiPemanasan(anak?: string): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('pemanasan_buka_sesi', {
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    console.error('[belajar] gagal membuka pemanasan:', error)
+    return { error: 'Pemanasannya belum bisa dibuka sekarang.' }
+  }
+  if (!data) {
+    return { error: 'Belum ada soal pemanasan untuk topik terakhirmu.' }
+  }
+  redirect(`/belajar/${data as string}`)
+}
