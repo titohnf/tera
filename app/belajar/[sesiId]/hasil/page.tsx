@@ -228,18 +228,27 @@ export default async function HasilSesi({
   // yang berisi empat soal dan benar semua tidak berarti paketnya selesai —
   // yang menentukan tinggal berapa dari kesepuluh soal itu yang masih salah.
   const sisa = paketIni ? paketIni.total - paketIni.benar : jumlahSalah
-  // Jalur peta tidak punya `?topik=`: petanya berdiri di halaman `/belajar` itu
-  // sendiri, dan komponennya membuka satu-satunya topik berisi dengan
-  // sendirinya. Jadi tautannya cukup `kembali` — bukan null, yang akan
-  // menghilangkan tombol "pilih paket lain" dari layar anak yang baru saja
-  // selesai satu paket.
+  // Jalur peta pulang ke MISI, bukan ke `/belajar`. Dulu memang cukup
+  // `kembali`, karena petanya berdiri di halaman `/belajar` itu sendiri —
+  // sejak ia pindah ke `/keluarga/[studentId]/misi`, `/belajar` cuma merender
+  // pemilih mapel, jadi tautan lama mendaratkan anak yang baru menuntaskan
+  // satu paket di layar yang tidak memuat petanya sama sekali. Alasan kedua
+  // yang ikut kedaluwarsa: petanya "membuka satu-satunya topik berisi dengan
+  // sendirinya" hanya benar sewaktu topik aktif tinggal satu.
+  //
+  // Pelajar berkode akses tidak punya halaman keluarga, dan tidak ada
+  // permukaan lain yang merender peta — untuk mereka `kembali` tetap yang
+  // paling masuk akal, dan tetap bukan null, yang akan menghilangkan tombol
+  // "pilih paket lain" sama sekali.
   const daftarPaket =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
         : petaPaket
-          ? kembali
+          ? pemilik.profileId
+            ? `/keluarga/${pemilik.profileId}/misi`
+            : kembali
           : null
 
   const pilihan = (
