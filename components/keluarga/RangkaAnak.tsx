@@ -6,14 +6,15 @@ import BottomNav from '@/components/keluarga/BottomNav'
 /**
  * Badan halaman anak beserta bilah navigasi bawahnya — atau tanpa bilah itu.
  *
- * Empat layar dibuka HANYA dari petak ikon di beranda: Tagihan, Laporan,
- * Kelas — dan Laporan sendiri membawa dua tab (Aktivitas Kelas dan Kompetensi)
- * di bawah satu alamat yang sama. Semuanya sudah membawa panah kembali ke
- * beranda di kepala layar, dan bilah bawah di sana tidak menawarkan apa pun yang
- * belum ada — "Beranda"-lah yang menyala, yaitu persis tujuan panah yang sudah
- * berdiri di pojok kiri atas. Dua kendali menuju tempat yang sama, satu di
- * antaranya memakan 56px di dasar setiap layar yang isinya justru panjang
- * (daftar tagihan, daftar sesi, tabel penguasaan).
+ * Beberapa layar dibuka HANYA dari petak ikon di beranda: Tagihan, Laporan,
+ * Kelas — dan Laporan sendiri membawa tiga tab (Progres Kelas, Latihan Mandiri,
+ * Ketuntasan Materi) yang digambar sebagai halaman terpisah di bawahnya.
+ * Semuanya sudah membawa panah kembali ke beranda di kepala layar, dan bilah
+ * bawah di sana tidak menawarkan apa pun yang belum ada — "Beranda"-lah yang
+ * menyala, yaitu persis tujuan panah yang sudah berdiri di pojok kiri atas.
+ * Dua kendali menuju tempat yang sama, satu di antaranya memakan 56px di dasar
+ * setiap layar yang isinya justru panjang (daftar tagihan, daftar sesi, tabel
+ * penguasaan).
  *
  * Yang MEMPERTAHANKAN bilahnya adalah layar-layar yang jadi tujuan bilah itu
  * sendiri — Beranda, Notifikasi, Profil — tempat ia berfungsi sebagai penanda
@@ -24,7 +25,7 @@ import BottomNav from '@/components/keluarga/BottomNav'
  * null sendiri akan meninggalkan 80px kosong di dasar layar. Satu tempat yang
  * tahu, satu daftar yang menentukan.
  */
-const TANPA_BILAH = ['/tagihan', '/laporan', '/jadwal', '/penguasaan']
+const TANPA_BILAH = ['/tagihan', '/laporan', '/jadwal', '/penguasaan', '/ketuntasan']
 
 export default function RangkaAnak({
   studentId,

@@ -22,7 +22,8 @@ import Link from 'next/link'
  * sekali tidak dicari.
  *
  * Laporan dan Penguasaan dahulu dua pintasan terpisah; kini satu menu
- * "Laporan" yang membuka halaman bertab (Aktivitas Kelas dan Kompetensi).
+ * "Laporan" yang membuka halaman bertab (Progres Kelas, Latihan Mandiri, dan
+ * Ketuntasan Materi).
  *
  * Di sini semuanya jadi petak ikon di beranda: satu baris, satu ketukan.
  * Kalimat penjelasnya sengaja dilepas — pada nama-nama sependek ini ia lebih

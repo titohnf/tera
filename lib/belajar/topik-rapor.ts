@@ -35,15 +35,15 @@ const TANPA_KODE = ''
  * Bentuk id topik pengukuran — `D-01`, `A-07`, `AB-12`.
  *
  * Dipakai membedakan rute `/penguasaan/[kunci]`: kunci yang cocok pola ini
- * adalah topik peta, sisanya id grup kurikulum yang berbentuk uuid. Pembedanya
- * bukan tebakan melainkan jaminan database — `topik.id` punya
- * `check (id ~ '^[A-F]{1,2}-[0-9]{2}$')` sejak migrasi 140.
+ * adalah topik peta, sisanya id grup kurikulum yang berbentuk uuid.
+ *
+ * Definisinya sendiri pindah ke `kode-topik.ts` sejak `HeaderKeluarga` — sebuah
+ * komponen KLIEN — ikut perlu membedakan keduanya untuk memilih tujuan panah
+ * kembali. Berkas ini mengimpor klien Supabase sisi server, jadi ia tidak bisa
+ * jadi jalan masuknya ke browser. Diteruskan di sini supaya pemanggil sisi
+ * server tidak perlu tahu perpindahan itu.
  */
-export const KODE_TOPIK = /^[A-F]{1,2}-[0-9]{2}$/
-
-export function adalahKodeTopik(kunci: string): boolean {
-  return KODE_TOPIK.test(kunci)
-}
+export { KODE_TOPIK, adalahKodeTopik } from '@/lib/belajar/kode-topik'
 
 /**
  * Kemajuan satu topik peta.
