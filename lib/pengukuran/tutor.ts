@@ -191,3 +191,59 @@ export async function daftarEskalasi(belumDijawab = false): Promise<Eskalasi[]> 
     statusSla: b.status_sla,
   }))
 }
+
+/** Status mesin keadaan sebuah topik untuk seorang murid (FR13). */
+export interface StatusTopik {
+  topikId: string
+  nama: string
+  status:
+    | 'terkunci'
+    | 'siap_dikerjakan'
+    | 'sedang_dikerjakan'
+    | 'tuntas'
+    | 'butuh_pengulangan'
+    | 'eskalasi_tutor'
+  perluVerifikasiUlang: boolean
+  sejak: string
+}
+
+/**
+ * Status topik seorang murid, dari cetakan yang ditulis `evaluasi_unlock`
+ * (migrasi 163).
+ *
+ * DIBACA LANGSUNG DARI TABEL, bukan lewat RPC seperti tetangganya di berkas
+ * ini. Alasannya: yang menjaga tabel ini adalah kebijakan RLS-nya sendiri —
+ * tutor penanggung jawab ada di dalamnya — jadi tidak ada gerbang yang perlu
+ * dipusatkan di sebuah fungsi. Yang lain memakai RPC karena `learners` memang
+ * tertutup bagi tutor; di sini tidak ada tabel tertutup yang perlu disatukan.
+ *
+ * Murid yang belum pernah menyelesaikan satu sesi pun belum punya baris sama
+ * sekali, dan daftar kosong adalah jawaban yang benar untuk itu — bukan enam
+ * belas baris `terkunci` yang tidak mengatakan apa-apa.
+ */
+export async function statusTopikMurid(learnerId: string): Promise<StatusTopik[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('status_topik_siswa')
+    .select('topik_id, status, perlu_verifikasi_ulang, waktu_perubahan_status, topik(nama)')
+    .eq('learner_id', learnerId)
+    .order('topik_id')
+  if (error) {
+    console.error('[pengukuran] gagal memuat status topik:', error)
+    return []
+  }
+
+  return ((data ?? []) as unknown as {
+    topik_id: string
+    status: StatusTopik['status']
+    perlu_verifikasi_ulang: boolean
+    waktu_perubahan_status: string
+    topik: { nama: string } | null
+  }[]).map(b => ({
+    topikId: b.topik_id,
+    nama: b.topik?.nama ?? b.topik_id,
+    status: b.status,
+    perluVerifikasiUlang: b.perlu_verifikasi_ulang,
+    sejak: b.waktu_perubahan_status,
+  }))
+}

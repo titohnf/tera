@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { daftarEskalasi, muridPengukuran, paketPengukuran } from '@/lib/pengukuran/tutor'
+import { daftarEskalasi, muridPengukuran, paketPengukuran, statusTopikMurid } from '@/lib/pengukuran/tutor'
 import RaporPaket from '@/components/pengukuran/RaporPaket'
 import KartuEskalasi from '@/components/pengukuran/KartuEskalasi'
+import StatusTopikList from '@/components/pengukuran/StatusTopikList'
 
 export const metadata = { title: 'Rapor Pengukuran' }
 
@@ -25,9 +26,10 @@ export default async function RaporMuridPage({
   const murid = roster.find(m => m.learnerId === learnerId)
   if (!murid) notFound()
 
-  const [paket, eskalasi] = await Promise.all([
+  const [paket, eskalasi, status] = await Promise.all([
     paketPengukuran(learnerId),
     daftarEskalasi(),
+    statusTopikMurid(learnerId),
   ])
   const miliknya = eskalasi.filter(e => e.learnerId === learnerId)
 
@@ -47,6 +49,13 @@ export default async function RaporMuridPage({
       </div>
 
       <RaporPaket paket={paket} />
+
+      {status.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">Status topik</h2>
+          <StatusTopikList status={status} />
+        </section>
+      )}
 
       {miliknya.length > 0 && (
         <section className="mt-8">
