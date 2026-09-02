@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { anakOrRedirect } from '@/lib/keluarga'
 import { isiPaket, keadaanPaket, kemajuanTopik, learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
 import { labelPenguasaan } from '@/lib/belajar/penguasaan'
 import { persenDari } from '@/lib/belajar/penilaian'
@@ -14,7 +13,13 @@ import BilahJawaban, {
 } from '@/components/belajar/BilahJawaban'
 
 /**
- * Rincian satu topik: bukan angkanya lagi, melainkan bagaimana angka itu jadi.
+ * Rincian satu topik KURIKULUM BIMBEL: bukan angkanya lagi, melainkan bagaimana
+ * angka itu jadi.
+ *
+ * Salah satu dari dua badan rute `/penguasaan/[kunci]`; yang satu lagi
+ * `RincianMisi` untuk topik peta. Yang memilih di antaranya `page.tsx`, dari
+ * bentuk kuncinya. Halaman ini tidak lagi memeriksa `anakOrRedirect` sendiri —
+ * perutenya yang melakukannya, sekali, sebelum memilih badan.
  *
  * Daftar Penguasaan menjawab "topik mana yang perlu dikuatkan". Pertanyaan
  * berikutnya selalu sama dan tidak punya tempat untuk dijawab: sudah dicoba
@@ -34,13 +39,13 @@ import BilahJawaban, {
  * sendiri dari baris jawaban — dan itu boleh, karena yang dihitung berbeda:
  * bukan penguasaan topiknya, melainkan apa yang terjadi di satu sesi.
  */
-export default async function RincianTopik({
-  params,
+export default async function RincianGrup({
+  studentId,
+  groupId,
 }: {
-  params: Promise<{ studentId: string; groupId: string }>
+  studentId: string
+  groupId: string
 }) {
-  const { studentId, groupId } = await params
-  await anakOrRedirect(studentId)
   const supabase = await createClient()
 
   const { data: topikRow } = await supabase
@@ -64,6 +69,18 @@ export default async function RincianTopik({
       </p>
     )
   }
+
+  // Topik peta yang memetakan ke grup ini, kalau ada — sekadar untuk menautkan.
+  // `topik_grup` terbuka untuk `authenticated` (migrasi 140), dan portal
+  // keluarga selalu orang tua yang sudah masuk.
+  const { data: petaRows } = await supabase
+    .from('topik_grup')
+    .select('topik_id, topik!inner(aktif)')
+    .eq('group_id', groupId)
+  const topikPeta =
+    ((petaRows as { topik_id: string; topik: { aktif: boolean } | null }[] | null) ?? []).find(
+      r => r.topik?.aktif,
+    )?.topik_id ?? null
 
   const learnerId = await learnerAnak(studentId)
   const [kemajuan, rubrik, paketTopik, isi] = await Promise.all([
@@ -494,6 +511,24 @@ export default async function RincianTopik({
             </p>
           )}
         </div>
+      )}
+
+      {topikPeta && (
+        // Tautan, BUKAN pengalihan. Grup ini boleh memuat jawaban jalur grup
+        // dari sebelum migrasi 148 memisahkan kedua lapisan, dan mengalihkan
+        // berarti menyembunyikan pekerjaan yang sungguh terjadi. Mapel tanpa
+        // peta tidak pernah sampai ke sini — mereka tidak punya baris
+        // `topik_grup` sama sekali.
+        <Link
+          href={`/keluarga/${studentId}/penguasaan/${topikPeta}`}
+          className="block rounded-xl bg-white p-4 text-sm shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
+        >
+          <span className="font-medium text-gray-900">Topik ini juga diukur di Misi</span>
+          <span className="mt-0.5 block text-xs text-gray-500">
+            Paket latihan bertingkat {topikPeta} punya laporannya sendiri, dengan soal yang
+            berbeda dari yang di sini.
+          </span>
+        </Link>
       )}
 
       <Link

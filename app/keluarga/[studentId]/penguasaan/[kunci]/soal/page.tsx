@@ -8,6 +8,9 @@ import {
   pemilikSesi,
   tinjauanSesi,
 } from '@/lib/belajar/sesi'
+import { keadaanPaketTopik, paketTopikSesi } from '@/lib/belajar/topik-peta'
+import { adalahKodeTopik, isiPaketTopikSemua } from '@/lib/belajar/topik-rapor'
+import { namaPaket } from '@/lib/belajar/nama-paket'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 
 /**
@@ -33,19 +36,32 @@ import TinjauanSesi from '@/components/belajar/TinjauanSesi'
  * dipakai anaknya berlatih — kunci yang bebas dibaca di sini membatalkan
  * seluruh taruhan di sisi sana. Yang tetap terbaca orang tua: soalnya, jawaban
  * anaknya, dan benar atau tidaknya. Itu yang ia cari; jawaban yang benar bukan.
+ *
+ * Aturan itu berlaku dua kali lipat di jalur Misi: kunci yang terbuka di sana
+ * mencemari sebuah PENGUKURAN, bukan cuma satu putaran latihan.
+ *
+ * SATU BERKAS, DUA LAPISAN — berbeda dari halaman rincian, yang sengaja
+ * disalin. Di sini yang penting justru semuanya bersama: pemeriksaan pemilik
+ * sesi, `tinjauanSesi()` yang berkunci SESI dan karena itu jalan apa adanya
+ * untuk kedua lapisan, dan `TinjauanSesi` yang menggambarnya. Yang berbeda
+ * cuma tiga baris — dari mana nomor urutnya datang, paket apa yang memuat
+ * sesi itu, dan apakah kuncinya sudah dibuka — dan menyalin seluruh berkas
+ * demi tiga baris berarti dua tempat yang harus sama-sama diingat saat aturan
+ * kuncinya berubah.
  */
 export default async function TinjauSoal({
   params,
   searchParams,
 }: {
-  params: Promise<{ studentId: string; groupId: string }>
+  params: Promise<{ studentId: string; kunci: string }>
   searchParams: Promise<{ sesi?: string; item?: string }>
 }) {
-  const { studentId, groupId } = await params
+  const { studentId, kunci } = await params
   const { sesi: sesiId, item: itemId } = await searchParams
   await anakOrRedirect(studentId)
 
-  const kembali = `/keluarga/${studentId}/penguasaan/${groupId}`
+  const misi = adalahKodeTopik(kunci)
+  const kembali = `/keluarga/${studentId}/penguasaan/${kunci}`
   if (!sesiId || !itemId) redirect(kembali)
 
   // Sesi itu harus milik ANAK YANG SEDANG DIBUKA, bukan sekadar milik keluarga
@@ -55,17 +71,31 @@ export default async function TinjauSoal({
   const [pemilik, learnerId] = await Promise.all([pemilikSesi(sesiId), learnerAnak(studentId)])
   if (!pemilik || !learnerId || pemilik.learnerId !== learnerId) redirect(kembali)
 
-  const [tinjauan, isi, paket] = await Promise.all([
+  const [tinjauan, isi, paket, paketMisi] = await Promise.all([
     tinjauanSesi(sesiId),
-    isiPaket(learnerId, groupId),
-    paketSesi(sesiId),
+    misi ? isiPaketTopikSemua(learnerId, kunci) : isiPaket(learnerId, kunci),
+    misi ? Promise.resolve(null) : paketSesi(sesiId),
+    misi ? paketTopikSesi(sesiId) : Promise.resolve(null),
   ])
 
-  const semuaPaket = paket ? await keadaanPaket(learnerId, paket.groupId) : []
-  const paketIni = paket ? (semuaPaket.find(p => p.nomor === paket.nomor) ?? null) : null
-  // Sesi lama tanpa paket dibiarkan terbuka: tidak ada paket yang bisa dikunci,
-  // jadi tidak ada yang bisa dipertaruhkan.
-  const kunciTampil = !paket || (paketIni?.terkunci ?? false)
+  // Paket yang memuat sesi ini, di lapisan mana pun ia hidup — dan apakah
+  // kuncinya sudah dibuka. Jalur grup berkunci nomor urut; jalur peta berkunci
+  // id paket, karena paketnya dibedakan jenis dan level Bloom, bukan urutan.
+  let kunciTampil: boolean
+  let labelPaket: string | null = null
+  if (misi) {
+    const semua = paketMisi ? await keadaanPaketTopik(learnerId, kunci) : []
+    const ini = paketMisi ? (semua.find(p => p.paketId === paketMisi.paketId) ?? null) : null
+    kunciTampil = !paketMisi || (ini?.terkunci ?? false)
+    labelPaket = ini ? namaPaket({ jenis: ini.jenis, levelBloom: ini.levelBloom, nomor: ini.nomor }) : null
+  } else {
+    const semua = paket ? await keadaanPaket(learnerId, paket.groupId) : []
+    const ini = paket ? (semua.find(p => p.nomor === paket.nomor) ?? null) : null
+    // Sesi lama tanpa paket dibiarkan terbuka: tidak ada paket yang bisa
+    // dikunci, jadi tidak ada yang bisa dipertaruhkan.
+    kunciTampil = !paket || (ini?.terkunci ?? false)
+    labelPaket = paket ? `Paket ${paket.nomor}` : null
+  }
 
   const ordPaket = new Map(isi.map(b => [b.itemId, b.ord]))
   const mentah = tinjauan.find(t => t.id === itemId)
@@ -84,7 +114,7 @@ export default async function TinjauSoal({
           pembacanya memilih. */}
       <p className="px-1 font-semibold tracking-tight text-gray-900">
         Soal {soal.nomor}
-        {paket && <span className="font-normal text-gray-500"> · Paket {paket.nomor}</span>}
+        {labelPaket && <span className="font-normal text-gray-500"> · {labelPaket}</span>}
       </p>
 
       <TinjauanSesi soal={[soal]} nama={pemilik.nama} kunciTampil={kunciTampil} />

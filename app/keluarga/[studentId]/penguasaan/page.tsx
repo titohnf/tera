@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { anakOrRedirect } from '@/lib/keluarga'
 import { kemajuanTopik, learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
+import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import {
   labelPenguasaan,
   rentangPita,
@@ -73,9 +74,15 @@ export default async function PenguasaanPage({
   // `belajarContext()` di sini akan melahirkan baris `learners` untuk anak yang
   // halaman penguasaannya kebetulan dibuka, padahal ia belum pernah berlatih.
   const learnerId = await learnerAnak(studentId)
-  const kemajuan = learnerId ? await kemajuanTopik(learnerId) : []
+  // Dua lapisan, dua sumber angka, satu layar. Migrasi 148 menjamin butirnya
+  // tidak beririsan — butir ber-`topik_id` dilarang punya tag kurikulum — jadi
+  // keduanya tidak pernah menghitung soal yang sama dua kali.
+  const [kemajuan, misi] = learnerId
+    ? await Promise.all([kemajuanTopik(learnerId), kemajuanTopikPeta(learnerId)])
+    : [[], []]
 
   const dikerjakan = (kemajuan ?? []).filter(k => k.answered > 0)
+  const misiDikerjakan = (misi ?? []).filter(k => k.answered > 0)
 
   const supabase = await createClient()
   const { data: topikRows } = dikerjakan.length
@@ -101,7 +108,16 @@ export default async function PenguasaanPage({
   // Satu rubrik per MAPEL, diambil sekali untuk tiap mapel yang muncul — bukan
   // sekali per baris. Anak yang mengerjakan dua puluh topik biasanya cuma
   // menyentuh dua atau tiga mapel.
-  const mapelIds = [...new Set([...topik.values()].map(t => t.subject_id).filter(Boolean))]
+  const mapelIds = [
+    ...new Set(
+      [
+        ...[...topik.values()].map(t => t.subject_id),
+        // Topik peta meminjam mapelnya dari kurikulum lewat `topik_grup`,
+        // supaya "Baik" dan "Istimewa" berarti sama di kedua paruh layar ini.
+        ...misiDikerjakan.map(k => k.subjectId),
+      ].filter(Boolean),
+    ),
+  ]
   const rubrik = new Map<string, PitaPenguasaan[] | null>(
     await Promise.all(
       mapelIds.map(async id => [id!, await rubrikMapel(id!)] as [string, PitaPenguasaan[] | null]),
@@ -118,7 +134,7 @@ export default async function PenguasaanPage({
       const awal = k.max_available > 0 ? persenDari(k.first_score, k.max_available) : null
       const pita = t?.subject_id ? (rubrik.get(t.subject_id) ?? null) : null
       return {
-        groupId: k.group_id,
+        kunci: k.group_id,
         subjectId: t?.subject_id ?? null,
         // Topik yang sudah dihapus dari kurikulum tetap disebut: jawabannya
         // sungguh terjadi, dan baris tanpa nama lebih jujur daripada baris yang
@@ -153,6 +169,49 @@ export default async function PenguasaanPage({
     // Yang penguasaannya tidak diketahui turun ke bawah: urutan ini janji
     // "paling perlu dikuatkan di atas", dan baris tanpa angka tidak bisa ikut
     // menjanjikannya.
+    .sort((a, b) => (a.persen ?? 101) - (b.persen ?? 101) || a.nama.localeCompare(b.nama, 'id'))
+
+  // Baris Misi, melewati pembangun yang sama supaya kedua paruh layar tidak
+  // bisa diam-diam berbeda arti. Tiga bedanya disengaja:
+  //
+  //   * `awal` selalu null. Di jalur grup ia menghidupkan "Naik dari X%"; di
+  //     jalur peta nilai jawaban pertama ADALAH Skor Putaran 1, yang PRD FR3
+  //     larang ditampilkan. Migrasi 161 bahkan tidak mengirimkannya.
+  //   * Penyebut paketnya paket LATIHAN saja, sama dengan peta anaknya. Paket
+  //     ujian punya tempatnya sendiri di halaman rincian.
+  //   * Tidak dikelompokkan per mapel. Seluruh peta hari ini satu mapel, dan
+  //     yang membedakan seksi ini dari tetangganya bukan mapelnya melainkan
+  //     lapisannya.
+  const barisMisi = misiDikerjakan
+    .map(k => {
+      const persen = k.maxAvailable > 0 ? persenDari(k.score, k.maxAvailable) : null
+      const pita = k.subjectId ? (rubrik.get(k.subjectId) ?? null) : null
+      return {
+        kunci: k.topikId,
+        subjectId: k.subjectId,
+        mapel: 'Misi',
+        nama: k.nama,
+        keterangan: [k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
+          .filter(Boolean)
+          .join(' · '),
+        persen,
+        label: persen != null ? labelPenguasaan(pita, persen) : null,
+        pitaKunci: pita ? JSON.stringify(rentangPita(pita)) : null,
+        awal: null,
+        paketTuntas: k.paketTuntas,
+        paketSempurna: k.paketSempurna,
+        paketTotal: k.paketTotal,
+        dikerjakan: k.answered,
+        total: k.total,
+        tuntas: k.total > 0 && k.answered >= k.total,
+        rincian: {
+          correct: k.correct,
+          partial: k.partial,
+          wrong: k.wrong,
+          belum: Math.max(0, k.total - k.answered),
+        },
+      }
+    })
     .sort((a, b) => (a.persen ?? 101) - (b.persen ?? 101) || a.nama.localeCompare(b.nama, 'id'))
 
   // Dikelompokkan per MAPEL, dan mapelnya sendiri diurut menurut topik
@@ -202,12 +261,13 @@ export default async function PenguasaanPage({
         <p className="rounded-xl bg-white p-6 text-sm leading-relaxed text-gray-500 shadow-kartu">
           Penguasaannya belum bisa dibaca sekarang. Coba buka lagi sebentar lagi.
         </p>
-      ) : baris.length === 0 ? (
+      ) : baris.length === 0 && barisMisi.length === 0 ? (
         <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">
           Belum ada latihan mandiri yang dikerjakan, jadi penguasaannya belum bisa dihitung.
         </p>
       ) : (
         <>
+          {baris.length > 0 && (
           <div className="rounded-xl bg-white p-4 shadow-kartu">
             <p className="text-sm leading-relaxed text-gray-600">
               <span className="font-semibold text-gray-900">{baris.length} topik</span> pernah
@@ -247,6 +307,31 @@ export default async function PenguasaanPage({
               </dl>
             ))}
           </div>
+          )}
+
+          {barisMisi.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between gap-3 px-1">
+                <p className="font-semibold tracking-tight text-gray-900">Misi</p>
+                <p className="shrink-0 text-xs text-gray-400">{barisMisi.length} topik</p>
+              </div>
+              {/* Seksi sendiri, bukan dilebur ke kelompok "Matematika".
+                  Keduanya mengukur himpunan butir yang dijamin terpisah oleh
+                  trigger migrasi 148, dan penyebut paketnya pun berbeda —
+                  di sini paket latihan saja. Meleburnya menaruh dua penyebut
+                  di bawah satu judul. */}
+              <p className="px-1 text-xs leading-relaxed text-gray-400">
+                Peta kompetensi Matematika: paket latihan bertingkat yang
+                mengukur penguasaan per topik. Paket ujiannya dilaporkan
+                terpisah di dalam tiap topik.
+              </p>
+              <ul className="space-y-3">
+                {barisMisi.map(b => (
+                  <KartuPenguasaan key={b.kunci} b={b} studentId={studentId} />
+                ))}
+              </ul>
+            </div>
+          )}
 
           {kelompok.map(rows => (
             <div key={rows[0].subjectId ?? 'lain'} className="space-y-2">
@@ -257,65 +342,7 @@ export default async function PenguasaanPage({
 
               <ul className="space-y-3">
                 {rows.map(b => (
-                  <li key={b.groupId}>
-                    {/* Seluruh kartunya tautan, bukan cuma namanya: sasaran
-                        sentuh setinggi kartunya sendiri adalah satu-satunya
-                        ukuran yang masuk akal di ponsel. */}
-                    <Link
-                      href={`/keluarga/${studentId}/penguasaan/${b.groupId}`}
-                      className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
-                    >
-                      {b.keterangan && <p className="text-xs text-gray-400">{b.keterangan}</p>}
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="mt-0.5 min-w-0 font-semibold tracking-tight text-gray-900">
-                          {b.nama}
-                        </p>
-                        <span className="shrink-0 text-gray-300" aria-hidden>
-                          ›
-                        </span>
-                      </div>
-
-                      {/* Angka penguasaannya berdiri sendiri dan besar. Ia
-                          jawaban atas pertanyaan yang membawa orang ke layar
-                          ini, dan sebagai ekor di ujung baris judul ia harus
-                          dicari dulu. */}
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold tabular-nums text-gray-900">
-                          {b.persen == null ? '—' : `${b.persen}%`}
-                        </span>
-                        {b.label && (
-                          <span className="text-sm font-medium text-gray-500">{b.label}</span>
-                        )}
-                        {/* Keyakinan menempel pada angkanya, bukan di ujung
-                            baris: ia mengubah arti angka itu. Bentuk ringkas —
-                            titiknya saja — karena di daftar sepanjang ini
-                            kalimat "3 paket dikerjakan" di tiap baris jadi
-                            kebisingan; kalimat lengkapnya tetap terbaca pembaca
-                            layar lewat `aria-label`. */}
-                        <Keyakinan
-                          tuntas={b.paketTuntas}
-                          sempurna={b.paketSempurna}
-                          total={b.paketTotal}
-                          ringkas
-                          className="ml-1"
-                        />
-                        <span className="ml-auto shrink-0 text-xs text-gray-400 tabular-nums">
-                          {b.dikerjakan}/{b.total} soal dikerjakan
-                        </span>
-                      </div>
-
-                      <BilahJawaban rincian={b.rincian} total={b.total} className="mt-2" />
-                      <KeteranganJawaban rincian={b.rincian} className="mt-2.5" />
-
-                      {b.awal != null && b.persen != null && (
-                        <p className="mt-2 text-xs text-gray-400">
-                          {b.awal < b.persen
-                            ? `Naik dari ${b.awal}% saat soal-soalnya pertama dijawab.`
-                            : `Saat pertama dijawab ${b.awal}%.`}
-                        </p>
-                      )}
-                    </Link>
-                  </li>
+                  <KartuPenguasaan key={b.kunci} b={b} studentId={studentId} />
                 ))}
               </ul>
             </div>
@@ -323,5 +350,99 @@ export default async function PenguasaanPage({
         </>
       )}
     </div>
+  )
+}
+
+/** Satu baris di daftar Penguasaan, apa pun lapisan asalnya. */
+interface BarisPenguasaan {
+  /** Id grup kurikulum (uuid) atau kode topik peta (`D-01`). Keduanya alamat. */
+  kunci: string
+  subjectId: string | null
+  mapel: string
+  nama: string
+  keterangan: string | null
+  persen: number | null
+  label: string | null
+  pitaKunci: string | null
+  /** Null di jalur Misi — lihat `lib/belajar/topik-rapor.ts`. */
+  awal: number | null
+  paketTuntas: number
+  paketSempurna: number
+  paketTotal: number
+  dikerjakan: number
+  total: number
+  tuntas: boolean
+  rincian: { correct: number; partial: number; wrong: number; belum: number }
+}
+
+/**
+ * Kartu baris Penguasaan, dipakai dua seksi.
+ *
+ * Satu komponen, bukan dua yang mirip: begitu keduanya melewati kartu yang
+ * sama, angka jalur grup dan jalur peta tidak bisa diam-diam digambar dengan
+ * aturan berbeda. Yang membedakan keduanya sudah diselesaikan di pembangun
+ * barisnya, bukan di sini.
+ */
+function KartuPenguasaan({ b, studentId }: { b: BarisPenguasaan; studentId: string }) {
+  return (
+    <li>
+      {/* Seluruh kartunya tautan, bukan cuma namanya: sasaran
+          sentuh setinggi kartunya sendiri adalah satu-satunya
+          ukuran yang masuk akal di ponsel. */}
+      <Link
+        href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
+        className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
+      >
+        {b.keterangan && <p className="text-xs text-gray-400">{b.keterangan}</p>}
+        <div className="flex items-start justify-between gap-3">
+          <p className="mt-0.5 min-w-0 font-semibold tracking-tight text-gray-900">
+            {b.nama}
+          </p>
+          <span className="shrink-0 text-gray-300" aria-hidden>
+            ›
+          </span>
+        </div>
+
+        {/* Angka penguasaannya berdiri sendiri dan besar. Ia
+            jawaban atas pertanyaan yang membawa orang ke layar
+            ini, dan sebagai ekor di ujung baris judul ia harus
+            dicari dulu. */}
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="text-2xl font-bold tabular-nums text-gray-900">
+            {b.persen == null ? '—' : `${b.persen}%`}
+          </span>
+          {b.label && (
+            <span className="text-sm font-medium text-gray-500">{b.label}</span>
+          )}
+          {/* Keyakinan menempel pada angkanya, bukan di ujung
+              baris: ia mengubah arti angka itu. Bentuk ringkas —
+              titiknya saja — karena di daftar sepanjang ini
+              kalimat "3 paket dikerjakan" di tiap baris jadi
+              kebisingan; kalimat lengkapnya tetap terbaca pembaca
+              layar lewat `aria-label`. */}
+          <Keyakinan
+            tuntas={b.paketTuntas}
+            sempurna={b.paketSempurna}
+            total={b.paketTotal}
+            ringkas
+            className="ml-1"
+          />
+          <span className="ml-auto shrink-0 text-xs text-gray-400 tabular-nums">
+            {b.dikerjakan}/{b.total} soal dikerjakan
+          </span>
+        </div>
+
+        <BilahJawaban rincian={b.rincian} total={b.total} className="mt-2" />
+        <KeteranganJawaban rincian={b.rincian} className="mt-2.5" />
+
+        {b.awal != null && b.persen != null && (
+          <p className="mt-2 text-xs text-gray-400">
+            {b.awal < b.persen
+              ? `Naik dari ${b.awal}% saat soal-soalnya pertama dijawab.`
+              : `Saat pertama dijawab ${b.awal}%.`}
+          </p>
+        )}
+      </Link>
+    </li>
   )
 }
