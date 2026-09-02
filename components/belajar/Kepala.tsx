@@ -197,7 +197,7 @@ export function KepalaBelajar() {
         </Link>
       ) : null}
       <h1 className="truncate text-base font-semibold text-gray-900">
-        {judul ?? 'Latihan Soal'}
+        {judul ?? 'Belajar Mandiri'}
       </h1>
 
       {pemilih && pemilih.anak.length > 1 && (
