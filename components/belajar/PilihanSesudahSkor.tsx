@@ -96,7 +96,16 @@ export default function PilihanSesudahSkor({
           className={bisaDiulang ? biasa : utama}
         >
           <span className="block">Lihat Kunci Jawaban</span>
-          <span className="mt-0.5 block text-xs font-normal text-gray-500">
+          {/* Warnanya ikut varian tombolnya. `text-gray-500` di atas biru
+              nyaris tidak terbaca — dan yang tidak terbaca justru harganya,
+              persis kalimat yang membuat tombol ini tidak berbohong. Varian
+              birunya muncul tepat ketika tidak ada yang bisa diulang, jadi
+              kalimat inilah satu-satunya peringatan yang tersisa. */}
+          <span
+            className={`mt-0.5 block text-xs font-normal ${
+              bisaDiulang ? 'text-gray-500' : 'text-blue-100'
+            }`}
+          >
             Paket ini terkunci sesudahnya — nilainya berhenti di sini
           </span>
         </button>
