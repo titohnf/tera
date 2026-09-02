@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
 import { probeSesi } from '@/lib/belajar/retest'
+import { menitTanpaJeda } from '@/lib/belajar/beban'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
 
@@ -38,12 +39,13 @@ export default async function SesiLatihan({
   // cukup untuk keduanya.
   const kembali = pemilik.profileId ? `/belajar?anak=${pemilik.profileId}` : '/belajar'
 
-  const [soal, paket, petaPaket, batasWaktu, probe] = await Promise.all([
+  const [soal, paket, petaPaket, batasWaktu, probe, menitCekIn] = await Promise.all([
     keadaanSesi(sesiId),
     paketSesi(sesiId),
     paketTopikSesi(sesiId),
     batasWaktuSesi(sesiId),
     probeSesi(sesiId),
+    menitTanpaJeda(),
   ])
   if (soal.length === 0) redirect('/belajar')
 
@@ -82,7 +84,13 @@ export default async function SesiLatihan({
         </Link>
       </div>
 
-      <PelariSesi sesiId={sesiId} soal={soal} batasWaktu={batasWaktu} />
+      <PelariSesi
+        sesiId={sesiId}
+        soal={soal}
+        batasWaktu={batasWaktu}
+        menitTanpaJeda={menitCekIn}
+        anak={pemilik.profileId ?? undefined}
+      />
     </div>
   )
 }

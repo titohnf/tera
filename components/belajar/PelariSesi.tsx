@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import type { SoalSesi } from '@/lib/belajar/sesi'
 import { acakOpsi } from '@/lib/belajar/acak-opsi'
-import { periksaJawaban, selesaikanLatihan } from '@/app/belajar/actions'
+import { catatNudge, periksaJawaban, selesaikanLatihan } from '@/app/belajar/actions'
 import InputSoal from './InputSoal'
 
 /**
@@ -49,11 +49,21 @@ export default function PelariSesi({
   sesiId,
   soal,
   batasWaktu,
+  menitTanpaJeda,
+  anak,
 }: {
   sesiId: string
   soal: SoalSesi[]
   /** ISO, hanya untuk paket ujian. Null berarti sesi ini tidak berbatas waktu. */
   batasWaktu?: string | null
+  /**
+   * Ambang nudge ringan FR10 — menit kerja tanpa jeda. Dari `pengaturan`,
+   * bukan angka di berkas ini: ia satu-satunya ambang FR10 yang punya rujukan
+   * riset langsung (rentang atensi siswa SMP 10-12 menit), dan justru karena
+   * itu ia harus bisa diubah saat rujukannya diperbarui.
+   */
+  menitTanpaJeda?: number
+  anak?: string
 }) {
   const mulaiDari = Math.max(
     soal.findIndex(s => !s.sudahDijawab),
@@ -70,6 +80,13 @@ export default function PelariSesi({
   // dirender ulang setiap kali anak berpindah tab.
   const jedaMs = useRef(0)
   const hilangSejak = useRef<number | null>(null)
+
+  // Waktu kerja AKTIF berturut-turut, milidetik (FR10). Menumpuk lintas butir
+  // dan direset oleh dua hal saja: jeda yang benar-benar terjadi, dan nudge
+  // yang sudah ditampilkan. Ref, bukan state, karena ia bergerak di tiap
+  // jawaban dan tidak satu pun pergerakannya perlu menggambar ulang layar.
+  const aktifMs = useRef(0)
+  const [cekIn, setCekIn] = useState(false)
 
   useEffect(() => {
     function ubah() {
@@ -115,6 +132,27 @@ export default function PelariSesi({
         setGalat('Jawabanmu belum tersimpan. Coba tekan sekali lagi.')
         return
       }
+
+      // Nudge ringan FR10, dihitung DI SINI — di batas antar butir, bukan
+      // lewat timer yang bisa menyela di tengah soal yang sedang dibaca.
+      //
+      // Jeda panjang mereset hitungannya: yang dipantau adalah kerja berturut-
+      // turut, dan anak yang berhenti tiga menit memang sudah beristirahat.
+      // Satu menit dipilih sebagai batas "benar-benar berhenti" — di bawah itu
+      // biasanya cuma notifikasi yang lewat.
+      const jedaTotal = jedaMs.current + jedaBerjalan
+      if (jedaTotal >= 60_000) {
+        aktifMs.current = 0
+      } else {
+        aktifMs.current +=
+          Math.max(0, Date.now() - new Date(mulaiButir).getTime() - jedaTotal)
+      }
+      if (!terakhir && aktifMs.current >= (menitTanpaJeda ?? 12) * 60_000) {
+        aktifMs.current = 0
+        setCekIn(true)
+        void catatNudge('ringan', 'tanpa_jeda', anak)
+      }
+
       if (!terakhir) {
         setIndeks(indeks + 1)
         setJawaban(undefined)
@@ -145,6 +183,27 @@ export default function PelariSesi({
       </div>
 
       {batasWaktu && <HitungMundur batas={batasWaktu} />}
+
+      {/* Cek-in ringan (FR10): pengingat ritme, bukan pembatasan. Ia tidak
+          menghitung terhadap batas dua-nudge-per-hari, tidak menyembunyikan
+          soalnya, dan tidak punya tombol "berhenti" — satu-satunya kendali di
+          sini adalah menutupnya. Anak yang ingin istirahat sudah punya tombol
+          Keluar di puncak layar, dan menaruh tombol kedua di sini akan membuat
+          sebuah cek-in terbaca sebagai perintah. */}
+      {cekIn && (
+        <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-100 p-3">
+          <p className="text-sm leading-relaxed text-gray-700">
+            Udah {menitTanpaJeda ?? 12} menit nih — mau lanjut atau istirahat sebentar?
+          </p>
+          <button
+            type="button"
+            onClick={() => setCekIn(false)}
+            className="shrink-0 text-sm font-medium text-gray-500 hover:text-gray-900"
+          >
+            Oke
+          </button>
+        </div>
+      )}
 
       <div className="rounded-xl bg-white p-4 shadow-kartu">
         <InputSoal soal={tampil} nilai={jawaban} onChange={setJawaban} />

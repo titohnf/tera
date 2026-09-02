@@ -23,6 +23,8 @@ import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
 import { probeSesi } from '@/lib/belajar/retest'
+import { nudgeBeban } from '@/lib/belajar/beban'
+import NudgeBeban from '@/components/belajar/NudgeBeban'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 import { hasilSoal, KeteranganJawaban, NomorJawaban } from '@/components/belajar/BilahJawaban'
 import PilihanSesudahSkor from '@/components/belajar/PilihanSesudahSkor'
@@ -62,7 +64,8 @@ export default async function HasilSesi({
   // Sesudah `tutupSesi`, tidak sebelumnya: `practice_session_review` cuma
   // membuka sesi yang `finished_at`-nya terisi, dan syarat itulah yang menjaga
   // kunci jawaban di dalamnya (migrasi 131).
-  const [rincian, tinjauan, paket, petaPaket, pendampingan, probe] = await Promise.all([
+  const [rincian, tinjauan, paket, petaPaket, pendampingan, probe, nudge] =
+    await Promise.all([
     ringkasanSesi(pemilik.learnerId, sesiId),
     tinjauanSesi(sesiId),
     paketSesi(sesiId),
@@ -72,6 +75,7 @@ export default async function HasilSesi({
     // ini benar-benar ditutup. Hampir selalu null.
     pesanPendampingan(pemilik.learnerId, sesiId),
     probeSesi(sesiId),
+    nudgeBeban(pemilik.learnerId, sesiId),
   ])
 
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
@@ -372,6 +376,15 @@ export default async function HasilSesi({
         <div className="rounded-xl bg-blue-50 p-4">
           <p className="text-sm leading-relaxed text-blue-900">{pendampingan}</p>
         </div>
+      )}
+
+      {/* Nudge beban belajar (FR10), SESUDAH pesan pendampingan. Keduanya jarang
+          muncul bersamaan, dan kalau itu terjadi urutan ini yang benar: yang
+          satu tentang topik yang sedang sulit, yang lain tentang hari yang
+          sudah panjang, dan anak perlu membaca soal dirinya sendiri sebelum
+          soal jadwalnya. */}
+      {nudge && (
+        <NudgeBeban nudge={nudge} kembali={kembali} anak={pemilik.profileId ?? undefined} />
       )}
 
       {/* Rincian per topik KURIKULUM — sesi jalur peta tidak punya satu pun,

@@ -325,3 +325,31 @@ export async function mulaiPemanasan(anak?: string): Promise<{ error: string } |
   }
   redirect(`/belajar/${data as string}`)
 }
+
+/**
+ * Mencatat bahwa satu nudge beban belajar benar-benar sampai ke layar (FR10).
+ *
+ * Terpisah dari pembacanya karena pembacanya `stable` dan boleh dipanggil dari
+ * komponen server mana pun. Sebuah nudge yang tercatat karena halamannya
+ * kebetulan dirender ulang akan menghabiskan jatah dua-per-hari tanpa satu pun
+ * kalimat sampai ke anaknya.
+ *
+ * Kegagalan ditelan: yang gagal cuma penghitungnya, dan menolak menampilkan
+ * kalimat yang sudah terlanjur berguna karena satu baris log gagal ditulis
+ * menghukum orang yang salah.
+ */
+export async function catatNudge(
+  kategori: 'ringan' | 'formal',
+  sinyal: string,
+  anak?: string,
+): Promise<void> {
+  const { learnerId } = await belajarContext(anak)
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('catat_nudge', {
+    p_kategori: kategori,
+    p_sinyal: sinyal,
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) console.error('[belajar] gagal mencatat nudge:', error)
+}
