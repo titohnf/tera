@@ -325,7 +325,17 @@ export default async function HasilSesi({
               harus angka yang sama dengan yang dibawa pulang ke daftar paket. */}
           <p className="text-sm text-gray-500">
             <span className="font-medium text-gray-700">
-              {paket ? `Paket ${paket.nomor}` : petaPaket ? namaPaket(petaPaket) : 'Latihan'}
+              {/* Nama yang sama dengan yang dibaca di layar pengerjaannya.
+                  Sebuah probe yang di halaman soalnya bernama "Pengecekan
+                  Ulang" lalu di halaman nilainya bernama "Latihan" membuat
+                  anak mengira ia sedang melihat nilai sesuatu yang lain. */}
+              {probe
+                ? `Pengecekan Ulang — ${probe.nama}`
+                : paket
+                  ? `Paket ${paket.nomor}`
+                  : petaPaket
+                    ? namaPaket(petaPaket)
+                    : 'Latihan'}
             </span>{' '}
             · {pemilik.nama}
           </p>
