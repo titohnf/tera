@@ -264,3 +264,38 @@ export async function bukaKunciPaketPeta(
   const { learnerId } = await belajarContext(anak)
   return kunciPaketTopik(learnerId, paketId)
 }
+
+/**
+ * Membuka satu sesi retest (FR11).
+ *
+ * Seluruh syaratnya dijaga `retest_buka_sesi` (migrasi 164) — jatuh tempo,
+ * kepemilikan, kolam probe yang cukup, dan satu probe berjalan pada satu waktu.
+ * Aksi ini tidak mengulang satu pun pemeriksaan itu: yang diulang di sisi React
+ * adalah yang akan tertinggal saat aturannya berubah.
+ *
+ * Null dari sana berarti "belum waktunya, atau belum bisa" — tiga sebab yang
+ * sengaja tidak dibedakan di layar, sama seperti seluruh jalur peta lain.
+ */
+export async function mulaiRetest(
+  topikId: string,
+  anak?: string,
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('retest_buka_sesi', {
+    p_topik_id: topikId,
+    p_access_code: '',
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    console.error('[belajar] gagal membuka sesi retest:', error)
+    return { error: 'Retestnya belum bisa dibuka sekarang. Coba lagi sebentar lagi.' }
+  }
+  if (!data) {
+    return {
+      error: 'Retest topik ini belum bisa dibuka — belum jatuh tempo, atau soal probenya belum cukup.',
+    }
+  }
+  redirect(`/belajar/${data as string}`)
+}

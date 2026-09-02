@@ -25,6 +25,7 @@ export default function PilihanSesudahSkor({
   daftarPaket,
   kembali,
   materi,
+  probe = false,
 }: {
   sesiId: string
   /** Soal paket ini yang masih salah. Nol berarti paketnya sudah benar semua. */
@@ -39,6 +40,13 @@ export default function PilihanSesudahSkor({
   kembali: string
   /** Materi topik yang barusan dikerjakan, kalau topiknya punya materi. */
   materi: string | null
+  /**
+   * Sesi ini probe retest (FR11), jadi tidak ada yang bisa diulang dan tidak
+   * ada kunci yang boleh dibuka. Bukan karena pelit: kolam probe sebuah topik
+   * kecil dan dipakai berkali-kali sepanjang berbulan-bulan, dan butir yang
+   * kuncinya pernah terlihat berhenti mengukur apa pun selamanya.
+   */
+  probe?: boolean
 }) {
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
@@ -56,7 +64,7 @@ export default function PilihanSesudahSkor({
   const biasa =
     'block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-50 disabled:text-gray-400'
 
-  const bisaDiulang = sisa > 0 && !terkunci
+  const bisaDiulang = !probe && sisa > 0 && !terkunci
 
   return (
     <div className="space-y-2">
@@ -80,7 +88,7 @@ export default function PilihanSesudahSkor({
       {/* Harganya ditulis di tombolnya. Sebuah tombol bernama "Lihat Kunci
           Jawaban" yang diam-diam menghentikan paket adalah tombol yang
           berbohong, dan yang hilang karenanya tidak bisa dikembalikan. */}
-      {!kunciTerbuka && !terkunci && (
+      {!probe && !kunciTerbuka && !terkunci && (
         <button
           type="button"
           disabled={sibuk}
@@ -97,7 +105,7 @@ export default function PilihanSesudahSkor({
       {/* Sudah terkunci: kuncinya boleh dibuka lagi kapan saja, karena yang
           hilang sudah hilang. Tidak ada peringatan kedua untuk harga yang sudah
           dibayar. */}
-      {terkunci && !kunciTerbuka && (
+      {!probe && terkunci && !kunciTerbuka && (
         <Link href={`/belajar/${sesiId}/hasil?kunci=1`} className={utama}>
           Lihat Kunci Jawaban
         </Link>

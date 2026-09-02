@@ -1,6 +1,8 @@
 import { belajarContext } from '@/lib/belajar/konteks'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import PetaTopik from '@/components/belajar/PetaTopik'
+import KartuRetest from '@/components/belajar/KartuRetest'
+import { retestJatuhTempo } from '@/lib/belajar/retest'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -40,12 +42,24 @@ export default async function PaketTopikPage({
   const { studentId } = await params
   const { learnerId } = await belajarContext(studentId)
 
-  const peta = await petaTopik(learnerId)
+  const [peta, retest] = await Promise.all([
+    petaTopik(learnerId),
+    retestJatuhTempo(learnerId),
+  ])
 
   // Satu topik saja berarti ia terbentang sejak halaman dibuka, jadi isinya
   // ikut dibawa sekarang — aturan yang sama dengan `/belajar`.
   const paketAwal =
     peta.length === 1 ? await keadaanPaketTopik(learnerId, peta[0].id) : undefined
 
-  return <PetaTopik anak={studentId} topik={peta} paketAwal={paketAwal} />
+  return (
+    <div className="space-y-4">
+      {/* Di ATAS petanya, bukan di bawah: yang jatuh tempo adalah satu-satunya
+          hal di layar ini yang punya waktunya sendiri, dan menaruhnya sesudah
+          daftar topik berarti ia ditemukan oleh anak yang sudah selesai memilih
+          hal lain. */}
+      <KartuRetest retest={retest} anak={studentId} />
+      <PetaTopik anak={studentId} topik={peta} paketAwal={paketAwal} />
+    </div>
+  )
 }

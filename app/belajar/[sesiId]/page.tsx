@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
+import { probeSesi } from '@/lib/belajar/retest'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
 
@@ -37,11 +38,12 @@ export default async function SesiLatihan({
   // cukup untuk keduanya.
   const kembali = pemilik.profileId ? `/belajar?anak=${pemilik.profileId}` : '/belajar'
 
-  const [soal, paket, petaPaket, batasWaktu] = await Promise.all([
+  const [soal, paket, petaPaket, batasWaktu, probe] = await Promise.all([
     keadaanSesi(sesiId),
     paketSesi(sesiId),
     paketTopikSesi(sesiId),
     batasWaktuSesi(sesiId),
+    probeSesi(sesiId),
   ])
   if (soal.length === 0) redirect('/belajar')
 
@@ -58,7 +60,17 @@ export default async function SesiLatihan({
             nilainya masing-masing yang tidak akan terhapus. */}
         <p className="text-sm text-gray-500">
           <span className="font-medium text-gray-700">
-            {paket ? `Paket ${paket.nomor}` : petaPaket ? namaPaket(petaPaket) : 'Latihan'}
+            {/* Probe disebut namanya sendiri. Anak yang mengira ini paket
+                latihan biasa akan mencari tombol "kerjakan lagi" yang sengaja
+                tidak ada di ujungnya (FR11: tanpa retry), dan ketiadaan tanpa
+                penjelasan terbaca sebagai layar yang rusak. */}
+            {probe
+              ? `Pengecekan Ulang — ${probe.nama}`
+              : paket
+                ? `Paket ${paket.nomor}`
+                : petaPaket
+                  ? namaPaket(petaPaket)
+                  : 'Latihan'}
           </span>{' '}
           · {pemilik.nama}
         </p>

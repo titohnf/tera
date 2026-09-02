@@ -22,6 +22,7 @@ import { namaPaket } from '@/lib/belajar/nama-paket'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
+import { probeSesi } from '@/lib/belajar/retest'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 import { hasilSoal, KeteranganJawaban, NomorJawaban } from '@/components/belajar/BilahJawaban'
 import PilihanSesudahSkor from '@/components/belajar/PilihanSesudahSkor'
@@ -61,7 +62,7 @@ export default async function HasilSesi({
   // Sesudah `tutupSesi`, tidak sebelumnya: `practice_session_review` cuma
   // membuka sesi yang `finished_at`-nya terisi, dan syarat itulah yang menjaga
   // kunci jawaban di dalamnya (migrasi 131).
-  const [rincian, tinjauan, paket, petaPaket, pendampingan] = await Promise.all([
+  const [rincian, tinjauan, paket, petaPaket, pendampingan, probe] = await Promise.all([
     ringkasanSesi(pemilik.learnerId, sesiId),
     tinjauanSesi(sesiId),
     paketSesi(sesiId),
@@ -70,6 +71,7 @@ export default async function HasilSesi({
     // adalah trigger pada `finished_at`, jadi barisnya baru ada setelah sesi
     // ini benar-benar ditutup. Hampir selalu null.
     pesanPendampingan(pemilik.learnerId, sesiId),
+    probeSesi(sesiId),
   ])
 
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
@@ -203,7 +205,14 @@ export default async function HasilSesi({
   //
   // Sesi tanpa paket (lahir sebelum migrasi 134) dibiarkan terbuka: tidak ada
   // paket yang bisa dikunci, jadi tidak ada yang bisa dipertaruhkan.
-  const kunciBoleh = (!paket && !petaPaket) || (paketIni?.terkunci ?? false)
+  //
+  // SESI PROBE tidak pernah membuka kunci, dan pengecualiannya harus ditulis
+  // eksplisit justru karena sesi probe tidak punya paket: tanpa baris ini ia
+  // jatuh ke cabang "sesi tanpa paket" di atas — cabang untuk sesi warisan
+  // sebelum migrasi 134 — dan seluruh kolam probe sebuah topik terbaca dalam
+  // sekali duduk. Kolam itu kecil dan dipakai berbulan-bulan (FR11).
+  const kunciBoleh =
+    !probe && ((!paket && !petaPaket) || (paketIni?.terkunci ?? false))
   const kunciTerbuka = kunciBoleh && (kunciDiminta === '1' || terpilih !== null)
 
   // Alamatnya ikut diluruskan, bukan cuma isinya: `?kunci=1` yang menampilkan
@@ -238,6 +247,7 @@ export default async function HasilSesi({
       daftarPaket={daftarPaket}
       kembali={kembali}
       materi={ulangi}
+      probe={probe !== null}
     />
   )
 

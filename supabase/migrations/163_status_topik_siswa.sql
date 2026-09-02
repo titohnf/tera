@@ -148,7 +148,7 @@ as $$
     where p.jenis = 'latihan'
   ),
   agregat as (
-    select topik_id,
+    select pk.topik_id,
            count(*) as paket_total,
            count(skor_putaran_1) as paket_dikerjakan,
            count(*) filter (
@@ -158,7 +158,7 @@ as $$
              where skor_akhir is not null
                and skor_akhir < (select nilai from ambang)
            ) as paket_akhir_di_bawah
-    from paket group by topik_id
+    from paket pk group by pk.topik_id
   ),
   -- Eskalasi yang BELUM dijawab tutor. Yang sudah dijawab bukan lagi keadaan
   -- yang sedang berlangsung — ia riwayat, dan riwayat tidak menahan apa pun.
@@ -172,8 +172,8 @@ as $$
   -- Sebuah topik `tuntas` membuka topik yang menjadikannya prasyarat. Topik
   -- tanpa prasyarat sama sekali selalu terbuka.
   tuntas as (
-    select topik_id from agregat
-    where paket_total > 0 and paket_lolos_putaran_1 = paket_total
+    select ag.topik_id from agregat ag
+    where ag.paket_total > 0 and ag.paket_lolos_putaran_1 = ag.paket_total
   )
   select t.id,
          case
@@ -185,7 +185,7 @@ as $$
            when not exists (
              select 1 from topik_prasyarat pr
              where pr.topik_id = t.id
-               and pr.prasyarat_id not in (select topik_id from tuntas)
+               and pr.prasyarat_id not in (select tt2.topik_id from tuntas tt2)
            ) then 'siap_dikerjakan'
            else 'terkunci'
          end,
