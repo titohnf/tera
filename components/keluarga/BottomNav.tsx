@@ -20,11 +20,16 @@ import { langganan, snapshotServer, snapshotTerbaca, urai } from '@/lib/notif-te
  * kelas yang sudah selesai diringkas di dasarnya.
  *
  * "Belajar" pernah tinggal di sini sebagai tab, menuju `/belajar`, permukaan
- * yang dipakai bersama pelanggan langganan. Dari bawah dua layar (Beranda
- * dan Profil) ia pindah ke sebuah petak di beranda — lihat
- * `PintasanKeluarga` — dan bilah ini berhenti menyala di `/belajar`. Bilahnya
- * sendiri tetap dirender di sana (lihat `components/belajar/BilahKeluarga`)
- * supaya siapa yang tiba dari petak punya jalan pulang ke portal tanpa jauh.
+ * yang dipakai bersama pelanggan langganan. Ia pindah ke sebuah petak di
+ * beranda — lihat `PintasanKeluarga` — dan bilah ini berhenti menyala di
+ * `/belajar`. Bilahnya juga tidak dirender di sana: yang membawa orang pulang
+ * ke portal adalah `components/belajar/PulangKe` di kepala layar.
+ *
+ * Tempat yang ditinggalkannya diisi "Misi", peta kompetensi berkunci topik
+ * pengukuran. Bukan penggantinya melainkan tetangganya: Belajar menyusun
+ * dunia menurut bab kurikulum bimbel, Misi menurut apa yang diukur, dan
+ * migrasi 148 memisahkan butir keduanya dengan trigger. Keduanya memang
+ * berdampingan permanen.
  *
  * Tagihan, Laporan, Kelas, dan Belajar tidak punya tempat di sini;
  * keempatnya dijangkau dari petak ikon di beranda, dan bilah ini tidak dirender
@@ -57,9 +62,9 @@ const ITEMS: Item[] = [
     ),
   },
   {
-    label: 'x',
-    href: (id) => `/keluarga/${id}/x`,
-    cocok: ['/x'],
+    label: 'Misi',
+    href: (id) => `/keluarga/${id}/misi`,
+    cocok: ['/misi'],
     ikon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
     ),
