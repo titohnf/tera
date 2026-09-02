@@ -288,3 +288,32 @@ export async function kunciPaketTopik(learnerId: string, paketId: string): Promi
   }
   return Boolean(data)
 }
+
+/**
+ * Kalimat pendampingan untuk murid sesudah paket pemicu eskalasi (FR7).
+ *
+ * Null berarti tidak ada yang perlu dikatakan — dan itu keadaan yang jauh
+ * lebih sering. Yang menyeberang dari database cuma kalimatnya: tidak ada
+ * skor, tidak ada ambang, tidak ada tanda bahwa sebuah baris eskalasi lahir.
+ * Batas itu ditegakkan oleh bentuk `pesan_pendampingan` sendiri (migrasi 162),
+ * bukan oleh kesopanan berkas ini.
+ *
+ * Galat ditelan jadi null dengan sengaja: sebuah kalimat penyemangat yang
+ * gagal dimuat tidak boleh menjatuhkan halaman hasil yang membawa nilai anak.
+ */
+export async function pesanPendampingan(
+  learnerId: string,
+  sesiId: string,
+): Promise<string | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('pesan_pendampingan', {
+    p_access_code: TANPA_KODE,
+    p_learner_id: learnerId,
+    p_sesi_id: sesiId,
+  })
+  if (error) {
+    console.error('[belajar] gagal membaca pesan pendampingan:', error)
+    return null
+  }
+  return (data as string | null) ?? null
+}

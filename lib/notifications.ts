@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { daftarEskalasi } from '@/lib/pengukuran/tutor'
 import type { NotificationItem } from '@/components/layout/HeaderNotifications'
 
 const REQUEST_LABEL: Record<string, string> = {
@@ -83,6 +84,44 @@ export async function getTutorNotifications(userId: string): Promise<Notificatio
       subtitle: classSubjectLabel(r.sessions?.classes ?? null, r.sessions?.subjects ?? null),
       createdAt: r.reviewed_at ?? r.created_at,
       href: `/tutor/sessions/${r.session_id}`,
+    })
+  }
+
+  // Eskalasi pengukuran (PRD FR7).
+  //
+  // Sampai di sini, eskalasi cuma jejak: `notifikasi_eskalasi` lahir sendiri
+  // saat putaran pertama paket kedua berturut-turut selesai di bawah ambang,
+  // dan `waktu_notifikasi_terkirim` diisi `now()` saat itu juga — artinya jam
+  // SLA 24 jam kerja mulai berdetak. Tanpa baris di bawah ini, satu-satunya
+  // cara tutor tahu adalah membuka `/tutor/pengukuran` atas inisiatif sendiri,
+  // dan ia bisa berstatus `terlambat` tanpa pernah dikabari. Lonceng inilah
+  // "kanal yang disepakati" di FR7; ia dipilih karena sudah berdiri, sehingga
+  // tidak ada layanan luar yang harus dipercaya membawa data anak.
+  //
+  // LEWAT RPC, BUKAN KUERI LANGSUNG. Fungsi lain di berkas ini memakai klien
+  // admin dan menyaring sendiri dengan `.eq(...)`; di sini tidak boleh —
+  // `learners` tertutup bagi tutor, dan menyatukannya dengan nama murid adalah
+  // persis pekerjaan `tutor_eskalasi` yang gerbangnya sudah ditulis di migrasi
+  // 150. Memakai klien admin di sini berarti menulis ulang gerbang itu dengan
+  // tangan, di tempat yang tidak akan ikut berubah kalau gerbangnya berubah.
+  // Konsekuensinya `userId` tidak dipakai untuk bagian ini: yang menentukan
+  // adalah `auth.uid()` milik sesi yang sedang berjalan, dan di layar ini
+  // keduanya orang yang sama.
+  //
+  // Untuk admin, `tutor_eskalasi` mengembalikan SELURUH eskalasi terbuka —
+  // sesuai kontraknya, karena admin memang penanggung jawab terakhir semuanya.
+  for (const e of await daftarEskalasi(true)) {
+    items.push({
+      id: `eskalasi-${e.id}`,
+      // Tanpa angka. Yang perlu dibawa lonceng adalah "siapa" dan "sekarang";
+      // skor Putaran 1 dan ambangnya ada di halaman tujuannya, di layar yang
+      // memang bergerbang untuk itu.
+      title: `${e.nama} perlu didampingi${e.statusSla === 'terlambat' ? ' — sudah lewat batas respons' : ''}`,
+      subtitle: e.labelPemicu
+        ? `Dua paket berturut di bawah ambang: ${e.labelPemicu}`
+        : 'Dua paket berturut di bawah ambang',
+      createdAt: e.waktuTerkirim,
+      href: `/tutor/pengukuran/${e.learnerId}`,
     })
   }
 

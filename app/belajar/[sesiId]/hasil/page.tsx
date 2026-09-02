@@ -16,6 +16,7 @@ import {
   isiPaketTopik,
   keadaanPaketTopik,
   paketTopikSesi,
+  pesanPendampingan,
 } from '@/lib/belajar/topik-peta'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import { persenDari } from '@/lib/belajar/penilaian'
@@ -60,11 +61,15 @@ export default async function HasilSesi({
   // Sesudah `tutupSesi`, tidak sebelumnya: `practice_session_review` cuma
   // membuka sesi yang `finished_at`-nya terisi, dan syarat itulah yang menjaga
   // kunci jawaban di dalamnya (migrasi 131).
-  const [rincian, tinjauan, paket, petaPaket] = await Promise.all([
+  const [rincian, tinjauan, paket, petaPaket, pendampingan] = await Promise.all([
     ringkasanSesi(pemilik.learnerId, sesiId),
     tinjauanSesi(sesiId),
     paketSesi(sesiId),
     paketTopikSesi(sesiId),
+    // Sesudah `tutupSesi` juga, dan itu syarat: pendeteksi eskalasi (149)
+    // adalah trigger pada `finished_at`, jadi barisnya baru ada setelah sesi
+    // ini benar-benar ditutup. Hampir selalu null.
+    pesanPendampingan(pemilik.learnerId, sesiId),
   ])
 
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
@@ -339,6 +344,25 @@ export default async function HasilSesi({
           </>
         )}
       </div>
+
+      {/* Kalimat pendampingan (FR7), tepat di bawah nilainya dan di atas segala
+          rincian: ia menjawab pertanyaan yang baru saja muncul di kepala anak
+          saat membaca angka itu, dan menaruhnya di dasar halaman berarti ia
+          dibaca sesudah anak selesai menyimpulkan sendiri.
+
+          Teksnya datang dari `pengaturan`, bukan dari berkas ini — tim konten
+          yang memiliki kalimatnya (FR7). Tidak ada angka di sekitarnya, dan
+          tidak ada penjelasan kenapa ia muncul: yang memicunya Skor Putaran 1,
+          angka yang FR3 larang sampai ke layar ini dalam bentuk apa pun,
+          termasuk dalam bentuk kalimat yang menerangkannya.
+
+          Bukan peringatan dan bukan pagar — warnanya biru muda, bukan merah,
+          dan tidak ada satu pun kendali yang dinonaktifkan olehnya. */}
+      {pendampingan && (
+        <div className="rounded-xl bg-blue-50 p-4">
+          <p className="text-sm leading-relaxed text-blue-900">{pendampingan}</p>
+        </div>
+      )}
 
       {/* Rincian per topik KURIKULUM — sesi jalur peta tidak punya satu pun,
           karena butirnya sengaja tidak bertag bab sejak migrasi 148. Untuk sesi
