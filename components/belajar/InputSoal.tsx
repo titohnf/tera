@@ -93,8 +93,17 @@ export default function InputSoal({
       )}
 
       {soal.tipe === 'short_answer' && (
+        // TERKENDALI, bukan `defaultValue`. Kotaknya menempati posisi yang sama
+        // di pohon React untuk setiap soal, jadi React memakai ulang simpul DOM
+        // yang sama — dan `defaultValue` cuma dipasang sekali saat lahir.
+        // Akibatnya jawaban soal sebelumnya tertinggal terbaca di kotak soal
+        // berikutnya, sementara `jawaban` di `PelariSesi` sudah kosong: anak
+        // melihat jawaban di layar dan tombol "Lanjut" yang mati, tanpa satu pun
+        // petunjuk kenapa. Yang lebih buruk, mengetik di atasnya menyambung ke
+        // sisa jawaban lama. Nilai yang tampil sekarang selalu nilai yang akan
+        // dikirim.
         <input
-          defaultValue={typeof nilai === 'string' ? nilai : ''}
+          value={typeof nilai === 'string' ? nilai : ''}
           onChange={e => onChange(e.target.value)}
           placeholder="Jawaban singkat"
           className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50"
@@ -350,8 +359,11 @@ function IsiRumpang({
         <span key={i} className="flex items-center gap-2">
           <RumusTeks text={b} />
           {i < bagian.length - 1 && (
+            // Terkendali, dengan alasan yang sama dengan `short_answer` di
+            // atas: dua soal rumpang berturut-turut yang jumlah kotaknya sama
+            // memakai ulang simpul DOM yang sama persis.
             <input
-              defaultValue={isian[i] ?? ''}
+              value={isian[i] ?? ''}
               onChange={e => set(i, e.target.value)}
               className="w-28 rounded-lg border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-50"
             />
