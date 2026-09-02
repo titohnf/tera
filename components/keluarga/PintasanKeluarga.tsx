@@ -33,19 +33,27 @@ import Link from 'next/link'
  * `public/logo-icon.png`, dicampur putih pada empat kadar — 0%, 50%
  * (`#80b5fa`), 80% (`#cce1fd`), dan 92% (`#eaf3fe`, warna lingkaran petak).
  *
- * Laporan dan Tagihan digambar sebagai siluet: badannya biru merek
- * penuh, detailnya `#cce1fd` — pucat, tapi masih jelas biru. Keduanya ikon
- * benda — kotak statistik, gulungan — yang seluruh detailnya berada
- * di dalam badan, jadi nada pucat itu selalu punya alas biru dan tidak pernah
- * hilang ke lingkaran.
+ * Keempatnya digambar sebagai siluet: badannya biru merek penuh, detailnya
+ * `#cce1fd` — pucat, tapi masih jelas biru. Semuanya ikon benda — buku, kotak
+ * statistik, kalender, gulungan — yang detailnya berada di dalam badan, jadi
+ * nada pucat itu selalu punya alas biru dan tidak pernah hilang ke lingkaran.
+ *
+ * Satu pengecualian, dan ia justru menegakkan aturan itu: dua ring di puncak
+ * kalender menonjol ke luar badan. Dipucatkan, ring itu lenyap ke lingkaran
+ * `#eaf3fe`; jadi ia dibiarkan biru merek, ikut jadi bagian siluetnya, dan yang
+ * dipucatkan cuma enam titik tanggal di dalam badan.
  *
  * Detailnya sempat diberi garis tepi tipis, meniru celah antara orang dan papan
- * di ikon Kelas. Di 28px garis itu cuma membuat goresannya berbulu; celah di
- * Kelas bekerja karena jaraknya nyata, bukan karena ada garisnya.
+ * di ikon Kelas yang dulu dipakai petak Jadwal. Di 28px garis itu cuma membuat
+ * goresannya berbulu; celah di Kelas bekerja karena jaraknya nyata, bukan karena
+ * ada garisnya.
  *
- * Kelas sendiri tidak ikut jadi siluet. Ikonnya orang di depan papan, dan
- * kepalanya berdiri di luar badan; kalau dimudakan ia lenyap ke latar. Petak itu
- * tetap dua nada — badan `#80b5fa`, detail biru merek.
+ * Belajar dan Jadwal sempat bukan gambar library sama sekali: keduanya digambar
+ * tangan dengan koordinat kasar, sementara Laporan dan Tagihan memang salinan
+ * dari set Streamline. Yang di petak Jadwal bahkan ikon orang di depan papan —
+ * sisa dari masa petak ini bernama "Kelas", nama berganti tapi gambarnya
+ * tertinggal. Sekarang keempatnya dari satu set — Belajar memakai `book-1-flat`
+ * dan Jadwal `calendar-mark-flat`.
  *
  * Logonya sebenarnya berpasangan biru dengan tosca `#20c5b5`, dan versi dengan
  * badan tosca sempat dicoba. Di ukuran 28px toscanya menang sendiri: yang
@@ -82,14 +90,9 @@ const PINTASAN = [
     to: (id: string) => `/belajar?anak=${id}`,
     ikon: (
       <>
-        <path fill="#80b5fa" d="M24 21.5C19.5 18 14.5 16.8 10.5 17.8 7.6 18.6 5.5 20.6 5.5 22.7L5.5 31.8C5.5 35.2 8.3 37.8 11.7 37.7 15 37.6 18.2 38.7 20.9 40.5 22.4 41.4 24 40.4 24 38.8Z"/>
-        <path fill="#80b5fa" d="M24 21.5C28.5 18 33.5 16.8 37.5 17.8 40.4 18.6 42.5 20.6 42.5 22.7L42.5 31.8C42.5 35.2 39.7 37.8 36.3 37.7 33 37.6 29.8 38.7 27.1 40.5 25.6 41.4 24 40.4 24 38.8Z"/>
-        <path fill="#026bf5" d="M23.6 22.4c.2 0 .4.2.4.4v6c0 .2-.2.4-.4.4s-.4-.2-.4-.4v-6c0-.2.2-.4.4-.4z"/>
-        <path fill="#026bf5" d="M10 24.3h8.4c.7 0 1.3.6 1.3 1.3s-.6 1.3-1.3 1.3H10c-.7 0-1.3-.6-1.3-1.3s.6-1.3 1.3-1.3z"/>
-        <path fill="#026bf5" d="M10 29.6h6c.7 0 1.3.6 1.3 1.3s-.6 1.3-1.3 1.3h-6c-.7 0-1.3-.6-1.3-1.3s.6-1.3 1.3-1.3z"/>
-        <path fill="#026bf5" d="M38 24.3h-8.4c-.7 0-1.3.6-1.3 1.3s.6 1.3 1.3 1.3H38c.7 0 1.3-.6 1.3-1.3s-.6-1.3-1.3-1.3z"/>
-        <path fill="#026bf5" d="M38 29.6h-6c-.7 0-1.3.6-1.3 1.3s.6 1.3 1.3 1.3h6c.7 0 1.3-.6 1.3-1.3s-.6-1.3-1.3-1.3z"/>
-        <path fill="#026bf5" d="M21.6 40.6h4.8v4.2c0 .8-.9 1.3-1.6.8l-.8-.6-.8.6c-.7.5-1.6 0-1.6-.8v-4.2z"/>
+        <path fill="#026bf5" d="M24 1.516c-6.41 0-10.991.254-13.976.51c-3.297.281-5.791 2.858-6.032 6.135c-.24 3.267-.492 8.455-.492 15.855s.252 12.587.492 15.855c.24 3.276 2.735 5.853 6.032 6.135c2.985.255 7.567.51 13.976.51s10.991-.255 13.976-.51c3.297-.282 5.791-2.859 6.032-6.135c.24-3.268.492-8.456.492-15.855s-.252-12.588-.492-15.855c-.24-3.277-2.735-5.854-6.032-6.136c-2.985-.255-7.567-.51-13.976-.51"/>
+        <path fill="#cce1fd" fillRule="evenodd" d="M22 10a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4zm-2 11a2 2 0 0 1 2-2h6a2 2 0 1 1 0 4h-6a2 2 0 0 1-2-2" clipRule="evenodd"/>
+        <path fill="#cce1fd" d="M14 1.755v44.52a121 121 0 0 1-3.976-.27c-3.297-.281-5.791-2.858-6.032-6.134c-.24-3.268-.492-8.456-.492-15.855s.252-12.588.492-15.856c.24-3.276 2.735-5.853 6.032-6.135c1.103-.094 2.425-.188 3.976-.27"/>
       </>
     ),
   },
@@ -109,8 +112,9 @@ const PINTASAN = [
     judul: 'Jadwal',
     ikon: (
       <>
-        <path fill="#80b5fa" d="m22.985 31.499l.308-4.415l5.412-.736c2.072-.281 4.115-1.813 4.567-4.287c.34-1.856.261-3.344.012-4.481c-.583-2.665-2.956-3.645-4.545-3.736a213 213 0 0 0-8.184-.305A9.46 9.46 0 0 0 22 8.5c0-3.33-1.714-6.26-4.307-7.956A429 429 0 0 1 24 .5c8.57 0 14.298.227 17.6.418c2.747.158 5.064 2.137 5.395 4.98c.259 2.23.505 5.549.505 10.102s-.246 7.871-.505 10.102c-.33 2.843-2.648 4.822-5.395 4.98c-3.302.191-9.03.418-17.6.418l-1.014-.001Z"/>
-        <path fill="#026bf5" d="M6 8.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 0 0-13 0m.506 8.23c6.975-.34 14.874-.303 22.062.11c.766.043 1.589.48 1.786 1.381c.16.725.24 1.81-.032 3.3c-.187 1.022-1.048 1.723-2.02 1.855l-7.428 1.01a.5.5 0 0 0-.431.46l-1.281 18.361c-.111 1.592-1.296 2.933-2.923 3.098q-.478.049-1.021.09a1.48 1.48 0 0 1-1.585-1.425l-.345-8.99a.5.5 0 0 0-.5-.48h-.575a.5.5 0 0 0-.5.48l-.345 8.975a1.48 1.48 0 0 1-1.593 1.425a41 41 0 0 1-.943-.088c-1.665-.175-2.86-1.575-2.92-3.21l-.377-10.15a.52.52 0 0 0-.484-.492a29 29 0 0 1-1.688-.174c-1.138-.154-1.872-1.14-1.843-2.237c.104-3.894.596-7.462 1.003-9.823c.339-1.968 2.006-3.38 3.983-3.477Z"/>
+        <path fill="#026bf5" d="M24 46.5c-7.632 0-12.948-.485-16.147-.911c-2.862-.382-5.068-2.554-5.479-5.419c-.417-2.91-.874-7.506-.874-13.67s.457-10.76.874-13.67c.41-2.864 2.617-5.037 5.48-5.418C11.051 6.985 16.367 6.5 24 6.5c7.632 0 12.948.485 16.147.912c2.862.381 5.068 2.554 5.479 5.418c.417 2.91.874 7.506.874 13.67s-.457 10.76-.874 13.67c-.41 2.864-2.617 5.037-5.48 5.419c-3.198.426-8.514.911-16.146.911"/>
+        <path fill="#026bf5" d="M33.5 14.518q-.754-.001-1.336-.037c-2.27-.133-3.547-2.002-3.618-3.918a69 69 0 0 1 0-5.091c.07-1.916 1.348-3.785 3.618-3.918q.582-.035 1.336-.036t1.336.036c2.27.133 3.547 2.002 3.618 3.918a69 69 0 0 1 0 5.091c-.07 1.916-1.348 3.785-3.618 3.918a23 23 0 0 1-1.336.037m-19 0q-.754-.001-1.336-.037c-2.27-.133-3.547-2.002-3.618-3.918a69 69 0 0 1 0-5.091c.07-1.916 1.348-3.785 3.618-3.918q.582-.035 1.336-.036t1.336.036c2.27.133 3.547 2.002 3.618 3.918a69 69 0 0 1 0 5.091c-.07 1.916-1.348 3.785-3.618 3.918a23 23 0 0 1-1.336.037"/>
+        <path fill="#cce1fd" fillRule="evenodd" d="M17 25a2 2 0 0 0-2-2h-4a2 2 0 1 0 0 4h4a2 2 0 0 0 2-2m5-2a2 2 0 1 0 0 4h4a2 2 0 1 0 0-4zm11 0a2 2 0 1 0 0 4h4a2 2 0 1 0 0-4zM22 33a2 2 0 1 0 0 4h4a2 2 0 1 0 0-4zm9 2a2 2 0 0 1 2-2h4a2 2 0 1 1 0 4h-4a2 2 0 0 1-2-2m-16-2a2 2 0 1 1 0 4h-4a2 2 0 1 1 0-4z" clipRule="evenodd"/>
       </>
     ),
   },
@@ -156,7 +160,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
                 memuat sesi yang akan datang sekaligus yang sudah lewat, dan
                 "Riwayat" mengunci ke belakang. Nama ini juga sama dengan tab
                 untuk rute yang sama di portal admin. */}
-            <span className="text-center text-[11px] leading-tight text-gray-600 break-words">
+            <span className="text-center text-[13px] font-medium leading-tight text-gray-700 break-words">
               {p.judul}
             </span>
           </Link>
