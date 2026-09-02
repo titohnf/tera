@@ -60,7 +60,7 @@ const LAYAR: Record<string, Layar> = {
   // beranda: pintu masuknya sekarang beranda, jadi panah kembali harus pulang
   // ke sana. Tanpa itu, layar yang dibuka dari sebuah petak tidak punya jalan
   // mundur ke petak-petaknya.
-  jadwal: { judul: 'Kelas', kembali: '' },
+  jadwal: { judul: 'Jadwal', kembali: '' },
   notifikasi: { judul: 'Notifikasi' },
   profil: { judul: 'Profil' },
   misi: { judul: 'Misi' },
