@@ -107,7 +107,16 @@ export default function PelariSesi({
   // Diacak sekali per butir, bukan tiap render: daftar yang berubah urutan di
   // bawah jari yang sedang memilihnya adalah cara tercepat membuat anak salah
   // menekan.
-  const { soal: tampil, urutan } = useMemo(() => acakOpsi(sekarang), [sekarang])
+  //
+  // Benihnya id sesi + id butir, bukan kebetulan: komponen ini dirender di
+  // server DAN di browser, dan pengacakan yang tidak berbenih membuat keduanya
+  // menghasilkan urutan berbeda — hidrasi gagal, lalu opsinya berpindah tempat
+  // di depan mata anak. Putaran kedua sebuah paket berjalan di sesi baru, jadi
+  // urutannya tetap berganti antar putaran seperti yang dituntut PRD FR3.
+  const { soal: tampil, urutan } = useMemo(
+    () => acakOpsi(sekarang, `${sesiId}:${sekarang.id}`),
+    [sekarang, sesiId]
+  )
 
   /**
    * Mencatat jawaban lalu maju. Hasil penilaiannya dibuang di sini dengan
