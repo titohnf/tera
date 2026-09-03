@@ -1,0 +1,264 @@
+{
+  "format": "tera/butir-impor@1",
+  "topik_id": "D-01",
+  "catatan": "Contoh lengkap: 11 tipe soal, 3 kolam, dua mode penilaian grid. Isinya boleh dihapus dan diganti — yang penting bentuknya. Baca README.md di folder yang sama sebelum menyunting.",
+  "butir": [
+    {
+      "type": "mcq_single",
+      "peruntukan": "latihan",
+      "bloom_level": 1,
+      "prompt": "Hasil dari (-7) + 4 adalah ...",
+      "options": { "choices": ["-3", "3", "-11", "11"] },
+      "correct_answer": "-3",
+      "weight": 1,
+      "explanation": "Menjumlah bilangan berbeda tanda berarti mencari selisihnya, lalu memakai tanda bilangan yang nilai mutlaknya lebih besar.",
+      "penjelasan_per_opsi": {
+        "0": "Benar. |-7| - |4| = 3, dan tandanya mengikuti -7 yang lebih besar nilai mutlaknya.",
+        "1": "Salah. Selisihnya tepat, tetapi tandanya diambil dari 4 yang justru lebih kecil nilai mutlaknya.",
+        "2": "Salah. -11 muncul kalau keduanya dianggap negatif: (-7) + (-4).",
+        "3": "Salah. 11 muncul kalau kedua tanda diabaikan sekaligus."
+      },
+      "elemen_proses": ["penalaran"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "true_false",
+      "peruntukan": "latihan",
+      "bloom_level": 1,
+      "prompt": "Hasil dari (-6) × (-3) adalah bilangan positif.",
+      "options": null,
+      "correct_answer": "true",
+      "weight": 1,
+      "label_kategori": { "positif": "Benar", "negatif": "Salah" },
+      "penjelasan_per_opsi": {
+        "0": "Benar. Negatif dikali negatif menghasilkan positif: 18.",
+        "1": "Salah. Aturan tanda untuk perkalian berbeda dari penjumlahan — dua negatif yang dikali menghasilkan positif."
+      },
+      "elemen_proses": ["penalaran"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "short_answer",
+      "peruntukan": "latihan",
+      "bloom_level": 2,
+      "prompt": "Hitung hasil dari (-15) : 3.",
+      "options": null,
+      "correct_answer": ["-5"],
+      "weight": 1,
+      "explanation": "Negatif dibagi positif menghasilkan negatif.",
+      "elemen_proses": ["representasi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "fill_blank",
+      "peruntukan": "latihan",
+      "bloom_level": 2,
+      "prompt": "Lengkapi langkahnya: (-8) + 5 = ___, lalu hasil itu dikali (-2) menjadi ___.",
+      "options": null,
+      "correct_answer": ["-3", "6"],
+      "weight": 1,
+      "explanation": "Dua rumpang dinilai terpisah: mengisi satu dengan benar tetap mendapat separuh bobot.",
+      "elemen_proses": ["representasi", "komunikasi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "mcq_multi",
+      "peruntukan": "latihan",
+      "bloom_level": 3,
+      "prompt": "Untuk a = -5 dan b = 2, pilih SEMUA pernyataan yang benar.",
+      "options": {
+        "choices": [
+          "a + b bernilai negatif",
+          "a × b bernilai negatif",
+          "a - b bernilai positif",
+          "nilai mutlak a lebih besar daripada nilai mutlak b"
+        ]
+      },
+      "correct_answer": [
+        "a + b bernilai negatif",
+        "a × b bernilai negatif",
+        "nilai mutlak a lebih besar daripada nilai mutlak b"
+      ],
+      "weight": 1,
+      "explanation": "a + b = -3, a × b = -10, a - b = -7 (negatif, jadi pernyataan ketiga salah), |a| = 5 > |b| = 2.",
+      "pola_solo": "multistruktural",
+      "elemen_proses": ["penalaran", "koneksi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "statement_grid",
+      "peruntukan": "latihan",
+      "bloom_level": 3,
+      "prompt": "Seorang siswa menghitung (-6) + 4 × 3. Nilai setiap pernyataan berikut.",
+      "options": {
+        "statements": [
+          "Perkalian dikerjakan lebih dulu daripada penjumlahan",
+          "Hasil akhirnya 6",
+          "Hasil akhirnya -6",
+          "Urutan operasi boleh dibalik karena semuanya bilangan bulat"
+        ],
+        "answer_labels": ["Benar", "Salah"],
+        "statement_label": "Pernyataan"
+      },
+      "correct_answer": {
+        "answers": [true, true, false, false],
+        "grading_mode": "proportional"
+      },
+      "weight": 1,
+      "explanation": "4 × 3 = 12 lebih dulu, lalu (-6) + 12 = 6.",
+      "elemen_proses": ["penalaran"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "matching",
+      "peruntukan": "ujian",
+      "bloom_level": 2,
+      "prompt": "Jodohkan tiap operasi dengan hasilnya.",
+      "options": {
+        "pairs": [
+          { "left": "(-4) + (-3)", "right": "-7" },
+          { "left": "(-4) × (-3)", "right": "12" },
+          { "left": "(-12) : 4", "right": "-3" },
+          { "left": "(-4) - (-3)", "right": "-1" }
+        ]
+      },
+      "correct_answer": {
+        "(-4) + (-3)": "-7",
+        "(-4) × (-3)": "12",
+        "(-12) : 4": "-3",
+        "(-4) - (-3)": "-1"
+      },
+      "weight": 1,
+      "explanation": "Empat aturan tanda yang berbeda pada empat operasi yang angkanya sama.",
+      "elemen_proses": ["koneksi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "ordering",
+      "peruntukan": "ujian",
+      "bloom_level": 2,
+      "prompt": "Urutkan bilangan berikut dari yang TERKECIL.",
+      "options": { "items": ["-9", "-4", "0", "3"] },
+      "correct_answer": ["-9", "-4", "0", "3"],
+      "weight": 1,
+      "explanation": "Semakin ke kiri di garis bilangan, semakin kecil — jadi -9 lebih kecil daripada -4 meski angkanya lebih besar.",
+      "elemen_proses": ["representasi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "statement_grid",
+      "peruntukan": "ujian",
+      "bloom_level": 3,
+      "prompt": "Suhu awal -3 °C lalu turun 5 °C. Nilai setiap pernyataan berikut.",
+      "options": {
+        "statements": [
+          "Suhu akhirnya -8 °C",
+          "Turun 5 °C berarti dikurangi 5",
+          "Suhu akhirnya lebih tinggi daripada suhu awal"
+        ],
+        "answer_labels": ["Benar", "Salah"]
+      },
+      "correct_answer": {
+        "answers": [true, true, false],
+        "grading_mode": "all_or_nothing"
+      },
+      "weight": 1,
+      "explanation": "Semua-atau-tidak dipakai kalau ketiga baris memang satu rangkaian penalaran, bukan tiga fakta lepas.",
+      "elemen_proses": ["penalaran", "koneksi"],
+      "tag_konteks_pisa": "scientific",
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "true_false_two_tier",
+      "peruntukan": "ujian",
+      "bloom_level": 3,
+      "prompt": "Hasil dari (-4) × (-6) lebih besar daripada (-4) + (-6).",
+      "options": {
+        "tier2_prompt": "Alasannya:",
+        "tier2_choices": [
+          "Hasil kalinya positif, sedangkan hasil jumlahnya negatif",
+          "Keduanya negatif, tetapi hasil kalinya lebih dekat ke nol",
+          "Perkalian selalu menghasilkan bilangan yang lebih besar",
+          "Kedua hasilnya sama besar"
+        ]
+      },
+      "correct_answer": {
+        "tier1": "true",
+        "tier2": "Hasil kalinya positif, sedangkan hasil jumlahnya negatif",
+        "skor_sebagian": 0.5
+      },
+      "weight": 1,
+      "explanation": "24 > -10. Alasan ketiga adalah miskonsepsi yang memberi kesimpulan benar lewat aturan yang akan gagal begitu salah satu faktornya positif.",
+      "elemen_proses": ["penalaran", "komunikasi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "mcq_single",
+      "peruntukan": "probe",
+      "bloom_level": 2,
+      "prompt": "Pada garis bilangan, jarak dari -3 ke 5 sama dengan jarak dari 0 ke ...",
+      "options": { "choices": ["8", "2", "-8", "15"] },
+      "correct_answer": "8",
+      "weight": 1,
+      "penjelasan_per_opsi": {
+        "0": "Benar. Jarak dua bilangan adalah selisihnya tanpa memandang tanda: 5 - (-3) = 8.",
+        "1": "Salah. 2 didapat dari 5 - 3, yaitu tanda minus pada -3 yang diabaikan.",
+        "2": "Salah. Jarak tidak pernah negatif.",
+        "3": "Salah. 15 adalah hasil kali 5 × 3, bukan jaraknya."
+      },
+      "elemen_proses": ["representasi"],
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "short_answer",
+      "peruntukan": "probe",
+      "bloom_level": 3,
+      "prompt": "Saldo tabungan Rp75.000. Selama 3 hari berturut-turut diambil Rp30.000 setiap hari. Berapa saldo akhirnya? Tulis dalam rupiah, pakai tanda minus kalau kurang dari nol.",
+      "options": null,
+      "correct_answer": ["-15000", "-15.000", "Rp-15.000"],
+      "weight": 1,
+      "explanation": "75.000 - (3 × 30.000) = -15.000, yaitu kekurangan Rp15.000.",
+      "elemen_proses": ["pemecahan_masalah", "koneksi"],
+      "tag_konteks_pisa": "personal",
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "essay",
+      "topik_id": null,
+      "peruntukan": null,
+      "bloom_level": 4,
+      "prompt": "Jelaskan mengapa hasil kali dua bilangan negatif selalu positif, dan berikan satu contoh dari kehidupan sehari-hari.",
+      "options": null,
+      "correct_answer": null,
+      "weight": 2,
+      "explanation": "Dinilai manusia. TIDAK BOLEH masuk kolam latihan/ujian/probe — lihat README bagian 'Tipe yang tidak boleh masuk kolam'.",
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    },
+    {
+      "type": "upload_file",
+      "topik_id": null,
+      "peruntukan": null,
+      "bloom_level": 6,
+      "prompt": "Unggah foto garis bilangan yang kamu gambar sendiri, lengkap dengan letak -4, 0, dan 3.",
+      "options": null,
+      "correct_answer": null,
+      "weight": 2,
+      "explanation": "Dinilai manusia. TIDAK BOLEH masuk kolam latihan/ujian/probe.",
+      "sumber_pembuatan": "manual",
+      "status_verifikasi": "draf"
+    }
+  ]
+}
