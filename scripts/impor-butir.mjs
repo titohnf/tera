@@ -28,7 +28,7 @@ const TANPA_NILAI = ['essay', 'upload_file']
 /** Kuncinya tinggal di `options`, bukan di `correct_answer`. */
 const KUNCI_DI_OPSI = ['matching', 'ordering']
 const KOLAM = ['latihan', 'ujian', 'probe']
-const STATUS = ['draf', 'terverifikasi_matematis', 'direview_pedagogis', 'aktif', 'ditarik']
+const STATUS = ['draf', 'aktif', 'ditarik']
 const SUMBER = ['manual', 'ai_generated_verified']
 const SOLO = ['unistruktural', 'multistruktural', 'relasional']
 const PISA = ['personal', 'occupational', 'societal', 'scientific']

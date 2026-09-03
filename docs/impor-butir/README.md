@@ -136,7 +136,7 @@ dua-duanya.
 | `weight` | bobot butir, > 0 | `1` |
 | `explanation` | pembahasan umum, ditampilkan sesudah dijawab | `null` |
 | `penjelasan_per_opsi` | `{"0":"...","1":"..."}` — **kunci = indeks opsi sebagai teks**. Inilah yang membuat analisis distraktor mungkin: "opsi B paling sering dipilih" hanya berguna kalau ada yang menulis miskonsepsi apa yang diwakili opsi B | `null` |
-| `status_verifikasi` | `draf` → `terverifikasi_matematis` → `direview_pedagogis` → `aktif` → `ditarik` | `draf` |
+| `status_verifikasi` | `draf`, `aktif`, atau `ditarik` (migrasi 185). Impor sebaiknya tetap `draf` lalu diaktifkan sesudah dibaca | `draf` |
 | `sumber_pembuatan` | `manual` atau `ai_generated_verified` | `manual` |
 | `elemen_proses` | array dari `penalaran`, `pemecahan_masalah`, `komunikasi`, `representasi`, `koneksi` | `null` |
 | `pola_solo` | `unistruktural`, `multistruktural`, `relasional` — dirancang untuk multi-select | `null` |
@@ -144,8 +144,10 @@ dua-duanya.
 | `label_kategori` | label dua kategori Benar-Salah, mis. `{"positif":"Benar","negatif":"Salah"}`. Metadata rubrik; layar murid tetap menulis "Benar/Salah" | `null` |
 | `stimulus_images` | array URL gambar stimulus | `[]` |
 
-**Hanya butir `aktif` yang disajikan ke murid.** Impor boleh masuk sebagai `draf` dan diaktifkan
-sesudah review — keanggotaan paketnya sudah disusun, penyajiannya yang menunggu status.
+**Hanya butir `aktif` yang disajikan ke murid.** Impor mendarat sebagai `draf`; sesudah naskahnya
+dibaca, tombol **Aktifkan N butir draf** di halaman topik Sora menghidupkan seluruhnya sekali klik.
+Sejak migrasi 185 tidak ada lagi tahap perantara — verifikasinya terjadi sebelum berkasnya diimpor,
+bukan lewat klik di layar.
 
 ## Sesudah impor
 
