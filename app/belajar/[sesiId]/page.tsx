@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
 import { probeSesi } from '@/lib/belajar/retest'
-import { penempatanSesi } from '@/lib/belajar/penempatan'
 import { menitTanpaJeda } from '@/lib/belajar/beban'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
@@ -40,14 +39,13 @@ export default async function SesiLatihan({
   // cukup untuk keduanya.
   const kembali = pemilik.profileId ? `/belajar?anak=${pemilik.profileId}` : '/belajar'
 
-  const [soal, paket, petaPaket, batasWaktu, probe, menitCekIn, penempatan] = await Promise.all([
+  const [soal, paket, petaPaket, batasWaktu, probe, menitCekIn] = await Promise.all([
     keadaanSesi(sesiId),
     paketSesi(sesiId),
     paketTopikSesi(sesiId),
     batasWaktuSesi(sesiId),
     probeSesi(sesiId),
     menitTanpaJeda(),
-    penempatanSesi(sesiId),
   ])
   if (soal.length === 0) redirect('/belajar')
 
@@ -68,13 +66,7 @@ export default async function SesiLatihan({
                 latihan biasa akan mencari tombol "kerjakan lagi" yang sengaja
                 tidak ada di ujungnya (FR11: tanpa retry), dan ketiadaan tanpa
                 penjelasan terbaca sebagai layar yang rusak. */}
-            {/* Tes penempatan pun menyebut namanya, dengan alasan yang sama:
-                ia tidak punya "kerjakan lagi" maupun kunci jawaban di
-                ujungnya, dan ketiadaan tanpa penjelasan terbaca sebagai
-                layar yang rusak. */}
-            {penempatan
-              ? `Tes Penempatan — ${penempatan.nama}`
-              : probe
+            {probe
               ? `Pengecekan Ulang — ${probe.nama}`
               : paket
                 ? `Paket ${paket.nomor}`

@@ -48,16 +48,6 @@ export interface TopikPeta {
    */
   status: string | null
   /**
-   * Tes penempatan topik ini masih boleh dibuka (Dokumen Fondasi Bagian 3.1):
-   * belum pernah dites, kolamnya lengkap, dan belum ada paket yang digarap.
-   */
-  penempatanSiap: boolean
-  /**
-   * Level Bloom tertinggi yang sudah dibebaskan tes penempatan. 0 berarti tidak
-   * ada — entah karena belum dites, atau karena tesnya tidak membebaskan apa pun.
-   */
-  levelDibebaskan: number
-  /**
    * Tanggal pengecekan ulang berikutnya (FR11), untuk topik yang sudah tuntas.
    * Null kalau topiknya belum tuntas atau jadwalnya sudah jatuh tempo — yang
    * jatuh tempo tampil sebagai `KartuRetest` di atas peta, bukan sebagai
@@ -150,31 +140,15 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
   //
   // Gagalnya salah satu bukan alasan menggagalkan petanya: yang hilang cuma
   // keterangan, sedangkan daftar topiknya sendiri sudah lengkap di tangan.
-  const [cetakan, jadwal, penempatan, kolam] = await Promise.all([
+  const [cetakan, jadwal] = await Promise.all([
     supabase.from('status_topik_siswa').select('topik_id, status').eq('learner_id', learnerId),
     supabase
       .from('jadwal_retest')
       .select('topik_id, tanggal_retest_berikutnya')
       .eq('learner_id', learnerId),
-    supabase
-      .from('penempatan_topik')
-      .select('topik_id, level_tertinggi_lolos')
-      .eq('learner_id', learnerId),
-    // Topik yang tes penempatannya boleh ditawarkan. DITANYAKAN, bukan
-    // dihitung ulang di sini: syaratnya tinggal di `penempatan_buka_sesi`, dan
-    // menyusunnya kembali di TypeScript berarti dua salinan aturan yang harus
-    // berubah bersama. Versi pertama berkas ini melakukannya, dan tidak pernah
-    // bekerja sama sekali — ia membaca `question_bank_items` langsung,
-    // sedangkan hak baca tabel itu cuma milik admin.
-    supabase.rpc('penempatan_ditawarkan', {
-      p_access_code: TANPA_KODE,
-      p_learner_id: learnerId,
-    }),
   ])
   if (cetakan.error) console.error('[peta] gagal membaca status topik:', cetakan.error)
   if (jadwal.error) console.error('[peta] gagal membaca jadwal retest:', jadwal.error)
-  if (penempatan.error) console.error('[peta] gagal membaca hasil penempatan:', penempatan.error)
-  if (kolam.error) console.error('[peta] gagal membaca tawaran penempatan:', kolam.error)
 
   const statusTopik = new Map(
     (cetakan.data ?? []).map(b => [b.topik_id as string, b.status as string])
@@ -184,13 +158,6 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     (jadwal.data ?? [])
       .filter(b => (b.tanggal_retest_berikutnya as string) > hariIni)
       .map(b => [b.topik_id as string, b.tanggal_retest_berikutnya as string])
-  )
-
-  const dibebaskan = new Map(
-    (penempatan.data ?? []).map(b => [b.topik_id as string, Number(b.level_tertinggi_lolos)])
-  )
-  const ditawarkan = new Set(
-    ((kolam.data as { topik_id: string }[] | null) ?? []).map(b => b.topik_id)
   )
 
   return ((data as BarisTopik[] | null) ?? []).map(b => ({
@@ -204,8 +171,6 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     prasyaratKurang: b.prasyarat_kurang ?? [],
     status: statusTopik.get(b.topik_id) ?? null,
     retestBerikutnya: retestTopik.get(b.topik_id) ?? null,
-    penempatanSiap: ditawarkan.has(b.topik_id),
-    levelDibebaskan: dibebaskan.get(b.topik_id) ?? 0,
   }))
 }
 

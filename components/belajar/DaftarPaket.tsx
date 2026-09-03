@@ -110,7 +110,6 @@ export default function DaftarPaket({
   sumber,
   jumlahSoal,
   awal,
-  levelDibebaskan = 0,
   hariIniWib,
 }: {
   anak: string | undefined
@@ -128,12 +127,6 @@ export default function DaftarPaket({
    * di situ jeda memang wajar: orangnya baru saja meminta.
    */
   awal?: PaketPeta[]
-  /**
-   * Level Bloom tertinggi yang dibebaskan tes penempatan untuk topik ini
-   * (Dokumen Fondasi Bagian 3.1). 0 berarti tidak ada yang dibebaskan — juga
-   * nilai yang dipakai jalur grup, yang tidak mengenal penempatan.
-   */
-  levelDibebaskan?: number
   /**
    * Hari ini dalam WIB (`YYYY-MM-DD`), dari server. Opsional karena jalur grup
    * tidak memakainya: latihan bebas mengunci permanen, jadi tidak ada waktu
@@ -155,7 +148,7 @@ export default function DaftarPaket({
       sumber.jenis === 'grup'
         ? muatPaket(anak, sumber.groupId).then(d =>
             // `levelBloom: null` untuk jalur grup: bab kurikulum tidak punya
-            // level Bloom, dan tidak mengenal tes penempatan.
+            // level Bloom.
             d.map(p => ({
               ...p,
               kunci: String(p.nomor),
@@ -223,11 +216,6 @@ export default function DaftarPaket({
         const bisa = !p.terkunci && !tuntas
         const persen = p.maks > 0 ? persenDari(p.skor, p.maks) : null
         const belumTersentuh = p.putaran === 0
-        // Dibebaskan tes penempatan — dan hanya selama paketnya belum
-        // disentuh. Anak yang tetap mengerjakannya dinilai dari pekerjaannya
-        // sendiri, jadi labelnya pun harus hilang begitu ia mulai.
-        const dibebaskan =
-          belumTersentuh && p.levelBloom !== null && p.levelBloom <= levelDibebaskan
 
         const isi = (
           <>
@@ -238,9 +226,7 @@ export default function DaftarPaket({
               </span>
               <span className="mt-0.5 block text-sm text-gray-500">
                 {belumTersentuh
-                  ? dibebaskan
-                    ? 'Dilewati — sudah terbukti di tes penempatan'
-                    : 'Belum dikerjakan'
+                  ? 'Belum dikerjakan'
                   : `${p.benar} dari ${p.total} benar${
                       p.putaran > 1 ? ` · ${p.putaran} putaran` : ''
                     }`}

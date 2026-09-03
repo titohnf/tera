@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import type { PaketPeta, TopikPeta } from '@/lib/belajar/topik-peta'
 import { kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
 import DaftarPaket from './DaftarPaket'
-import KartuPenempatan from './KartuPenempatan'
 
 /**
  * Peta kompetensi: topik yang boleh dikerjakan anak ini, berurut menurut
@@ -285,42 +284,13 @@ function Baris({
         </span>
       </button>
 
-      {/* TAWARAN LOMPAT KELUAR DARI AKORDEON. Tes penempatan dulu cuma terlihat
-          SESUDAH topiknya dibentangkan — jadi satu-satunya jalan menemukan
-          tawaran "kamu tidak perlu mengerjakan ini" adalah membuka daftar
-          pekerjaan yang ia tawarkan untuk dilewati. Anak yang sudah menguasai
-          topiknya justru yang paling tidak punya alasan mengetuk barisnya.
-          Bilah ini yang mengabarkannya; rinciannya — delapan soal, sekali saja —
-          tetap di `KartuPenempatan` di dalam, jadi tidak ada yang berlipat dua.
-          Ia menghilang begitu topiknya terbentang, karena kartunya sudah
-          berdiri di sana. */}
-      {t.penempatanSiap && !aktif && (
-        <button
-          type="button"
-          onClick={onKetuk}
-          className="flex w-full items-center justify-between gap-2 border-t border-blue-100 bg-blue-50/70 px-4 py-2.5 text-left transition hover:bg-blue-100/70"
-        >
-          <span className="text-xs font-medium text-blue-800">
-            Sudah bisa? Lewati bagian yang mudah dengan tes penempatan
-          </span>
-          <span className="shrink-0 text-xs text-blue-400" aria-hidden>
-            →
-          </span>
-        </button>
-      )}
-
       {aktif && (
         <div className="border-t border-slate-100 bg-slate-50/60 p-3">
-          {/* DI ATAS daftar paketnya, bukan di bawah: tawaran untuk TIDAK
-              mengerjakan sebagian daftar itu hanya berguna kalau dibaca sebelum
-              daftarnya dipilih. */}
-          {t.penempatanSiap && <KartuPenempatan topikId={t.id} anak={anak} />}
           <DaftarPaket
             anak={anak}
             sumber={{ jenis: 'peta', topikId: t.id }}
             jumlahSoal={t.jumlahPaket * 8}
             awal={awal}
-            levelDibebaskan={t.levelDibebaskan}
             hariIniWib={hariIniWib}
           />
         </div>
