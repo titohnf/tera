@@ -37,11 +37,21 @@ export default function PetaTopik({
   anak,
   topik,
   paketAwal,
+  hariIniWib,
 }: {
   anak: string | undefined
   topik: TopikPeta[]
   /** Paket topik yang terbentang sejak awal, dibawa server bersama halamannya. */
   paketAwal?: PaketPeta[]
+  /**
+   * Hari ini dalam WIB (`YYYY-MM-DD`), dari server.
+   *
+   * Diberikan, bukan dibaca sendiri di browser: "besok pukul 09.56" dirender
+   * dua kali — sekali di server, sekali saat hidrasi — dan jam yang dibaca
+   * masing-masing akan berbeda. Pola yang sama dengan `labelSesiWib`, yang juga
+   * menolak membaca jamnya sendiri.
+   */
+  hariIniWib: string
 }) {
   // Satu topik saja: tidak ada yang perlu dipilih, jadi jangan menyuruh orang
   // mengetuk untuk membuka satu-satunya pintu yang ada.
@@ -134,6 +144,7 @@ export default function PetaTopik({
                     jumlahSoal={t.jumlahPaket * 8}
                     awal={topik.length === 1 ? paketAwal : undefined}
                     levelDibebaskan={t.levelDibebaskan}
+                    hariIniWib={hariIniWib}
                   />
                 </div>
               )}

@@ -82,6 +82,15 @@ export interface PaketPeta {
   maks: number
   putaran: number
   terkunci: boolean
+  /**
+   * Kapan paket yang sedang terkunci terbuka lagi (ISO), atau null.
+   *
+   * Null punya dua arti yang sengaja tidak dibedakan di sini: paketnya memang
+   * tidak terkunci, atau ia paket ujian yang kuncinya permanen. Yang memakainya
+   * cuma menampilkan waktunya kalau ada — dan untuk ujian memang tidak ada
+   * waktu yang boleh dijanjikan.
+   */
+  bukaPada: string | null
 }
 
 interface BarisTopik {
@@ -109,6 +118,7 @@ interface BarisPaket {
   maks: number | string
   putaran: number | string
   terkunci: boolean | null
+  buka_pada: string | null
 }
 
 const angka = (n: number | string | null | undefined) => Number(n ?? 0)
@@ -229,6 +239,7 @@ export async function keadaanPaketTopik(
     maks: angka(b.maks),
     putaran: angka(b.putaran),
     terkunci: Boolean(b.terkunci),
+    bukaPada: b.buka_pada ?? null,
   }))
 }
 
