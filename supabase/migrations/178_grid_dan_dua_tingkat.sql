@@ -81,6 +81,11 @@
 -- padanya. Kalau tim konten membacanya lain, yang berubah cuma angka
 -- pembaginya, bukan aturannya.
 --
+-- AMAN DIJALANKAN ULANG. Bagian 1 dan 2 memakai `create or replace` dan
+-- `drop constraint if exists`; bagian 4 memeriksa keberadaan tiap butir lebih
+-- dulu. Percobaan pertama berkas ini gagal di bagian penyemaian — lihat bagian
+-- 3 — jadi menjalankannya lagi memang yang diminta, bukan yang dihindari.
+--
 -- Jalankan SESUDAH 177.
 -- ============================================================
 
@@ -323,7 +328,105 @@ alter table questions
     'statement_grid', 'true_false_two_tier'
   ));
 
--- 3. Butir dua tingkat, satu per topik ----------------------------------------
+-- 3. Perbaikan `semai_paket_topik` yang saya rusak di 177 -----------------------
+--
+-- Migrasi 177 menyusun ulang fungsi ini untuk menambah satu hal: paket ujian
+-- yang baru lahir membawa `jumlah_butir_sampel = 12`. Badannya disalin dari
+-- migrasi 145 — dan 145 BUKAN versi terakhirnya. Migrasi 147 sudah memperbaiki
+-- fungsi yang sama karena gagal dengan "column reference paket_id is
+-- ambiguous": `paket_id` adalah nama kolom keluaran fungsi, dan plpgsql
+-- memperlakukan nama keluaran sebagai variabel, jadi `on conflict (paket_id,
+-- …)` bisa dibaca dua arah.
+--
+-- Menyalin dari 145 menghidupkan lagi bug yang sudah mati tiga puluh migrasi.
+-- Ia tidak terlihat sampai berkas ini dijalankan karena 177 sendiri tidak
+-- pernah memanggil `semai_paket_topik`; yang memanggilnya bagian penyemaian di
+-- bawah, dan di sanalah ia meledak.
+--
+-- Diperbaiki dengan menyalin dari 147 kali ini, lengkap dengan kedua
+-- penjagaannya — `#variable_conflict use_column` dan `on conflict on constraint
+-- paket_topik_item_pkey`, yang menyebut nama batasannya sehingga tidak ada nama
+-- kolom yang perlu ditafsirkan sama sekali — ditambah satu baris dari 177 yang
+-- memang dimaksudkan: ukuran sampel paket ujian.
+create or replace function semai_paket_topik(p_topik_id text)
+returns table (paket_id uuid, jenis text, level_bloom smallint, jumlah_butir bigint)
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $semai$
+#variable_conflict use_column
+declare
+  v_paket uuid;
+  v_level smallint;
+begin
+  -- Paket latihan: satu per level Bloom yang benar-benar ada butirnya.
+  for v_level in
+    select distinct b.bloom_level
+    from question_bank_items b
+    where b.topik_id = p_topik_id
+      and coalesce(b.peruntukan, 'latihan') = 'latihan'
+      and b.bloom_level is not null
+    order by 1
+  loop
+    select p.id into v_paket
+    from paket_topik p
+    where p.topik_id = p_topik_id and p.jenis = 'latihan' and p.nomor = v_level;
+
+    if v_paket is null then
+      insert into paket_topik (topik_id, jenis, level_bloom, nomor)
+      values (p_topik_id, 'latihan', v_level, v_level)
+      returning paket_topik.id into v_paket;
+    elsif exists (select 1 from practice_sessions s where s.paket_topik_id = v_paket) then
+      continue;
+    end if;
+
+    insert into paket_topik_item (paket_id, question_bank_item_id, ord)
+    select v_paket, b.id,
+           row_number() over (order by b.created_at, b.id)
+    from question_bank_items b
+    where b.topik_id = p_topik_id
+      and coalesce(b.peruntukan, 'latihan') = 'latihan'
+      and b.bloom_level = v_level
+    on conflict on constraint paket_topik_item_pkey do nothing;
+  end loop;
+
+  -- Paket ujian: satu, mencampur level (dokumen fondasi Bagian 3.7), dan
+  -- menyajikan dua belas di antaranya kepada tiap murid (Protokol Bagian 3).
+  if exists (
+    select 1 from question_bank_items b
+    where b.topik_id = p_topik_id and b.peruntukan = 'ujian'
+  ) then
+    select p.id into v_paket
+    from paket_topik p
+    where p.topik_id = p_topik_id and p.jenis = 'ujian' and p.nomor = 1;
+
+    if v_paket is null then
+      insert into paket_topik (topik_id, jenis, level_bloom, nomor, jumlah_butir_sampel)
+      values (p_topik_id, 'ujian', null, 1, 12)
+      returning paket_topik.id into v_paket;
+    end if;
+
+    if not exists (select 1 from practice_sessions s where s.paket_topik_id = v_paket) then
+      insert into paket_topik_item (paket_id, question_bank_item_id, ord)
+      select v_paket, b.id, row_number() over (order by b.created_at, b.id)
+      from question_bank_items b
+      where b.topik_id = p_topik_id and b.peruntukan = 'ujian'
+      on conflict on constraint paket_topik_item_pkey do nothing;
+    end if;
+  end if;
+
+  return query
+    select p.id, p.jenis, p.level_bloom, count(i.question_bank_item_id)
+    from paket_topik p
+    left join paket_topik_item i on i.paket_id = p.id
+    where p.topik_id = p_topik_id
+    group by p.id, p.jenis, p.level_bloom, p.nomor
+    order by p.jenis desc, p.nomor;
+end;
+$semai$;
+
+-- 4. Butir dua tingkat, satu per topik ----------------------------------------
 --
 -- Butir DUMMY, sama seperti 169, 171, dan 176: ditulis untuk menguji mesinnya,
 -- bukan untuk mengajar anak. Dicabut dengan satu perintah:
