@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import type {
+  JawabanDuaTingkat,
+  OpsiDuaTingkat,
   OpsiMenjodohkan,
   OpsiPernyataan,
   OpsiPilihan,
@@ -110,6 +112,10 @@ export default function InputSoal({
         />
       )}
 
+      {soal.tipe === 'true_false_two_tier' && (
+        <DuaTingkat soal={soal} nilai={nilai} onChange={onChange} />
+      )}
+
       {soal.tipe === 'statement_grid' && (
         <KisiPernyataan soal={soal} nilai={nilai} onChange={onChange} />
       )}
@@ -124,6 +130,66 @@ export default function InputSoal({
         <IsiRumpang soal={soal} nilai={nilai} onChange={onChange} />
       )}
     </fieldset>
+  )
+}
+
+/**
+ * Benar-Salah dua tingkat (FR5): pernyataannya dulu, lalu alasannya.
+ *
+ * TINGKAT 2 BARU MUNCUL SESUDAH TINGKAT 1 DIPILIH, dan itu bukan sekadar
+ * kerapian layar. Bentuk soal ini mengukur apakah jawaban yang benar datang
+ * dari alasan yang benar; menyodorkan empat alasan bersamaan dengan
+ * pertanyaannya mengubahnya jadi soal pilihan ganda biasa yang jawabannya bisa
+ * dibaca mundur dari daftar alasan. Anak menyatakan pendiriannya dulu, baru
+ * mempertanggungjawabkannya.
+ *
+ * Mengubah tingkat 1 TIDAK menghapus alasan yang sudah dipilih: anak yang
+ * berpikir ulang tentang pernyataannya belum tentu berpikir ulang tentang
+ * alasannya, dan menghapus diam-diam adalah pekerjaan yang hilang tanpa
+ * diminta. Yang tidak cocok akan dinilai apa adanya — itu memang yang diukur.
+ */
+function DuaTingkat({
+  soal,
+  nilai,
+  onChange,
+}: {
+  soal: SoalSesi
+  nilai: unknown
+  onChange: (nilai: unknown) => void
+}) {
+  const opsi = soal.opsi as OpsiDuaTingkat | null
+  const alasan = opsi?.tier2_choices ?? []
+  const jawab = (nilai ?? {}) as JawabanDuaTingkat
+
+  return (
+    <div className="mt-4 flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        {(['true', 'false'] as const).map(v => (
+          <PilihanKartu
+            key={v}
+            terpilih={jawab.tier1 === v}
+            onClick={() => onChange({ ...jawab, tier1: v })}
+          >
+            {v === 'true' ? 'Benar' : 'Salah'}
+          </PilihanKartu>
+        ))}
+      </div>
+
+      {jawab.tier1 !== undefined && alasan.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-gray-400">{opsi?.tier2_prompt || 'Alasannya:'}</p>
+          {alasan.map(pilihan => (
+            <PilihanKartu
+              key={pilihan}
+              terpilih={jawab.tier2 === pilihan}
+              onClick={() => onChange({ ...jawab, tier2: pilihan })}
+            >
+              <IsiSoal text={pilihan} />
+            </PilihanKartu>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

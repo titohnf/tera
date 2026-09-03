@@ -1,4 +1,6 @@
 import type {
+  JawabanDuaTingkat,
+  KunciDuaTingkat,
   KunciPernyataan,
   OpsiMenjodohkan,
   OpsiPernyataan,
@@ -54,6 +56,21 @@ export function bacaJawaban(soal: SoalLatihan, jawaban: unknown): BarisJawaban[]
     case 'mcq_single':
     case 'short_answer':
       return teks(jawaban) ? [{ teks: teks(jawaban) }] : null
+
+    // Dua baris berlabel, bukan satu baris gabungan: yang ingin dilihat tutor
+    // maupun orang tua justru selisih antara keduanya — jawaban akhir yang
+    // benar dengan alasan yang keliru adalah miskonsepsi, dan itu hilang kalau
+    // keduanya dilebur jadi satu kalimat.
+    case 'true_false_two_tier': {
+      const dua = (jawaban ?? {}) as JawabanDuaTingkat
+      const tingkat1 = teks(dua.tier1)
+      const tingkat2 = teks(dua.tier2)
+      if (!tingkat1 && !tingkat2) return null
+      return [
+        { label: 'Pernyataan', teks: tingkat1 ? benarSalah(tingkat1) : '—' },
+        { label: 'Alasan', teks: tingkat2 || '—' },
+      ]
+    }
 
     case 'mcq_multi': {
       const dipilih = (Array.isArray(jawaban) ? jawaban : []).map(teks).filter(Boolean)
@@ -137,6 +154,17 @@ export function bacaKunci(soal: SoalLatihan, kunci: unknown): BarisJawaban[] | n
             teks: baris[i] === true ? labelBenar : baris[i] === false ? labelSalah : '—',
           }))
         : null
+    }
+
+    case 'true_false_two_tier': {
+      const dua = (kunci ?? {}) as Partial<KunciDuaTingkat>
+      const tingkat1 = teks(dua.tier1)
+      const tingkat2 = teks(dua.tier2)
+      if (!tingkat1 && !tingkat2) return null
+      return [
+        { label: 'Pernyataan', teks: tingkat1 ? benarSalah(tingkat1) : '—' },
+        { label: 'Alasan', teks: tingkat2 || '—' },
+      ]
     }
 
     case 'short_answer': {

@@ -22,6 +22,7 @@ export type TipeSoal =
   | 'fill_blank'
   | 'upload_file'
   | 'statement_grid'
+  | 'true_false_two_tier'
 
 export interface OpsiPilihan {
   choices: string[]
@@ -48,11 +49,23 @@ export interface OpsiPernyataan {
   statement_label?: string
 }
 
+/**
+ * Opsi `true_false_two_tier`. Tingkat 1 selalu Benar/Salah — tidak perlu
+ * ditulis penyusunnya — dan yang disimpan di sini hanya daftar alasan untuk
+ * tingkat 2.
+ */
+export interface OpsiDuaTingkat {
+  /** Pengantar daftar alasannya. "Alasannya:" kalau tidak diisi. */
+  tier2_prompt?: string
+  tier2_choices: string[]
+}
+
 export type OpsiSoal =
   | OpsiPilihan
   | OpsiMenjodohkan
   | OpsiUrutan
   | OpsiPernyataan
+  | OpsiDuaTingkat
   | null
 
 export type ModePenilaianPernyataan = 'proportional' | 'all_or_nothing'
@@ -61,6 +74,31 @@ export type ModePenilaianPernyataan = 'proportional' | 'all_or_nothing'
 export interface KunciPernyataan {
   answers: (boolean | null)[]
   grading_mode: ModePenilaianPernyataan
+}
+
+/**
+ * Bentuk `correct_answer` untuk `true_false_two_tier`, sebagaimana dibaca
+ * `nilai_jawaban()` sejak migrasi 138.
+ */
+export interface KunciDuaTingkat {
+  tier1: 'true' | 'false'
+  tier2: string
+  /**
+   * Nilai untuk "pernyataannya benar, alasannya keliru". 0,5 kalau tidak
+   * disebut — FR5 menyerahkan besarannya kepada tim konten, jadi ia ikut di
+   * kunci tiap butir, bukan dipatok di kode.
+   */
+  skor_sebagian?: number
+}
+
+/**
+ * Jawaban yang dikirim untuk `true_false_two_tier`. Keduanya opsional: anak
+ * bisa memilih pernyataannya lalu berhenti, dan itu keadaan yang dinilai —
+ * bukan keadaan yang ditolak.
+ */
+export interface JawabanDuaTingkat {
+  tier1?: 'true' | 'false'
+  tier2?: string
 }
 
 /** Satu soal di layar. Kunci jawabannya tidak pernah ikut sampai sini. */
