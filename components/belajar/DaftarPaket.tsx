@@ -11,11 +11,23 @@ import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
 /**
  * Paket-paket sebuah topik, dan keadaan masing-masing.
  *
- * Sebuah paket BUKAN undian: isinya potongan tetap dari bank soal topiknya —
- * Paket 1 selalu sepuluh soal yang sama, bagi siapa pun, kapan pun. Karena itu
- * layar ini daftar, bukan satu tombol "Mulai Latihan": yang dipilih anak bukan
- * "sepuluh soal entah yang mana", melainkan bagian mana dari topik ini yang
- * mau ia hadapi.
+ * Sebuah paket LATIHAN bukan undian: isinya potongan tetap dari bank soal
+ * topiknya — Paket 1 selalu soal yang sama, bagi siapa pun, kapan pun. Karena
+ * itu layar ini daftar, bukan satu tombol "Mulai Latihan": yang dipilih anak
+ * bukan "sepuluh soal entah yang mana", melainkan bagian mana dari topik ini
+ * yang mau ia hadapi.
+ *
+ * PAKET UJIAN SATU-SATUNYA PENGECUALIAN, sejak migrasi 177. Ia menyajikan dua
+ * belas butir yang diambil acak berjenjang dari kolam ujian topiknya, sekali,
+ * saat dibuka — dan sampel itu berbeda untuk tiap murid. Alasannya ada di
+ * kepala migrasi itu: ujian hanya boleh dikerjakan sekali dan tidak punya
+ * putaran kedua, jadi satu lembar soal yang sama untuk seluruh angkatan
+ * berhenti mengukur apa pun begitu satu anak selesai lebih dulu.
+ *
+ * Akibatnya di layar ini: `total` sebuah paket ujian adalah 12 — bukan besar
+ * kolamnya — dan sebelum ujiannya dibuka, petak soalnya kosong. Belum ada dua
+ * belas butir yang menjadi miliknya; kartunya menyebut berapa yang akan
+ * datang, bukan yang mana.
  *
  * Tiap baris menyebutkan tiga hal, dan ketiganya menentukan apakah baris itu
  * masih bisa diketuk:
