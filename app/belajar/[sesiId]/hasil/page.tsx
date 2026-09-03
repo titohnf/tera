@@ -23,6 +23,7 @@ import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
 import { probeSesi } from '@/lib/belajar/retest'
+import { penempatanSesi } from '@/lib/belajar/penempatan'
 import { nudgeBeban } from '@/lib/belajar/beban'
 import NudgeBeban from '@/components/belajar/NudgeBeban'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
@@ -64,7 +65,7 @@ export default async function HasilSesi({
   // Sesudah `tutupSesi`, tidak sebelumnya: `practice_session_review` cuma
   // membuka sesi yang `finished_at`-nya terisi, dan syarat itulah yang menjaga
   // kunci jawaban di dalamnya (migrasi 131).
-  const [rincian, tinjauan, paket, petaPaket, pendampingan, probe, nudge] =
+  const [rincian, tinjauan, paket, petaPaket, pendampingan, probe, nudge, penempatan] =
     await Promise.all([
     ringkasanSesi(pemilik.learnerId, sesiId),
     tinjauanSesi(sesiId),
@@ -76,7 +77,15 @@ export default async function HasilSesi({
     pesanPendampingan(pemilik.learnerId, sesiId),
     probeSesi(sesiId),
     nudgeBeban(pemilik.learnerId, sesiId),
+    penempatanSesi(sesiId),
   ])
+
+  // Sesi yang BUKAN paket: probe retest dan tes penempatan. Keduanya tidak
+  // menawarkan putaran ulang maupun kunci jawaban, dan keduanya harus
+  // dikecualikan di tempat yang sama persis — sebuah cabang yang cuma menyebut
+  // salah satunya akan memperlakukan yang lain seperti sesi warisan sebelum
+  // migrasi 134, yang kuncinya memang terbuka.
+  const bukanPaket = probe ?? penempatan
 
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
   // yang kini benar, sudah berapa putaran, dan apakah kuncinya sudah dibuka.
@@ -216,7 +225,7 @@ export default async function HasilSesi({
   // sebelum migrasi 134 — dan seluruh kolam probe sebuah topik terbaca dalam
   // sekali duduk. Kolam itu kecil dan dipakai berbulan-bulan (FR11).
   const kunciBoleh =
-    !probe && ((!paket && !petaPaket) || (paketIni?.terkunci ?? false))
+    !bukanPaket && ((!paket && !petaPaket) || (paketIni?.terkunci ?? false))
   const kunciTerbuka = kunciBoleh && (kunciDiminta === '1' || terpilih !== null)
 
   // Alamatnya ikut diluruskan, bukan cuma isinya: `?kunci=1` yang menampilkan
@@ -240,12 +249,17 @@ export default async function HasilSesi({
   // permukaan lain yang merender peta — untuk mereka `kembali` tetap yang
   // paling masuk akal, dan tetap bukan null, yang akan menghilangkan tombol
   // "pilih paket lain" sama sekali.
+  //
+  // Sesi penempatan ikut jalur peta. Tanpa baris untuknya, `daftarPaket` jadi
+  // null dan tombol "Pilih Paket Lain" hilang sama sekali — anak yang baru
+  // menyelesaikan tes penempatan berdiri di layar nilai tanpa satu pun jalan
+  // kembali ke topik yang baru saja ditempatkannya.
   const daftarPaket =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
-        : petaPaket
+        : petaPaket || penempatan
           ? pemilik.profileId
             ? `/keluarga/${pemilik.profileId}/misi`
             : kembali
@@ -260,7 +274,7 @@ export default async function HasilSesi({
       daftarPaket={daftarPaket}
       kembali={kembali}
       materi={ulangi}
-      probe={probe !== null}
+      probe={bukanPaket !== null}
     />
   )
 
@@ -338,7 +352,9 @@ export default async function HasilSesi({
                   Sebuah probe yang di halaman soalnya bernama "Pengecekan
                   Ulang" lalu di halaman nilainya bernama "Latihan" membuat
                   anak mengira ia sedang melihat nilai sesuatu yang lain. */}
-              {probe
+              {penempatan
+                ? `Tes Penempatan — ${penempatan.nama}`
+                : probe
                 ? `Pengecekan Ulang — ${probe.nama}`
                 : paket
                   ? `Paket ${paket.nomor}`

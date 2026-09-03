@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { bukaPenempatan } from '@/lib/belajar/penempatan'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import { createClient } from '@/lib/supabase/server'
@@ -276,6 +277,30 @@ export async function bukaKunciPaketPeta(
  * Null dari sana berarti "belum waktunya, atau belum bisa" — tiga sebab yang
  * sengaja tidak dibedakan di layar, sama seperti seluruh jalur peta lain.
  */
+/**
+ * Membuka tes penempatan sebuah topik (Dokumen Fondasi Bagian 3.1).
+ *
+ * Kembar `mulaiRetest`, dan sengaja tidak disatukan dengannya: keduanya
+ * kebetulan berbentuk sama hari ini, tapi yang satu membuka pembuktian ULANG
+ * dan yang lain pengukuran AWAL. Menyatukannya berarti setiap perubahan pada
+ * salah satunya harus menjawab dulu "ini berlaku untuk yang mana".
+ */
+export async function mulaiPenempatan(
+  topikId: string,
+  anak?: string,
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+
+  const sesi = await bukaPenempatan(learnerId, topikId)
+  if (!sesi) {
+    return {
+      error:
+        'Tes penempatan topik ini tidak bisa dibuka — mungkin sudah pernah dikerjakan, paketnya sudah mulai digarap, atau soalnya belum cukup.',
+    }
+  }
+  redirect(`/belajar/${sesi}`)
+}
+
 export async function mulaiRetest(
   topikId: string,
   anak?: string,

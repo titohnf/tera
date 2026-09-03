@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { PaketPeta, TopikPeta } from '@/lib/belajar/topik-peta'
 import DaftarPaket from './DaftarPaket'
+import KartuPenempatan from './KartuPenempatan'
 
 /**
  * Peta kompetensi: topik yang boleh dikerjakan anak ini, berurut menurut
@@ -123,11 +124,16 @@ export default function PetaTopik({
 
               {aktif && (
                 <div className="border-t border-slate-100 bg-slate-50/60 p-3">
+                  {/* DI ATAS daftar paketnya, bukan di bawah: tawaran untuk
+                      TIDAK mengerjakan sebagian daftar itu hanya berguna kalau
+                      dibaca sebelum daftarnya dipilih. */}
+                  {t.penempatanSiap && <KartuPenempatan topikId={t.id} anak={anak} />}
                   <DaftarPaket
                     anak={anak}
                     sumber={{ jenis: 'peta', topikId: t.id }}
                     jumlahSoal={t.jumlahPaket * 8}
                     awal={topik.length === 1 ? paketAwal : undefined}
+                    levelDibebaskan={t.levelDibebaskan}
                   />
                 </div>
               )}

@@ -42,6 +42,8 @@ interface Baris extends PaketTopik {
   /** Yang diteruskan ke aksi pembuka — nomor paket, atau id paket. */
   kunci: string
   judul: string
+  /** Level Bloom paket latihan; null untuk ujian dan untuk jalur grup. */
+  levelBloom: number | null
 }
 
 /** Satu paket peta jadi baris layar. Dipakai dua kali: dari server, dan dari browser. */
@@ -59,6 +61,7 @@ function dariPeta(p: PaketPeta): Baris {
     terkunci: p.terkunci,
     kunci: p.paketId,
     judul: namaPaket(p),
+    levelBloom: p.levelBloom,
   }
 }
 
@@ -67,6 +70,7 @@ export default function DaftarPaket({
   sumber,
   jumlahSoal,
   awal,
+  levelDibebaskan = 0,
 }: {
   anak: string | undefined
   sumber: Sumber
@@ -83,6 +87,12 @@ export default function DaftarPaket({
    * di situ jeda memang wajar: orangnya baru saja meminta.
    */
   awal?: PaketPeta[]
+  /**
+   * Level Bloom tertinggi yang dibebaskan tes penempatan untuk topik ini
+   * (Dokumen Fondasi Bagian 3.1). 0 berarti tidak ada yang dibebaskan — juga
+   * nilai yang dipakai jalur grup, yang tidak mengenal penempatan.
+   */
+  levelDibebaskan?: number
 }) {
   const [paket, setPaket] = useState<Baris[] | null>(awal ? awal.map(dariPeta) : null)
   const [galat, setGalat] = useState<string | null>(null)
@@ -97,7 +107,14 @@ export default function DaftarPaket({
     const muat: Promise<Baris[]> =
       sumber.jenis === 'grup'
         ? muatPaket(anak, sumber.groupId).then(d =>
-            d.map(p => ({ ...p, kunci: String(p.nomor), judul: `Paket ${p.nomor}` }))
+            // `levelBloom: null` untuk jalur grup: bab kurikulum tidak punya
+            // level Bloom, dan tidak mengenal tes penempatan.
+            d.map(p => ({
+              ...p,
+              kunci: String(p.nomor),
+              judul: `Paket ${p.nomor}`,
+              levelBloom: null,
+            }))
           )
         : muatPaketPeta(anak, sumber.topikId).then(d => d.map(dariPeta))
 
@@ -159,6 +176,11 @@ export default function DaftarPaket({
         const bisa = !p.terkunci && !tuntas
         const persen = p.maks > 0 ? persenDari(p.skor, p.maks) : null
         const belumTersentuh = p.putaran === 0
+        // Dibebaskan tes penempatan — dan hanya selama paketnya belum
+        // disentuh. Anak yang tetap mengerjakannya dinilai dari pekerjaannya
+        // sendiri, jadi labelnya pun harus hilang begitu ia mulai.
+        const dibebaskan =
+          belumTersentuh && p.levelBloom !== null && p.levelBloom <= levelDibebaskan
 
         const isi = (
           <>
@@ -169,7 +191,9 @@ export default function DaftarPaket({
               </span>
               <span className="mt-0.5 block text-sm text-gray-500">
                 {belumTersentuh
-                  ? 'Belum dikerjakan'
+                  ? dibebaskan
+                    ? 'Dilewati — sudah terbukti di tes penempatan'
+                    : 'Belum dikerjakan'
                   : `${p.benar} dari ${p.total} benar${
                       p.putaran > 1 ? ` · ${p.putaran} putaran` : ''
                     }`}
