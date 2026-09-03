@@ -1,16 +1,34 @@
 # Format impor butir
 
 `contoh-butir.json` di folder ini adalah **satu contoh yang sudah lolos periksa**: 11 tipe soal,
-3 kolam, dua mode penilaian grid. Salin, ganti isinya, jalankan pemeriksanya.
+3 kolam, dua mode penilaian grid. Salin, ganti isinya, impor.
+
+## Dua jalan impor, satu format
+
+**Lewat Sora — ini jalan utamanya.** Bank Soal → Pengukuran → impor, pilih berkasnya. Berkas dengan
+format di halaman ini dibaca apa adanya sejak `soal-json.ts` di repo `form` mengenali bungkus
+`{ topik_id, butir }` dan nama kolom database. Di sana ada pratinjau per butir sebelum disimpan,
+dan butir probe langsung terdaftar ke kolamnya.
+
+**Lewat terminal**, untuk naskah besar atau saat tidak ada sesi Sora terbuka:
 
 ```bash
 node scripts/impor-butir.mjs berkas-anda.json           # periksa saja
 node scripts/impor-butir.mjs berkas-anda.json --tulis   # periksa lalu tulis
 ```
 
-Tanpa `--tulis` tidak ada satu baris pun yang masuk. Pemeriksanya juga mengirim tiap butir ke
+Tanpa `--tulis` tidak ada satu baris pun yang masuk. Pemeriksanya mengirim tiap butir ke
 `nilai_jawaban()` **di database** bersama jawaban yang mestinya benar — kalau nilainya bukan bobot
 penuh, butirnya ditolak di sini, bukan ditemukan berbulan kemudian sebagai anak yang "salah".
+
+Sora menerima **dua dialek** untuk isi yang sama: nama kolom database seperti di halaman ini
+(`type`, `prompt`, `correct_answer`), dan nama naskah Skema Data Sistem (`format`, `konten_soal`,
+`kunci_jawaban`) yang bisa diunduh dari tombol "Unduh contoh JSON" di dialog impornya. Keduanya
+melewati pemeriksaan yang sama persis. Yang di halaman ini dipakai kalau naskahnya disusun dari
+kolom database; yang naskah dipakai kalau ditulis mengikuti dokumen.
+
+Apa pun jalannya, butir mendarat sebagai `draf` — impor tidak pernah menyatakan sebuah butir sudah
+diverifikasi.
 
 ## Bentuk berkasnya
 
@@ -59,7 +77,9 @@ Tiga hal yang paling sering keliru, disebut lebih dulu:
    untuk murid.
 3. **`matching` dan `ordering` dinilai dari `options`,** bukan dari `correct_answer`.
    `correct_answer` boleh diisi sebagai salinan yang terbaca manusia; kalau isinya berbeda dari
-   `options`, pemeriksanya menolak — yang salah adalah salinannya.
+   `options`, pemeriksanya menolak — yang salah adalah salinannya. Salinan itu **tidak ikut
+   disimpan**: kolom `correct_answer` dua bentuk ini diisi `null`, karena salinan kedua adalah
+   salinan yang suatu hari akan berbeda pendapat dengan aslinya. Dua jalan impor melakukannya sama.
 
 | `type` | `options` | `correct_answer` |
 |---|---|---|
@@ -129,7 +149,15 @@ sesudah review — keanggotaan paketnya sudah disusun, penyajiannya yang menungg
 
 ## Sesudah impor
 
-Skripnya memanggil `semai_paket_topik` untuk tiap topik yang butir latihan/ujiannya bertambah:
-satu paket latihan per level Bloom yang ada butirnya, satu paket ujian. Aman diulang — paket yang
-sudah pernah dikerjakan murid dilewati, jadi menambah butir tidak mengacak-acak paket yang sedang
-berjalan.
+Butir yang masuk bank belum jadi paket. `semai_paket_topik` yang menyusunnya: satu paket latihan per
+level Bloom yang ada butirnya, satu paket ujian. Aman diulang — paket yang sudah pernah dikerjakan
+murid dilewati, jadi menambah butir tidak mengacak-acak paket yang sedang berjalan.
+
+- **Lewat terminal**, skripnya memanggilnya sendiri untuk tiap topik yang butir latihan/ujiannya
+  bertambah.
+- **Lewat Sora**, tekan **Susun paket** di halaman topiknya. Sengaja terpisah dari impor: menyusun
+  paket adalah keputusan tersendiri, dan naskah sering masuk bertahap.
+
+Lalu aktifkan butirnya. Keanggotaan paket disusun tanpa memandang status, tapi yang **disajikan**
+ke murid hanya butir `aktif` — jadi paket yang isinya masih `draf` akan tampak ada dan terbuka
+kosong.

@@ -25,6 +25,8 @@ const TIPE = [
 ]
 /** Tidak bisa dinilai mesin, jadi tidak boleh masuk kolam mana pun. */
 const TANPA_NILAI = ['essay', 'upload_file']
+/** Kuncinya tinggal di `options`, bukan di `correct_answer`. */
+const KUNCI_DI_OPSI = ['matching', 'ordering']
 const KOLAM = ['latihan', 'ujian', 'probe']
 const STATUS = ['draf', 'terverifikasi_matematis', 'direview_pedagogis', 'aktif', 'ditarik']
 const SUMBER = ['manual', 'ai_generated_verified']
@@ -276,7 +278,12 @@ async function main() {
     type: b.type,
     prompt: b.prompt,
     options: b.options ?? null,
-    correct_answer: b.correct_answer ?? null,
+    // Menjodohkan dan mengurutkan: kuncinya tinggal di `options`, dan
+    // `nilai_jawaban()` memang membaca dari sana. Salinan yang boleh ditulis di
+    // naskah tidak ikut disimpan — salinan kedua adalah salinan yang suatu hari
+    // akan berbeda pendapat dengan aslinya, dan yang membacanya akan mengira
+    // kunci yang lain. Sama dengan yang dilakukan impor Sora.
+    correct_answer: KUNCI_DI_OPSI.includes(b.type) ? null : (b.correct_answer ?? null),
     weight: b.weight ?? 1,
     explanation: b.explanation ?? null,
     bloom_level: b.bloom_level ?? null,
