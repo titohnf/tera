@@ -76,7 +76,13 @@ interface Baris extends PaketTopik {
  */
 function kapanTerbuka(iso: string, hariIniWib: string): string {
   const l = labelSesiWib(iso, hariIniWib)
-  return `${l.hari.toLowerCase()} pukul ${l.jam}`
+  // "besok pukul 16.56" — tapi "Jumat, 4 September pukul 16.56". Sebutan
+  // relatif jatuh di tengah kalimat jadi huruf kecil; nama hari dan bulan tidak
+  // pernah. `labelSesiWib` memulangkan tanggal penuh di `hari` begitu jaraknya
+  // lebih dari lusa — keadaan yang muncul kalau `jeda_buka_paket_jam` disetel
+  // lebih panjang daripada 24.
+  const hari = l.hari === l.tanggal ? l.hari : l.hari.toLowerCase()
+  return `${hari} pukul ${l.jam}`
 }
 
 /** Satu paket peta jadi baris layar. Dipakai dua kali: dari server, dan dari browser. */
