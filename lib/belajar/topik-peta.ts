@@ -150,19 +150,21 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
       .from('penempatan_topik')
       .select('topik_id, level_tertinggi_lolos')
       .eq('learner_id', learnerId),
-    // Kolam penempatan tiap topik. Dihitung sekali untuk seluruh peta, bukan
-    // ditanyakan per topik: sembilan belas kueri untuk satu angka per baris
-    // adalah harga yang tidak perlu dibayar.
-    supabase
-      .from('question_bank_items')
-      .select('topik_id, bloom_level')
-      .eq('peruntukan', 'penempatan')
-      .eq('status_verifikasi', 'aktif'),
+    // Topik yang tes penempatannya boleh ditawarkan. DITANYAKAN, bukan
+    // dihitung ulang di sini: syaratnya tinggal di `penempatan_buka_sesi`, dan
+    // menyusunnya kembali di TypeScript berarti dua salinan aturan yang harus
+    // berubah bersama. Versi pertama berkas ini melakukannya, dan tidak pernah
+    // bekerja sama sekali — ia membaca `question_bank_items` langsung,
+    // sedangkan hak baca tabel itu cuma milik admin.
+    supabase.rpc('penempatan_ditawarkan', {
+      p_access_code: TANPA_KODE,
+      p_learner_id: learnerId,
+    }),
   ])
   if (cetakan.error) console.error('[peta] gagal membaca status topik:', cetakan.error)
   if (jadwal.error) console.error('[peta] gagal membaca jadwal retest:', jadwal.error)
   if (penempatan.error) console.error('[peta] gagal membaca hasil penempatan:', penempatan.error)
-  if (kolam.error) console.error('[peta] gagal membaca kolam penempatan:', kolam.error)
+  if (kolam.error) console.error('[peta] gagal membaca tawaran penempatan:', kolam.error)
 
   const statusTopik = new Map(
     (cetakan.data ?? []).map(b => [b.topik_id as string, b.status as string])
@@ -177,21 +179,9 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
   const dibebaskan = new Map(
     (penempatan.data ?? []).map(b => [b.topik_id as string, Number(b.level_tertinggi_lolos)])
   )
-  // Kolamnya baru bisa dipakai kalau KEDUA levelnya berisi empat butir; itu
-  // syarat yang sama dengan yang ditegakkan `penempatan_buka_sesi`, ditulis di
-  // sini supaya tombolnya tidak muncul untuk kemudian menolak saat ditekan.
-  const cukup = new Map<string, { c1: number; c2: number }>()
-  for (const b of kolam.data ?? []) {
-    const t = b.topik_id as string
-    const isi = cukup.get(t) ?? { c1: 0, c2: 0 }
-    if (Number(b.bloom_level) === 1) isi.c1 += 1
-    if (Number(b.bloom_level) === 2) isi.c2 += 1
-    cukup.set(t, isi)
-  }
-  // Status yang menandakan SUDAH ada pekerjaan di topik itu. Menawarkan
-  // penempatan sesudahnya berarti menawarkan jalan memutar yang ujungnya sama.
-  const belumDigarap = (st: string | null) =>
-    st === null || st === 'siap_dikerjakan' || st === 'terkunci'
+  const ditawarkan = new Set(
+    ((kolam.data as { topik_id: string }[] | null) ?? []).map(b => b.topik_id)
+  )
 
   return ((data as BarisTopik[] | null) ?? []).map(b => ({
     id: b.topik_id,
@@ -204,11 +194,7 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     prasyaratKurang: b.prasyarat_kurang ?? [],
     status: statusTopik.get(b.topik_id) ?? null,
     retestBerikutnya: retestTopik.get(b.topik_id) ?? null,
-    penempatanSiap:
-      !dibebaskan.has(b.topik_id) &&
-      belumDigarap(statusTopik.get(b.topik_id) ?? null) &&
-      (cukup.get(b.topik_id)?.c1 ?? 0) >= 4 &&
-      (cukup.get(b.topik_id)?.c2 ?? 0) >= 4,
+    penempatanSiap: ditawarkan.has(b.topik_id),
     levelDibebaskan: dibebaskan.get(b.topik_id) ?? 0,
   }))
 }
