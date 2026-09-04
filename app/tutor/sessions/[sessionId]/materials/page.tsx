@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MaterialUploader from '@/components/materials/MaterialUploader'
 import MaterialList from '@/components/materials/MaterialList'
+import { materiKurikulumSesi } from '@/lib/materi-sesi'
 
 export default async function MaterialsPage({
   params,
@@ -17,7 +18,7 @@ export default async function MaterialsPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, status, class_id, topic, classes(name)')
+    .select('id, status, class_id, topic, curriculum_topic_id, selected_cp_ids, classes(name)')
     .eq('id', sessionId)
     .eq('tutor_id', user.id)
     .single()
@@ -29,6 +30,16 @@ export default async function MaterialsPage({
     .select('id, title, file_path, link_url, mime_type, file_size_bytes, created_at')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: false })
+
+  // Halaman ini menampilkan kolom lampiran yang sama dengan tab Materi di detail
+  // sesi, jadi ia harus tahu hal yang sama: topik yang sudah bermateri kurikulum
+  // mengunci kolomnya. Tanpa ini tutor yang masuk lewat sini disodori kolom
+  // kosong untuk bahan yang sebenarnya sudah ada.
+  const materiKurikulum = await materiKurikulumSesi(
+    supabase,
+    session.curriculum_topic_id ?? null,
+    session.selected_cp_ids ?? [],
+  )
 
   const cls = (session.classes as unknown as { name: string } | null)
 
@@ -55,6 +66,7 @@ export default async function MaterialsPage({
         sessionId={sessionId}
         tutorId={user.id}
         classId={session.class_id}
+        materiKurikulum={materiKurikulum}
       />
 
       <div className="mt-4">

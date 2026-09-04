@@ -15,6 +15,7 @@ import SessionTabs from '@/components/sessions/SessionTabs'
 import MaterialUploaderAdmin from '@/components/materials/MaterialUploaderAdmin'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { rosterForSession } from '@/lib/enrollment'
+import { materiKurikulumSesi } from '@/lib/materi-sesi'
 import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import type { AttendanceStatus } from '@/lib/types/database'
 
@@ -139,6 +140,16 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   ])
   if (freshSession) session.status = freshSession.status
 
+  // Materi kurikulum untuk topik sesi ini — sama seperti yang dilihat tutor.
+  // Tanpa ini halaman admin memperlihatkan tab Materi yang kosong untuk sesi
+  // yang materinya sebenarnya sudah ada, dan admin tidak punya cara melihat
+  // bahan apa yang sedang diterima muridnya.
+  const materiKurikulum = await materiKurikulumSesi(
+    admin,
+    session.curriculum_topic_id ?? null,
+    session.selected_cp_ids ?? [],
+  )
+
   const date = new Date(session.scheduled_at)
 
   // Hanya siswa yang keanggotaannya mencakup tanggal sesi ini — lihat lib/enrollment.ts
@@ -261,7 +272,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             cpUrls={session.cp_urls ?? {}}
             subjectName={session.subjects?.name ?? null}
             grade={sessionGrade}
-            materialUploader={<MaterialUploaderAdmin sessionId={sessionId} />}
+            materialUploader={<MaterialUploaderAdmin sessionId={sessionId} materiKurikulum={materiKurikulum} />}
             isAdmin
             isPrivateClass={allowCustomTopic}
             saveCustomTopicAction={saveCustomTopicAdmin}
@@ -301,7 +312,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               <div className="space-y-1.5">
                 {[
                   { label: 'Topik', ok: completionCheck.hasTopic },
-                  { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
+                  { label: `Materi (${completionCheck.materialsCount + completionCheck.materiKurikulumCount})`, ok: completionCheck.hasMaterials },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
                   { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.gradesRequired})`, ok: completionCheck.hasAssessments },

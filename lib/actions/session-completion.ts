@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { rosterForSession } from '@/lib/enrollment'
+import { materiKurikulumSesi } from '@/lib/materi-sesi'
 
 /**
  * Boleh melihat / memicu penyelesaian sesi ini?
@@ -45,6 +46,12 @@ export type CompletionCheck = {
   presentLateCount: number
   notesCount: number
   materialsCount: number
+  /**
+   * Materi kurikulum untuk topik sesi ini — yang muncul sendiri untuk murid dan
+   * yang membuat kolom lampiran tutor terkunci. Tidak pernah berupa baris
+   * `materials`, jadi harus dihitung terpisah.
+   */
+  materiKurikulumCount: number
   assessmentsCount: number
   gradedCount: number
   /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
@@ -62,7 +69,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
 
   const { data: session } = await admin
     .from('sessions')
-    .select('id, status, topic, class_id, scheduled_at')
+    .select('id, status, topic, class_id, scheduled_at, curriculum_topic_id, selected_cp_ids')
     .eq('id', sessionId)
     .single()
 
@@ -87,6 +94,18 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     admin.from('materials').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
     admin.from('assessments').select('id').eq('session_id', sessionId),
   ])
+
+  // Materi yang datang dari Kurikulum tidak pernah menjadi baris `materials`:
+  // begitu topiknya bermateri, `MaterialUploader` justru MENGUNCI kolom lampiran
+  // dan memberi tahu tutor bahwa bahannya sudah otomatis muncul untuk murid.
+  // Menghitung baris `materials` saja karena itu menagih tutor atas pekerjaan
+  // yang sengaja dilarang dikerjakannya — lencana "Materi" merah selamanya, dan
+  // sesi yang tidak pernah bisa diselesaikan.
+  const materiKurikulum = await materiKurikulumSesi(
+    admin,
+    session.curriculum_topic_id ?? null,
+    session.selected_cp_ids ?? [],
+  )
   const notesCount = new Set((notedStudents ?? []).map(n => n.student_id)).size
 
   const sc = rosterForSession(enrollments ?? [], session.scheduled_at).length
@@ -117,7 +136,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     : presentLateCount === 0
       ? true
       : notesCount >= presentLateCount
-  const hasMaterials = (materialsCount ?? 0) >= 1
+  const hasMaterials = (materialsCount ?? 0) + materiKurikulum.length >= 1
   // Mirrors the notes rule: needs at least 1 assessment with every attending
   // student graded, and is skipped entirely when nobody attended.
   const hasAssessments = !hasAllAttendance
@@ -134,6 +153,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     presentLateCount,
     notesCount,
     materialsCount: materialsCount ?? 0,
+    materiKurikulumCount: materiKurikulum.length,
     assessmentsCount,
     gradedCount,
     gradesRequired,

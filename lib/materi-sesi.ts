@@ -69,3 +69,53 @@ export async function materiKurikulumSesi(
     .filter((r) => r.group_id)
     .map((r) => ({ id: r.id, title: r.title, groupId: r.group_id as string }))
 }
+
+/**
+ * Sesi mana saja yang topiknya sudah bermateri kurikulum — untuk banyak sesi
+ * sekaligus.
+ *
+ * `materiKurikulumSesi()` menjawab satu sesi dan mengembalikan materinya;
+ * daftar sesi di halaman kelas hanya perlu tahu ADA atau TIDAK, untuk ratusan
+ * sesi, dan memanggil fungsi itu sekali per sesi berarti ratusan bolak-balik ke
+ * basis data. Yang ini menjawab seluruh daftar dengan dua kueri.
+ *
+ * Aturannya sengaja sama persis dengan `materiKurikulumSesi()` — kind 'materi'
+ * dan `readable_at` terisi — supaya lencana "Materi" di daftar kelas tidak
+ * pernah berselisih dengan yang dilihat tutor di dalam sesinya.
+ */
+export async function sesiBermateriKurikulum(
+  db: Klien,
+  sesi: { id: string; curriculum_topic_id?: string | null; selected_cp_ids?: string[] | null }[],
+): Promise<Set<string>> {
+  const cpPerSesi = new Map<string, string[]>()
+  for (const s of sesi) {
+    const ids = [...new Set([...(s.curriculum_topic_id ? [s.curriculum_topic_id] : []), ...(s.selected_cp_ids ?? [])])]
+    if (ids.length > 0) cpPerSesi.set(s.id, ids)
+  }
+  const semuaCp = [...new Set([...cpPerSesi.values()].flat())]
+  if (semuaCp.length === 0) return new Set()
+
+  const { data: cpRows } = await db.from('curriculum_topics').select('id, group_id').in('id', semuaCp)
+  const grupPerCp = new Map<string, string>()
+  for (const r of ((cpRows as { id: string; group_id: string | null }[] | null) ?? [])) {
+    if (r.group_id) grupPerCp.set(r.id, r.group_id)
+  }
+  const grup = [...new Set([...grupPerCp.values()])]
+  if (grup.length === 0) return new Set()
+
+  const { data: resRows } = await db
+    .from('curriculum_resources')
+    .select('group_id')
+    .in('group_id', grup)
+    .eq('kind', 'materi')
+    .not('readable_at', 'is', null)
+  const grupBermateri = new Set(
+    ((resRows as { group_id: string | null }[] | null) ?? []).map((r) => r.group_id).filter((g): g is string => !!g),
+  )
+
+  const hasil = new Set<string>()
+  for (const [sesiId, cpIds] of cpPerSesi) {
+    if (cpIds.some((cp) => { const g = grupPerCp.get(cp); return g && grupBermateri.has(g) })) hasil.add(sesiId)
+  }
+  return hasil
+}

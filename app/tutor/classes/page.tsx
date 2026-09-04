@@ -8,6 +8,7 @@ import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { splitClassName, splitClassPrefix } from '@/lib/format-class-name'
+import { sesiBermateriKurikulum } from '@/lib/materi-sesi'
 
 type ClassRow = {
   id: string
@@ -31,6 +32,8 @@ type TeachingSessionRow = {
   status: string
   topic: string | null
   payroll_status: string
+  curriculum_topic_id: string | null
+  selected_cp_ids: string[] | null
   classes: { name: string; level: string | null } | null
   subjects: { name: string } | null
   materials: CountRow
@@ -85,6 +88,7 @@ export default async function TutorClassesPage({
 
   const sessionFields = `
     id, class_id, scheduled_at, duration_minutes, location, status, topic, payroll_status,
+    curriculum_topic_id, selected_cp_ids,
     classes(name, level),
     subjects(name),
     materials(count),
@@ -269,10 +273,16 @@ export default async function TutorClassesPage({
       .map(a => a.session_id)
   )
 
+  // Materi kurikulum tidak pernah menjadi baris `materials` — topik yang sudah
+  // bermateri justru MENGUNCI kolom lampiran tutor. Menghitung lampiran saja di
+  // sini menandai sesi itu belum lengkap sampai kapan pun, dan berselisih dengan
+  // halaman sesinya sendiri yang sudah menghitungnya.
+  const sesiBermateri = await sesiBermateriKurikulum(admin, teachingSessionsRaw)
+
   function getTeachingCounts(session: TeachingSessionRow): SessionCounts {
     return {
       topic: session.topic,
-      hasMaterials: (session.materials[0]?.count ?? 0) > 0,
+      hasMaterials: (session.materials[0]?.count ?? 0) > 0 || sesiBermateri.has(session.id),
       hasAssessments: (session.assessments[0]?.count ?? 0) > 0,
       hasAttendance: (session.attendances[0]?.count ?? 0) > 0,
       hasNotes: (session.performance_notes[0]?.count ?? 0) > 0,

@@ -6,6 +6,7 @@ import TeachingScheduleFilters from '@/components/tutor/TeachingScheduleFilters'
 import ClassDetailLayout from '@/components/classes/ClassDetailLayout'
 import HorizontalScrollShadow from '@/components/classes/HorizontalScrollShadow'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
+import { sesiBermateriKurikulum } from '@/lib/materi-sesi'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
 
@@ -39,6 +40,8 @@ type SessionRow = {
   payroll_status: string
   tutor_id: string
   subject_id: string | null
+  curriculum_topic_id: string | null
+  selected_cp_ids: string[] | null
   subjects: { name: string } | null
   materials: CountRow
   assessments: CountRow
@@ -88,6 +91,7 @@ export default async function TutorClassDetailPage({
 
   const sessionSelect = `
     id, scheduled_at, duration_minutes, location, status, topic, payroll_status, tutor_id, subject_id,
+    curriculum_topic_id, selected_cp_ids,
     subjects(name),
     materials(count),
     assessments(count),
@@ -411,10 +415,16 @@ export default async function TutorClassDetailPage({
       : { data: [] as { session_id: string }[] }
     const pendingRequestSessionIds = new Set((pendingRequestsRaw ?? []).map(r => r.session_id))
 
+    // Materi kurikulum tidak pernah menjadi baris `materials` — topik yang sudah
+    // bermateri justru MENGUNCI kolom lampiran tutor. Menghitung lampiran saja di
+    // sini menandai sesi itu belum lengkap sampai kapan pun, dan berselisih dengan
+    // halaman sesinya sendiri yang sudah menghitungnya.
+    const sesiBermateri = await sesiBermateriKurikulum(admin, sessions)
+
     function getCounts(session: SessionRow): SessionCounts {
       return {
         topic: session.topic,
-        hasMaterials: (session.materials[0]?.count ?? 0) > 0,
+        hasMaterials: (session.materials[0]?.count ?? 0) > 0 || sesiBermateri.has(session.id),
         hasAssessments: (session.assessments[0]?.count ?? 0) > 0,
         hasAttendance: (session.attendances[0]?.count ?? 0) > 0,
         hasNotes: (session.performance_notes[0]?.count ?? 0) > 0,
