@@ -17,8 +17,8 @@ import { useRouter } from 'next/navigation'
  * menyajikan berkasnya dari penyimpanan Tera setelah barisnya lolos RLS
  * (policy 057 untuk admin), jadi admin melihat berkas yang sama dengan yang
  * dibaca murid tanpa perlu punya akses Drive-nya sendiri. Kembaran tutor
- * sengaja belum menautkannya: `curriculum_resources` tidak punya policy select
- * untuk peran tutor, jadi rute yang sama akan menjawab 404 untuk mereka.
+ * menautkan berkas yang sama sejak policy `Tutors read learning materials`
+ * (migrasi 188) memberi peran tutor hak membacanya.
  */
 export default function MaterialUploaderAdmin({
   sessionId,

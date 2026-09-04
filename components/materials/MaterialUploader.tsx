@@ -18,6 +18,11 @@ import { useRouter } from 'next/navigation'
  * — sedangkan kolom terkunci yang memperlihatkan isinya menjawab pertanyaan itu
  * sebelum sempat ditanyakan.
  *
+ * Berkasnya bisa dibuka dari sini lewat `/api/materi/<id>`, dan itu bergantung
+ * pada policy `Tutors read learning materials` (migrasi 188): rute itu meminta
+ * barisnya lewat klien sesi lebih dulu, jadi tanpa policy itu tutor cuma
+ * diberi tahu judul bahan yang tidak bisa dilihatnya.
+ *
  * Topik yang BELUM bermateri tetap membuka kolomnya seperti biasa. Selama
  * perpustakaan belum menutup seluruh kurikulum, mencabut jalan tutor berarti
  * bahan yang ada di tangannya tidak punya tempat sama sekali.
@@ -80,14 +85,21 @@ export default function MaterialUploader({
                 readOnly
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
               />
-              <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">URL / Link</label>
-              <input
-                type="text"
-                value={`/belajar?topik=${m.groupId}`}
-                disabled
-                readOnly
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
-              />
+              <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">Berkasnya</label>
+              <a
+                href={`/api/materi/${m.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Buka materi
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+              <p className="text-xs text-gray-400 mt-1">
+                Yang dibuka murid: <code className="text-gray-500">/belajar?topik={m.groupId}</code>
+              </p>
             </div>
           ))}
           <p className="text-xs text-gray-400">
