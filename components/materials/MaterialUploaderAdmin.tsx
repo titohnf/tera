@@ -12,6 +12,13 @@ import { useRouter } from 'next/navigation'
  * topik yang materinya sebenarnya sudah dibaca murid. Admin yang memeriksa
  * keluhan tutor lalu melihat kekosongan itu dan menyimpulkan materinya belum
  * ada — kesimpulan yang salah, dan justru dari layar yang seharusnya menjawab.
+ *
+ * Berkasnya ditautkan lewat `/api/materi/<id>`, bukan ke Drive: rute itu
+ * menyajikan berkasnya dari penyimpanan Tera setelah barisnya lolos RLS
+ * (policy 057 untuk admin), jadi admin melihat berkas yang sama dengan yang
+ * dibaca murid tanpa perlu punya akses Drive-nya sendiri. Kembaran tutor
+ * sengaja belum menautkannya: `curriculum_resources` tidak punya policy select
+ * untuk peran tutor, jadi rute yang sama akan menjawab 404 untuk mereka.
  */
 export default function MaterialUploaderAdmin({
   sessionId,
@@ -61,14 +68,21 @@ export default function MaterialUploaderAdmin({
                 readOnly
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
               />
-              <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">URL / Link</label>
-              <input
-                type="text"
-                value={`/belajar?topik=${m.groupId}`}
-                disabled
-                readOnly
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
-              />
+              <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">Berkasnya</label>
+              <a
+                href={`/api/materi/${m.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Buka materi
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+              <p className="text-xs text-gray-400 mt-1">
+                Yang dibuka murid: <code className="text-gray-500">/belajar?topik={m.groupId}</code>
+              </p>
             </div>
           ))}
           <p className="text-xs text-gray-400">
