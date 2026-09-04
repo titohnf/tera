@@ -540,7 +540,7 @@ export default async function SessionPage({
               <div className="space-y-1.5">
                 {[
                   { label: 'Topik', ok: completionCheck.hasTopic },
-                  { label: `Materi (${completionCheck.materialsCount})`, ok: completionCheck.hasMaterials },
+                  { label: `Materi (${completionCheck.materialsCount + completionCheck.materiKurikulumCount})`, ok: completionCheck.hasMaterials },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
                   { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.gradesRequired})`, ok: completionCheck.hasAssessments },

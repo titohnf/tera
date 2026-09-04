@@ -4,7 +4,23 @@ import { useState, useTransition } from 'react'
 import { addLinkMaterialAdmin } from '@/lib/actions/admin/materials'
 import { useRouter } from 'next/navigation'
 
-export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string }) {
+/**
+ * Kembaran admin dari `MaterialUploader`, termasuk keadaan terkuncinya.
+ *
+ * Materi kurikulum tidak pernah menjadi baris `materials`, jadi halaman yang
+ * hanya menampilkan lampiran sesi memperlihatkan tab Materi yang kosong untuk
+ * topik yang materinya sebenarnya sudah dibaca murid. Admin yang memeriksa
+ * keluhan tutor lalu melihat kekosongan itu dan menyimpulkan materinya belum
+ * ada — kesimpulan yang salah, dan justru dari layar yang seharusnya menjawab.
+ */
+export default function MaterialUploaderAdmin({
+  sessionId,
+  materiKurikulum = [],
+}: {
+  sessionId: string
+  /** Materi dari Kurikulum untuk topik sesi ini. Kosong = admin mengisi sendiri. */
+  materiKurikulum?: { id: string; title: string; groupId: string }[]
+}) {
   const [linkTitle, setLinkTitle] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
 
@@ -24,6 +40,44 @@ export default function MaterialUploaderAdmin({ sessionId }: { sessionId: string
       setLinkUrl('')
       router.refresh()
     })
+  }
+
+  if (materiKurikulum.length > 0) {
+    return (
+      <div className="border border-slate-200 rounded-xl p-4">
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Materi topik ini sudah tersedia di Kurikulum dan otomatis muncul untuk
+            murid. Tutor tidak perlu menempelkannya lagi, dan syarat &ldquo;Materi&rdquo;
+            sesi ini sudah terpenuhi olehnya.
+          </p>
+          {materiKurikulum.map(m => (
+            <div key={m.id}>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Judul</label>
+              <input
+                type="text"
+                value={m.title}
+                disabled
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
+              />
+              <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">URL / Link</label>
+              <input
+                type="text"
+                value={`/belajar?topik=${m.groupId}`}
+                disabled
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-sm text-gray-500 cursor-not-allowed"
+              />
+            </div>
+          ))}
+          <p className="text-xs text-gray-400">
+            Bahan lain untuk topik ini ditambahkan dari Admin &rarr; Kurikulum, supaya
+            semua murid topik ini mendapatkannya.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
