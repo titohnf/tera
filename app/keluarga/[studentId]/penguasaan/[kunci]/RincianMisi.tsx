@@ -4,6 +4,8 @@ import { learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
 import { keadaanPaketTopik } from '@/lib/belajar/topik-peta'
 import { isiPaketTopikSemua, kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import { namaPaket } from '@/lib/belajar/nama-paket'
+import { namaTema } from '@/lib/belajar/tema-topik'
+import IkonTema from '@/components/belajar/IkonTema'
 import { labelPenguasaan } from '@/lib/belajar/penguasaan'
 import { persenDari } from '@/lib/belajar/penilaian'
 import Keyakinan from '@/components/belajar/Keyakinan'
@@ -189,12 +191,20 @@ export default async function RincianMisi({
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-white p-5 shadow-kartu">
-        <p className="text-xs text-gray-400">
-          {['Misi', k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-        <p className="mt-0.5 text-lg font-semibold tracking-tight text-gray-900">{k.nama}</p>
+        {/* Ikon temanya sebesar 44px di sini, bukan 36 seperti di daftar: ini
+            kepala halaman sebuah topik, dan yang di daftar berdampingan dengan
+            delapan belas saudaranya. */}
+        <div className="flex items-start gap-3">
+          <IkonTema elemen={k.elemen} size={44} />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-gray-400">
+              {['Misi', namaTema(k.elemen), k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+            <p className="mt-0.5 text-lg font-semibold tracking-tight text-gray-900">{k.nama}</p>
+          </div>
+        </div>
 
         {k.answered > 0 ? (
           <>

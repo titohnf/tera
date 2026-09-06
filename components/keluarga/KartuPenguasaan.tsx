@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import BilahJawaban, { KeteranganJawaban } from '@/components/belajar/BilahJawaban'
+import IkonTema from '@/components/belajar/IkonTema'
 import Keyakinan from '@/components/belajar/Keyakinan'
 
 /**
@@ -17,6 +18,16 @@ export interface BarisPenguasaan {
   mapel: string
   nama: string
   keterangan: string | null
+  /**
+   * Elemen topik peta (`bilangan`, `aljabar`, ...), atau null.
+   *
+   * Null untuk baris jalur GRUP, dan itu bukan data yang hilang: bab kurikulum
+   * tidak punya elemen, dan kartunya memang tidak menggambar ikon apa pun.
+   * Ikonnya menandai tema, bukan menghias baris — baris yang temanya tidak
+   * diketahui lebih baik tanpa lingkaran abu-abu yang tidak menjelaskan apa
+   * pun.
+   */
+  elemen?: string | null
   persen: number | null
   label: string | null
   pitaKunci: string | null
@@ -49,11 +60,12 @@ export default function KartuPenguasaan({ b, studentId }: { b: BarisPenguasaan; 
         href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
         className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
       >
-        {b.keterangan && <p className="text-xs text-gray-400">{b.keterangan}</p>}
-        <div className="flex items-start justify-between gap-3">
-          <p className="mt-0.5 min-w-0 font-semibold tracking-tight text-gray-900">
-            {b.nama}
-          </p>
+        <div className="flex items-start gap-3">
+          {b.elemen && <IkonTema elemen={b.elemen} size={36} />}
+          <div className="min-w-0 flex-1">
+            {b.keterangan && <p className="text-xs text-gray-400">{b.keterangan}</p>}
+            <p className="mt-0.5 font-semibold tracking-tight text-gray-900">{b.nama}</p>
+          </div>
           <span className="shrink-0 text-gray-300" aria-hidden>
             ›
           </span>

@@ -1,6 +1,7 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import { learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
 import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
+import { namaTema } from '@/lib/belajar/tema-topik'
 import {
   labelPenguasaan,
   rentangPita,
@@ -60,7 +61,10 @@ export default async function KetuntasanMateriPage({
         subjectId: k.subjectId,
         mapel: 'Misi',
         nama: k.nama,
-        keterangan: [k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
+        elemen: k.elemen,
+        // Tema di depan, urutan yang sama dengan baris peta di Misi: yang
+        // pertama menjawab "ini tentang apa", sisanya menjawab "yang mana".
+        keterangan: [namaTema(k.elemen), k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
           .filter(Boolean)
           .join(' · '),
         persen,
