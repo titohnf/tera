@@ -37,6 +37,12 @@ import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
  *   putaran         sudah berapa kali dikerjakan sampai tuntas
  *   terkunci        kuncinya sudah dibuka, jadi nilainya berhenti di situ
  *
+ * Ditambah satu keadaan yang hanya dipunyai paket ujian sejak migrasi 189:
+ * `menungguLatihan`, yang menutup pintunya sampai seluruh paket latihan dalam
+ * cakupan topiknya tuntas. Ujian berdiri paling akhir di daftar ini karena
+ * urutan yang sama, dan keduanya menjawab satu hal: ujian sekali seumur topik,
+ * jadi ia tidak boleh jadi kartu pertama yang diketuk anak yang baru datang.
+ *
  * Paket yang sudah benar semua juga tidak bisa diketuk lagi, dan itu bukan
  * hukuman melainkan kabar baik yang tidak perlu diulang.
  *
@@ -65,6 +71,13 @@ interface Baris extends PaketTopik {
    * dan layarnya jatuh ke kalimat lama.
    */
   bukaPada?: string | null
+  /**
+   * Ujian yang masih menunggu paket latihan topiknya tuntas (migrasi 189).
+   *
+   * Hanya jalur peta yang punya ini; latihan bebas tidak punya paket ujian sama
+   * sekali. Undefined dibaca sebagai "tidak menunggu apa-apa".
+   */
+  menungguLatihan?: boolean
 }
 
 /**
@@ -102,6 +115,7 @@ function dariPeta(p: PaketPeta): Baris {
     judul: namaPaket(p),
     levelBloom: p.levelBloom,
     bukaPada: p.bukaPada,
+    menungguLatihan: p.menungguLatihan,
   }
 }
 
@@ -213,7 +227,11 @@ export default function DaftarPaket({
 
       {paket.map(p => {
         const tuntas = p.benar >= p.total
-        const bisa = !p.terkunci && !tuntas
+        // Gerbang ujian (189). Satu-satunya keadaan di layar ini yang menutup
+        // pintu karena sesuatu di paket LAIN, jadi ia disebutkan — baris mati
+        // tanpa sebab adalah yang membuat orang mengetuknya berkali-kali.
+        const menunggu = p.menungguLatihan === true
+        const bisa = !p.terkunci && !tuntas && !menunggu
         const persen = p.maks > 0 ? persenDari(p.skor, p.maks) : null
         const belumTersentuh = p.putaran === 0
 
@@ -241,6 +259,11 @@ export default function DaftarPaket({
                   {p.bukaPada && hariIniWib
                     ? `Terkunci — bisa dicoba lagi ${kapanTerbuka(p.bukaPada, hariIniWib)}`
                     : 'Terkunci — kuncinya sudah dibuka'}
+                </span>
+              )}
+              {menunggu && (
+                <span className="mt-0.5 block text-xs text-gray-400">
+                  Terbuka setelah semua paket latihan tuntas
                 </span>
               )}
               {tuntas && !p.terkunci && (

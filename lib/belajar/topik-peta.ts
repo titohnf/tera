@@ -81,6 +81,14 @@ export interface PaketPeta {
    * waktu yang boleh dijanjikan.
    */
   bukaPada: string | null
+  /**
+   * Paket ujian yang masih menunggu paket latihan topiknya tuntas (migrasi 189).
+   *
+   * Selalu `false` untuk paket latihan, dan untuk ujian yang sudah pernah
+   * dikerjakan — jadi layar boleh memakainya apa adanya tanpa memeriksa
+   * `jenis` maupun `putaran` lebih dulu.
+   */
+  menungguLatihan: boolean
 }
 
 interface BarisTopik {
@@ -109,6 +117,7 @@ interface BarisPaket {
   putaran: number | string
   terkunci: boolean | null
   buka_pada: string | null
+  menunggu_latihan: boolean | null
 }
 
 const angka = (n: number | string | null | undefined) => Number(n ?? 0)
@@ -205,6 +214,7 @@ export async function keadaanPaketTopik(
     putaran: angka(b.putaran),
     terkunci: Boolean(b.terkunci),
     bukaPada: b.buka_pada ?? null,
+    menungguLatihan: Boolean(b.menunggu_latihan),
   }))
 }
 
