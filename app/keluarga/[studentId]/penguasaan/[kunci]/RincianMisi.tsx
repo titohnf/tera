@@ -137,9 +137,9 @@ export default async function RincianMisi({
     perPaket.set(b.paketId, ada)
   }
 
-  // Kartunya mengikuti urutan `keadaanPaketTopik` — latihan dulu menurut
-  // nomornya, ujian di belakang. Angka tiap paket datang dari sana, bukan
-  // dihitung ulang di sini.
+  // Kartunya mengikuti urutan `keadaanPaketTopik` — paket wajib dulu, pengayaan
+  // sesudahnya, ujian paling belakang (migrasi 189). Angka tiap paket datang
+  // dari sana, bukan dihitung ulang di sini.
   const kartuPaket = paket.map(p => {
     const soal = (perPaket.get(p.paketId) ?? []).sort((a, b) => a.ord - b.ord)
     return {
@@ -149,6 +149,10 @@ export default async function RincianMisi({
       // tanpa diberi tahu, dan layar orang tua tidak boleh membocorkannya.
       nama: namaPaket({ jenis: p.jenis, levelBloom: p.levelBloom, nomor: p.nomor }),
       ujian: p.jenis === 'ujian',
+      // Di luar cakupan Bloom topiknya: boleh dikerjakan, tapi tidak diminta
+      // dan tidak ikut menentukan apa pun. Orang tua yang tidak diberi tahu
+      // akan membacanya sebagai pekerjaan yang tertinggal.
+      pengayaan: p.pengayaan,
       total: p.total,
       benar: p.benar,
       putaran: p.putaran,
@@ -180,6 +184,7 @@ export default async function RincianMisi({
     belum: Math.max(0, k.total - k.answered),
   }
   const adaUjian = kartuPaket.some(p => p.ujian)
+  const adaPengayaan = kartuPaket.some(p => p.pengayaan)
 
   return (
     <div className="space-y-4">
@@ -225,6 +230,15 @@ export default async function RincianMisi({
                 kartu bawah.
               </p>
             )}
+            {/* Alasan yang sama dengan paket ujian, dan disebut dengan cara
+                yang sama: yang tidak masuk penyebut harus dikatakan, bukan
+                dibiarkan jadi selisih yang tidak bisa dijelaskan siapa pun. */}
+            {adaPengayaan && (
+              <p className="mt-2 text-xs leading-relaxed text-gray-400">
+                Begitu juga paket pengayaannya — ia di luar cakupan topik ini, jadi
+                mengerjakannya menambah kemampuan tanpa menambah angka di sini.
+              </p>
+            )}
           </>
         ) : (
           <p className="mt-2 text-sm leading-relaxed text-gray-500">
@@ -237,12 +251,27 @@ export default async function RincianMisi({
         <div className="space-y-2">
           <div className="px-1">
             <p className="font-semibold tracking-tight text-gray-900">Proses belajarnya</p>
+            {/* Keterangannya sekali di kepala daftar, bukan diulang di tiap
+                kartu bertanda: yang perlu dibaca orang tua artinya tandanya,
+                dan itu cukup dijelaskan satu kali. */}
+            {adaPengayaan && (
+              <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                Paket bertanda <span className="font-medium">Pengayaan</span> tidak
+                diminta dari anak Anda — ia melampaui cakupan topik ini, dan
+                melewatinya tidak membuat topiknya kurang tuntas.
+              </p>
+            )}
           </div>
 
           {kartuPaket.map(p => (
             <div key={p.paketId} className="rounded-xl bg-white p-4 shadow-kartu">
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-sm font-semibold text-gray-900">{p.nama}</span>
+                {p.pengayaan && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    Pengayaan
+                  </span>
+                )}
                 <span className="text-sm text-gray-500 tabular-nums">
                   {p.benar}/{p.total} benar
                 </span>

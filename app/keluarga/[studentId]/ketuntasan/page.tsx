@@ -19,7 +19,8 @@ import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
  * topik kurikulum: trigger migrasi 148 melarang butir ber-`topik_id` punya tag
  * kurikulum, jadi butir yang dihitung di sini tidak pernah sama dengan yang
  * dihitung di tab Kompetensi, dan penyebut paketnya pun berbeda — di sini paket
- * latihan saja, sementara paket ujian dilaporkan terpisah di dalam tiap topik.
+ * latihan DI DALAM cakupan Bloom tiap topik saja (migrasi 189), sementara paket
+ * ujian dan paket pengayaan dilaporkan terpisah di dalam tiap topik.
  *
  * Menaruh dua penyebut berbeda di bawah satu layar hanya membingungkan; satu
  * tab per penyebut membuat batasnya tertulis di bilah ini, bukan tersirat.
@@ -107,8 +108,8 @@ export default async function KetuntasanMateriPage({
           </div>
           <p className="px-1 text-xs leading-relaxed text-gray-400">
             Peta kompetensi Matematika: paket latihan bertingkat yang mengukur
-            penguasaan per topik. Paket ujiannya dilaporkan terpisah di dalam
-            tiap topik.
+            penguasaan per topik, sebatas yang diminta dari tiap topik. Paket
+            ujian dan paket pengayaannya dilaporkan terpisah di dalam tiap topik.
           </p>
           <ul className="space-y-3">
             {baris.map(b => (
