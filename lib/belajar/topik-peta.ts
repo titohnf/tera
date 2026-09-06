@@ -38,6 +38,22 @@ export interface TopikPeta {
    */
   prasyaratTerpenuhi: boolean
   prasyaratKurang: string[]
+  /**
+   * Status enam keadaan topik ini (FR13), dari cetakan `status_topik_siswa`.
+   *
+   * Null untuk topik yang belum punya baris cetakan — cetakannya baru ditulis
+   * `evaluasi_unlock` di akhir sesi, jadi anak yang belum pernah mengerjakan
+   * apa pun memang belum punya status yang layak ditampilkan. Null berarti
+   * "belum ada yang bisa dikatakan", bukan "terkunci".
+   */
+  status: string | null
+  /**
+   * Tanggal pengecekan ulang berikutnya (FR11), untuk topik yang sudah tuntas.
+   * Null kalau topiknya belum tuntas atau jadwalnya sudah jatuh tempo — yang
+   * jatuh tempo tampil sebagai `KartuRetest` di atas peta, bukan sebagai
+   * keterangan di baris topiknya.
+   */
+  retestBerikutnya: string | null
 }
 
 /** Satu paket di dalam sebuah topik. */
@@ -56,6 +72,15 @@ export interface PaketPeta {
   maks: number
   putaran: number
   terkunci: boolean
+  /**
+   * Kapan paket yang sedang terkunci terbuka lagi (ISO), atau null.
+   *
+   * Null punya dua arti yang sengaja tidak dibedakan di sini: paketnya memang
+   * tidak terkunci, atau ia paket ujian yang kuncinya permanen. Yang memakainya
+   * cuma menampilkan waktunya kalau ada — dan untuk ujian memang tidak ada
+   * waktu yang boleh dijanjikan.
+   */
+  bukaPada: string | null
 }
 
 interface BarisTopik {
@@ -83,6 +108,7 @@ interface BarisPaket {
   maks: number | string
   putaran: number | string
   terkunci: boolean | null
+  buka_pada: string | null
 }
 
 const angka = (n: number | string | null | undefined) => Number(n ?? 0)
@@ -106,6 +132,34 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     return []
   }
 
+  // Status dan jadwal dijemput di sini, bukan dibiarkan diminta komponennya
+  // sendiri sesudah hidup: peta ini dirender di server, dan menyerahkan dua
+  // pertanyaan kecil ke browser berarti barisnya muncul dulu tanpa label lalu
+  // berkedip berisi. Keduanya tabel biasa dengan RLS yang sudah mengizinkan
+  // keluarga membacanya (migrasi 163 dan 164), jadi tidak ada RPC baru.
+  //
+  // Gagalnya salah satu bukan alasan menggagalkan petanya: yang hilang cuma
+  // keterangan, sedangkan daftar topiknya sendiri sudah lengkap di tangan.
+  const [cetakan, jadwal] = await Promise.all([
+    supabase.from('status_topik_siswa').select('topik_id, status').eq('learner_id', learnerId),
+    supabase
+      .from('jadwal_retest')
+      .select('topik_id, tanggal_retest_berikutnya')
+      .eq('learner_id', learnerId),
+  ])
+  if (cetakan.error) console.error('[peta] gagal membaca status topik:', cetakan.error)
+  if (jadwal.error) console.error('[peta] gagal membaca jadwal retest:', jadwal.error)
+
+  const statusTopik = new Map(
+    (cetakan.data ?? []).map(b => [b.topik_id as string, b.status as string])
+  )
+  const hariIni = new Date().toISOString().slice(0, 10)
+  const retestTopik = new Map(
+    (jadwal.data ?? [])
+      .filter(b => (b.tanggal_retest_berikutnya as string) > hariIni)
+      .map(b => [b.topik_id as string, b.tanggal_retest_berikutnya as string])
+  )
+
   return ((data as BarisTopik[] | null) ?? []).map(b => ({
     id: b.topik_id,
     nama: b.nama,
@@ -115,6 +169,8 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     jumlahPaket: angka(b.jumlah_paket),
     prasyaratTerpenuhi: b.prasyarat_terpenuhi,
     prasyaratKurang: b.prasyarat_kurang ?? [],
+    status: statusTopik.get(b.topik_id) ?? null,
+    retestBerikutnya: retestTopik.get(b.topik_id) ?? null,
   }))
 }
 
@@ -148,6 +204,7 @@ export async function keadaanPaketTopik(
     maks: angka(b.maks),
     putaran: angka(b.putaran),
     terkunci: Boolean(b.terkunci),
+    bukaPada: b.buka_pada ?? null,
   }))
 }
 

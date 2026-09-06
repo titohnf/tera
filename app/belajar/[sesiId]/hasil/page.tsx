@@ -78,6 +78,12 @@ export default async function HasilSesi({
     nudgeBeban(pemilik.learnerId, sesiId),
   ])
 
+  // Sesi yang BUKAN paket: probe retest. Ia tidak menawarkan putaran ulang
+  // maupun kunci jawaban, dan harus dikecualikan di tempat yang sama persis —
+  // cabang yang melewatkannya akan memperlakukannya seperti sesi warisan
+  // sebelum migrasi 134, yang kuncinya memang terbuka.
+  const bukanPaket = probe
+
   // Keadaan paketnya SESUDAH putaran ini ditutup — berapa dari kesepuluh soal
   // yang kini benar, sudah berapa putaran, dan apakah kuncinya sudah dibuka.
   // Ini yang dinilai, bukan putaran yang barusan: putaran kedua yang berisi
@@ -216,7 +222,7 @@ export default async function HasilSesi({
   // sebelum migrasi 134 — dan seluruh kolam probe sebuah topik terbaca dalam
   // sekali duduk. Kolam itu kecil dan dipakai berbulan-bulan (FR11).
   const kunciBoleh =
-    !probe && ((!paket && !petaPaket) || (paketIni?.terkunci ?? false))
+    !bukanPaket && ((!paket && !petaPaket) || (paketIni?.terkunci ?? false))
   const kunciTerbuka = kunciBoleh && (kunciDiminta === '1' || terpilih !== null)
 
   // Alamatnya ikut diluruskan, bukan cuma isinya: `?kunci=1` yang menampilkan
@@ -228,18 +234,27 @@ export default async function HasilSesi({
   // yang berisi empat soal dan benar semua tidak berarti paketnya selesai —
   // yang menentukan tinggal berapa dari kesepuluh soal itu yang masih salah.
   const sisa = paketIni ? paketIni.total - paketIni.benar : jumlahSalah
-  // Jalur peta tidak punya `?topik=`: petanya berdiri di halaman `/belajar` itu
-  // sendiri, dan komponennya membuka satu-satunya topik berisi dengan
-  // sendirinya. Jadi tautannya cukup `kembali` — bukan null, yang akan
-  // menghilangkan tombol "pilih paket lain" dari layar anak yang baru saja
-  // selesai satu paket.
+  // Jalur peta pulang ke MISI, bukan ke `/belajar`. Dulu memang cukup
+  // `kembali`, karena petanya berdiri di halaman `/belajar` itu sendiri —
+  // sejak ia pindah ke `/keluarga/[studentId]/misi`, `/belajar` cuma merender
+  // pemilih mapel, jadi tautan lama mendaratkan anak yang baru menuntaskan
+  // satu paket di layar yang tidak memuat petanya sama sekali. Alasan kedua
+  // yang ikut kedaluwarsa: petanya "membuka satu-satunya topik berisi dengan
+  // sendirinya" hanya benar sewaktu topik aktif tinggal satu.
+  //
+  // Pelajar berkode akses tidak punya halaman keluarga, dan tidak ada
+  // permukaan lain yang merender peta — untuk mereka `kembali` tetap yang
+  // paling masuk akal, dan tetap bukan null, yang akan menghilangkan tombol
+  // "pilih paket lain" sama sekali.
   const daftarPaket =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
         : petaPaket
-          ? kembali
+          ? pemilik.profileId
+            ? `/keluarga/${pemilik.profileId}/misi`
+            : kembali
           : null
 
   const pilihan = (
@@ -251,7 +266,7 @@ export default async function HasilSesi({
       daftarPaket={daftarPaket}
       kembali={kembali}
       materi={ulangi}
-      probe={probe !== null}
+      probe={bukanPaket !== null}
     />
   )
 

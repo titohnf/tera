@@ -5,6 +5,7 @@ import KartuRetest from '@/components/belajar/KartuRetest'
 import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
 import { catatKunjungan, sapaanKunjungan } from '@/lib/belajar/kunjungan'
+import { todayWib } from '@/lib/daily-message'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -73,7 +74,12 @@ export default async function PaketTopikPage({
           disambut, bukan langsung disodori daftar yang harus dipilih. */}
       {sapaan && <SapaanKunjungan sapaan={sapaan} anak={studentId} />}
       <KartuRetest retest={retest} anak={studentId} />
-      <PetaTopik anak={studentId} topik={peta} paketAwal={paketAwal} />
+      <PetaTopik
+        anak={studentId}
+        topik={peta}
+        paketAwal={paketAwal}
+        hariIniWib={todayWib()}
+      />
     </div>
   )
 }

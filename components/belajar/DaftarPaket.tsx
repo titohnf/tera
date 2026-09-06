@@ -6,16 +6,29 @@ import type { PaketPeta } from '@/lib/belajar/topik-peta'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import { mulaiPaket, mulaiPaketPeta, muatPaket, muatPaketPeta } from '@/app/belajar/actions'
 import { persenDari } from '@/lib/belajar/penilaian'
+import { labelSesiWib } from '@/lib/waktu'
 import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
 
 /**
  * Paket-paket sebuah topik, dan keadaan masing-masing.
  *
- * Sebuah paket BUKAN undian: isinya potongan tetap dari bank soal topiknya —
- * Paket 1 selalu sepuluh soal yang sama, bagi siapa pun, kapan pun. Karena itu
- * layar ini daftar, bukan satu tombol "Mulai Latihan": yang dipilih anak bukan
- * "sepuluh soal entah yang mana", melainkan bagian mana dari topik ini yang
- * mau ia hadapi.
+ * Sebuah paket LATIHAN bukan undian: isinya potongan tetap dari bank soal
+ * topiknya — Paket 1 selalu soal yang sama, bagi siapa pun, kapan pun. Karena
+ * itu layar ini daftar, bukan satu tombol "Mulai Latihan": yang dipilih anak
+ * bukan "sepuluh soal entah yang mana", melainkan bagian mana dari topik ini
+ * yang mau ia hadapi.
+ *
+ * PAKET UJIAN SATU-SATUNYA PENGECUALIAN, sejak migrasi 177. Ia menyajikan dua
+ * belas butir yang diambil acak berjenjang dari kolam ujian topiknya, sekali,
+ * saat dibuka — dan sampel itu berbeda untuk tiap murid. Alasannya ada di
+ * kepala migrasi itu: ujian hanya boleh dikerjakan sekali dan tidak punya
+ * putaran kedua, jadi satu lembar soal yang sama untuk seluruh angkatan
+ * berhenti mengukur apa pun begitu satu anak selesai lebih dulu.
+ *
+ * Akibatnya di layar ini: `total` sebuah paket ujian adalah 12 — bukan besar
+ * kolamnya — dan sebelum ujiannya dibuka, petak soalnya kosong. Belum ada dua
+ * belas butir yang menjadi miliknya; kartunya menyebut berapa yang akan
+ * datang, bukan yang mana.
  *
  * Tiap baris menyebutkan tiga hal, dan ketiganya menentukan apakah baris itu
  * masih bisa diketuk:
@@ -42,6 +55,34 @@ interface Baris extends PaketTopik {
   /** Yang diteruskan ke aksi pembuka — nomor paket, atau id paket. */
   kunci: string
   judul: string
+  /** Level Bloom paket latihan; null untuk ujian dan untuk jalur grup. */
+  levelBloom: number | null
+  /**
+   * Kapan paket yang terkunci terbuka sendiri (ISO), atau null.
+   *
+   * Hanya jalur peta yang punya ini. Latihan bebas mengunci permanen — kolam
+   * dan aturannya lain — jadi barisnya memang tidak membawa apa-apa di sini,
+   * dan layarnya jatuh ke kalimat lama.
+   */
+  bukaPada?: string | null
+}
+
+/**
+ * "besok pukul 09.56" — kapan paket yang terkunci bisa dicoba lagi.
+ *
+ * Memakai `labelSesiWib` supaya sebutan harinya sama persis dengan yang dipakai
+ * jadwal sesi di beranda keluarga: satu produk tidak boleh menyebut hari esok
+ * dengan dua cara.
+ */
+function kapanTerbuka(iso: string, hariIniWib: string): string {
+  const l = labelSesiWib(iso, hariIniWib)
+  // "besok pukul 16.56" — tapi "Jumat, 4 September pukul 16.56". Sebutan
+  // relatif jatuh di tengah kalimat jadi huruf kecil; nama hari dan bulan tidak
+  // pernah. `labelSesiWib` memulangkan tanggal penuh di `hari` begitu jaraknya
+  // lebih dari lusa — keadaan yang muncul kalau `jeda_buka_paket_jam` disetel
+  // lebih panjang daripada 24.
+  const hari = l.hari === l.tanggal ? l.hari : l.hari.toLowerCase()
+  return `${hari} pukul ${l.jam}`
 }
 
 /** Satu paket peta jadi baris layar. Dipakai dua kali: dari server, dan dari browser. */
@@ -59,6 +100,8 @@ function dariPeta(p: PaketPeta): Baris {
     terkunci: p.terkunci,
     kunci: p.paketId,
     judul: namaPaket(p),
+    levelBloom: p.levelBloom,
+    bukaPada: p.bukaPada,
   }
 }
 
@@ -67,6 +110,7 @@ export default function DaftarPaket({
   sumber,
   jumlahSoal,
   awal,
+  hariIniWib,
 }: {
   anak: string | undefined
   sumber: Sumber
@@ -83,6 +127,12 @@ export default function DaftarPaket({
    * di situ jeda memang wajar: orangnya baru saja meminta.
    */
   awal?: PaketPeta[]
+  /**
+   * Hari ini dalam WIB (`YYYY-MM-DD`), dari server. Opsional karena jalur grup
+   * tidak memakainya: latihan bebas mengunci permanen, jadi tidak ada waktu
+   * terbuka yang perlu disebut.
+   */
+  hariIniWib?: string
 }) {
   const [paket, setPaket] = useState<Baris[] | null>(awal ? awal.map(dariPeta) : null)
   const [galat, setGalat] = useState<string | null>(null)
@@ -97,7 +147,14 @@ export default function DaftarPaket({
     const muat: Promise<Baris[]> =
       sumber.jenis === 'grup'
         ? muatPaket(anak, sumber.groupId).then(d =>
-            d.map(p => ({ ...p, kunci: String(p.nomor), judul: `Paket ${p.nomor}` }))
+            // `levelBloom: null` untuk jalur grup: bab kurikulum tidak punya
+            // level Bloom.
+            d.map(p => ({
+              ...p,
+              kunci: String(p.nomor),
+              judul: `Paket ${p.nomor}`,
+              levelBloom: null,
+            }))
           )
         : muatPaketPeta(anak, sumber.topikId).then(d => d.map(dariPeta))
 
@@ -176,7 +233,14 @@ export default function DaftarPaket({
               </span>
               {p.terkunci && (
                 <span className="mt-0.5 block text-xs text-gray-400">
-                  Terkunci — kuncinya sudah dibuka
+                  {/* Kapan ia terbuka lagi disebutkan kalau memang ada
+                      waktunya. Baris mati tanpa satu kata pun tentang kapan ia
+                      hidup kembali adalah yang membuat anak mengira topiknya
+                      habis — padahal paket latihan membuka sendiri sesudah
+                      jeda, dan yang perlu ia lakukan cuma kembali besok. */}
+                  {p.bukaPada && hariIniWib
+                    ? `Terkunci — bisa dicoba lagi ${kapanTerbuka(p.bukaPada, hariIniWib)}`
+                    : 'Terkunci — kuncinya sudah dibuka'}
                 </span>
               )}
               {tuntas && !p.terkunci && (

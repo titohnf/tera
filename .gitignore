@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# skrip periksa sekali pakai (scripts/.cek*.mjs dan sejenisnya)
+scripts/.*.mjs
