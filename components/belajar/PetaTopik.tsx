@@ -382,6 +382,17 @@ function Langkah({ langkah }: { langkah?: LangkahTopik }) {
     )
   }
 
+  // "Ulangi", bukan "Lanjut", untuk paket yang sudah pernah ditutup anak.
+  // Langkah yang menunjuk paket yang baru saja ia kerjakan berarti paket itu
+  // belum lolos ambang — dan layar yang tetap berkata "Lanjut: Paket C1" pada
+  // anak yang baru menutup Paket C1 terbaca seperti aplikasi yang tidak
+  // mengikuti apa yang barusan terjadi.
+  if (langkah.pernahDikerjakan) {
+    return (
+      <span className="mt-1 block text-xs font-medium text-amber-700">Ulangi: {nama}</span>
+    )
+  }
+
   return (
     <span className="mt-1 block text-xs font-medium text-blue-600">
       {langkah.sudahMulai ? `Lanjut: ${nama}` : `Mulai dari ${nama}`}

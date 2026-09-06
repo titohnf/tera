@@ -26,6 +26,13 @@ export interface LangkahTopik {
   sudahMulai: boolean
   terkunci: boolean
   bukaPada: string | null
+  /**
+   * Paket langkahnya sendiri sudah pernah dikerjakan sampai selesai (191).
+   *
+   * Inilah yang membedakan "lanjut" dari "ulangi": langkah yang menunjuk paket
+   * yang baru saja ditutup anak berarti paketnya belum lolos ambang.
+   */
+  pernahDikerjakan: boolean
 }
 
 interface BarisLangkah {
@@ -36,6 +43,7 @@ interface BarisLangkah {
   sudah_mulai: boolean | null
   terkunci: boolean | null
   buka_pada: string | null
+  pernah_dikerjakan: boolean | null
 }
 
 function dariBaris(b: BarisLangkah): LangkahTopik {
@@ -47,6 +55,7 @@ function dariBaris(b: BarisLangkah): LangkahTopik {
     sudahMulai: Boolean(b.sudah_mulai),
     terkunci: Boolean(b.terkunci),
     bukaPada: b.buka_pada ?? null,
+    pernahDikerjakan: Boolean(b.pernah_dikerjakan),
   }
 }
 

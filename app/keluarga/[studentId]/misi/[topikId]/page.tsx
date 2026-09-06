@@ -79,6 +79,21 @@ export default async function TopikMisiPage({
       })
     : null
 
+  // Paket langkahnya, kalau ada — dipakai mengenali satu keadaan buntu yang
+  // tidak punya tombol: paket yang seluruh soalnya sudah benar tapi Skor
+  // Putaran 1-nya tetap di bawah ambang. Ia tidak bisa dibuka lagi (tidak ada
+  // soal yang tersisa untuk dikerjakan), sementara langkahnya tetap menunjuk ke
+  // sana. Satu-satunya jalan keluarnya memulai siklus baru lewat kunci jawaban
+  // (183) — dan jalan itu harus DIKATAKAN, bukan dibiarkan dicari sendiri.
+  const paketLangkah = langkah?.paketId
+    ? (paket.find(p => p.paketId === langkah.paketId) ?? null)
+    : null
+  const buntu =
+    paketLangkah != null &&
+    !paketLangkah.terkunci &&
+    paketLangkah.total > 0 &&
+    paketLangkah.benar >= paketLangkah.total
+
   const bukaPada = langkah?.bukaPada
     ? (() => {
         const l = labelSesiWib(langkah.bukaPada!, todayWib())
@@ -128,12 +143,23 @@ export default async function TopikMisiPage({
 
       {/* Langkah berikutnya, dan tidak ada yang lain di kartu ini. Ini
           satu-satunya pertanyaan yang membawa anak ke halaman ini. */}
-      {namaLangkah && langkah && !langkah.terkunci && (
+      {namaLangkah && langkah && !langkah.terkunci && !buntu && (
         <div className="rounded-xl bg-white p-5 shadow-kartu">
           <p className="text-xs text-gray-400">Berikutnya</p>
           <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
             {namaLangkah}
           </p>
+          {langkah.pernahDikerjakan && langkah.jenis !== 'ujian' && (
+            // KESIMPULAN, BUKAN ANGKA. Yang membuat paket ini muncul lagi
+            // adalah Skor Putaran 1 yang belum melewati ambang — angka yang
+            // FR3 larang ditampilkan ke murid. Yang disampaikan cuma apa yang
+            // perlu ia lakukan, dan kalimatnya tidak menyebut kegagalan:
+            // corrective loop adalah inti mastery learning, bukan hukumannya.
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">
+              Paket ini belum tuntas. Kerjakan sekali lagi ya — kali ini kamu
+              sudah tahu bentuk soalnya.
+            </p>
+          )}
           {langkah.jenis === 'ujian' && (
             // Ujian disebutkan APA ADANYA sebelum dibuka, dan ini
             // satu-satunya tempat yang bisa menyebutkannya: sekali ditekan,
@@ -152,9 +178,11 @@ export default async function TopikMisiPage({
               label={
                 langkah.jenis === 'ujian'
                   ? 'Mulai Ujian Topik'
-                  : langkah.sudahMulai
-                    ? `Lanjut — ${namaLangkah}`
-                    : `Mulai — ${namaLangkah}`
+                  : langkah.pernahDikerjakan
+                    ? `Ulangi — ${namaLangkah}`
+                    : langkah.sudahMulai
+                      ? `Lanjut — ${namaLangkah}`
+                      : `Mulai — ${namaLangkah}`
               }
             />
           </div>
@@ -175,6 +203,26 @@ export default async function TopikMisiPage({
               ? `Kunci jawabannya sudah dibuka, jadi paket ini bisa dikerjakan lagi ${bukaPada}.`
               : 'Kunci jawabannya sudah dibuka, jadi paket ini tidak dikerjakan lagi.'}{' '}
             Sementara itu kamu boleh mengambil paket lain di bawah.
+          </p>
+        </div>
+      )}
+
+      {/* Buntu: benar semua, tapi penilaiannya diambil dari percobaan pertama.
+          Kalimatnya menyebutkan jalan keluarnya dengan lengkap — termasuk
+          harganya — karena jalan keluar yang tidak disebutkan sama saja dengan
+          tidak ada. */}
+      {buntu && namaLangkah && (
+        <div className="rounded-xl bg-white p-5 shadow-kartu">
+          <p className="text-xs text-gray-400">Berikutnya</p>
+          <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
+            {namaLangkah}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-gray-500">
+            Semua soalnya sudah kamu jawab benar, tapi ketuntasan dihitung dari
+            percobaan pertama — jadi paket ini belum terhitung tuntas. Kalau kamu
+            mau dinilai ulang dari awal, buka kunci jawabannya di daftar bawah;
+            paketnya akan terbuka lagi sesudah beberapa waktu, dengan hitungan
+            yang benar-benar baru.
           </p>
         </div>
       )}
