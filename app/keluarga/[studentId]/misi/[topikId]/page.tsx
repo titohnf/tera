@@ -79,21 +79,6 @@ export default async function TopikMisiPage({
       })
     : null
 
-  // Paket langkahnya, kalau ada — dipakai mengenali satu keadaan buntu yang
-  // tidak punya tombol: paket yang seluruh soalnya sudah benar tapi Skor
-  // Putaran 1-nya tetap di bawah ambang. Ia tidak bisa dibuka lagi (tidak ada
-  // soal yang tersisa untuk dikerjakan), sementara langkahnya tetap menunjuk ke
-  // sana. Satu-satunya jalan keluarnya memulai siklus baru lewat kunci jawaban
-  // (183) — dan jalan itu harus DIKATAKAN, bukan dibiarkan dicari sendiri.
-  const paketLangkah = langkah?.paketId
-    ? (paket.find(p => p.paketId === langkah.paketId) ?? null)
-    : null
-  const buntu =
-    paketLangkah != null &&
-    !paketLangkah.terkunci &&
-    paketLangkah.total > 0 &&
-    paketLangkah.benar >= paketLangkah.total
-
   const bukaPada = langkah?.bukaPada
     ? (() => {
         const l = labelSesiWib(langkah.bukaPada!, todayWib())
@@ -143,7 +128,7 @@ export default async function TopikMisiPage({
 
       {/* Langkah berikutnya, dan tidak ada yang lain di kartu ini. Ini
           satu-satunya pertanyaan yang membawa anak ke halaman ini. */}
-      {namaLangkah && langkah && !langkah.terkunci && !buntu && (
+      {namaLangkah && langkah && !langkah.terkunci && (
         <div className="rounded-xl bg-white p-5 shadow-kartu">
           <p className="text-xs text-gray-400">Berikutnya</p>
           <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
@@ -156,8 +141,9 @@ export default async function TopikMisiPage({
             // perlu ia lakukan, dan kalimatnya tidak menyebut kegagalan:
             // corrective loop adalah inti mastery learning, bukan hukumannya.
             <p className="mt-1 text-sm leading-relaxed text-gray-500">
-              Paket ini belum tuntas. Kerjakan sekali lagi ya — kali ini kamu
-              sudah tahu bentuk soalnya.
+              Nilainya belum sampai batas tuntas. Perbaiki soal yang masih salah
+              — yang dihitung nilai terakhirmu, jadi memperbaikinya benar-benar
+              terhitung.
             </p>
           )}
           {langkah.jenis === 'ujian' && (
@@ -207,26 +193,10 @@ export default async function TopikMisiPage({
         </div>
       )}
 
-      {/* Buntu: benar semua, tapi penilaiannya diambil dari percobaan pertama.
-          Kalimatnya menyebutkan jalan keluarnya dengan lengkap — termasuk
-          harganya — karena jalan keluar yang tidak disebutkan sama saja dengan
-          tidak ada. */}
-      {buntu && namaLangkah && (
-        <div className="rounded-xl bg-white p-5 shadow-kartu">
-          <p className="text-xs text-gray-400">Berikutnya</p>
-          <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
-            {namaLangkah}
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-gray-500">
-            Semua soalnya sudah kamu jawab benar, tapi ketuntasan dihitung dari
-            percobaan pertama — jadi paket ini belum terhitung tuntas. Kalau kamu
-            mau dinilai ulang dari awal, buka kunci jawabannya di daftar bawah;
-            paketnya akan terbuka lagi sesudah beberapa waktu, dengan hitungan
-            yang benar-benar baru.
-          </p>
-        </div>
-      )}
-
+      {/* Keadaan "benar semua tapi belum tuntas" sudah TIDAK ADA sejak 192.
+          Ketuntasan memakai nilai akhir, jadi paket yang seluruh soalnya benar
+          otomatis lolos dan langkahnya pindah sendiri. Kartu penjelasannya
+          ikut dihapus bersama keadaan yang dijelaskannya. */}
       {!namaLangkah && (
         <div className="rounded-xl bg-emerald-50 p-5">
           <p className="text-sm font-semibold text-emerald-900">Topik ini sudah selesai</p>
