@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react'
 import type { PaketPeta, TopikPeta } from '@/lib/belajar/topik-peta'
 import { kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
+import { namaTema } from '@/lib/belajar/tema-topik'
 import DaftarPaket from './DaftarPaket'
+import IkonTema from './IkonTema'
 
 /**
  * Peta kompetensi: topik yang boleh dikerjakan anak ini, berurut menurut
@@ -237,6 +239,12 @@ function Baris({
         aria-expanded={aktif}
         className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-slate-50"
       >
+        {/* Ikon temanya, dan bukan ikon mapel: seluruh topik di peta ini
+            Matematika, jadi ikon mapel akan menggambar sembilan belas lingkaran
+            indigo yang sama persis — deretan yang tidak membedakan apa pun
+            justru membuat baris lebih sulit dipindai daripada tanpa ikon sama
+            sekali. Temanya yang berbeda, jadi temanya yang digambar. */}
+        <IkonTema elemen={t.elemen} />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {/* KODENYA IKUT TAMPIL. Keterangan prasyarat di bawah menyebut
@@ -249,7 +257,12 @@ function Baris({
             <span className="min-w-0 text-sm font-semibold text-gray-900">{t.nama}</span>
             <LabelStatus status={t.status} />
           </span>
-          <span className="mt-0.5 block text-xs text-gray-400">{t.jumlahPaket} paket</span>
+          {/* Tema mendahului jumlah paket: yang pertama menjawab "ini tentang
+              apa", yang kedua "seberapa panjang". Anak yang membuka peta
+              mencari yang pertama. */}
+          <span className="mt-0.5 block text-xs text-gray-400">
+            {namaTema(t.elemen)} · {t.jumlahPaket} paket
+          </span>
           {!t.prasyaratTerpenuhi && t.status !== 'tuntas' && (
             // Kalimatnya sengaja tidak melarang. Yang disampaikan sebuah saran
             // urutan, bukan pintu yang tertutup.
