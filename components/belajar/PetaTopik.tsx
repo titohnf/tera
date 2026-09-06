@@ -1,10 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import type { PaketPeta, TopikPeta } from '@/lib/belajar/topik-peta'
+import { useMemo, useState, useTransition } from 'react'
+import Link from 'next/link'
+import type { TopikPeta } from '@/lib/belajar/topik-peta'
+import type { LangkahTopik } from '@/lib/belajar/langkah'
 import { kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
+import { namaPaket } from '@/lib/belajar/nama-paket'
 import { namaTema } from '@/lib/belajar/tema-topik'
-import DaftarPaket from './DaftarPaket'
+import { mulaiLangkahTopik } from '@/app/belajar/actions'
 import IkonTema from './IkonTema'
 
 /**
@@ -26,6 +29,19 @@ import IkonTema from './IkonTema'
  * beserta alasan mengapa "satu topik pada satu waktu" tidak bisa dibangun di
  * atas graf prasyarat ini.
  *
+ * SATU ALUR, BUKAN PRASMANAN. Sampai sebelum migrasi 190, mengetuk sebuah topik
+ * membentangkan daftar paketnya — C1 sampai C6 plus ujian — dan anak memilih
+ * sendiri. Daftar itu jujur tapi tidak menjawab pertanyaan yang membawanya ke
+ * sini, dan ongkos memilihnya dibayar ulang setiap kunjungan untuk jawaban yang
+ * hampir selalu sama. Sekarang barisnya langsung membuka langkah berikutnya:
+ * kunjungan pertama masuk ke soal tanpa perantara, kunjungan berikutnya mampir
+ * di halaman topik yang menyebutkan paket mana yang akan dikerjakan.
+ *
+ * DAFTAR PAKETNYA TIDAK HILANG, ia pindah ke halaman topik — satu tempat, bukan
+ * dua. Selama daftar yang sama hidup di dua layar, keduanya harus diingat
+ * bersamaan setiap kali aturan paket berubah, dan yang terlupa selalu yang
+ * jarang dibuka.
+ *
  * DAFTARNYA DATANG DARI SERVER, bukan dijemput sendiri sesudah komponennya
  * hidup. Versi pertama memanggil `muatPeta()` di dalam `useEffect`, dan itu
  * punya dua akibat yang cuma kelihatan setelah dipakai: petanya baru muncul
@@ -35,8 +51,8 @@ import IkonTema from './IkonTema'
  * menghasilkan tampilan yang sama persis: tidak ada apa-apa.
  *
  * Halaman Misi sudah tahu atas nama siapa ia dibuka, jadi ia pula yang
- * bertanya. Yang tersisa di browser cuma yang memang milik browser: topik mana
- * yang sedang dibentangkan, dan kelompok mana yang sedang dibuka.
+ * bertanya. Yang tersisa di browser cuma yang memang milik browser: kelompok
+ * mana yang sedang dibuka.
  *
  * PRASYARAT MEMBERI TAHU, BUKAN MEMBLOKIR. Topik yang prasyaratnya belum
  * tuntas tetap bisa diketuk, cuma disertai keterangan — sekarang dari balik
@@ -49,22 +65,16 @@ import IkonTema from './IkonTema'
 export default function PetaTopik({
   anak,
   topik,
-  paketAwal,
-  hariIniWib,
+  langkah,
 }: {
   anak: string | undefined
   topik: TopikPeta[]
-  /** Paket topik yang terbentang sejak awal, dibawa server bersama halamannya. */
-  paketAwal?: PaketPeta[]
   /**
-   * Hari ini dalam WIB (`YYYY-MM-DD`), dari server.
-   *
-   * Diberikan, bukan dibaca sendiri di browser: "besok pukul 09.56" dirender
-   * dua kali — sekali di server, sekali saat hidrasi — dan jam yang dibaca
-   * masing-masing akan berbeda. Pola yang sama dengan `labelSesiWib`, yang juga
-   * menolak membaca jamnya sendiri.
+   * Langkah berikutnya tiap topik (migrasi 190), dibawa server bersama
+   * halamannya. Topik yang tidak punya barisnya di sini tetap digambar — tanpa
+   * indikator, dan ketukannya jatuh ke halaman topik seperti biasa.
    */
-  hariIniWib: string
+  langkah: LangkahTopik[]
 }) {
   const { siap, belum, tuntas } = useMemo(() => kelompokkanPeta(topik), [topik])
 
@@ -72,18 +82,8 @@ export default function PetaTopik({
   // bukan cuma yang terlipat: prasyarat sebuah topik di `belum` bisa saja topik
   // yang sedang berdiri di `siap`.
   const namaTopik = useMemo(() => new Map(topik.map(t => [t.id, t.nama])), [topik])
+  const perTopik = useMemo(() => new Map(langkah.map(l => [l.topikId, l])), [langkah])
 
-  // Satu topik saja: tidak ada yang perlu dipilih, jadi jangan menyuruh orang
-  // mengetuk untuk membuka satu-satunya pintu yang ada.
-  //
-  // SATU-SATUNYA yang dibentangkan otomatis, dan frontier yang berisi lima
-  // topik SENGAJA dibiarkan tertutup semua. Membentangkan yang teratas akan
-  // mendorong empat sisanya ke bawah layar, dan dengan itu layar ini berubah
-  // jadi versi satu-kartu — tepat bentuk yang graf prasyaratnya tidak
-  // membenarkan.
-  const [terbuka, setTerbuka] = useState<string | null>(
-    topik.length === 1 ? topik[0].id : null
-  )
   const [lihatBelum, setLihatBelum] = useState(false)
   const [lihatTuntas, setLihatTuntas] = useState(false)
 
@@ -97,11 +97,8 @@ export default function PetaTopik({
       key={t.id}
       topik={t}
       anak={anak}
-      aktif={terbuka === t.id}
-      onKetuk={() => setTerbuka(terbuka === t.id ? null : t.id)}
+      langkah={perTopik.get(t.id)}
       namaTopik={namaTopik}
-      awal={topik.length === 1 ? paketAwal : undefined}
-      hariIniWib={hariIniWib}
     />
   )
 
@@ -213,32 +210,43 @@ function Lipatan({
   )
 }
 
-/** Satu baris topik, beserta paketnya kalau sedang dibentangkan. */
+/**
+ * Satu baris topik, dan pintunya ke langkah berikutnya.
+ *
+ * DUA PERILAKU, SATU BARIS. Kunjungan pertama sebuah topik langsung membuka
+ * sesi paket pertamanya; kunjungan berikutnya mendarat di halaman topik. Yang
+ * membedakan bukan selera melainkan apa yang ada untuk dibaca: anak yang belum
+ * pernah menyentuh topiknya tidak punya kemajuan untuk dilihat, dan halaman
+ * yang cuma berkata "kamu akan mengerjakan Paket C1" adalah ketukan tambahan
+ * yang tidak membayar dirinya sendiri. Yang sudah berjalan justru sebaliknya —
+ * ia perlu tahu ia sampai di mana sebelum soal berikutnya muncul.
+ *
+ * Ketukan pertama itu MENULIS (sesi baru lahir), jadi ia tombol, bukan tautan.
+ * Sisanya membaca, jadi tautan — dan tautan yang benar-benar tautan bisa
+ * dibuka di tab baru, ditekan lama, dan dibaca pembaca layar sebagai tujuan.
+ */
 function Baris({
   topik: t,
   anak,
-  aktif,
-  onKetuk,
+  langkah,
   namaTopik,
-  awal,
-  hariIniWib,
 }: {
   topik: TopikPeta
   anak: string | undefined
-  aktif: boolean
-  onKetuk: () => void
+  langkah?: LangkahTopik
   namaTopik: Map<string, string>
-  awal?: PaketPeta[]
-  hariIniWib: string
 }) {
-  return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-kartu">
-      <button
-        type="button"
-        onClick={onKetuk}
-        aria-expanded={aktif}
-        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-slate-50"
-      >
+  const [galat, setGalat] = useState<string | null>(null)
+  const [sibuk, mulai] = useTransition()
+
+  // Kunjungan pertama: tidak ada sesi selesai satu pun di topik ini, dan
+  // langkahnya masih ada. Keduanya harus benar — topik yang paketnya sudah
+  // habis tidak punya apa pun untuk dibuka.
+  const langsung = langkah != null && !langkah.sudahMulai && langkah.paketId != null
+  const alamat = anak ? `/keluarga/${anak}/misi/${t.id}` : null
+
+  const isi = (
+    <>
         {/* Ikon temanya, dan bukan ikon mapel: seluruh topik di peta ini
             Matematika, jadi ikon mapel akan menggambar sembilan belas lingkaran
             indigo yang sama persis — deretan yang tidak membedakan apa pun
@@ -291,24 +299,93 @@ function Baris({
               Dicek ulang sekitar {tanggalPendek(t.retestBerikutnya)}
             </span>
           )}
+          {/* Langkahnya paling bawah, sesudah seluruh keterangan lain: ia yang
+              menjelaskan apa yang akan terjadi kalau baris ini diketuk, dan
+              kalimat tentang akibat pantas berdiri paling dekat dengan
+              ketukannya. */}
+          <Langkah langkah={langkah} />
         </span>
-        <span className="shrink-0 text-gray-300" aria-hidden>
-          {aktif ? '▾' : '▸'}
-        </span>
-      </button>
+      <span className="shrink-0 text-gray-300" aria-hidden>
+        ›
+      </span>
+    </>
+  )
 
-      {aktif && (
-        <div className="border-t border-slate-100 bg-slate-50/60 p-3">
-          <DaftarPaket
-            anak={anak}
-            sumber={{ jenis: 'peta', topikId: t.id }}
-            jumlahSoal={t.jumlahPaket * 8}
-            awal={awal}
-            hariIniWib={hariIniWib}
-          />
-        </div>
+  const gaya =
+    'flex w-full items-center gap-3 rounded-xl bg-white p-4 text-left shadow-kartu transition hover:bg-slate-50'
+
+  return (
+    <div className="space-y-1.5">
+      {galat && (
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-100">
+          {galat}
+        </p>
+      )}
+
+      {langsung || !alamat ? (
+        <button
+          type="button"
+          disabled={sibuk}
+          onClick={() => {
+            setGalat(null)
+            mulai(async () => {
+              const hasil = await mulaiLangkahTopik(anak, t.id)
+              if (hasil && 'error' in hasil) setGalat(hasil.error)
+            })
+          }}
+          className={`${gaya} disabled:opacity-60`}
+        >
+          {isi}
+        </button>
+      ) : (
+        <Link href={alamat} className={gaya}>
+          {isi}
+        </Link>
       )}
     </div>
+  )
+}
+
+/**
+ * Satu kalimat: sekarang paket mana.
+ *
+ * MENYEBUT PAKETNYA, bukan cuma "lanjutkan". Anak yang membaca "Paket C2 —
+ * Memahami" tahu apa yang akan ia hadapi sebelum mengetuk, dan itu yang
+ * membedakan alur dari kotak kejutan. Nama paketnya dirakit `namaPaket`, sama
+ * persis dengan yang tertulis di daftar paket — dua sebutan berbeda untuk paket
+ * yang sama adalah cara tercepat membuat anak mengira ia salah tempat.
+ */
+function Langkah({ langkah }: { langkah?: LangkahTopik }) {
+  if (!langkah) return null
+
+  if (!langkah.paketId) {
+    return (
+      <span className="mt-1 block text-xs font-medium text-emerald-600">
+        Semua paketnya sudah selesai
+      </span>
+    )
+  }
+
+  const nama = namaPaket({
+    jenis: langkah.jenis === 'ujian' ? 'ujian' : 'latihan',
+    levelBloom: langkah.levelBloom,
+    nomor: langkah.levelBloom ?? 1,
+  })
+
+  // Terkunci bukan berarti buntu: paket latihan membuka sendiri sesudah
+  // jedanya, dan kapan persisnya disebutkan halaman topik — layar yang punya
+  // ruang untuk menyebutkan jam. Di sini cukup diketahui bahwa yang berikutnya
+  // sedang menunggu, supaya anak tidak mengetuk lalu mendapat penolakan.
+  if (langkah.terkunci) {
+    return (
+      <span className="mt-1 block text-xs text-gray-400">{nama} sedang terkunci</span>
+    )
+  }
+
+  return (
+    <span className="mt-1 block text-xs font-medium text-blue-600">
+      {langkah.sudahMulai ? `Lanjut: ${nama}` : `Mulai dari ${nama}`}
+    </span>
   )
 }
 

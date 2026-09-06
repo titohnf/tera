@@ -1,11 +1,11 @@
 import { belajarContext } from '@/lib/belajar/konteks'
-import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
+import { petaTopik } from '@/lib/belajar/topik-peta'
+import { langkahSeluruhTopik } from '@/lib/belajar/langkah'
 import PetaTopik from '@/components/belajar/PetaTopik'
 import KartuRetest from '@/components/belajar/KartuRetest'
 import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
 import { catatKunjungan, sapaanKunjungan } from '@/lib/belajar/kunjungan'
-import { todayWib } from '@/lib/daily-message'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -22,8 +22,10 @@ import { todayWib } from '@/lib/daily-message'
  * butir ber-`topik_id` tidak boleh punya tag kurikulum sama sekali. Keduanya
  * berdampingan permanen; jangan satukan.
  *
- * Jalur datanya: `petaTopik()` dari server, lalu keadaan paket yang terbentang
- * dijemput sendiri oleh `DaftarPaket` lewat `muatPaketPeta`.
+ * Jalur datanya: `petaTopik()` dan `langkahSeluruhTopik()` dari server. Daftar
+ * paketnya TIDAK lagi ada di sini — sejak migrasi 190 ia tinggal di halaman
+ * topik (`misi/[topikId]`), dan barisnya di sini cuma pintu menuju langkah
+ * berikutnya.
  *
  * MEMBUAT BARIS `learners`, dan itu disengaja. `belajarContext()` memanggil
  * `practice_start_as_child`, yang melahirkan baris `learners` kalau belum ada
@@ -53,15 +55,11 @@ export default async function PaketTopikPage({
   const hariSejakKunjungan = await catatKunjungan(learnerId)
   const sapaan = sapaanKunjungan(hariSejakKunjungan)
 
-  const [peta, retest] = await Promise.all([
+  const [peta, retest, langkah] = await Promise.all([
     petaTopik(learnerId),
     retestJatuhTempo(learnerId),
+    langkahSeluruhTopik(learnerId),
   ])
-
-  // Satu topik saja berarti ia terbentang sejak halaman dibuka, jadi isinya
-  // ikut dibawa sekarang — aturan yang sama dengan `/belajar`.
-  const paketAwal =
-    peta.length === 1 ? await keadaanPaketTopik(learnerId, peta[0].id) : undefined
 
   return (
     <div className="space-y-4">
@@ -74,12 +72,7 @@ export default async function PaketTopikPage({
           disambut, bukan langsung disodori daftar yang harus dipilih. */}
       {sapaan && <SapaanKunjungan sapaan={sapaan} anak={studentId} />}
       <KartuRetest retest={retest} anak={studentId} />
-      <PetaTopik
-        anak={studentId}
-        topik={peta}
-        paketAwal={paketAwal}
-        hariIniWib={todayWib()}
-      />
+      <PetaTopik anak={studentId} topik={peta} langkah={langkah} />
     </div>
   )
 }

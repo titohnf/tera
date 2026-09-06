@@ -85,6 +85,9 @@ const LAYAR: Record<string, Layar> = {
  * tab yang ia tinggalkan.
  */
 const LAYAR_RINCI: Record<string, { judul: string; kembali: (kunci: string) => string }> = {
+  // `/misi/<kode topik>` — halaman satu topik, tempat alurnya menyebutkan paket
+  // berikutnya (migrasi 190). Panah kembalinya selalu ke peta, apa pun kodenya.
+  misi: { judul: 'Topik', kembali: () => '/misi' },
   penguasaan: {
     judul: 'Rincian Topik',
     kembali: kunci => (adalahKodeTopik(kunci) ? '/ketuntasan' : '/penguasaan'),

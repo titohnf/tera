@@ -27,6 +27,7 @@ import {
   paketTopikSesi,
   type PaketPeta,
 } from '@/lib/belajar/topik-peta'
+import { langkahTopik } from '@/lib/belajar/langkah'
 
 /**
  * Aksi permukaan belajar — tipis dengan sengaja.
@@ -252,6 +253,41 @@ export async function mulaiPaketPeta(
     return {
       error:
         'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, kuncinya sudah dibuka, atau ujiannya sudah pernah dikerjakan.',
+    }
+  }
+  redirect(`/belajar/${sesiId}`)
+}
+
+/**
+ * Membuka paket berikutnya sebuah topik — pintu alur Misi (190).
+ *
+ * Yang datang dari browser cuma id topiknya; paket mana yang berikutnya
+ * diputuskan database, bukan layar yang mengetuk. Bedanya dengan
+ * `mulaiPaketPeta` bukan kenyamanan melainkan siapa yang memilih: kalau layar
+ * yang mengirim id paket, maka layar yang usang — tab yang dibiarkan terbuka
+ * semalaman — akan membuka paket yang tadi pagi sudah dituntaskan anaknya.
+ */
+export async function mulaiLangkahTopik(
+  anak: string | undefined,
+  topikId: string
+): Promise<{ error: string } | never> {
+  const { learnerId } = await belajarContext(anak)
+  const langkah = await langkahTopik(learnerId, topikId)
+
+  if (!langkah) {
+    return { error: 'Topik ini tidak ada di peta kompetensi, atau belum aktif.' }
+  }
+  if (!langkah.paketId) {
+    return {
+      error: 'Semua paket topik ini sudah selesai — tidak ada lagi yang perlu dikerjakan.',
+    }
+  }
+
+  const { sesiId, galat } = await bukaPaketTopik(learnerId, langkah.paketId)
+  if (galat) return { error: galat }
+  if (!sesiId) {
+    return {
+      error: 'Paketnya belum bisa dibuka sekarang. Coba lihat daftar paketnya ya.',
     }
   }
   redirect(`/belajar/${sesiId}`)

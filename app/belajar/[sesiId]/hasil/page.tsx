@@ -28,6 +28,7 @@ import NudgeBeban from '@/components/belajar/NudgeBeban'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 import { hasilSoal, KeteranganJawaban, NomorJawaban } from '@/components/belajar/BilahJawaban'
 import PilihanSesudahSkor from '@/components/belajar/PilihanSesudahSkor'
+import { langkahTopik } from '@/lib/belajar/langkah'
 
 /**
  * Hasil satu sesi, dirinci per topik.
@@ -253,9 +254,51 @@ export default async function HasilSesi({
         ? `/belajar?topik=${paket.groupId}`
         : petaPaket
           ? pemilik.profileId
-            ? `/keluarga/${pemilik.profileId}/misi`
+            // Ke HALAMAN TOPIKNYA, bukan ke peta: sejak 190 daftar paket
+            // tinggal di sana, dan tombol bernama "Pilih Paket Lain" yang
+            // mendaratkan anak di daftar topik memaksanya mencari lagi topik
+            // yang baru saja ia tinggalkan.
+            ? `/keluarga/${pemilik.profileId}/misi/${petaPaket.topikId}`
             : kembali
           : null
+
+  // Langkah berikutnya topik ini, kalau sesi tadi memang paket peta.
+  //
+  // DITANYAKAN KE DATABASE, tidak disimpulkan dari layar. Yang menentukan boleh
+  // tidaknya melangkah adalah Skor Putaran 1 melewati ambang — angka yang FR3
+  // larang ditampilkan ke murid "dalam bentuk apa pun". Halaman ini tidak
+  // pernah melihat angkanya: ia cuma bertanya "berikutnya apa", dan jawaban
+  // yang menyebut paket yang sama berarti paket ini belum lolos. Kesimpulannya
+  // sampai, angkanya tidak.
+  const langkah = petaPaket ? await langkahTopik(pemilik.learnerId, petaPaket.topikId) : null
+  const bolehLanjut =
+    langkah != null &&
+    langkah.paketId != null &&
+    langkah.paketId !== petaPaket?.paketId &&
+    !langkah.terkunci
+  const lanjut =
+    bolehLanjut && langkah
+      ? {
+          topikId: langkah.topikId,
+          anak: pemilik.profileId ?? null,
+          label:
+            langkah.jenis === 'ujian'
+              ? 'Lanjut ke Ujian Topik'
+              : `Lanjut ke ${namaPaket({
+                  jenis: 'latihan',
+                  levelBloom: langkah.levelBloom,
+                  nomor: langkah.levelBloom ?? 1,
+                })}`,
+          // Ujian TIDAK dibuka langsung dari sini. Sampelnya lahir saat sesinya
+          // dibuka dan tidak ada putaran kedua (189), jadi ia harus lewat
+          // halaman topik yang menyebutkan itu lebih dulu — satu ketukan
+          // tambahan untuk sesuatu yang tidak bisa dibatalkan.
+          alamatTopik:
+            langkah.jenis === 'ujian' && pemilik.profileId
+              ? `/keluarga/${pemilik.profileId}/misi/${langkah.topikId}`
+              : null,
+        }
+      : null
 
   const pilihan = (
     <PilihanSesudahSkor
@@ -267,6 +310,7 @@ export default async function HasilSesi({
       kembali={kembali}
       materi={ulangi}
       probe={bukanPaket !== null}
+      lanjut={lanjut}
     />
   )
 

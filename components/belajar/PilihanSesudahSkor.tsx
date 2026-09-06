@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { bukaKunciJawaban, ulangiPaket } from '@/app/belajar/actions'
+import { bukaKunciJawaban, mulaiLangkahTopik, ulangiPaket } from '@/app/belajar/actions'
 
 /**
  * Jalan keluar sesudah satu putaran — dan di sinilah taruhan seluruh alurnya.
@@ -26,6 +26,7 @@ export default function PilihanSesudahSkor({
   kembali,
   materi,
   probe = false,
+  lanjut = null,
 }: {
   sesiId: string
   /** Soal paket ini yang masih salah. Nol berarti paketnya sudah benar semua. */
@@ -47,6 +48,23 @@ export default function PilihanSesudahSkor({
    * kuncinya pernah terlihat berhenti mengukur apa pun selamanya.
    */
   probe?: boolean
+  /**
+   * Langkah berikutnya topik ini (migrasi 190), atau null kalau tidak ada.
+   *
+   * NULL PUNYA DUA ARTI YANG SENGAJA TIDAK DIBEDAKAN di sini: sesi ini bukan
+   * paket peta, atau paket barusan belum lolos ambang sehingga langkahnya masih
+   * paket yang sama. Keduanya berujung pada layar yang sama — tanpa tombol
+   * lanjut — dan membedakannya berarti menyeberangkan kabar "nilaimu kurang"
+   * yang tidak diminta siapa pun. Yang kurang sudah punya kalimatnya sendiri:
+   * "Kerjakan Lagi N Soal yang Salah".
+   */
+  lanjut?: {
+    topikId: string
+    anak: string | null
+    label: string
+    /** Diisi untuk ujian: dilewatkan halaman topik dulu, tidak dibuka langsung. */
+    alamatTopik: string | null
+  } | null
 }) {
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
@@ -84,6 +102,30 @@ export default function PilihanSesudahSkor({
           Kerjakan Lagi {sisa} Soal yang Salah
         </button>
       )}
+
+      {/* Melangkah maju berdiri SESUDAH "kerjakan lagi" dan SEBELUM kunci
+          jawaban. Urutannya bukan selera: yang paling atas adalah yang paling
+          kita harapkan dilakukan anak, dan memperbaiki yang salah lebih
+          berharga daripada menambah paket baru. Tapi ia tetap di atas kunci
+          jawaban — melangkah maju selalu lebih baik daripada mengakhiri paket
+          ini dengan melihat kuncinya. */}
+      {lanjut &&
+        (lanjut.alamatTopik ? (
+          <Link href={lanjut.alamatTopik} className={bisaDiulang ? biasa : utama}>
+            {lanjut.label}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={sibuk}
+            onClick={() =>
+              jalankan(() => mulaiLangkahTopik(lanjut.anak ?? undefined, lanjut.topikId))
+            }
+            className={bisaDiulang ? biasa : utama}
+          >
+            {lanjut.label}
+          </button>
+        ))}
 
       {/* Harganya ditulis di tombolnya. Sebuah tombol bernama "Lihat Kunci
           Jawaban" yang diam-diam menghentikan paket adalah tombol yang
