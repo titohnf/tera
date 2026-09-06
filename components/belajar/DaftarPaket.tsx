@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { Fragment, useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
 import type { PaketPeta } from '@/lib/belajar/topik-peta'
 import { namaPaket } from '@/lib/belajar/nama-paket'
@@ -36,6 +36,13 @@ import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
  *   berapa benar    keadaan sekarang dari soal-soal paket itu — hanya bisa naik
  *   putaran         sudah berapa kali dikerjakan sampai tuntas
  *   terkunci        kuncinya sudah dibuka, jadi nilainya berhenti di situ
+ *
+ * DUA KELOMPOK SEJAK 189: wajib dan pengayaan. Cakupan Bloom tiap topik (182)
+ * sudah lama memutuskan bahwa hanya sebagian paket yang menentukan ketuntasan,
+ * tapi layar ini menampilkan semuanya sebagai baris sederajat — dan anak yang
+ * melihat enam baris menyimpulkan enam-enamnya diminta. Judul kelompoknya cuma
+ * muncul kalau memang ada dua kelompok; topik yang seluruh paketnya wajib tetap
+ * tampil sebagai satu daftar polos.
  *
  * Ditambah satu keadaan yang hanya dipunyai paket ujian sejak migrasi 189:
  * `menungguLatihan`, yang menutup pintunya sampai seluruh paket latihan dalam
@@ -78,6 +85,13 @@ interface Baris extends PaketTopik {
    * sekali. Undefined dibaca sebagai "tidak menunggu apa-apa".
    */
   menungguLatihan?: boolean
+  /**
+   * Paket latihan di luar cakupan Bloom topiknya (189).
+   *
+   * Hanya jalur peta yang punya ini; bab kurikulum tidak punya cakupan Bloom,
+   * jadi di sana tidak ada paket yang perlu dibedakan wajib atau bukan.
+   */
+  pengayaan?: boolean
 }
 
 /**
@@ -116,6 +130,7 @@ function dariPeta(p: PaketPeta): Baris {
     levelBloom: p.levelBloom,
     bukaPada: p.bukaPada,
     menungguLatihan: p.menungguLatihan,
+    pengayaan: p.pengayaan,
   }
 }
 
@@ -217,6 +232,10 @@ export default function DaftarPaket({
     )
   }
 
+  // Ada dua kelompok atau tidak sama sekali. Dihitung sekali di sini, bukan di
+  // dalam `map`, supaya baris pertama tahu ia perlu berjudul.
+  const adaPengayaan = paket.some(p => p.pengayaan)
+
   return (
     <div className="space-y-2">
       {galat && (
@@ -225,7 +244,7 @@ export default function DaftarPaket({
         </p>
       )}
 
-      {paket.map(p => {
+      {paket.map((p, i) => {
         const tuntas = p.benar >= p.total
         // Gerbang ujian (189). Satu-satunya keadaan di layar ini yang menutup
         // pintu karena sesuatu di paket LAIN, jadi ia disebutkan — baris mati
@@ -263,7 +282,7 @@ export default function DaftarPaket({
               )}
               {menunggu && (
                 <span className="mt-0.5 block text-xs text-gray-400">
-                  Terbuka setelah semua paket latihan tuntas
+                  Terbuka setelah semua paket wajib tuntas
                 </span>
               )}
               {tuntas && !p.terkunci && (
@@ -280,13 +299,12 @@ export default function DaftarPaket({
 
         const gaya = 'flex w-full items-center gap-3 rounded-xl bg-white p-4 text-left shadow-kartu'
 
-        return bisa ? (
+        const baris = bisa ? (
           <button
-            key={p.kunci}
             type="button"
             disabled={sibuk}
             onClick={() => buka(p.kunci)}
-            className={`${gaya} transition hover:bg-slate-50 disabled:opacity-60`}
+            className={`${gaya} w-full transition hover:bg-slate-50 disabled:opacity-60`}
           >
             {isi}
           </button>
@@ -294,9 +312,38 @@ export default function DaftarPaket({
           // Bukan tombol mati melainkan bukan tombol sama sekali: sasaran ketuk
           // yang tidak melakukan apa-apa membuat orang mengetuknya berkali-kali
           // untuk memastikan.
-          <div key={p.kunci} className={`${gaya} opacity-70`}>
-            {isi}
-          </div>
+          <div className={`${gaya} opacity-70`}>{isi}</div>
+        )
+
+        return (
+          <Fragment key={p.kunci}>
+            {/* Judul kelompok, dan hanya kalau memang ada dua kelompok. Topik
+                yang seluruh paketnya wajib tidak mendapat satu kata pun
+                tambahan: "Wajib" di atas daftar yang isinya wajib semua bukan
+                keterangan, cuma perabot. */}
+            {adaPengayaan && i === 0 && (
+              <div className="pt-1 pb-0.5">
+                <p className="text-xs font-semibold text-gray-600">Wajib</p>
+                <p className="text-xs leading-relaxed text-gray-400">
+                  Semua paket ini perlu tuntas sebelum ujian topiknya terbuka.
+                </p>
+              </div>
+            )}
+            {p.pengayaan && !paket[i - 1]?.pengayaan && (
+              <div className="pt-3 pb-0.5">
+                <p className="text-xs font-semibold text-gray-600">Pengayaan</p>
+                {/* Dua hal yang harus dikatakan sekaligus: ia tidak wajib, DAN
+                    tidak mengurangi apa pun kalau dilewati. Menyebut yang
+                    pertama saja membuat sebagian anak mengerjakannya karena
+                    khawatir, dan itu jenis kerja yang tidak pernah kita minta. */}
+                <p className="text-xs leading-relaxed text-gray-400">
+                  Tidak wajib dan tidak memengaruhi ketuntasan topik — untuk kamu
+                  yang mau melangkah lebih jauh.
+                </p>
+              </div>
+            )}
+            {baris}
+          </Fragment>
         )
       })}
     </div>

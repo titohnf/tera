@@ -49,6 +49,22 @@
 -- latihan-ujian (Fondasi 4.2) berarti — keduanya kini diukur pada anak yang
 -- sudah belajar, bukan pada anak yang kebetulan mengetuk duluan.
 --
+-- TIGA: PAKET PENGAYAAN DIBEDAKAN DARI PAKET WAJIB.
+-- Gerbang di atas menuntut "semua paket wajib tuntas", dan sebuah tuntutan yang
+-- tidak bisa dilihat batasnya adalah tuntutan yang tidak bisa dipenuhi dengan
+-- tenang: layar hari ini menampilkan C1 sampai C6 sebagai enam baris sederajat,
+-- padahal 182 sudah lama memutuskan hanya sebagian di antaranya yang menentukan
+-- ketuntasan. Anak yang melihat enam baris akan mengira enam-enamnya wajib —
+-- dan yang berhenti di C4 pada topik yang cakupannya berhenti di C3 mengerjakan
+-- dua paket tambahan yang tidak pernah diminta siapa pun.
+--
+-- `pengayaan` MEMULANGKAN CAKUPAN ITU KE LAYAR, tanpa memindahkan keputusannya
+-- ke sana: penyaringnya satu ekspresi yang sama dengan yang dipakai
+-- `status_topik_murid` dan `ujian_menunggu_latihan`, dan layar cuma membacanya.
+-- Paket di LUAR cakupan bisa berada di bawah maupun di atasnya — 184 mencatat
+-- 14 topik mulai di C2 dan 13 mulai di C3 — jadi urutannya memakai kolom itu
+-- sendiri, bukan level Bloom-nya, supaya yang wajib selalu berdiri lebih dulu.
+--
 -- Jalankan SESUDAH 184 (`status_topik_murid` tanpa suku pembebasan).
 -- ============================================================
 
@@ -180,7 +196,7 @@ begin
   -- layar murid — jalur yang sudah dibuka 155 dan diteruskan `bukaPaketTopik`.
   if ujian_menunggu_latihan(v_learner, p_paket_id) then
     raise exception
-      'Ujian topik ini terbuka setelah semua paket latihannya tuntas. Selesaikan dulu paket yang tersisa ya — ujiannya cuma bisa dikerjakan sekali, jadi lebih baik saat kamu sudah siap.'
+      'Ujian topik ini terbuka setelah semua paket wajibnya tuntas. Selesaikan dulu paket yang tersisa ya — ujiannya cuma bisa dikerjakan sekali, jadi lebih baik saat kamu sudah siap.'
       using errcode = 'check_violation';
   end if;
 
@@ -337,7 +353,12 @@ returns table (
   -- Ujian yang masih menunggu paket latihannya. Kolom sendiri, bukan digabung
   -- ke `terkunci`: yang itu berarti "kuncinya sudah dibuka, nilainya berhenti
   -- di situ", dan layar mengucapkan keduanya dengan kalimat yang berbeda.
-  menunggu_latihan boolean
+  menunggu_latihan boolean,
+  -- Paket latihan di LUAR cakupan Bloom topiknya: boleh dikerjakan, tidak
+  -- menentukan ketuntasan, tidak menahan ujian. False untuk paket ujian, dan
+  -- untuk topik yang cakupannya belum diputuskan (rentang NULL) — di sana
+  -- seluruh paket masih wajib, seperti sebelum 182 ada.
+  pengayaan boolean
 )
 language sql
 stable
@@ -348,8 +369,15 @@ as $$
     select practice_actor(coalesce(p_access_code, ''), p_learner_id) as learner
   ),
   paket as (
-    select p.id, p.jenis, p.level_bloom, p.nomor, p.jumlah_butir_sampel
+    select p.id, p.jenis, p.level_bloom, p.nomor, p.jumlah_butir_sampel,
+           (
+             p.jenis = 'latihan'
+             and t.bloom_min is not null
+             and p.level_bloom is not null
+             and p.level_bloom not between t.bloom_min and t.bloom_maks
+           ) as pengayaan
     from paket_topik p
+    join topik t on t.id = p.topik_id
     where p.topik_id = p_topik_id
       and (select learner from me) is not null
   ),
@@ -418,7 +446,8 @@ as $$
          coalesce(max(p.n), 0),
          paket_terkunci((select learner from me), k.id),
          paket_buka_pada((select learner from me), k.id),
-         ujian_menunggu_latihan((select learner from me), k.id)
+         ujian_menunggu_latihan((select learner from me), k.id),
+         k.pengayaan
   from paket k
   left join lateral paket_butir_murid(
     (select learner from me), k.id, coalesce(p_access_code, '')
@@ -426,12 +455,16 @@ as $$
   left join jawaban j
     on j.question_bank_item_id = i.item_id and j.paket_topik_id = k.id
   left join putaran p on p.paket_topik_id = k.id
-  group by k.id, k.jenis, k.level_bloom, k.nomor, k.jumlah_butir_sampel
-  order by (k.jenis = 'ujian'), k.level_bloom nulls last, k.nomor;
+  group by k.id, k.jenis, k.level_bloom, k.nomor, k.jumlah_butir_sampel, k.pengayaan
+  -- Wajib lebih dulu, pengayaan sesudahnya, ujian paling akhir. `pengayaan`
+  -- mendahului level Bloom karena paket di luar cakupan bisa berada di BAWAH
+  -- cakupan juga: topik yang mulai di C3 punya C1 dan C2 sebagai pengayaan, dan
+  -- mengurutkannya menurut level akan menaruh keduanya di depan paket wajib.
+  order by (k.jenis = 'ujian'), k.pengayaan, k.level_bloom nulls last, k.nomor;
 $$;
 
 comment on function topik_paket_state(text, text, uuid) is
-  'Keadaan tiap paket sebuah topik untuk satu murid di siklus yang berjalan: banyak butir, hasil per butir, skor berlantai nol, putaran, kuncinya, kapan kuncinya terbuka lagi, dan apakah ujiannya masih menunggu latihan (189). Urut latihan C1..C6 lebih dulu, ujian paling akhir.';
+  'Keadaan tiap paket sebuah topik untuk satu murid di siklus yang berjalan: banyak butir, hasil per butir, skor berlantai nol, putaran, kuncinya, kapan kuncinya terbuka lagi, apakah ujiannya masih menunggu paket wajib, dan apakah ia paket pengayaan (189). Urut wajib, pengayaan, lalu ujian.';
 
 -- 4. Permukaan lain yang ikut terbalik urutannya --------------------------------
 --

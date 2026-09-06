@@ -89,6 +89,14 @@ export interface PaketPeta {
    * `jenis` maupun `putaran` lebih dulu.
    */
   menungguLatihan: boolean
+  /**
+   * Paket latihan di luar cakupan Bloom topiknya (migrasi 182, dipulangkan 189).
+   *
+   * Boleh dikerjakan, tidak menentukan ketuntasan, dan tidak menahan ujian.
+   * False untuk paket ujian, dan untuk topik yang cakupannya belum diputuskan —
+   * di sana seluruh paketnya masih wajib.
+   */
+  pengayaan: boolean
 }
 
 interface BarisTopik {
@@ -118,6 +126,7 @@ interface BarisPaket {
   terkunci: boolean | null
   buka_pada: string | null
   menunggu_latihan: boolean | null
+  pengayaan: boolean | null
 }
 
 const angka = (n: number | string | null | undefined) => Number(n ?? 0)
@@ -215,6 +224,7 @@ export async function keadaanPaketTopik(
     terkunci: Boolean(b.terkunci),
     bukaPada: b.buka_pada ?? null,
     menungguLatihan: Boolean(b.menunggu_latihan),
+    pengayaan: Boolean(b.pengayaan),
   }))
 }
 
