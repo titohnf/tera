@@ -165,10 +165,33 @@ export async function mulaiPaket(
  * Topik dan nomor paketnya dibaca dari SESINYA, tidak diterima dari browser:
  * sesi sudah tahu ia paket yang mana, dan menanyakannya lagi ke pemanggil cuma
  * membuka kemungkinan dua jawaban yang berbeda.
+ *
+ * MELAYANI DUA JALUR, dan sampai sebelum ini cuma satu. Sesi jalur peta
+ * membawa `paket_topik_id`, bukan grup dan nomor, jadi `paketSesi()`
+ * memulangkan null untuknya — dan tombol "Kerjakan Lagi N Soal yang Salah"
+ * menjawab dengan kalimat yang salah tentang latihan yang jelas-jelas bagian
+ * dari sebuah paket. Kalimat itu benar cuma untuk sesi warisan sebelum migrasi
+ * 134, dan tidak ada yang menyadarinya karena jalur peta baru saja mendapat
+ * tombolnya sendiri.
+ *
+ * Bentuk putaran ulangnya sama di kedua jalur: paket yang sama dibuka lagi, dan
+ * database yang memilih butir mana yang ikut — yang nilainya belum penuh saja.
  */
 export async function ulangiPaket(sesiId: string): Promise<{ error: string } | never> {
   const pemilik = await pemilikSesi(sesiId)
   if (!pemilik) redirect('/belajar')
+
+  const petaPaket = await paketTopikSesi(sesiId)
+  if (petaPaket) {
+    const { sesiId: baru, galat } = await bukaPaketTopik(pemilik.learnerId, petaPaket.paketId)
+    if (galat) return { error: galat }
+    if (!baru) {
+      return {
+        error: 'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, atau kuncinya sudah dibuka.',
+      }
+    }
+    redirect(`/belajar/${baru}`)
+  }
 
   const paket = await paketSesi(sesiId)
   if (!paket) {
