@@ -20,6 +20,8 @@ export type PayrollReviewSession = {
   payrollStatus: string
   rejectionReason: string | null
   tutorNote: string | null
+  /** Sesi lain di kelas dan tanggal yang sama — kandidat pertemuan ganda. */
+  duplicates: { id: string; scheduled_at: string; payrollStatus: string }[]
 }
 
 export type PayrollReviewGroup = {
@@ -45,6 +47,10 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
 
   const pendingIds = group.sessions.filter(s => s.payrollStatus === 'pending').map(s => s.id)
   const incompleteCount = group.sessions.filter(s => s.payrollStatus === 'incomplete').length
+  const duplicateCount = group.sessions.filter(s => s.duplicates.length > 0).length
+  const pendingDuplicateCount = group.sessions.filter(
+    s => s.payrollStatus === 'pending' && s.duplicates.length > 0,
+  ).length
 
   function handleApprove(sessionId: string) {
     setMessage(null)
@@ -56,6 +62,17 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
   }
 
   function handleApproveAll() {
+    // Menyetujui borongan adalah cara paling gampang membayar pertemuan ganda
+    // tanpa sadar, jadi kalau ada yang ditandai dobel admin ditahan sebentar.
+    if (pendingDuplicateCount > 0) {
+      const ok = confirm(
+        `${pendingDuplicateCount} dari ${pendingIds.length} sesi ini punya sesi lain ` +
+        `di kelas dan tanggal yang sama. Kalau itu satu pertemuan yang tercatat dua kali, ` +
+        `menyetujui semuanya membuat ${group.tutorName} dibayar dua kali.\n\n` +
+        `Tetap setujui semuanya?`,
+      )
+      if (!ok) return
+    }
     setMessage(null)
     startTransition(async () => {
       const result = await approveSessionPayrollBulk(pendingIds)
@@ -100,6 +117,9 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
             {pendingIds.length > 0 && ` · ${pendingIds.length} menunggu review`}
             {incompleteCount > 0 && (
               <span className="text-orange-600 font-medium"> · {incompleteCount} jurnal belum lengkap</span>
+            )}
+            {duplicateCount > 0 && (
+              <span className="text-orange-600 font-medium"> · {duplicateCount} terindikasi dobel</span>
             )}
           </p>
         </div>
@@ -152,6 +172,22 @@ function TutorGroup({ group }: { group: PayrollReviewGroup }) {
                       <span className="text-gray-900">{s.className}</span>
                     )}
                     <p className="text-xs text-gray-400 max-w-[280px]">{s.topic || 'Tanpa topik'}</p>
+                    {s.duplicates.length > 0 && (
+                      <p className="mt-1 max-w-[280px]">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                          </svg>
+                          Dobel
+                        </span>
+                        <span className="block text-xs text-orange-600 mt-0.5">
+                          Sesi lain di kelas &amp; tanggal yang sama:{' '}
+                          {s.duplicates.map(d => `${formatTime(d.scheduled_at)} (${
+                            PAYROLL_STATUS_BADGE[d.payrollStatus]?.label ?? d.payrollStatus
+                          })`).join(', ')}
+                        </span>
+                      </p>
+                    )}
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap text-gray-500">
                     {s.duration_minutes ? `${s.duration_minutes} mnt` : '—'}

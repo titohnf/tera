@@ -59,6 +59,37 @@ export default async function PayrollReviewPage({
     reviewStatus: s.status === 'completed' ? s.payroll_status : 'incomplete',
   }))
 
+  // Dua sesi di kelas dan tanggal yang sama hampir selalu berarti satu
+  // pertemuan tercatat dua kali — biasanya karena jadwal kelas disunting dan
+  // sesi lama ikut terbawa. Kalau tidak ditandai di sini, keduanya disetujui
+  // berurutan tanpa disadari dan tutornya dibayar dua kali untuk satu
+  // pertemuan. Bukan larangan: kelas memang boleh bertemu dua kali sehari,
+  // jadi yang diberikan cuma peringatan yang minta admin melihat sekali lagi.
+  //
+  // Dihitung dari seluruh sesi bulan itu, bukan hanya yang lolos filter
+  // status: kembarannya sering sudah disetujui saat yang ini masih pending.
+  const dateKey = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const sameSlot = new Map<string, typeof allSessions>()
+  for (const s of allSessions) {
+    if (!s.classes?.id) continue
+    const key = `${s.classes.id}|${dateKey(s.scheduled_at)}`
+    const bucket = sameSlot.get(key)
+    if (bucket) bucket.push(s)
+    else sameSlot.set(key, [s])
+  }
+  const kembaranDari = (s: (typeof allSessions)[number]) => {
+    if (!s.classes?.id) return []
+    const bucket = sameSlot.get(`${s.classes.id}|${dateKey(s.scheduled_at)}`) ?? []
+    return bucket
+      .filter(other => other.id !== s.id)
+      .map(other => ({
+        id: other.id,
+        scheduled_at: other.scheduled_at,
+        payrollStatus: other.reviewStatus,
+      }))
+  }
+
   const counts = {
     total: allSessions.length,
     incomplete: allSessions.filter(s => s.reviewStatus === 'incomplete').length,
@@ -92,9 +123,14 @@ export default async function PayrollReviewPage({
       payrollStatus: s.reviewStatus,
       rejectionReason: s.payroll_rejection_reason,
       tutorNote: s.payroll_tutor_note,
+      duplicates: kembaranDari(s),
     })
   }
   const groups = [...groupMap.values()].sort((a, b) => a.tutorName.localeCompare(b.tutorName, 'id'))
+
+  // Dihitung sekali untuk banner: berapa hari yang tercatat lebih dari sekali,
+  // di seluruh bulan — termasuk yang sedang tersaring keluar dari layar.
+  const hariDobel = [...sameSlot.values()].filter(v => v.length > 1).length
 
   return (
     <div>
@@ -129,6 +165,20 @@ export default async function PayrollReviewPage({
         <MetricCard label="Disetujui" value={counts.approved} valueColor="text-green-600" />
         <MetricCard label="Ditolak" value={counts.rejected} valueColor="text-red-600" />
       </div>
+
+      {hariDobel > 0 && (
+        <div className="flex items-start gap-2.5 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 mb-6">
+          <svg className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p className="text-sm text-orange-700">
+            {hariDobel === 1 ? '1 hari' : `${hariDobel} hari`} di {monthLabel} punya lebih dari satu
+            sesi di kelas yang sama. Biasanya itu satu pertemuan yang tercatat dua kali, dan kalau
+            keduanya disetujui tutornya dibayar dua kali. Barisnya ditandai <strong>Dobel</strong>
+            {' '}di bawah — buka detailnya dulu sebelum menyetujui.
+          </p>
+        </div>
+      )}
 
       {groups.length === 0 ? (
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 py-16">
