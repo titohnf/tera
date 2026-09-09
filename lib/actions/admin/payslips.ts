@@ -467,10 +467,19 @@ export async function markPayslipPaid(payslipId: string, paymentReference?: stri
   if (!user) throw new Error('Unauthorized')
 
   const supabase = createAdminClient()
+  const { data: current } = await supabase
+    .from('payslips')
+    .select('status')
+    .eq('id', payslipId)
+    .single() as { data: { status: string } | null }
+
+  // Slip yang sudah dikirim tidak boleh mundur ke 'paid': status hanya
+  // mencatat langkah terakhir, dan menurunkannya akan menghapus fakta bahwa
+  // tutornya sudah menerima slip. Fakta pembayaran disimpan di `paid_at`.
   const { error } = await supabase
     .from('payslips')
     .update({
-      status: 'paid',
+      ...(current?.status === 'sent' ? {} : { status: 'paid' }),
       paid_at: new Date().toISOString(),
       payment_reference: paymentReference ?? null,
       updated_at: new Date().toISOString(),

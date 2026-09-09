@@ -6,6 +6,7 @@ import ClassFilters from '@/components/tutor/ClassFilters'
 import TeachingScheduleFilters from '@/components/tutor/TeachingScheduleFilters'
 import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { getSessionDisplayStatus } from '@/lib/session-status'
+import { sudahDibayar, type PayslipPaidRow } from '@/lib/payslip-bayar'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { splitClassName, splitClassPrefix } from '@/lib/format-class-name'
 import { sesiBermateriKurikulum } from '@/lib/materi-sesi'
@@ -138,11 +139,15 @@ export default async function TutorClassesPage({
       .order('name') as unknown as Promise<{ data: ClassRow[] | null }>,
     // A session counts as "Dibayar" once it's part of a payslip the admin has
     // marked paid — payroll_status alone only reflects admin approval, not payout.
+    //
+    // Disaring lewat sudahDibayar, bukan status: slip yang sudah dibayar lalu
+    // dikirim berstatus 'sent', dan kalau itu terlewat gaji yang sudah cair
+    // terbaca "belum dibayar" di layar tutornya.
     admin
       .from('payslips')
-      .select('line_items')
+      .select('line_items, status, paid_at')
       .eq('tutor_id', user.id)
-      .eq('status', 'paid') as unknown as Promise<{ data: { line_items: { sessionId: string }[] }[] | null }>,
+      .neq('status', 'draft') as unknown as Promise<{ data: PayslipPaidRow[] | null }>,
     admin
       .from('class_slots')
       .select('class_id')
@@ -162,7 +167,7 @@ export default async function TutorClassesPage({
   const ownSessionIds = new Set((ownSessions ?? []).map(s => s.id))
   const newSwapIds = pendingSwapSessionIds.filter(id => !ownSessionIds.has(id))
   const paidSessionIds = new Set(
-    (paidPayslips ?? []).flatMap(p => (p.line_items ?? []).map(li => li.sessionId))
+    (paidPayslips ?? []).filter(sudahDibayar).flatMap(p => (p.line_items ?? []).map(li => li.sessionId))
   )
 
   const mainClasses = [...ownedClasses, ...(assignedClassesRaw ?? [])]

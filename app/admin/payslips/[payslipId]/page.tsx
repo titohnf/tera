@@ -5,6 +5,7 @@ import PayslipActions from '@/components/admin/payslips/PayslipActions'
 import MetricCard from '@/components/dashboard/MetricCard'
 import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
 import { fetchJournalStatusByTutor, emptyJournalCounts, isFullyApproved, countUnapproved } from '@/lib/payroll-journal'
+import { labelStatusSlip, warnaStatusSlip } from '@/lib/payslip-bayar'
 import type { PayslipRow } from '@/lib/types/database'
 
 function formatRupiah(n: number) {
@@ -15,12 +16,6 @@ function formatDate(s: string) {
   return new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-const STATUS_LABEL: Record<string, string> = { draft: 'Draft', sent: 'Terkirim', paid: 'Dibayar' }
-const STATUS_COLOR: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-500',
-  sent:  'bg-blue-100 text-blue-700',
-  paid:  'bg-green-100 text-green-700',
-}
 
 export default async function PayslipDetailPage({
   params,
@@ -60,8 +55,8 @@ export default async function PayslipDetailPage({
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-xl font-semibold text-gray-900">{payslip.payslip_number}</h1>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[payslip.status] ?? 'bg-gray-100 text-gray-500'}`}>
-                {STATUS_LABEL[payslip.status] ?? payslip.status}
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${warnaStatusSlip(payslip)}`}>
+                {labelStatusSlip(payslip)}
               </span>
             </div>
             <p className="text-sm text-gray-500 mt-1">

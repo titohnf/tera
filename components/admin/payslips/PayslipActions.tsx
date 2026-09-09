@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { sendPayslip, markPayslipPaid, deletePayslip } from '@/lib/actions/admin/payslips'
+import { sudahDibayar } from '@/lib/payslip-bayar'
 import type { PayslipRow } from '@/lib/types/database'
 
 export default function PayslipActions({ payslip }: { payslip: PayslipRow }) {
@@ -22,15 +23,48 @@ export default function PayslipActions({ payslip }: { payslip: PayslipRow }) {
     })
   }
 
+  const dibayar = sudahDibayar(payslip)
+
+  // Slip yang sudah dikirim tapi belum ditandai dibayar tetap butuh tombolnya —
+  // urutan draft → dibayar → kirim tidak selalu diikuti, dan tanpa tombol ini
+  // pembayarannya tidak pernah bisa dicatat sama sekali.
   if (payslip.status === 'sent') {
     return (
-      <div className="text-sm text-green-700 flex items-center gap-2">
-        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        Slip sudah dikirim ke tutor
-        {payslip.payment_reference && (
-          <span className="text-gray-500 text-xs ml-1">· Ref: {payslip.payment_reference}</span>
+      <div className="space-y-3">
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            {error}
+          </div>
+        )}
+        <div className="text-sm text-green-700 flex items-center gap-2">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Slip sudah dikirim ke tutor
+          {payslip.payment_reference && (
+            <span className="text-gray-500 text-xs ml-1">· Ref: {payslip.payment_reference}</span>
+          )}
+        </div>
+        {!dibayar && (
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={ref}
+              onChange={e => setRef(e.target.value)}
+              placeholder="No. referensi transfer (opsional)"
+              className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <button
+              onClick={() => run(() => markPayslipPaid(payslip.id, ref || undefined))}
+              disabled={isPending}
+              className="inline-flex items-center gap-2 bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Tandai Dibayar
+            </button>
+          </div>
         )}
       </div>
     )

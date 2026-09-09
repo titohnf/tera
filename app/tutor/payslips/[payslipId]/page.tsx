@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MetricCard from '@/components/dashboard/MetricCard'
 import { buildClassBreakdown, formatBasePerSession } from '@/lib/salary'
+import { sudahDibayar } from '@/lib/payslip-bayar'
 import type { PayslipRow } from '@/lib/types/database'
 
 function formatRupiah(n: number) {
@@ -15,6 +16,7 @@ function formatDate(s: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = { sent: 'Menunggu Pembayaran', paid: 'Dibayar' }
+
 const STATUS_COLOR: Record<string, string> = {
   sent: 'bg-blue-100 text-blue-700',
   paid: 'bg-green-100 text-green-700',
@@ -54,8 +56,8 @@ export default async function TutorPayslipDetailPage({
           <h1 className="text-xl font-semibold text-gray-900">Slip Gaji {workMonthLabel}</h1>
           <p className="font-mono text-xs text-gray-400 mt-0.5">{payslip.payslip_number}</p>
         </div>
-        <span className={`text-xs font-medium px-3 py-1 rounded-full ${STATUS_COLOR[payslip.status]}`}>
-          {STATUS_LABEL[payslip.status]}
+        <span className={`text-xs font-medium px-3 py-1 rounded-full ${sudahDibayar(payslip) ? STATUS_COLOR.paid : STATUS_COLOR.sent}`}>
+          {sudahDibayar(payslip) ? STATUS_LABEL.paid : STATUS_LABEL.sent}
         </span>
       </div>
 
@@ -66,7 +68,7 @@ export default async function TutorPayslipDetailPage({
         <MetricCard label="Jumlah Sesi" value={payslip.total_sessions} />
       </div>
 
-      {payslip.status === 'paid' && payslip.paid_at && (
+      {sudahDibayar(payslip) && payslip.paid_at && (
         <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-sm text-green-700">
           <p className="font-semibold mb-0.5">Gaji telah dibayarkan</p>
           <p className="text-xs text-green-600">

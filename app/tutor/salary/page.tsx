@@ -9,6 +9,7 @@ import MonthSelect from '@/components/tutor/MonthSelect'
 import MetricCard from '@/components/dashboard/MetricCard'
 import type { SalarySchemeRow, SessionPaymentRow, AttendanceRow, SessionRow, PayslipRow } from '@/lib/types/database'
 import { summarizePayrollStatus } from '@/lib/session-status'
+import { sudahDibayar } from '@/lib/payslip-bayar'
 
 type SessionWithClass = SessionRow & { classes: { name: string; class_type: string | null; level: string | null; jenis: string | null } | null; subjects: { name: string } | null; payroll_status: string }
 type AttendancePick = Pick<AttendanceRow, 'session_id' | 'status'>
@@ -406,8 +407,8 @@ async function SlipGajiTab({ userId }: { userId: string }) {
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <p className="font-semibold text-gray-900">{workMonthLabel}</p>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PAYSLIP_STATUS_COLOR[p.status]}`}>
-                      {PAYSLIP_STATUS_LABEL[p.status]}
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sudahDibayar(p) ? PAYSLIP_STATUS_COLOR.paid : PAYSLIP_STATUS_COLOR.sent}`}>
+                      {sudahDibayar(p) ? PAYSLIP_STATUS_LABEL.paid : PAYSLIP_STATUS_LABEL.sent}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">

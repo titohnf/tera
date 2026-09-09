@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { sudahDibayar } from '@/lib/payslip-bayar'
 
 /**
  * Laba rugi bimbel per bulan, basis kas.
@@ -170,6 +171,7 @@ type PayslipRow = {
   grand_total: number
   pay_date: string
   status: string
+  paid_at: string | null
   tutor_name: string
   total_sessions: number
 }
@@ -208,7 +210,7 @@ async function fetchFinanceRows(admin: SupabaseClient, bounds: Bounds) {
     .limit(5000)
   let payslipQuery = admin
     .from('payslips')
-    .select('grand_total, pay_date, status, tutor_name, total_sessions')
+    .select('grand_total, pay_date, status, paid_at, tutor_name, total_sessions')
     .in('status', ['sent', 'paid'])
     .limit(5000)
   let expenseQuery = admin
@@ -258,7 +260,7 @@ export async function getMonthlyTotals(
     if (!t) continue
     const amount = Number(ps.grand_total) || 0
     t.payroll += amount
-    if (ps.status !== 'paid') t.payrollUnpaid += amount
+    if (!sudahDibayar(ps)) t.payrollUnpaid += amount
   }
 
   for (const e of expenses ?? []) {
@@ -277,7 +279,11 @@ export type PayrollDetail = {
   tutorName: string
   sessions: number
   total: number
-  /** 'paid' hanya kalau SEMUA slip tutor ini di rentang tersebut sudah lunas. */
+  /**
+   * 'paid' hanya kalau SEMUA slip tutor ini di rentang tersebut sudah lunas —
+   * lunas menurut `paid_at`, bukan status, karena slip yang sudah dibayar lalu
+   * dikirim berstatus 'sent'.
+   */
   status: string
   /** Jumlah slip yang diringkas — selalu 1 di mode per bulan. */
   slips: number
@@ -337,7 +343,7 @@ export async function getPeriodTotals(
   for (const ps of payslips) {
     const amount = Number(ps.grand_total) || 0
     totals.payroll += amount
-    if (ps.status !== 'paid') totals.payrollUnpaid += amount
+    if (!sudahDibayar(ps)) totals.payrollUnpaid += amount
   }
   for (const e of expenses) {
     totals.operational += Number(e.amount) || 0
@@ -370,7 +376,7 @@ export async function getPeriodBreakdown(
     row.sessions += p.total_sessions ?? 0
     row.total += Number(p.grand_total) || 0
     row.slips += 1
-    if (p.status !== 'paid') row.status = p.status
+    if (!sudahDibayar(p)) row.status = p.status
     payrollByTutor.set(p.tutor_name, row)
   }
 

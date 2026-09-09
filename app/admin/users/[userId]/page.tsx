@@ -7,6 +7,7 @@ import { getWorkloadLevel, WORKLOAD_CONFIG } from '@/lib/tutorWorkload'
 import TutorStatusButton from '@/components/admin/users/TutorStatusButton'
 import { getSessionCompletionStatus, type CompletionCheck } from '@/lib/actions/session-completion'
 import MonthFilter from '@/components/admin/users/MonthFilter'
+import { labelStatusSlip, warnaStatusSlip } from '@/lib/payslip-bayar'
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-700',
@@ -128,6 +129,7 @@ type PayslipRow = {
   month: string
   grand_total: number
   status: string
+  paid_at: string | null
 }
 
 type AvailabilityRow = {
@@ -199,7 +201,7 @@ export default async function UserDetailPage({
         .eq('tutor_id', userId) as unknown as Promise<{ data: TutorSubjectRow[] | null }>,
       admin
         .from('payslips')
-        .select('id, month, grand_total, status')
+        .select('id, month, grand_total, status, paid_at')
         .eq('tutor_id', userId)
         .order('month', { ascending: false }) as unknown as Promise<{ data: PayslipRow[] | null }>,
       admin
@@ -430,16 +432,6 @@ export default async function UserDetailPage({
   const classNameMap = new Map(taughtClasses.map(c => [c.id, c.name]))
   const classSubjectMap = new Map(taughtClasses.map(c => [c.id, c.class_subjects?.[0]?.subjects?.name ?? null]))
 
-  const PAYSLIP_STATUS_LABEL: Record<string, string> = {
-    draft: 'Draft',
-    sent: 'Dikirim',
-    paid: 'Dibayar',
-  }
-  const PAYSLIP_STATUS_COLOR: Record<string, string> = {
-    draft: 'text-gray-500 bg-gray-100',
-    sent: 'text-blue-700 bg-blue-100',
-    paid: 'text-green-700 bg-green-100',
-  }
 
   // ─── Schedule grid data ──────────────────────────────────────────────────────
   const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
@@ -1001,8 +993,8 @@ export default async function UserDetailPage({
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <Link href={`/admin/payslips/${slip.id}`} className="block">
-                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PAYSLIP_STATUS_COLOR[slip.status] ?? 'text-gray-500 bg-gray-100'}`}>
-                                    {PAYSLIP_STATUS_LABEL[slip.status] ?? slip.status}
+                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${warnaStatusSlip(slip)}`}>
+                                    {labelStatusSlip(slip)}
                                   </span>
                                 </Link>
                               </td>

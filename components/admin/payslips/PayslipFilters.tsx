@@ -12,7 +12,9 @@ interface Props {
 const STATUS_OPTIONS = [
   { label: 'Semua Status', value: '' },
   { label: 'Draft',        value: 'draft' },
-  { label: 'Terkirim',     value: 'sent' },
+  // 'sent' berarti terkirim tapi belum dibayar; slip yang sudah dibayar lalu
+  // dikirim ikut di 'paid', karena itu yang dicari orang saat memilihnya.
+  { label: 'Belum Dibayar', value: 'sent' },
   { label: 'Dibayar',      value: 'paid' },
 ]
 

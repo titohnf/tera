@@ -9,6 +9,7 @@ import type { SessionCounts } from '@/components/sessions/SessionStatusChips'
 import { sesiBermateriKurikulum } from '@/lib/materi-sesi'
 import { getSessionDisplayStatus } from '@/lib/session-status'
 import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
+import { sudahDibayar, type PayslipPaidRow } from '@/lib/payslip-bayar'
 
 const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
   unavailable: { label: 'Belum Tersedia', cls: 'bg-gray-100 text-gray-500' },
@@ -388,11 +389,15 @@ export default async function TutorClassDetailPage({
     const { data: paidPayslips } = tutorIds.length > 0
       ? await admin
           .from('payslips')
-          .select('line_items')
+          .select('line_items, status, paid_at')
           .in('tutor_id', tutorIds)
-          .eq('status', 'paid') as unknown as { data: { line_items: { sessionId: string }[] }[] | null }
-      : { data: [] as { line_items: { sessionId: string }[] }[] }
-    const paidSessionIds = new Set((paidPayslips ?? []).flatMap(p => (p.line_items ?? []).map(li => li.sessionId)))
+          .neq('status', 'draft') as unknown as { data: PayslipPaidRow[] | null }
+      : { data: [] as PayslipPaidRow[] }
+    // Lihat catatan di app/tutor/classes/page.tsx: 'sent' bisa berarti sudah
+    // dibayar, jadi yang menentukan paid_at — bukan statusnya.
+    const paidSessionIds = new Set(
+      (paidPayslips ?? []).filter(sudahDibayar).flatMap(p => (p.line_items ?? []).map(li => li.sessionId)),
+    )
 
     const { data: gradedData } = sessionIds.length > 0
       ? await admin
