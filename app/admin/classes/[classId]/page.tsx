@@ -10,8 +10,17 @@ import ClassDetailLayout from '@/components/classes/ClassDetailLayout'
 type Profile = { id: string; full_name: string; email: string; avatar_url?: string | null }
 type CountRow = [{ count: number }]
 
-export default async function ClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
+export default async function ClassDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ classId: string }>
+  searchParams: Promise<{ sesiDilewati?: string }>
+}) {
   const { classId } = await params
+  // Dikirim oleh createSession saat pola pengulangan melewati hari libur atau
+  // tanggal yang sudah punya sesi — lihat lib/actions/admin/sessions.ts.
+  const sesiDilewati = Number((await searchParams).sesiDilewati ?? 0)
   const admin = createAdminClient()
 
   const [
@@ -324,6 +333,19 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
       }))}
       actions={actions}
     >
+      {sesiDilewati > 0 && (
+        <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-5">
+          <svg className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p className="text-sm text-blue-700">
+            {sesiDilewati === 1 ? '1 pertemuan' : `${sesiDilewati} pertemuan`} dari pola pengulangan
+            tidak dibuat karena jatuh di hari libur atau di tanggal yang kelas ini sudah punya
+            sesinya. Kalau memang perlu, tambahkan sesinya satu per satu.
+          </p>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <ClassSessions
           classId={classId}

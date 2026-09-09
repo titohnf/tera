@@ -49,7 +49,7 @@ export async function createSession(prevState: ActionState, formData: FormData):
   const baseDate = wibToUtcDate(date, time)
   const count = recurrencePattern === 'none' ? 1 : recurrenceCount
 
-  const sessionsToInsert = Array.from({ length: count }, (_, i) => {
+  const semua = Array.from({ length: count }, (_, i) => {
     const d = new Date(baseDate)
     if (i > 0) {
       if (recurrencePattern === 'weekly') d.setUTCDate(d.getUTCDate() + i * 7)
@@ -67,6 +67,47 @@ export async function createSession(prevState: ActionState, formData: FormData):
       location,
       status: 'scheduled' as const,
     }
+  })
+
+  // Pengulangan mingguan bisa melempar sampai 52 sesi ke depan sekaligus, dan
+  // tanpa penyaringan sebagian di antaranya mendarat di hari libur atau di
+  // tanggal yang kelas ini sudah punya sesinya — dua hal yang sesudahnya harus
+  // dibereskan satu per satu secara manual.
+  //
+  // Sesi pertama tidak pernah disaring: tanggalnya diketik admin sendiri, jadi
+  // itu keputusan sadar (sesi pengganti di hari libur, misalnya). Yang disaring
+  // hanya salinan yang dilahirkan pola pengulangan.
+  const tanggalKunci = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const kunciSemua = semua.map(x => tanggalKunci(x.scheduled_at))
+
+  const [{ data: hariLibur }, { data: sesiSekelas }] = await Promise.all([
+    ctx.admin
+      .from('holidays')
+      .select('holiday_date')
+      .gte('holiday_date', kunciSemua[0])
+      .lte('holiday_date', kunciSemua[kunciSemua.length - 1]),
+    ctx.admin
+      .from('sessions')
+      .select('scheduled_at')
+      .eq('class_id', classId)
+      .neq('status', 'cancelled'),
+  ])
+  const liburSet = new Set(
+    (hariLibur ?? []).map((h: { holiday_date: string }) => h.holiday_date),
+  )
+  const sudahTerisi = new Set(
+    (sesiSekelas ?? []).map((s: { scheduled_at: string }) => tanggalKunci(s.scheduled_at)),
+  )
+
+  const dilewati: string[] = []
+  const sessionsToInsert = semua.filter((s, i) => {
+    if (i === 0) return true
+    const kunci = tanggalKunci(s.scheduled_at)
+    if (liburSet.has(kunci)) { dilewati.push(kunci); return false }
+    if (sudahTerisi.has(kunci)) { dilewati.push(kunci); return false }
+    sudahTerisi.add(kunci)
+    return true
   })
 
   if (count === 1) {
@@ -87,7 +128,14 @@ export async function createSession(prevState: ActionState, formData: FormData):
     await syncPrivateClassDraftInvoices(classId, ctx.admin)
     revalidatePath('/admin/sessions')
     revalidatePath(`/admin/classes/${classId}`)
-    redirect(redirectTo || `/admin/classes/${classId}`)
+    // Sesi yang dilewati harus disebut, kalau tidak admin memesan 12 pertemuan,
+    // mendapat 10, dan tidak pernah tahu dua sisanya ke mana.
+    const tujuan = redirectTo || `/admin/classes/${classId}`
+    redirect(
+      dilewati.length > 0
+        ? `${tujuan}${tujuan.includes('?') ? '&' : '?'}sesiDilewati=${dilewati.length}`
+        : tujuan,
+    )
   }
 }
 

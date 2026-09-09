@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { syncPrivateClassDraftInvoices } from './invoices'
 import { dayToIso } from '@/lib/enrollment'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ActionState = { error: string } | null
 
@@ -188,7 +189,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   )
 
   // Auto-generate sessions for the date range
-  const generatedSessions = generateSessionsFromSlots(slots, startDate, endDate, data.id, durationMinutes)
+  const holidayDates = await fetchHolidayDates(ctx.admin, startDate, endDate)
+  const generatedSessions = generateSessionsFromSlots(slots, startDate, endDate, data.id, durationMinutes, holidayDates)
   if (generatedSessions.length > 0) {
     const { error: sessionError } = await ctx.admin.from('sessions').insert(generatedSessions)
     if (sessionError) return { error: `Kelas berhasil dibuat tapi jadwal gagal di-generate: ${sessionError.message}` }
@@ -316,13 +318,17 @@ export async function updateClass(classId: string, prevState: ActionState, formD
   // filling in (topic, attendance, notes, materials, or assessments) even
   // though they aren't marked complete yet — only untouched ones get wiped
   // and regenerated, and generation is now allowed to reach into the past.
+  //
+  // Yang diambil semua status, bukan cuma 'scheduled': sesi yang sudah selesai
+  // atau dibatalkan memang tidak ikut dihapus, tapi tanggalnya tetap harus
+  // terhitung di bawah supaya tidak ditimpa sesi baru.
   const { data: existingSessions } = await ctx.admin
     .from('sessions')
     .select('id, scheduled_at, status, topic')
     .eq('class_id', classId)
-    .eq('status', 'scheduled')
 
-  const scheduledSessions = existingSessions ?? []
+  const allSessions = existingSessions ?? []
+  const scheduledSessions = allSessions.filter(s => s.status === 'scheduled')
   const scheduledIds = scheduledSessions.map(s => s.id)
 
   const filledSessionIds = new Set<string>()
@@ -376,20 +382,39 @@ export async function updateClass(classId: string, prevState: ActionState, formD
     .filter(s => !filledSessionIds.has(s.id) && !isBeforeRebuild(s.scheduled_at))
     .map(s => s.id)
   const deletedIds = new Set(idsToDelete)
-  const preservedDateKeys = new Set(
-    scheduledSessions.filter(s => !deletedIds.has(s.id)).map(s => localDateKey(s.scheduled_at))
-  )
+  // Berapa sesi yang masih dipegang tiap tanggal — termasuk yang sudah selesai
+  // dan yang dibatalkan, bukan cuma yang 'scheduled'. Kalau yang selesai tidak
+  // ikut dihitung, tiap kali kelas disunting sesi yang sudah berlangsung
+  // dibuatkan kembarannya, dan tanggal itu muncul dua kali dengan mapel sama.
+  //
+  // Dihitung, bukan sekadar ditandai ada: kelas yang punya dua slot di hari
+  // yang sama tetap berhak atas pertemuan keduanya kalau baru satu yang
+  // tersisa di tanggal itu.
+  const preservedPerDate = new Map<string, number>()
+  for (const s of allSessions) {
+    if (deletedIds.has(s.id)) continue
+    const key = localDateKey(s.scheduled_at)
+    preservedPerDate.set(key, (preservedPerDate.get(key) ?? 0) + 1)
+  }
 
   if (idsToDelete.length > 0) {
     await ctx.admin.from('sessions').delete().in('id', idsToDelete)
   }
 
   // Re-generate sessions across the full new date range (including dates in
-  // the past), skipping any date that still has a preserved session so we
-  // don't double-book it.
+  // the past), dropping as many per date as were preserved there so we don't
+  // double-book it.
   if (startDate! <= endDate!) {
-    const newSessions = generateSessionsFromSlots(slots, startDate!, endDate!, classId, durationMinutes)
-      .filter(s => !preservedDateKeys.has(localDateKey(s.scheduled_at)))
+    const holidayDates = await fetchHolidayDates(ctx.admin, startDate!, endDate!)
+    const sisaPerTanggal = new Map(preservedPerDate)
+    const newSessions = generateSessionsFromSlots(slots, startDate!, endDate!, classId, durationMinutes, holidayDates)
+      .filter(s => {
+        const key = localDateKey(s.scheduled_at)
+        const sisa = sisaPerTanggal.get(key) ?? 0
+        if (sisa === 0) return true
+        sisaPerTanggal.set(key, sisa - 1)
+        return false
+      })
     if (newSessions.length > 0) {
       await ctx.admin.from('sessions').insert(newSessions)
     }
@@ -499,12 +524,40 @@ export async function updateEnrollmentWindow(
   return null
 }
 
+/**
+ * Tanggal libur dalam rentang kelas, sebagai kunci `YYYY-MM-DD`.
+ *
+ * Semua jenis libur ikut — nasional, cuti bersama, maupun libur bimbel —
+ * karena halaman Kalender Libur pun memperlakukan ketiganya sama saat mencari
+ * sesi yang bentrok. Kalau bimbel memang ingin tetap mengajar di salah satu
+ * tanggal itu, sesinya ditambahkan manual; itu jauh lebih jarang daripada
+ * membatalkan satu per satu sesi yang tidak seharusnya lahir.
+ *
+ * Kegagalannya sengaja tidak menggagalkan penyimpanan kelas: migrasi di proyek
+ * ini dijalankan manual, jadi tabelnya bisa saja belum ada di satu lingkungan.
+ * Yang hilang paling banter perlindungan hari libur, bukan jadwalnya.
+ */
+async function fetchHolidayDates(
+  admin: SupabaseClient,
+  startDate: string,
+  endDate: string,
+): Promise<Set<string>> {
+  const { data, error } = await admin
+    .from('holidays')
+    .select('holiday_date')
+    .gte('holiday_date', startDate)
+    .lte('holiday_date', endDate)
+  if (error) return new Set()
+  return new Set((data ?? []).map((h: { holiday_date: string }) => h.holiday_date))
+}
+
 function generateSessionsFromSlots(
   slots: { subjectIds: string[]; tutorIds: string[]; day: number | null; time: string; effectiveFrom?: string | null }[],
   startDate: string,
   endDate: string,
   classId: string,
   durationMinutes: number,
+  holidayDates: Set<string> = new Set(),
 ) {
   const sessions: {
     class_id: string
@@ -539,6 +592,14 @@ function generateSessionsFromSlots(
   while (current <= end) {
     const dow = current.getUTCDay() // 0=Sun..6=Sat
     const dayKey = current.toISOString().slice(0, 10)
+    // Hari libur tidak melahirkan sesi sama sekali, dan dilewati sebelum
+    // rotasi mapel dihitung — pertemuannya memang tidak terjadi, jadi mapel
+    // yang seharusnya kebagian hari itu maju ke pertemuan berikutnya alih-alih
+    // hangus.
+    if (holidayDates.has(dayKey)) {
+      current.setUTCDate(current.getUTCDate() + 1)
+      continue
+    }
     slots.forEach((slot, slotIndex) => {
       if (slot.day === null || slot.day !== dow) return
       // A slot that only takes effect from a given date generates nothing
