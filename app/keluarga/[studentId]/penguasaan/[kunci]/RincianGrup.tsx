@@ -521,7 +521,7 @@ export default async function RincianGrup({
         // `topik_grup` sama sekali.
         <Link
           href={`/keluarga/${studentId}/penguasaan/${topikPeta}`}
-          className="block rounded-xl bg-white p-4 text-sm shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
+          className="block rounded-xl bg-white p-4 text-sm shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
         >
           <span className="font-medium text-gray-900">Topik ini juga diukur di Misi</span>
           <span className="mt-0.5 block text-xs text-gray-500">

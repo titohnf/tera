@@ -20,10 +20,15 @@ import 'katex/dist/katex.min.css'
  * (`components/apps/KartuAkun`) — ia satu-satunya pemanggil `signOut()`
  * yang tersisa untuk keluarga, jadi ia tidak boleh ikut hilang.
  *
- * Latarnya PUTIH, dan itu menentukan bentuk seluruh portal. Sebelumnya ia abu
- * muda (`bg-slate-100`) dengan kartu putih melayang di atasnya — pola aplikasi
- * bawaan iOS. Kartunya tetap putih, dan yang memisahkannya dari latar sekarang
- * bayang paling tipis yang punya Tailwind: `shadow-kartu`, tanpa garis tepi.
+ * Latar di sini cuma alas terakhir; yang memilih warnanya per layar adalah
+ * `RangkaAnak` — putih di beranda, abu paling muda (#fafafa) di layar lain.
+ * Alasannya ditulis di sana. Yang tetap berlaku di seluruh portal: kartunya
+ * putih, dan yang memisahkannya dari latar adalah bayang paling tipis yang
+ * punya Tailwind — `shadow-kartu`, tanpa garis tepi.
+ *
+ * Rantai `flex flex-col` di sini yang membuat `flex-1` di `RangkaAnak` bisa
+ * memenuhi sisa tinggi layar; tanpa itu, latarnya berhenti di ujung isi dan
+ * halaman pendek menyisakan pita putih di dasar layar.
  *
  * Dua aturan yang harus dijaga siapa pun yang menambah kartu di bawah rute ini:
  *
@@ -49,7 +54,7 @@ export default async function KeluargaLayout({ children }: { children: React.Rea
   const { anak } = await keluargaContext()
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <HeaderKeluarga anak={anak} />
       {/* Tanpa `main` di sini: bilah navigasi bawah menempel ke tepi layar,
           jadi yang memasang lebar dan padding isi adalah

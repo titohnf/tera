@@ -7,7 +7,6 @@ import {
   type PitaPenguasaan,
 } from '@/lib/belajar/penguasaan'
 import { persenDari } from '@/lib/belajar/penilaian'
-import TabLaporan from '@/components/keluarga/TabLaporan'
 import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
 
 /**
@@ -115,7 +114,6 @@ export default async function PenguasaanPage({
       // pembilangnya hanya jawaban dari putaran yang selesai (migrasi 134).
       // Null berarti penyebutnya tidak diketahui — bukan nol persen.
       const persen = k.max_available > 0 ? persenDari(k.score, k.max_available) : null
-      const awal = k.max_available > 0 ? persenDari(k.first_score, k.max_available) : null
       const pita = t?.subject_id ? (rubrik.get(t.subject_id) ?? null) : null
       return {
         kunci: k.group_id,
@@ -130,30 +128,27 @@ export default async function PenguasaanPage({
         // tiap kartu cuma memakan baris pertama yang seharusnya menerangkan
         // jenjang dan temanya.
         keterangan: t ? [t.grade_level, t.theme].filter(Boolean).join(' · ') : null,
-        persen,
-        label: persen != null ? labelPenguasaan(pita, persen) : null,
         pitaKunci: pita ? JSON.stringify(rentangPita(pita)) : null,
-        // Hanya kalau ada soal yang diulang — kalau tidak, ia cuma mengulang
-        // angka yang sudah tertulis di sebelahnya.
-        awal: k.first_score !== k.score ? awal : null,
-        paketTuntas: k.paket_tuntas,
-        paketSempurna: k.paket_sempurna,
-        paketTotal: k.paket_total,
-        dikerjakan: k.answered,
-        total: k.total,
         tuntas: k.total > 0 && k.answered >= k.total,
-        rincian: {
-          correct: k.correct,
-          partial: k.partial,
-          wrong: k.wrong,
-          belum: Math.max(0, k.total - k.answered),
+        // Yang disorot tab ini: seberapa dikuasai. Angka dan namanya tinggal di
+        // dalam `sorotan`, bukan disalin ke luar juga — pengurutan dan sebaran
+        // pita di bawah membacanya dari sini, supaya tidak ada dua tempat yang
+        // bisa menyimpan dua persen berbeda untuk baris yang sama.
+        sorotan: {
+          jenis: 'penguasaan' as const,
+          persen,
+          label: persen != null ? labelPenguasaan(pita, persen) : null,
         },
       }
     })
     // Yang penguasaannya tidak diketahui turun ke bawah: urutan ini janji
     // "paling perlu dikuatkan di atas", dan baris tanpa angka tidak bisa ikut
     // menjanjikannya.
-    .sort((a, b) => (a.persen ?? 101) - (b.persen ?? 101) || a.nama.localeCompare(b.nama, 'id'))
+    .sort(
+      (a, b) =>
+        (a.sorotan.persen ?? 101) - (b.sorotan.persen ?? 101) ||
+        a.nama.localeCompare(b.nama, 'id'),
+    )
 
   // Dikelompokkan per MAPEL, dan mapelnya sendiri diurut menurut topik
   // terlemahnya. Dua hal sekaligus: struktur (orang tua membaca rapor per
@@ -180,19 +175,19 @@ export default async function PenguasaanPage({
   // kolom "Baik" yang diam-diam berisi dua ambang yang berlainan.
   const sebaran = new Map<string, Map<string, number>>()
   for (const b of baris) {
-    if (!b.pitaKunci || !b.label) continue
+    if (!b.pitaKunci || !b.sorotan.label) continue
     const ada = sebaran.get(b.pitaKunci) ?? new Map<string, number>()
-    ada.set(b.label, (ada.get(b.label) ?? 0) + 1)
+    ada.set(b.sorotan.label, (ada.get(b.sorotan.label) ?? 0) + 1)
     sebaran.set(b.pitaKunci, ada)
   }
 
   return (
     <div className="space-y-6">
-      <TabLaporan studentId={studentId} aktif="kompetensi" />
 
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
       <p className="text-sm leading-relaxed text-gray-500">
-        Menampilkan persentase penguasaan siswa terhadap suatu topik pelajaran.
+        Seberapa dikuasai tiap bab kurikulum yang pernah dikerjakan sendiri.
+        Ketuk sebuah topik untuk melihat rinciannya.
       </p>
 
       {kemajuan === null ? (
@@ -210,16 +205,14 @@ export default async function PenguasaanPage({
         <>
           {baris.length > 0 && (
           <div className="rounded-xl bg-white p-4 shadow-kartu">
-            <p className="text-sm leading-relaxed text-gray-600">
-              <span className="font-semibold text-gray-900">{baris.length} topik</span> pernah
-              dikerjakan
-              {tuntas > 0 && (
-                <>
-                  , <span className="font-semibold text-gray-900">{tuntas}</span> di antaranya sudah
-                  dikerjakan seluruh soalnya
-                </>
-              )}
-              .
+            {/* "N topik pernah dikerjakan" TIDAK diucapkan lagi di sini: kartu
+                Latihan Mandiri di `/rapor` sudah mengatakannya per mapel, dan
+                dua kalimat yang sengaja berbunyi sama cuma menuntut pembacanya
+                memeriksa apakah keduanya cocok. Yang tersisa di kartu ini
+                adalah yang memang cuma ada di sini — arti tiap pita, dan
+                berapa topik jatuh di mana. */}
+            <p className="text-sm font-semibold tracking-tight text-gray-900">
+              Sebaran penguasaan
             </p>
 
             {/* Sebaran pita SEKALIGUS legendanya. Dulu dua hal terpisah —
@@ -247,6 +240,18 @@ export default async function PenguasaanPage({
                 ))}
               </dl>
             ))}
+
+            {/* Cakupan, bukan penguasaan — dan karena itu ia tinggal di bawah
+                sebarannya, bukan ikut jadi salah satu pitanya. "Seluruh
+                soalnya sudah dikerjakan" tidak mengatakan apa pun tentang
+                benar atau salah; ia satu-satunya angka di kartu ini yang
+                tidak ada di kartu ringkasan puncak halaman. */}
+            {tuntas > 0 && (
+              <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-gray-500">
+                Seluruh soalnya sudah dikerjakan di{' '}
+                <span className="font-semibold text-gray-900">{tuntas} topik</span>.
+              </p>
+            )}
           </div>
           )}
 

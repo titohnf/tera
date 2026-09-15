@@ -98,7 +98,7 @@ const PINTASAN = [
     ),
   },
   {
-    ke: 'laporan',
+    ke: 'rapor',
     judul: 'Laporan',
     ikon: (
       <>

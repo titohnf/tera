@@ -3,7 +3,6 @@ import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import LaporanBulananView from '@/components/laporan/LaporanBulananView'
 import { createClient } from '@/lib/supabase/server'
 import { bulanIni } from '@/lib/waktu'
-import TabLaporan from '@/components/keluarga/TabLaporan'
 import MonthSelect from '@/components/admin/attendance/MonthSelect'
 
 /**
@@ -73,7 +72,6 @@ export default async function LaporanAnak({
 
   return (
     <div className="space-y-6">
-      <TabLaporan studentId={studentId} aktif="aktivitas" />
 
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`).
           Barisnya sendiri hanya lahir kalau ada yang bisa diunduh — pembungkus

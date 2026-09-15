@@ -111,7 +111,7 @@ function ClassSessionTable({
     <div className="space-y-3">
       <button
         onClick={() => setCollapsed(c => !c)}
-        className={`w-full px-4 pt-3 border border-slate-200! rounded-xl bg-white hover:bg-slate-50 transition-colors ${collapsed ? 'pb-3' : 'pb-7'}`}
+        className={`w-full px-4 pt-3 border border-slate-200! rounded-xl bg-white hover:bg-slate-100 transition-colors ${collapsed ? 'pb-3' : 'pb-7'}`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col items-start min-w-0">

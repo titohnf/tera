@@ -58,7 +58,7 @@ export default function SapaanKunjungan({
             <button
               type="button"
               onClick={() => setTampil(false)}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-50"
+              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-100"
             >
               Langsung lanjut saja
             </button>

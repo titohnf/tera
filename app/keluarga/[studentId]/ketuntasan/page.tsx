@@ -1,15 +1,13 @@
 import { anakOrRedirect } from '@/lib/keluarga'
-import { learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
+import { learnerAnak } from '@/lib/belajar/sesi'
 import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import { namaTema } from '@/lib/belajar/tema-topik'
-import {
-  labelPenguasaan,
-  rentangPita,
-  type PitaPenguasaan,
-} from '@/lib/belajar/penguasaan'
-import { persenDari } from '@/lib/belajar/penilaian'
-import TabLaporan from '@/components/keluarga/TabLaporan'
 import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
+
+/** Bagian paket yang tuntas, 0–1. Topik tanpa paket dikirim ke ujung daftar. */
+function rasioTuntas({ tuntas, total }: { tuntas: number; total: number }) {
+  return total > 0 ? tuntas / total : 2
+}
 
 /**
  * Ketuntasan Materi: peta kompetensi seorang anak — paket latihan bertingkat
@@ -25,6 +23,20 @@ import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
  *
  * Menaruh dua penyebut berbeda di bawah satu layar hanya membingungkan; satu
  * tab per penyebut membuat batasnya tertulis di bilah ini, bukan tersirat.
+ *
+ * Tab yang terpisah ternyata belum cukup. Selama halaman ini masih menyorot
+ * PERSEN seperti tab Kompetensi — kartu yang sama, angka besar yang sama, pita
+ * "Baik"/"Istimewa" yang sama — orang tua tetap melihat dua persen yang tampak
+ * sebanding untuk anak yang sama, dan tidak ada apa pun di layar yang
+ * menyebutkan bahwa penyebutnya berlainan. Sekarang halaman ini menyorot yang
+ * memang jadi pertanyaan pendekatan berjenjang: BERAPA PAKET YANG SUDAH
+ * TUNTAS. Tidak ada persen di daftar ini, jadi tidak ada yang bisa tertukar;
+ * persen penguasaannya tetap terbaca satu ketukan lebih dalam, di kepala
+ * halaman rincian tiap topik.
+ *
+ * Karena persennya tidak lagi digambar, rubrik pita tidak lagi dibaca di sini —
+ * dan bersamanya hilang satu panggilan `mastery_rubric_for` per mapel setiap
+ * halaman ini dibuka.
  *
  * Angkanya dihitung lewat `kemajuanTopikPeta`, jalur yang sama dengan peta
  * `Misi` di portal anak — dua layar yang digambar orang tua dan anak tidak
@@ -42,58 +54,40 @@ export default async function KetuntasanMateriPage({
   const misi = learnerId ? await kemajuanTopikPeta(learnerId) : []
   const misiDikerjakan = (misi ?? []).filter(k => k.answered > 0)
 
-  // Satu rubrik per MAPEL, diambil sekali untuk tiap mapel yang muncul. Topik
-  // peta meminjam mapelnya dari kurikulum lewat `topik_grup`, jadi "Baik" dan
-  // "Istimewa" berarti sama dengan yang dibaca di tab Kompetensi.
-  const mapel = [...new Set(misiDikerjakan.map(k => k.subjectId).filter(Boolean) as string[])]
-  const rubrik = new Map<string, PitaPenguasaan[] | null>(
-    await Promise.all(
-      mapel.map(async id => [id, await rubrikMapel(id)] as [string, PitaPenguasaan[] | null]),
-    ),
-  )
-
   const baris = misiDikerjakan
-    .map(k => {
-      const persen = k.maxAvailable > 0 ? persenDari(k.score, k.maxAvailable) : null
-      const pita = k.subjectId ? (rubrik.get(k.subjectId) ?? null) : null
-      return {
-        kunci: k.topikId,
-        subjectId: k.subjectId,
-        mapel: 'Misi',
-        nama: k.nama,
-        elemen: k.elemen,
-        // Tema di depan, urutan yang sama dengan baris peta di Misi: yang
-        // pertama menjawab "ini tentang apa", sisanya menjawab "yang mana".
-        keterangan: [namaTema(k.elemen), k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
-          .filter(Boolean)
-          .join(' · '),
-        persen,
-        label: persen != null ? labelPenguasaan(pita, persen) : null,
-        pitaKunci: pita ? JSON.stringify(rentangPita(pita)) : null,
-        awal: null,
-        paketTuntas: k.paketTuntas,
-        paketSempurna: k.paketSempurna,
-        paketTotal: k.paketTotal,
-        dikerjakan: k.answered,
-        total: k.total,
-        tuntas: k.total > 0 && k.answered >= k.total,
-        rincian: {
-          correct: k.correct,
-          partial: k.partial,
-          wrong: k.wrong,
-          belum: Math.max(0, k.total - k.answered),
-        },
-      }
-    })
-    .sort((a, b) => (a.persen ?? 101) - (b.persen ?? 101) || a.nama.localeCompare(b.nama, 'id'))
+    .map(k => ({
+      kunci: k.topikId,
+      nama: k.nama,
+      elemen: k.elemen,
+      // Tema di depan, urutan yang sama dengan baris peta di Misi: yang
+      // pertama menjawab "ini tentang apa", sisanya menjawab "yang mana".
+      keterangan: [namaTema(k.elemen), k.jenjangKelas && `Kelas ${k.jenjangKelas}`, k.topikId]
+        .filter(Boolean)
+        .join(' · '),
+      sorotan: {
+        jenis: 'ketuntasan' as const,
+        tuntas: k.paketTuntas,
+        total: k.paketTotal,
+      },
+    }))
+    // Yang paling sedikit tuntas di atas — janji yang sama dengan tab
+    // Kompetensi, tapi diukur dengan angka yang MEMANG TERBACA di kartunya.
+    // Mengurutkan menurut persen yang tidak lagi ditampilkan berarti urutan
+    // yang tidak bisa dijelaskan kepada yang membacanya. Topik tanpa paket
+    // turun ke bawah: ia tidak punya rasio, dan nol bukan jawaban yang jujur
+    // untuk penyebut yang kosong.
+    .sort(
+      (a, b) =>
+        rasioTuntas(a.sorotan) - rasioTuntas(b.sorotan) || a.nama.localeCompare(b.nama, 'id'),
+    )
 
   return (
     <div className="space-y-6">
-      <TabLaporan studentId={studentId} aktif="ketuntasan" />
 
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
       <p className="text-sm leading-relaxed text-gray-500">
-        Penguasaan siswa terhadap tiap topik dari peta kompetensi.
+        Berapa banyak paket latihan tiap topik peta kompetensi yang sudah
+        dituntaskan. Ketuk sebuah topik untuk melihat rinciannya.
       </p>
 
       {misi === null ? (
@@ -106,10 +100,16 @@ export default async function KetuntasanMateriPage({
         </p>
       ) : (
         <div className="space-y-2">
-          <div className="flex items-baseline justify-between gap-3 px-1">
-            <p className="font-semibold tracking-tight text-gray-900">Ketuntasan Materi</p>
-            <p className="shrink-0 text-xs text-gray-400">{baris.length} topik</p>
-          </div>
+          {/* Tidak ada kartu ringkasan di sini. "N dari M topik tuntas" sudah
+              diucapkan kartu Ketuntasan Materi di `/rapor`, layar yang dilewati
+              setiap orang yang sampai ke sini. Halaman ini daftarnya; yang
+              merangkum adalah pintu masuknya. Banyaknya topik tetap terbaca di
+              ujung kanan judul seksi di bawah. */}
+          {/* Nama seksinya TIDAK diulang: sejak bilah tab diganti kartu,
+              `HeaderKeluarga` sudah mencetak "Ketuntasan Materi" di puncak
+              layar, dan judul yang sama dua kali dalam satu layar cuma memakan
+              baris. Yang tersisa cuma cacahnya. */}
+          <p className="px-1 text-right text-xs text-gray-400">{baris.length} topik</p>
           <p className="px-1 text-xs leading-relaxed text-gray-400">
             Peta kompetensi Matematika: paket latihan bertingkat yang mengukur
             penguasaan per topik, sebatas yang diminta dari tiap topik. Paket

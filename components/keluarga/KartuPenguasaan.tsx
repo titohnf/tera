@@ -1,21 +1,44 @@
 import Link from 'next/link'
-import BilahJawaban, { KeteranganJawaban } from '@/components/belajar/BilahJawaban'
+import { BilahKemajuan } from '@/components/belajar/BilahJawaban'
 import IkonTema from '@/components/belajar/IkonTema'
-import Keyakinan from '@/components/belajar/Keyakinan'
+
+/**
+ * Apa yang disorot sebuah baris — dan dengan begitu, PERTANYAAN apa yang
+ * dijawab tabnya.
+ *
+ * Ini yang dulu tidak ada, dan ketiadaannya yang membuat dua tab rapor terlihat
+ * kembar. Latihan Mandiri dan Ketuntasan Materi mengukur hal yang berbeda
+ * dengan PENYEBUT yang berbeda — bab kurikulum lewat `kemajuanTopik`, paket
+ * latihan dalam cakupan Bloom lewat `kemajuanTopikPeta` (migrasi 189), dan
+ * trigger migrasi 148 menjamin butirnya tidak pernah beririsan. Tapi keduanya
+ * digambar sebagai "persen besar + pita + titik + bilah + legenda" yang sama
+ * persis, jadi orang tua melihat dua angka yang tampak sebanding padahal bukan,
+ * dan tidak ada apa pun di layar yang menyebutkan bedanya.
+ *
+ * Sekarang bedanya DIDEKLARASIKAN, bukan tersirat. Menambah tab keempat berarti
+ * menambah anggota union ini, dan kompilator yang menagih kalimat serta bilah
+ * untuknya — bukan sebuah komponen baru yang kebetulan mirip.
+ */
+export type SorotanBaris =
+  /** Seberapa dikuasai: persen atas SELURUH soal topik, dengan nama pitanya. */
+  | { jenis: 'penguasaan'; persen: number | null; label: string | null }
+  /** Berapa banyak yang sudah selesai: paket tuntas dari paket yang ada. */
+  | { jenis: 'ketuntasan'; tuntas: number; total: number }
 
 /**
  * Satu baris penguasaan, apa pun lapisan asalnya.
  *
- * Dipakai dua seksi (Kompetensi dan Ketuntasan Materi) lewat kartu yang sama.
- * Agar angka di kedua tempat tidak bisa diam-diam digambar dengan aturan yang
- * berbeda, definisi barisnya diturunkan dari pembangunnya masing-masing —
- * komponen ini hanya menerima apa yang sudah jadi.
+ * Isinya sengaja tinggal segini. Versi sebelumnya menerima tiga belas field —
+ * `pitaKunci`, `awal`, `paketSempurna`, `rincian`, `subjectId`, dan seterusnya —
+ * dan dua di antaranya (`pitaKunci`, `tuntas`) bahkan tidak pernah digambar
+ * kartunya: keduanya ikut menumpang karena halaman pemanggilnya membutuhkan
+ * mereka untuk ringkasan dan pengelompokannya sendiri. Sekarang keperluan itu
+ * tinggal di tipe baris lokal tiap halaman, dan yang menyeberang ke sini hanya
+ * yang benar-benar digambar.
  */
 export interface BarisPenguasaan {
   /** Id grup kurikulum (uuid) atau kode topik peta (`D-01`). Keduanya alamat. */
   kunci: string
-  subjectId: string | null
-  mapel: string
   nama: string
   keterangan: string | null
   /**
@@ -28,29 +51,61 @@ export interface BarisPenguasaan {
    * pun.
    */
   elemen?: string | null
-  persen: number | null
-  label: string | null
-  pitaKunci: string | null
-  /** Null di jalur Misi — lihat `lib/belajar/topik-rapor.ts`. */
-  awal: number | null
-  paketTuntas: number
-  paketSempurna: number
-  paketTotal: number
-  dikerjakan: number
-  total: number
-  tuntas: boolean
-  rincian: { correct: number; partial: number; wrong: number; belum: number }
+  sorotan: SorotanBaris
 }
 
 /**
- * Kartu baris Penguasaan, dipakai dua seksi.
+ * Kalimat status dan label bagi pembaca layar, dirakit dari sorotannya.
  *
- * Satu komponen, bukan dua yang mirip: begitu keduanya melewati kartu yang
- * sama, angka jalur grup dan jalur peta tidak bisa diam-diam digambar dengan
- * aturan berbeda. Yang membedakan keduanya sudah diselesaikan di pembangun
- * barisnya, bukan di sini.
+ * Satu tempat, bukan dua cabang JSX: kalimat yang dibaca mata dan kalimat yang
+ * didengar pembaca layar harus kalimat yang SAMA, dan dua rantai ternari yang
+ * berdampingan pasti akan berbeda pada suatu hari.
  */
-export default function KartuPenguasaan({ b, studentId }: { b: BarisPenguasaan; studentId: string }) {
+function kalimatSorotan(s: SorotanBaris): { teks: string; terisi: number; dari: number } {
+  if (s.jenis === 'ketuntasan') {
+    return {
+      teks: `Tuntas ${s.tuntas} dari ${s.total} paket`,
+      terisi: s.tuntas,
+      dari: s.total,
+    }
+  }
+  // Persen yang tidak diketahui ditulis "—", BUKAN nol persen: penyebut yang
+  // belum diketahui bukan kabar buruk tentang anaknya.
+  if (s.persen == null) return { teks: '—', terisi: 0, dari: 0 }
+  return {
+    teks: [s.label, `${s.persen}%`].filter(Boolean).join(' · '),
+    terisi: s.persen,
+    dari: 100,
+  }
+}
+
+/**
+ * Kartu baris rapor, dipakai dua tab.
+ *
+ * Empat baris, dan tidak lebih: nama, keterangan, satu kalimat status, satu
+ * bilah. Yang dulu ikut di sini — titik `Keyakinan`, legenda "5 benar · 3 salah
+ * · 4 belum", "8/12 soal dikerjakan", "Naik dari 20%" — semuanya SUDAH dirender
+ * utuh di halaman rincian yang jadi tujuan ketukan kartunya (`RincianGrup` dan
+ * `RincianMisi`). Jadi ini pengurangan, bukan pemangkasan: tidak ada satu pun
+ * angka yang jadi tidak bisa dibaca, yang berubah cuma berapa jauh ia dari
+ * layar pertama.
+ *
+ * Alasan memangkasnya: enam pengkodean angka dalam satu baris adalah enam hal
+ * yang harus dibaca dulu sebelum orang tua tahu anaknya bagaimana — di daftar
+ * dua puluh baris, di layar 390px, dalam kunjungan sekali seminggu.
+ *
+ * Namanya di ATAS keterangannya, kebalikan dari susunan lama. Yang dicari
+ * pembaca adalah nama topiknya; "Aljabar · Kelas 7" cuma menjawab "yang mana",
+ * dan pertanyaan itu datang kedua.
+ */
+export default function KartuPenguasaan({
+  b,
+  studentId,
+}: {
+  b: BarisPenguasaan
+  studentId: string
+}) {
+  const { teks, terisi, dari } = kalimatSorotan(b.sorotan)
   return (
     <li>
       {/* Seluruh kartunya tautan, bukan cuma namanya: sasaran
@@ -58,58 +113,21 @@ export default function KartuPenguasaan({ b, studentId }: { b: BarisPenguasaan; 
           ukuran yang masuk akal di ponsel. */}
       <Link
         href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
-        className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
+        className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
       >
         <div className="flex items-start gap-3">
           {b.elemen && <IkonTema elemen={b.elemen} size={36} />}
           <div className="min-w-0 flex-1">
-            {b.keterangan && <p className="text-xs text-gray-400">{b.keterangan}</p>}
-            <p className="mt-0.5 font-semibold tracking-tight text-gray-900">{b.nama}</p>
+            <p className="font-semibold tracking-tight text-gray-900">{b.nama}</p>
+            {b.keterangan && <p className="mt-0.5 text-xs text-gray-400">{b.keterangan}</p>}
           </div>
           <span className="shrink-0 text-gray-300" aria-hidden>
             ›
           </span>
         </div>
 
-        {/* Angka penguasaannya berdiri sendiri dan besar. Ia
-            jawaban atas pertanyaan yang membawa orang ke layar
-            ini, dan sebagai ekor di ujung baris judul ia harus
-            dicari dulu. */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-bold tabular-nums text-gray-900">
-            {b.persen == null ? '—' : `${b.persen}%`}
-          </span>
-          {b.label && (
-            <span className="text-sm font-medium text-gray-500">{b.label}</span>
-          )}
-          {/* Keyakinan menempel pada angkanya, bukan di ujung
-              baris: ia mengubah arti angka itu. Bentuk ringkas —
-              titiknya saja — karena di daftar sepanjang ini
-              kalimat "3 paket dikerjakan" di tiap baris jadi
-              kebisingan; kalimat lengkapnya tetap terbaca pembaca
-              layar lewat `aria-label`. */}
-          <Keyakinan
-            tuntas={b.paketTuntas}
-            sempurna={b.paketSempurna}
-            total={b.paketTotal}
-            ringkas
-            className="ml-1"
-          />
-          <span className="ml-auto shrink-0 text-xs text-gray-400 tabular-nums">
-            {b.dikerjakan}/{b.total} soal dikerjakan
-          </span>
-        </div>
-
-        <BilahJawaban rincian={b.rincian} total={b.total} className="mt-2" />
-        <KeteranganJawaban rincian={b.rincian} className="mt-2.5" />
-
-        {b.awal != null && b.persen != null && (
-          <p className="mt-2 text-xs text-gray-400">
-            {b.awal < b.persen
-              ? `Naik dari ${b.awal}% saat soal-soalnya pertama dijawab.`
-              : `Saat pertama dijawab ${b.awal}%.`}
-          </p>
-        )}
+        <p className="mt-3 text-sm font-medium tabular-nums text-gray-600">{teks}</p>
+        <BilahKemajuan terisi={terisi} dari={dari} label={teks} className="mt-2" />
       </Link>
     </li>
   )

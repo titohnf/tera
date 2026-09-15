@@ -448,7 +448,7 @@ export default function PemilihLatihan({
         // penanda sendiri dan sisanya tidak sedang mengerjakan apa-apa.
         disabled={memuat !== null && !sedang}
         onClick={() => pilihMapel(m, awalan === 'kelas')}
-        className={`flex w-full rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50 disabled:opacity-60 ${
+        className={`flex w-full rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100 disabled:opacity-60 ${
           tegak
             ? 'flex-col items-center gap-2 text-center'
             : 'items-center gap-3 text-left'
@@ -774,7 +774,7 @@ export default function PemilihLatihan({
         key={t.group_id}
         type="button"
         onClick={() => pilihTopik(t)}
-        className="flex w-full items-center gap-3 rounded-xl bg-white p-4 text-left shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-50"
+        className="flex w-full items-center gap-3 rounded-xl bg-white p-4 text-left shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
       >
         <span className="min-w-0 flex-1">
           {/* Tema di ATAS namanya, sebagai label: ia yang memberi tahu topik ini
@@ -901,7 +901,7 @@ export default function PemilihLatihan({
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
                   saringan === s.nilai
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 shadow-kartu hover:bg-slate-50'
+                    : 'bg-white text-gray-600 shadow-kartu hover:bg-slate-100'
                 }`}
               >
                 {s.label}

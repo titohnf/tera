@@ -56,6 +56,63 @@ export default function BilahJawaban({
 }
 
 /**
+ * Bilah sewarna: gambar dari satu kalimat, bukan dari empat hal sekaligus.
+ *
+ * Berdampingan dengan `BilahJawaban`, dan bukan menggantikannya. Keduanya
+ * menjawab pertanyaan yang berbeda, dan itulah sebabnya keduanya ada:
+ *
+ * - `BilahJawaban` memuat empat arti dalam satu bentuk — panjangnya cakupan,
+ *   warnanya hasil. Ia hanya terbaca kalau legendanya ikut berdiri di
+ *   sebelahnya, dan legenda itu memakan dua baris di tiap kartu.
+ * - `BilahKemajuan` tidak punya arti sendiri sama sekali. Ia gambar dari
+ *   kalimat yang tertulis TEPAT DI ATASNYA — "62%" atau "3 dari 6 paket" —
+ *   jadi tidak ada yang perlu diterangkan, dan tidak ada legenda yang perlu
+ *   ditumpangkan.
+ *
+ * Karena itu yang di daftar rapor keluarga adalah yang ini, dan yang di halaman
+ * rincian tetap `BilahJawaban` lengkap dengan keterangannya. Daftar menjawab
+ * "sejauh mana"; rincian menjawab "kenapa segitu".
+ *
+ * `label` wajib diisi pemanggil, bukan dirakit di sini: kalimat di atas bilah
+ * ini berbeda-beda menurut tabnya, dan pembaca layar harus mendengar kalimat
+ * yang sama dengan yang terbaca mata — bukan versi kedua yang disusun sendiri
+ * oleh komponennya.
+ *
+ * Warnanya SENGAJA netral, bukan `WARNA.benar`. Di seluruh permukaan belajar
+ * hijau berarti "benar", dan bilah hijau di bawah tulisan "Kurang · 20%" adalah
+ * dua kabar yang bertentangan dalam satu kartu. Bilah ini mengukur SEJAUH MANA,
+ * bukan sebagus apa; yang menilai adalah kalimat di atasnya, dan bilahnya cukup
+ * menggambar panjangnya saja.
+ */
+export function BilahKemajuan({
+  terisi,
+  dari,
+  label,
+  className = '',
+}: {
+  terisi: number
+  /** Penyebutnya; nol berarti tidak ada yang bisa digambar. */
+  dari: number
+  label: string
+  className?: string
+}) {
+  if (dari <= 0) return null
+  // Dijepit 0–100: `paket_tuntas` yang melampaui `paket_total` adalah keadaan
+  // yang tidak boleh terjadi, tapi kalau terjadi ia harus muncul sebagai bilah
+  // penuh, bukan sebagai bilah yang meluber keluar cangkangnya.
+  const persen = Math.min(100, Math.max(0, (terisi / dari) * 100))
+  return (
+    <span
+      className={`flex h-1.5 overflow-hidden rounded-full bg-gray-100 ${className}`}
+      role="img"
+      aria-label={label}
+    >
+      <span className="block h-full bg-slate-400" style={{ width: `${persen}%` }} />
+    </span>
+  )
+}
+
+/**
  * Keterangan bilah: titik berwarna, angkanya, lalu namanya.
  *
  * Ditulis sebagai kata, bukan sebagai legenda terpisah di kepala halaman:

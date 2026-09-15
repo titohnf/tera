@@ -66,9 +66,16 @@ const LAYAR: Record<string, Layar> = {
   profil: { judul: 'Profil' },
   misi: { judul: 'Misi' },
   tagihan: { judul: 'Tagihan', kembali: '' },
-  laporan: { judul: 'Laporan', kembali: '' },
-  penguasaan: { judul: 'Laporan', kembali: '' },
-  ketuntasan: { judul: 'Laporan', kembali: '' },
+  // Rapor adalah pintu masuk ketiga laporan; ia yang pulang ke beranda.
+  rapor: { judul: 'Laporan', kembali: '' },
+  // Ketiganya DULU satu judul "Laporan" karena mereka tiga tab di bawah satu
+  // bilah — judul tabnya yang membedakan, jadi mengulanginya di header cuma
+  // menumpuk. Sejak bilah itu diganti kartu di `/rapor`, tiap layar berdiri
+  // sendiri: judulnya harus namanya sendiri, dan panah kembalinya menuju
+  // kartu yang membukanya, bukan melompati satu tingkat ke beranda.
+  laporan: { judul: 'Progres Kelas', kembali: '/rapor' },
+  penguasaan: { judul: 'Latihan Mandiri', kembali: '/rapor' },
+  ketuntasan: { judul: 'Ketuntasan Materi', kembali: '/rapor' },
 }
 
 /**
