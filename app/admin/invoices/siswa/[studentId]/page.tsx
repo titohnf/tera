@@ -15,6 +15,8 @@ type InvoiceRow = {
   due_date: string | null
   status: string
   line_items: (BillingLineItem & { period?: string })[]
+  sent_at: string | null
+  reminded_at: string | null
   classes: { name: string; start_date: string | null; end_date: string | null } | null
 }
 
@@ -46,7 +48,9 @@ export default async function StudentInvoiceDetailPage({
     admin.from('profiles').select('id, full_name, nickname, parent_name, parent_phone').eq('id', studentId).single(),
     admin
       .from('invoices')
-      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, line_items, classes!class_id(name, start_date, end_date)')
+      // sent_at dan reminded_at baru ada sejak migrasi 195 — jalankan migrasinya
+      // sebelum kode ini ter-deploy, atau query ini gagal dan halamannya kosong.
+      .select('id, invoice_number, class_id, total_due, issued_at, due_date, status, line_items, sent_at, reminded_at, classes!class_id(name, start_date, end_date)')
       .eq('student_id', studentId)
       .order('issued_at', { ascending: false })
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
@@ -117,6 +121,8 @@ export default async function StudentInvoiceDetailPage({
       payments: paymentsByInvoice.get(inv.id) ?? [],
       isMonthly: inv.line_items.some(i => i.period),
       lineItems: inv.line_items,
+      sentAt: inv.sent_at,
+      remindedAt: inv.reminded_at,
     })
   }
 

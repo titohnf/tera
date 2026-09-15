@@ -212,11 +212,54 @@ export async function updateInvoiceStatus(id: string, status: 'draft' | 'sent' |
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
+  const now = new Date().toISOString()
+
+  if (status === 'sent') {
+    // Mengirim adalah peristiwa, bukan keadaan tagihan. Invoice yang sudah
+    // dicicil atau lunas tetap boleh dikirim ulang, tapi statusnya tidak boleh
+    // mundur ke 'sent' — itu yang membuat Albirru dan Qirania terbaca
+    // "Terkirim" padahal sudah mengangsur (15 Sep 2026). Hanya draft yang naik
+    // jadi 'sent'; kapan dikirimnya dicatat terpisah di sent_at (migrasi 195).
+    const { error } = await ctx.admin
+      .from('invoices')
+      .update({ sent_at: now, updated_at: now })
+      .eq('id', id)
+    if (error) return { error: error.message }
+
+    const { error: statusError } = await ctx.admin
+      .from('invoices')
+      .update({ status: 'sent' })
+      .eq('id', id)
+      .eq('status', 'draft')
+    if (statusError) return { error: statusError.message }
+  } else {
+    const { error } = await ctx.admin
+      .from('invoices')
+      .update({ status, updated_at: now })
+      .eq('id', id)
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${id}`)
+  return { success: true }
+}
+
+/**
+ * Mencatat bahwa "Kirim Pengingat" ditekan (migrasi 195).
+ *
+ * Status tidak disentuh sama sekali — pengingat tidak mengubah apa pun soal
+ * tagihannya. Yang dicatat hanya kapan admin membuka WhatsApp dengan pesan
+ * pengingat, supaya pertanyaan "sudah diingatkan belum" punya jawaban.
+ */
+export async function catatPengingatTerkirim(id: string) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
   const { error } = await ctx.admin
     .from('invoices')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ reminded_at: new Date().toISOString() })
     .eq('id', id)
-
   if (error) return { error: error.message }
 
   revalidatePath('/admin/invoices')

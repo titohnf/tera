@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
+import { catatPengingatTerkirim, deleteInvoice, deletePayment, recordPayment, updateInvoiceStatus, updatePayment } from '@/lib/actions/admin/invoices'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
 import { getMonthlyBreakdown, getInstallmentPlan, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment, type BillingLineItem } from '@/lib/billing-message'
 import { KemajuanBayar, RiwayatPembayaran, urutkanPembayaran } from '@/components/invoices/PembayaranBlok'
 import MenuTitikTiga from '@/components/invoices/MenuTitikTiga'
 import { statusTagihan, tanggalBayarTerakhir, warnaBilahTagihan } from '@/lib/tagihan'
 import { todayWib } from '@/lib/daily-message'
+import { waktuWib } from '@/lib/waktu'
 
 // Pakai label dari rincian tagihan bila bulannya ada di sana (supaya ikut
 // membawa tahun saat rentangnya lintas tahun), selain itu nama bulan saja.
@@ -33,6 +34,10 @@ export type InvoiceItem = {
   payments: Payment[]
   isMonthly: boolean
   lineItems: BillingLineItem[]
+  /** Terakhir "Kirim Invoice"/"Kirim Ulang Invoice" ditekan (migrasi 195). */
+  sentAt: string | null
+  /** Terakhir "Kirim Pengingat" ditekan (migrasi 195). */
+  remindedAt: string | null
 }
 
 export type ClassGroup = {
@@ -227,7 +232,14 @@ function InvoiceCard({
       `Terima kasih atas kepercayaannya kepada Bimbel Tera.`,
     ].join('\n')
     const waUrl = `https://wa.me/${formatWaPhone(parentPhone)}?text=${encodeURIComponent(lines)}`
+    // WhatsApp dibuka lebih dulu, di dalam ketukan yang sama — browser memblokir
+    // window.open yang menunggu server. Catatannya menyusul; kalau gagal,
+    // pesannya tetap terbuka dan yang hilang cuma tanggalnya.
     window.open(waUrl, '_blank')
+    startTransition(async () => {
+      await catatPengingatTerkirim(invoice!.id)
+      router.refresh()
+    })
   }
 
   function handleRecordPayment() {
@@ -305,6 +317,18 @@ function InvoiceCard({
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-0.5 truncate">{group.className}</p>
+          {/* Riwayat kirim terpisah dari status: "Angsuran" tetap Angsuran
+              walau invoicenya dikirim ulang, dan di sinilah terbaca kapan
+              invoice atau pengingatnya terakhir dibuka di WhatsApp. WIB,
+              supaya server dan browser menulis jam yang sama. */}
+          {(invoice.sentAt || invoice.remindedAt) && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {[
+                invoice.sentAt && `Invoice dikirim ${waktuWib(invoice.sentAt)}`,
+                invoice.remindedAt && `Pengingat ${waktuWib(invoice.remindedAt)}`,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          )}
         </div>
         <span className="flex-1" />
         <span className="text-sm font-semibold text-gray-700 shrink-0">{formatRupiah(invoice.total_due)}</span>
