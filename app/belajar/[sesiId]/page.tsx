@@ -6,6 +6,7 @@ import { probeSesi } from '@/lib/belajar/retest'
 import { menitTanpaJeda } from '@/lib/belajar/beban'
 import { namaPaket } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
+import PulangKe from '@/components/belajar/PulangKe'
 
 /**
  * Satu sesi latihan, dengan alamatnya sendiri.
@@ -53,8 +54,26 @@ export default async function SesiLatihan({
   // yang dilewati orang yang menutup tab tepat sesudah soal terakhir.
   if (soal.every(s => s.sudahDijawab)) redirect(`/belajar/${sesiId}/hasil`)
 
+  // KE TEMPAT SESI INI DIBUKA, bukan ke beranda. Aturannya sama persis dengan
+  // layar hasil, dan memang harus: dua layar yang berurutan di satu perjalanan
+  // tidak boleh punya dua jalan pulang yang berbeda.
+  //
+  // Tanpa ini panah kembali di header jatuh ke "/" — nilai bawaan `KepalaBelajar`
+  // untuk layar yang tidak menyebutkan tujuannya. Beranda portal bukan halaman
+  // sebelumnya bagi siapa pun: anak jalur Misi mengetuk barisnya di peta lalu
+  // langsung mendarat di soal, jadi yang ia tinggalkan peta itu, bukan beranda.
+  const pulangKe =
+    paket && pemilik.profileId
+      ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
+      : paket
+        ? `/belajar?topik=${paket.groupId}`
+        : (petaPaket || probe) && pemilik.profileId
+          ? `/keluarga/${pemilik.profileId}/misi`
+          : kembali
+
   return (
     <div className="space-y-4">
+      <PulangKe href={pulangKe} />
       <div className="flex items-center justify-between gap-3">
         {/* Nama paketnya, bukan cuma "Latihan": sepuluh soal ini satu satuan
             penilaian yang berdiri sendiri, dan anak yang tahu ia sedang
@@ -76,8 +95,13 @@ export default async function SesiLatihan({
           </span>{' '}
           · {pemilik.nama}
         </p>
+        {/* "Keluar" dan panah di header menuju tempat yang SAMA. Dua jalan
+            keluar boleh ada — panahnya kecil dan di pojok, sedangkan yang
+            sedang mengerjakan soal perlu tahu ia boleh berhenti tanpa mencari
+            — tapi dua jalan keluar yang mendarat di tempat berbeda adalah
+            aplikasi yang tidak punya satu jawaban untuk "tadi saya dari mana". */}
         <Link
-          href={kembali}
+          href={pulangKe}
           className="shrink-0 text-sm font-medium text-gray-500 hover:text-gray-900"
         >
           Keluar

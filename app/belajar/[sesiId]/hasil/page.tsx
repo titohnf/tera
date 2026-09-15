@@ -28,6 +28,7 @@ import NudgeBeban from '@/components/belajar/NudgeBeban'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 import { hasilSoal, KeteranganJawaban, NomorJawaban } from '@/components/belajar/BilahJawaban'
 import PilihanSesudahSkor from '@/components/belajar/PilihanSesudahSkor'
+import PulangKe from '@/components/belajar/PulangKe'
 import { langkahTopik } from '@/lib/belajar/langkah'
 
 /**
@@ -235,32 +236,50 @@ export default async function HasilSesi({
   // yang berisi empat soal dan benar semua tidak berarti paketnya selesai —
   // yang menentukan tinggal berapa dari kesepuluh soal itu yang masih salah.
   const sisa = paketIni ? paketIni.total - paketIni.benar : jumlahSalah
-  // Jalur peta pulang ke MISI, bukan ke `/belajar`. Dulu memang cukup
-  // `kembali`, karena petanya berdiri di halaman `/belajar` itu sendiri —
-  // sejak ia pindah ke `/keluarga/[studentId]/misi`, `/belajar` cuma merender
-  // pemilih mapel, jadi tautan lama mendaratkan anak yang baru menuntaskan
-  // satu paket di layar yang tidak memuat petanya sama sekali. Alasan kedua
-  // yang ikut kedaluwarsa: petanya "membuka satu-satunya topik berisi dengan
-  // sendirinya" hanya benar sewaktu topik aktif tinggal satu.
+  // ARAH PULANG, dan sejak layar ini kehilangan dua tombol navigasinya ia
+  // dipakai satu-satunya oleh panah kembali di header (lihat `PulangKe` di
+  // bawah). Tanpanya panahnya mendarat di "/" — beranda yang memaksa anak
+  // mencari lagi dari nol apa yang baru saja ia tinggalkan.
   //
-  // Pelajar berkode akses tidak punya halaman keluarga, dan tidak ada
-  // permukaan lain yang merender peta — untuk mereka `kembali` tetap yang
-  // paling masuk akal, dan tetap bukan null, yang akan menghilangkan tombol
-  // "pilih paket lain" sama sekali.
-  const daftarPaket =
+  // JALUR PETA PULANG KE BERANDA MISI. Dulu `/belajar`, karena petanya memang
+  // berdiri di halaman itu; sejak peta pindah ke `/keluarga/[studentId]/misi`,
+  // alamat lama mendaratkan anak di pemilih mapel yang tidak memuat petanya
+  // sama sekali.
+  //
+  // Dan ke BERANDANYA, bukan ke halaman topik yang barusan dikerjakan. Sesudah
+  // baris peta membuka soal secara langsung, halaman topik bukan lagi layar
+  // yang dilewati anak saat berangkat — memulangkannya ke sana berarti
+  // mendaratkannya di tempat yang belum pernah ia lihat dalam perjalanan ini.
+  // Beranda Misi tempat ia benar-benar berangkat, dan satu-satunya layar yang
+  // menjawab "sekarang apa" dengan seluruh topiknya sekaligus.
+  //
+  // ONGKOSNYA DIBAYAR SADAR: selama paket wajib sebuah topik belum tuntas,
+  // halaman topik tidak punya pintu lain — barisnya di peta membuka soal, dan
+  // layar ini tidak lagi menunjuk ke sana. Artinya daftar "Semua paket" dan
+  // kelompok Pengayaan praktis tidak terjangkau sampai wajibnya habis. Itu
+  // dipilih, bukan terlewat: pengayaan memang bukan pekerjaan yang kita minta,
+  // dan alur satu jalan lebih berharga daripada pintu samping yang jarang
+  // diketuk. Kalau suatu saat pengayaan perlu dibuka lebih awal, pintunya
+  // dipasang di BARIS PETA — bukan dengan memulangkan anak ke halaman topik.
+  //
+  // Jalur grup kurikulum tidak ikut: ia tidak punya peta, dan daftar paket
+  // babnya memang layar tempat anak memilih tadi.
+  //
+  // Pelajar berkode akses tidak punya halaman keluarga, jadi untuk mereka
+  // `/belajar` tetap yang paling masuk akal.
+  const pulangKe =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
-        : petaPaket
-          ? pemilik.profileId
-            // Ke HALAMAN TOPIKNYA, bukan ke peta: sejak 190 daftar paket
-            // tinggal di sana, dan tombol bernama "Pilih Paket Lain" yang
-            // mendaratkan anak di daftar topik memaksanya mencari lagi topik
-            // yang baru saja ia tinggalkan.
-            ? `/keluarga/${pemilik.profileId}/misi/${petaPaket.topikId}`
-            : kembali
-          : null
+        : (petaPaket || probe) && pemilik.profileId
+          // Probe retest ikut pulang ke Misi meski ia bukan paket: kartu
+          // jatuh temponya berdiri di beranda itu, dan tidak ada satu pun
+          // permukaan lain yang menyebut retest. Memulangkannya ke pemilih
+          // mapel berarti mendaratkan anak sejauh mungkin dari satu-satunya
+          // layar yang tahu apa yang barusan ia kerjakan.
+          ? `/keluarga/${pemilik.profileId}/misi`
+          : kembali
 
   // Langkah berikutnya topik ini, kalau sesi tadi memang paket peta.
   //
@@ -300,18 +319,24 @@ export default async function HasilSesi({
         }
       : null
 
+  // JALAN PULANG DIPASANG DI HEADER, bukan sebagai tombol di badan halaman.
+  // "Pilih Paket Lain" dan "Pilih Latihan Lain" pernah berdiri paling bawah di
+  // sini; keduanya kendali navigasi yang menyamar jadi isi, dan lima tombol
+  // sederajat membuat yang paling penting tenggelam di antaranya. Yang tersisa
+  // di badan halaman cuma yang MELAKUKAN sesuatu pada paket tadi.
   const pilihan = (
-    <PilihanSesudahSkor
-      sesiId={sesiId}
-      sisa={sisa}
-      terkunci={paketIni?.terkunci ?? false}
-      kunciTerbuka={kunciTerbuka}
-      daftarPaket={daftarPaket}
-      kembali={kembali}
-      materi={ulangi}
-      probe={bukanPaket !== null}
-      lanjut={lanjut}
-    />
+    <>
+      <PulangKe href={pulangKe} />
+      <PilihanSesudahSkor
+        sesiId={sesiId}
+        sisa={sisa}
+        terkunci={paketIni?.terkunci ?? false}
+        kunciTerbuka={kunciTerbuka}
+        materi={ulangi}
+        probe={bukanPaket !== null}
+        lanjut={lanjut}
+      />
+    </>
   )
 
   if (terpilih) {

@@ -94,3 +94,81 @@ export async function langkahTopik(
   const baris = (data as BarisLangkah[] | null) ?? []
   return baris.length ? dariBaris(baris[0]) : null
 }
+
+/**
+ * Keadaan tiap paket seluruh topik — bahan deretan keping di kartu Misi (194).
+ *
+ * Berbeda dari `PaketPeta` di `topik-peta.ts`, dan perbedaannya bukan kerapian:
+ * yang itu menghitung per BUTIR untuk SATU topik, dipakai halaman topik yang
+ * memang menggambar rinciannya. Yang di sini sekadar keadaan ringkas untuk
+ * SELURUH topik sekali jalan — persis yang bisa dimuat sebuah keping selebar
+ * dua digit.
+ */
+export interface PaketRingkas {
+  topikId: string
+  paketId: string
+  jenis: 'latihan' | 'ujian'
+  levelBloom: number | null
+  nomor: number
+  /** Latihan di luar cakupan Bloom topiknya: boleh, tapi tidak menahan apa pun. */
+  pengayaan: boolean
+  /** Latihan: nilai akhirnya lolos ambang (192). Ujian: sudah pernah dikerjakan. */
+  lolos: boolean
+  terkunci: boolean
+  /**
+   * Kapan yang terkunci terbuka lagi (ISO), atau null.
+   *
+   * Dipakai kartu Misi untuk menyebut paket wajib yang sedang tertutup sekalipun
+   * yang ditawarkan tombolnya paket pengayaan (193).
+   */
+  bukaPada: string | null
+  /** Pernah ada putaran yang selesai — membedakan "belum disentuh" dari "belum lolos". */
+  pernahDikerjakan: boolean
+}
+
+interface BarisPaketRingkas {
+  topik_id: string
+  paket_id: string
+  jenis: string | null
+  level_bloom: number | null
+  nomor: number | null
+  pengayaan: boolean | null
+  lolos: boolean | null
+  terkunci: boolean | null
+  buka_pada: string | null
+  pernah_dikerjakan: boolean | null
+}
+
+/**
+ * Keadaan seluruh paket, untuk seluruh topik aktif.
+ *
+ * Urutan barisnya dipertahankan apa adanya dari database — di sana sudah urutan
+ * gambarnya (wajib menaik, pengayaan, lalu ujian), dan menyusun ulang di sini
+ * berarti aturan urutan hidup di dua tempat.
+ */
+export async function paketRingkasSeluruhTopik(learnerId: string): Promise<PaketRingkas[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('topik_paket_ringkas', {
+    p_access_code: TANPA_KODE,
+    p_learner_id: learnerId,
+  })
+  if (error) {
+    // Kartunya tetap digambar tanpa kepingnya, dengan alasan yang sama seperti
+    // `langkahSeluruhTopik`: peta tanpa hiasan masih bisa dipakai, peta yang
+    // tidak muncul tidak.
+    console.error('[misi] gagal membaca ringkasan paket:', error)
+    return []
+  }
+  return ((data as BarisPaketRingkas[] | null) ?? []).map(b => ({
+    topikId: b.topik_id,
+    paketId: b.paket_id,
+    jenis: b.jenis === 'ujian' ? 'ujian' : 'latihan',
+    levelBloom: b.level_bloom == null ? null : Number(b.level_bloom),
+    nomor: b.nomor == null ? 0 : Number(b.nomor),
+    pengayaan: Boolean(b.pengayaan),
+    lolos: Boolean(b.lolos),
+    terkunci: Boolean(b.terkunci),
+    bukaPada: b.buka_pada ?? null,
+    pernahDikerjakan: Boolean(b.pernah_dikerjakan),
+  }))
+}

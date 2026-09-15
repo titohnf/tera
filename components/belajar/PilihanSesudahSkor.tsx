@@ -16,14 +16,26 @@ import { bukaKunciJawaban, mulaiLangkahTopik, ulangiPaket } from '@/app/belajar/
  *
  * Komponen browser karena kedua tombolnya memanggil server action yang bisa
  * gagal. Kegagalan seperti itu bukan layar rusak, jadi yang muncul kalimat.
+ *
+ * HANYA LANGKAH, BUKAN NAVIGASI. "Pilih Paket Lain" dan "Pilih Latihan Lain"
+ * pernah berdiri paling bawah di sini, dan keduanya sudah pergi: lima tombol
+ * bertumpuk membuat anak membaca daftar alih-alih memilih, dan yang paling
+ * mahal justru yang paling penting — "Kerjakan Lagi" di puncaknya kehilangan
+ * bobotnya begitu ia cuma satu dari lima kotak seukuran.
+ *
+ * Keduanya juga bukan jenis yang sama dengan tetangganya. Sisa tombol di sini
+ * MELAKUKAN sesuatu pada paket yang barusan dikerjakan — mengulang, melangkah,
+ * membuka kunci. Dua itu cuma berpindah tempat, dan kendali navigasi yang
+ * menyamar jadi isi halaman adalah pola yang sudah lama ditolak permukaan ini
+ * (lihat `Kepala.tsx`: tombol kembali tinggal di header). Arah pulangnya
+ * sekarang dipasang halaman hasil lewat `PulangKe` — panah kembali di header
+ * mendarat di halaman topiknya, bukan di beranda.
  */
 export default function PilihanSesudahSkor({
   sesiId,
   sisa,
   terkunci,
   kunciTerbuka,
-  daftarPaket,
-  kembali,
   materi,
   probe = false,
   lanjut = null,
@@ -35,10 +47,6 @@ export default function PilihanSesudahSkor({
   terkunci: boolean
   /** Layar ini sedang menampilkan kuncinya, jadi tombolnya tidak perlu lagi. */
   kunciTerbuka: boolean
-  /** Daftar paket topik ini, untuk kembali memilih. Null kalau topiknya tak diketahui. */
-  daftarPaket: string | null
-  /** Daftar mapel, atas nama anak yang sama. */
-  kembali: string
   /** Materi topik yang barusan dikerjakan, kalau topiknya punya materi. */
   materi: string | null
   /**
@@ -80,7 +88,7 @@ export default function PilihanSesudahSkor({
   const utama =
     'block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-300'
   const biasa =
-    'block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-50 disabled:text-gray-400'
+    'block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-100 disabled:text-gray-400'
 
   const bisaDiulang = !probe && sisa > 0 && !terkunci
 
@@ -161,16 +169,6 @@ export default function PilihanSesudahSkor({
           Lihat Kunci Jawaban
         </Link>
       )}
-
-      {daftarPaket && (
-        <Link href={daftarPaket} className={biasa}>
-          Pilih Paket Lain
-        </Link>
-      )}
-
-      <Link href={kembali} className={biasa}>
-        Pilih Latihan Lain
-      </Link>
 
       {materi && (
         <p className="pt-1 text-center">

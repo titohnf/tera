@@ -13,13 +13,22 @@ import TombolLangkah from '@/components/belajar/TombolLangkah'
 /**
  * Halaman satu topik Misi: kamu sampai di mana, dan berikutnya apa.
  *
- * LAYAR TRANSISI, DAN CUMA UNTUK YANG SUDAH BERJALAN. Kunjungan pertama sebuah
- * topik tidak pernah mendarat di sini — barisnya di peta langsung membuka sesi
- * paket pertama, karena halaman yang cuma berkata "kamu akan mengerjakan Paket
- * C1" adalah ketukan yang tidak membayar dirinya sendiri. Yang sudah punya
- * kemajuan justru sebaliknya: ia perlu tahu ia sampai di mana sebelum soal
- * berikutnya muncul, dan tanpa layar ini alurnya terasa seperti mesin yang
- * menyodorkan soal tanpa pernah menyebutkan sudah sampai mana.
+ * LAYAR PERSIMPANGAN, BUKAN LAYAR ANTARA. Selama langkahnya masih paket
+ * latihan, barisnya di peta membuka soalnya langsung — kunjungan pertama,
+ * lanjutan, maupun pengulangan paket yang belum lolos ambang. Halaman yang cuma
+ * berkata "kamu akan mengerjakan Paket C2" adalah ketukan yang tidak membayar
+ * dirinya sendiri, dan itu berlaku untuk ketiganya.
+ *
+ * Yang membawa anak ke sini cuma satu keadaan: paket wajib terakhir lolos, dan
+ * langkahnya berpindah ke ujian. Di situ ada dua hal yang tidak dipunyai
+ * satu pun langkah sebelumnya — sebuah PILIHAN (ambil pengayaan dulu, atau
+ * ujian sekarang) dan sebuah AKIBAT YANG TIDAK BISA DIBATALKAN (sampel ujian
+ * lahir sekali, tanpa putaran kedua). Keduanya pantas dibaca sebelum diketuk.
+ *
+ * Selebihnya halaman ini tetap bisa dibuka kapan saja lewat "Pilih Paket Lain"
+ * dan tautan langsung, jadi seluruh keadaan lain — langkah latihan, terkunci,
+ * topik yang sudah habis — tetap punya tampilannya di bawah. Yang berubah cuma
+ * siapa yang diantar ke sini, bukan apa yang ia temukan kalau datang sendiri.
  *
  * RUMAH BARU DAFTAR PAKET. Sampai sebelum 190 daftarnya membentang di dalam
  * kartu peta; sekarang ia tinggal di sini saja. Satu daftar di dua layar berarti
@@ -54,7 +63,7 @@ export default async function TopikMisiPage({
         </p>
         <Link
           href={`/keluarga/${studentId}/misi`}
-          className="block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-50"
+          className="block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-100"
         >
           Kembali ke Misi
         </Link>
@@ -78,6 +87,12 @@ export default async function TopikMisiPage({
         nomor: langkah.levelBloom ?? 1,
       })
     : null
+
+  // Topik ini punya paket pengayaan atau tidak. Menentukan apakah kartu ujian
+  // di bawah boleh menawarkannya sebagai pilihan — menawarkan sesuatu yang
+  // tidak ada adalah cara tercepat membuat anak menggulir mencari yang tidak
+  // pernah ada.
+  const adaPengayaan = paket.some(p => p.pengayaan)
 
   const bukaPada = langkah?.bukaPada
     ? (() => {
@@ -130,7 +145,13 @@ export default async function TopikMisiPage({
           satu-satunya pertanyaan yang membawa anak ke halaman ini. */}
       {namaLangkah && langkah && !langkah.terkunci && (
         <div className="rounded-xl bg-white p-5 shadow-kartu">
-          <p className="text-xs text-gray-400">Berikutnya</p>
+          {/* "Rekomendasi", bukan cuma "Berikutnya". Yang kedua berbunyi
+              seperti antrean yang sudah ditetapkan, padahal daftar di bawah
+              memang boleh dikerjakan dalam urutan mana saja — dan anak yang
+              membacanya sebagai perintah akan mengira paket lain terlarang.
+              Kata "rekomendasi" mengatakan hal yang sebenarnya: ini saran
+              sistem, bukan pagar. */}
+          <p className="text-xs text-gray-400">Rekomendasi Berikutnya</p>
           <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
             {namaLangkah}
           </p>
@@ -157,6 +178,22 @@ export default async function TopikMisiPage({
               seluruh level dan hanya dikerjakan sekali — tidak ada putaran kedua.
             </p>
           )}
+          {langkah.jenis === 'ujian' && adaPengayaan && (
+            // CABANGNYA DISEBUT, bukan cuma disediakan. Paket pengayaan memang
+            // sudah berdiri di daftar bawah dengan judul kelompoknya sendiri,
+            // tapi anak yang membaca kartu "Berikutnya: Ujian Topik" lalu
+            // melihat tombol besar di bawahnya tidak punya alasan menggulir
+            // lebih jauh. Satu kalimat di sini yang mengubah layar ini dari
+            // pengumuman jadi persimpangan.
+            //
+            // Urutannya sengaja: ujian disebut lebih dulu sebagai langkah
+            // resmi, pengayaan sebagai tawaran. Membalikkannya membuat yang
+            // tidak wajib terbaca seperti syarat.
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              Kalau mau, paket pengayaan di bawah boleh kamu ambil dulu — tidak
+              wajib, dan ujiannya tetap menunggu sampai kamu siap.
+            </p>
+          )}
           <div className="mt-3">
             <TombolLangkah
               anak={studentId}
@@ -180,7 +217,13 @@ export default async function TopikMisiPage({
           hidup lagi adalah yang membuat anak mengira topiknya habis. */}
       {namaLangkah && langkah?.terkunci && (
         <div className="rounded-xl bg-white p-5 shadow-kartu">
-          <p className="text-xs text-gray-400">Berikutnya</p>
+          {/* "Rekomendasi", bukan cuma "Berikutnya". Yang kedua berbunyi
+              seperti antrean yang sudah ditetapkan, padahal daftar di bawah
+              memang boleh dikerjakan dalam urutan mana saja — dan anak yang
+              membacanya sebagai perintah akan mengira paket lain terlarang.
+              Kata "rekomendasi" mengatakan hal yang sebenarnya: ini saran
+              sistem, bukan pagar. */}
+          <p className="text-xs text-gray-400">Rekomendasi Berikutnya</p>
           <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
             {namaLangkah}
           </p>
@@ -207,15 +250,14 @@ export default async function TopikMisiPage({
         </div>
       )}
 
-      <div className="space-y-2">
-        <div className="px-1 pt-2">
-          <p className="font-semibold tracking-tight text-gray-900">Semua paket</p>
-          {/* Alurnya menawarkan urutan, tidak memagarinya. Kalimat ini yang
-              membuat daftar di bawah tidak terbaca sebagai daftar terlarang. */}
-          <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
-            Kamu boleh mengerjakan paket mana saja dari sini, tidak harus urut.
-          </p>
-        </div>
+      {/* Judulnya saja, tanpa kalimat keterangan di bawahnya. "Boleh dikerjakan
+          tidak harus urut" dulu berdiri di sini; yang menyampaikannya sekarang
+          kartunya sendiri, yang masing-masing menyebut apa ia wajib atau
+          pengayaan dan mana yang bisa diketuk. Judulnya sendiri tetap perlu:
+          ia yang memisahkan daftar ini dari kartu langkah berikutnya di
+          atasnya, dua hal yang tanpa batas terbaca sebagai satu tumpukan. */}
+      <div className="space-y-2 pt-2">
+        <p className="px-1 font-semibold tracking-tight text-gray-900">Daftar Paket</p>
         <DaftarPaket
           anak={studentId}
           sumber={{ jenis: 'peta', topikId }}

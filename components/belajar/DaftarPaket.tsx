@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
 import type { PaketPeta } from '@/lib/belajar/topik-peta'
 import { namaPaket } from '@/lib/belajar/nama-paket'
@@ -37,12 +37,22 @@ import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
  *   putaran         sudah berapa kali dikerjakan sampai tuntas
  *   terkunci        kuncinya sudah dibuka, jadi nilainya berhenti di situ
  *
- * DUA KELOMPOK SEJAK 189: wajib dan pengayaan. Cakupan Bloom tiap topik (182)
- * sudah lama memutuskan bahwa hanya sebagian paket yang menentukan ketuntasan,
- * tapi layar ini menampilkan semuanya sebagai baris sederajat — dan anak yang
- * melihat enam baris menyimpulkan enam-enamnya diminta. Judul kelompoknya cuma
- * muncul kalau memang ada dua kelompok; topik yang seluruh paketnya wajib tetap
- * tampil sebagai satu daftar polos.
+ * WAJIB DAN PENGAYAAN, DI KARTUNYA MASING-MASING. Cakupan Bloom tiap topik
+ * (182) sudah lama memutuskan bahwa hanya sebagian paket yang menentukan
+ * ketuntasan, dan anak yang melihat enam kartu sederajat menyimpulkan
+ * enam-enamnya diminta. Pembedanya sempat berupa judul kelompok berikut satu
+ * kalimat keterangan di atas tiap kelompok; keduanya sudah dihapus.
+ *
+ * Alasannya: keterangan yang berdiri di atas kelompok cuma terbaca oleh yang
+ * kebetulan menggulir lewat batasnya. Anak yang matanya jatuh di kartu keempat
+ * tidak punya cara tahu kartu itu wajib atau tidak tanpa menggulir balik
+ * mencari judul yang menaunginya — dan itu persis pertanyaan yang paling sering
+ * ia punya. Sekarang penandanya menempel di kartunya sendiri, jadi jawabannya
+ * ada di tempat pertanyaannya muncul.
+ *
+ * Penandanya cuma menyala kalau topiknya memang punya dua jenis. "Wajib" di
+ * setiap kartu pada topik yang seluruh paketnya wajib bukan keterangan, cuma
+ * perabot — dan penanda yang selalu sama tidak membedakan apa pun.
  *
  * Ditambah satu keadaan yang hanya dipunyai paket ujian sejak migrasi 189:
  * `menungguLatihan`, yang menutup pintunya sampai seluruh paket latihan dalam
@@ -92,6 +102,12 @@ interface Baris extends PaketTopik {
    * jadi di sana tidak ada paket yang perlu dibedakan wajib atau bukan.
    */
   pengayaan?: boolean
+  /**
+   * Latihan atau ujian. Hanya jalur peta yang punya paket ujian, jadi jalur
+   * grup membiarkannya undefined — dan yang memakainya (penanda wajib) memang
+   * cuma menyala di jalur peta.
+   */
+  jenis?: 'latihan' | 'ujian'
 }
 
 /**
@@ -110,6 +126,72 @@ function kapanTerbuka(iso: string, hariIniWib: string): string {
   // lebih panjang daripada 24.
   const hari = l.hari === l.tanggal ? l.hari : l.hari.toLowerCase()
   return `${hari} pukul ${l.jam}`
+}
+
+/**
+ * Gembok dan centang — keadaan sebuah kartu, sebelum satu kata pun dibaca.
+ *
+ * SVG, bukan emoji: emoji digambar fon perangkat, jadi warnanya tidak bisa
+ * diikutkan warna teks di sekitarnya dan bentuknya berbeda antara iOS, Android,
+ * dan Windows. Ukurannya pun ikut fon, yang membuat perataannya meleset di
+ * sebagian ponsel.
+ */
+function IkonGembok() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <rect x="4" y="10" width="16" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
+function IkonCentang() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path d="m5 13 4 4L19 7" />
+    </svg>
+  )
+}
+
+/**
+ * Warna satu lingkaran per soal, urut dari yang terbaik.
+ *
+ * DIURUTKAN, bukan digambar sesuai urutan soalnya — dan itu disengaja. Layar
+ * ini tidak tahu soal ke berapa yang salah (yang tahu halaman hasil, dan di
+ * sana nomornya memang ditulis), jadi menyusunnya acak cuma akan mengarang
+ * urutan yang tidak berarti apa-apa. Yang diurutkan justru terbaca sebagai satu
+ * ukuran: sejauh mana hijaunya sudah berjalan.
+ *
+ * Jumlahnya selalu persis `total`. Data yang cacat — jumlah keadaan melebihi
+ * butir paketnya — dipotong alih-alih melahirkan baris lingkaran yang lebih
+ * panjang daripada kartunya.
+ */
+function warnaSoal(p: Baris): string[] {
+  const w = [
+    ...Array<string>(p.benar).fill('bg-emerald-500'),
+    ...Array<string>(p.sebagian).fill('bg-amber-400'),
+    ...Array<string>(p.salah).fill('bg-rose-400'),
+  ].slice(0, p.total)
+  while (w.length < p.total) w.push('bg-gray-200')
+  return w
 }
 
 /** Satu paket peta jadi baris layar. Dipakai dua kali: dari server, dan dari browser. */
@@ -131,6 +213,7 @@ function dariPeta(p: PaketPeta): Baris {
     bukaPada: p.bukaPada,
     menungguLatihan: p.menungguLatihan,
     pengayaan: p.pengayaan,
+    jenis: p.jenis,
   }
 }
 
@@ -244,7 +327,7 @@ export default function DaftarPaket({
         </p>
       )}
 
-      {paket.map((p, i) => {
+      {paket.map(p => {
         const tuntas = p.benar >= p.total
         // Gerbang ujian (189). Satu-satunya keadaan di layar ini yang menutup
         // pintu karena sesuatu di paket LAIN, jadi ia disebutkan — baris mati
@@ -254,57 +337,219 @@ export default function DaftarPaket({
         const persen = p.maks > 0 ? persenDari(p.skor, p.maks) : null
         const belumTersentuh = p.putaran === 0
 
+        // Penandanya cuma untuk paket LATIHAN. Ujian bukan salah satu dari
+        // "paket wajib" yang harus tuntas — ia yang menunggu mereka tuntas —
+        // dan menempelinya penanda "Wajib" akan membuat kartu terakhir tampak
+        // sebagai syarat yang keenam. Namanya sendiri sudah menyebut ia apa.
+        const penanda =
+          adaPengayaan && p.jenis !== 'ujian' ? (p.pengayaan ? 'Pengayaan' : 'Wajib') : null
+
+        const ajakan = !bisa
+          ? null
+          : p.jenis === 'ujian'
+            ? 'Mulai ujian'
+            : belumTersentuh
+              ? 'Mulai kerjakan'
+              : 'Kerjakan lagi'
+
         const isi = (
           <>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold text-gray-900">{p.judul}</span>
-                <span className="text-xs text-gray-400">{p.total} soal</span>
+            {penanda && (
+              // Penandanya paling atas, sebaris sendiri. Ia menjawab pertanyaan
+              // yang datang lebih dulu daripada "paket apa ini" — yaitu "ini
+              // perlu saya kerjakan atau tidak".
+              //
+              // WAJIB BIRU, PENGAYAAN AMBER. Dua warna, bukan satu warna dan
+              // satu kelabu: kelabu di seluruh permukaan ini berarti "mati" —
+              // kartu terkunci, teks yang meredup, petak yang belum terisi —
+              // jadi penanda kelabu membuat pengayaan terbaca sebagai sesuatu
+              // yang tidak bisa dikerjakan, padahal ia justru terbuka. Amber
+              // menandainya sebagai jalur yang lain, bukan jalur yang tertutup.
+              //
+              // Di kartu yang sudah mati warnanya ikut memudar: penanda
+              // berwarna pada kartu kelabu adalah satu-satunya benda mencolok
+              // di sana, dan ia akan menarik mata justru ke kartu yang tidak
+              // bisa diapa-apakan.
+              <span className="flex">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    !bisa
+                      ? 'bg-white text-gray-400 ring-1 ring-gray-200'
+                      : p.pengayaan
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-blue-50 text-blue-700'
+                  }`}
+                >
+                  {penanda}
+                </span>
               </span>
-              <span className="mt-0.5 block text-sm text-gray-500">
-                {belumTersentuh
-                  ? 'Belum dikerjakan'
-                  : `${p.benar} dari ${p.total} benar${
-                      p.putaran > 1 ? ` · ${p.putaran} putaran` : ''
-                    }`}
-              </span>
-              {p.terkunci && (
-                <span className="mt-0.5 block text-xs text-gray-400">
-                  {/* Kapan ia terbuka lagi disebutkan kalau memang ada
-                      waktunya. Baris mati tanpa satu kata pun tentang kapan ia
-                      hidup kembali adalah yang membuat anak mengira topiknya
-                      habis — padahal paket latihan membuka sendiri sesudah
-                      jeda, dan yang perlu ia lakukan cuma kembali besok. */}
-                  {p.bukaPada && hariIniWib
-                    ? `Terkunci — bisa dicoba lagi ${kapanTerbuka(p.bukaPada, hariIniWib)}`
-                    : 'Terkunci — kuncinya sudah dibuka'}
+            )}
+
+            <span className={`flex items-start gap-2.5 ${penanda ? 'mt-2' : ''}`}>
+              {/* Ikon keadaan, dan HANYA untuk kartu yang mati. Kartu hidup
+                  tidak butuh ikon "bisa dikerjakan" — tombolnya di bawah sudah
+                  mengatakannya dengan kata-kata, dan ikon ketiga yang muncul di
+                  setiap kartu akan meratakan kembali perbedaan yang baru saja
+                  dibangun. */}
+              {!bisa && (
+                <span
+                  className={`mt-0.5 shrink-0 ${tuntas ? 'text-emerald-500' : 'text-gray-400'}`}
+                >
+                  {tuntas ? <IkonCentang /> : <IkonGembok />}
                 </span>
               )}
-              {menunggu && (
-                <span className="mt-0.5 block text-xs text-gray-400">
-                  Terbuka setelah semua paket wajib tuntas
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span
+                    className={`text-sm font-semibold ${bisa ? 'text-gray-900' : 'text-gray-500'}`}
+                  >
+                    {p.judul}
+                  </span>
+                  <span className="text-xs text-gray-400">{p.total} soal</span>
                 </span>
-              )}
-              {tuntas && !p.terkunci && (
-                <span className="mt-0.5 block text-xs text-emerald-600">Benar semua</span>
+                <span
+                  className={`mt-0.5 block text-sm ${bisa ? 'text-gray-500' : 'text-gray-400'}`}
+                >
+                  {belumTersentuh
+                    ? 'Belum dikerjakan'
+                    : `${p.benar} dari ${p.total} benar${
+                        p.putaran > 1 ? ` · ${p.putaran} putaran` : ''
+                      }`}
+                </span>
+                {p.terkunci && (
+                  <span className="mt-0.5 block text-xs text-gray-400">
+                    {/* Kapan ia terbuka lagi disebutkan kalau memang ada
+                        waktunya. Baris mati tanpa satu kata pun tentang kapan
+                        ia hidup kembali adalah yang membuat anak mengira
+                        topiknya habis — padahal paket latihan membuka sendiri
+                        sesudah jeda, dan yang perlu ia lakukan cuma kembali
+                        besok. */}
+                    {p.bukaPada && hariIniWib
+                      ? `Terbuka lagi ${kapanTerbuka(p.bukaPada, hariIniWib)}`
+                      : 'Terkunci — kuncinya sudah dibuka'}
+                  </span>
+                )}
+                {menunggu && (
+                  <span className="mt-0.5 block text-xs text-gray-400">
+                    Terbuka setelah semua paket wajib tuntas
+                  </span>
+                )}
+              </span>
+              {persen != null && !belumTersentuh && (
+                <span
+                  className={`shrink-0 text-sm font-semibold tabular-nums ${
+                    bisa ? 'text-gray-900' : 'text-gray-400'
+                  }`}
+                >
+                  {persen}%
+                </span>
               )}
             </span>
-            {persen != null && !belumTersentuh && (
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-900">
-                {persen}%
+
+            {/* SATU LINGKARAN SATU SOAL, berwarna menurut jawabannya.
+                
+                Batang menerus sebelumnya ambigu, dan ambigu dengan cara yang
+                paling mahal: ia menggambar butir yang benar, sedangkan angka
+                persen tepat di atasnya adalah NILAI — dua besaran berbeda yang
+                untuk 7 dari 8 sama-sama jatuh di 88%. Tidak ada satu pun cara
+                bagi yang melihatnya untuk tahu yang mana yang sedang digambar.
+                
+                Lingkaran yang bisa dihitung tidak punya masalah itu: delapan
+                lingkaran untuk delapan soal, persis seperti kalimat "6 dari 8
+                benar" di atasnya. Satuannya kelihatan, jadi ia tidak mungkin
+                dibaca sebagai persentase.
+                
+                WARNANYA SAMA DENGAN LAYAR HASIL — hijau benar, kuning sebagian
+                benar, merah salah, kelabu belum dijawab. Petak bernomor di
+                layar hasil sudah memakai keempat warna itu sejak lama, dan anak
+                yang baru menutup sebuah paket membawa arti warna itu di
+                kepalanya. Memakai warna yang sama di sini berarti tidak ada
+                yang perlu dipelajari dua kali; memakai warna lain berarti dua
+                bahasa untuk satu hal.
+                
+                Tidak digambar untuk paket yang belum disentuh: deretan
+                lingkaran kosong adalah gambar tentang ketiadaan, dan ia muncul
+                justru di kartu yang paling ingin kita buat menarik. */}
+            {!belumTersentuh && p.total > 0 && (
+              <span className="mt-2.5 flex flex-wrap gap-1.5" aria-hidden>
+                {warnaSoal(p).map((w, i) => (
+                  <span key={i} className={`h-2.5 w-2.5 rounded-full ${w}`} />
+                ))}
+              </span>
+            )}
+
+            {/* TOMBOL SUNGGUHAN, bukan teks biru. Seluruh kartu memang sudah
+                jadi tombol sejak dulu, tapi bentuknya sama persis dengan kartu
+                yang tidak bisa diapa-apakan — dan satu-satunya pembedanya latar
+                yang berubah saat disentuh kursor, yang di ponsel tidak ada.
+                Bentuk tombol adalah satu-satunya isyarat "ini bisa ditekan"
+                yang terbaca tanpa disentuh lebih dulu.
+
+                Ia `span`, bukan `button`: kartunya sendiri yang tombol, dan
+                tombol di dalam tombol bukan HTML yang sah.
+                
+                SATU WARNA UNTUK SEMUA, wajib maupun pengayaan. Tombol yang
+                warnanya berbeda-beda menuntut dibaca lebih dulu sebelum
+                dikenali sebagai tombol, dan itu membatalkan sendiri alasan ia
+                dibuat berbentuk tombol. Perbedaan bobot paketnya sudah dipikul
+                penanda di kepala kartu — mengulanginya di tombol berarti satu
+                keterangan yang sama dikatakan dua kali dengan dua bahasa.
+                
+                DAN SEMUANYA SEKUNDER — bergaris, bukan biru pekat. Di halaman
+                ini cuma ada SATU tombol biru penuh, yaitu tombol rekomendasi
+                berikutnya di kartu paling atas. Itulah gunanya tombol primer:
+                menunjuk satu hal dari sekian banyak. Enam tombol pekat di
+                bawahnya membuat penunjuk itu tidak menunjuk apa-apa lagi,
+                sedangkan yang bergaris tetap terbaca sebagai tombol tanpa ikut
+                berebut perhatian. */}
+            {ajakan && (
+              <span className="mt-3 flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+                {/* Sisa salahnya, tepat di sebelah tombol yang akan
+                    mengerjakannya. "Kerjakan lagi" tidak menyebutkan seberapa
+                    besar pekerjaannya, dan dua soal terasa sangat berbeda dari
+                    delapan — perbedaan yang menentukan anak menekannya sekarang
+                    atau menundanya. Angkanya juga bukan nilai, jadi ia tidak
+                    menyeberangkan apa pun yang FR3 larang.
+
+                    Ruang ini kosong untuk paket yang belum disentuh: di sana
+                    seluruh soalnya masih menunggu, dan "8 soal masih salah"
+                    untuk paket yang belum pernah dibuka adalah kalimat yang
+                    tidak benar. */}
+                <span className="text-xs text-gray-400">
+                  {/* "Belum benar", bukan "masih salah": hitungannya
+                      `total - benar`, jadi ia ikut memuat soal yang SEBAGIAN
+                      benar — lingkaran kuning di atas. Menyebut yang kuning
+                      sebagai salah membuat kalimat ini membantah gambarnya
+                      sendiri. */}
+                  {!belumTersentuh && p.total - p.benar > 0
+                    ? `${p.total - p.benar} soal belum benar`
+                    : ''}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-semibold text-blue-600 ring-1 ring-blue-200">
+                  {ajakan}
+                  <span aria-hidden>›</span>
+                </span>
               </span>
             )}
           </>
         )
 
-        const gaya = 'flex w-full items-center gap-3 rounded-xl bg-white p-4 text-left shadow-kartu'
+        // DUA BENTUK KARTU, dan inilah perbedaan yang sebenarnya dikerjakan
+        // layar ini. Yang hidup mengambang: putih, berbayang, bertombol. Yang
+        // mati rata dengan latar halaman — kelabu, bergaris tipis, tanpa
+        // bayangan sama sekali. Sebelumnya keduanya kartu putih berbayang yang
+        // sama persis dan bedanya cuma `opacity-70`, yang di layar terbaca
+        // sebagai "gambarnya belum selesai dimuat", bukan sebagai "yang ini
+        // memang belum bisa".
+        const gaya = 'flex w-full flex-col rounded-xl p-4 text-left'
 
-        const baris = bisa ? (
+        return bisa ? (
           <button
+            key={p.kunci}
             type="button"
             disabled={sibuk}
             onClick={() => buka(p.kunci)}
-            className={`${gaya} w-full transition hover:bg-slate-50 disabled:opacity-60`}
+            className={`${gaya} bg-white shadow-kartu transition hover:bg-slate-100 disabled:opacity-60`}
           >
             {isi}
           </button>
@@ -312,38 +557,9 @@ export default function DaftarPaket({
           // Bukan tombol mati melainkan bukan tombol sama sekali: sasaran ketuk
           // yang tidak melakukan apa-apa membuat orang mengetuknya berkali-kali
           // untuk memastikan.
-          <div className={`${gaya} opacity-70`}>{isi}</div>
-        )
-
-        return (
-          <Fragment key={p.kunci}>
-            {/* Judul kelompok, dan hanya kalau memang ada dua kelompok. Topik
-                yang seluruh paketnya wajib tidak mendapat satu kata pun
-                tambahan: "Wajib" di atas daftar yang isinya wajib semua bukan
-                keterangan, cuma perabot. */}
-            {adaPengayaan && i === 0 && (
-              <div className="pt-1 pb-0.5">
-                <p className="text-xs font-semibold text-gray-600">Wajib</p>
-                <p className="text-xs leading-relaxed text-gray-400">
-                  Semua paket ini perlu tuntas sebelum ujian topiknya terbuka.
-                </p>
-              </div>
-            )}
-            {p.pengayaan && !paket[i - 1]?.pengayaan && (
-              <div className="pt-3 pb-0.5">
-                <p className="text-xs font-semibold text-gray-600">Pengayaan</p>
-                {/* Dua hal yang harus dikatakan sekaligus: ia tidak wajib, DAN
-                    tidak mengurangi apa pun kalau dilewati. Menyebut yang
-                    pertama saja membuat sebagian anak mengerjakannya karena
-                    khawatir, dan itu jenis kerja yang tidak pernah kita minta. */}
-                <p className="text-xs leading-relaxed text-gray-400">
-                  Tidak wajib dan tidak memengaruhi ketuntasan topik — untuk kamu
-                  yang mau melangkah lebih jauh.
-                </p>
-              </div>
-            )}
-            {baris}
-          </Fragment>
+          <div key={p.kunci} className={`${gaya} border border-gray-200 bg-slate-50`}>
+            {isi}
+          </div>
         )
       })}
     </div>

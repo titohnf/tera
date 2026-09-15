@@ -48,3 +48,26 @@ export function namaPaket(p: {
   const bloom = p.levelBloom == null ? undefined : NAMA_BLOOM[p.levelBloom]
   return bloom ? `Paket ${bloom.kode} — ${bloom.nama}` : `Paket ${p.nomor}`
 }
+
+/**
+ * Sebutan pendek paket, untuk tempat yang cuma punya beberapa kata.
+ *
+ * "C1", bukan "Paket C1 — Mengingat". Label tombol di kartu Misi harus muat di
+ * setengah lebar layar ponsel bersama tombol kedua, dan nama Bloom yang ikut
+ * masuk ke sana akan terpotong di tengah kata — persis pada bagian yang
+ * membedakan satu paket dari paket lain.
+ *
+ * Yang panjang TIDAK diganti, cuma didampingi: begitu anak sampai di halaman
+ * topik atau layar hasil, ruangnya ada dan "Mengingat" memang layak dibaca.
+ * Keduanya memakai tabel yang sama supaya kode di tombol dan nama di halaman
+ * tidak mungkin menunjuk paket yang berbeda.
+ */
+export function kodePaket(p: {
+  jenis: 'latihan' | 'ujian'
+  levelBloom: number | null
+  nomor: number
+}): string {
+  if (p.jenis === 'ujian') return 'Ujian'
+  const bloom = p.levelBloom == null ? undefined : NAMA_BLOOM[p.levelBloom]
+  return bloom ? bloom.kode : `Paket ${p.nomor}`
+}

@@ -1,11 +1,12 @@
 import { belajarContext } from '@/lib/belajar/konteks'
 import { petaTopik } from '@/lib/belajar/topik-peta'
-import { langkahSeluruhTopik } from '@/lib/belajar/langkah'
+import { langkahSeluruhTopik, paketRingkasSeluruhTopik } from '@/lib/belajar/langkah'
 import PetaTopik from '@/components/belajar/PetaTopik'
 import KartuRetest from '@/components/belajar/KartuRetest'
 import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
 import { catatKunjungan, sapaanKunjungan } from '@/lib/belajar/kunjungan'
+import { todayWib } from '@/lib/daily-message'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -55,10 +56,15 @@ export default async function PaketTopikPage({
   const hariSejakKunjungan = await catatKunjungan(learnerId)
   const sapaan = sapaanKunjungan(hariSejakKunjungan)
 
-  const [peta, retest, langkah] = await Promise.all([
+  const [peta, retest, langkah, paket] = await Promise.all([
     petaTopik(learnerId),
     retestJatuhTempo(learnerId),
     langkahSeluruhTopik(learnerId),
+    // Keadaan tiap paket (194), untuk deretan keping di kartu. Ikut di
+    // `Promise.all` yang sama, bukan menunggu giliran: empat pertanyaan ini
+    // tidak saling bergantung, dan menjalankannya berurutan menambah tiga
+    // perjalanan jaringan pada layar yang paling sering dibuka anak.
+    paketRingkasSeluruhTopik(learnerId),
   ])
 
   return (
@@ -72,7 +78,17 @@ export default async function PaketTopikPage({
           disambut, bukan langsung disodori daftar yang harus dipilih. */}
       {sapaan && <SapaanKunjungan sapaan={sapaan} anak={studentId} />}
       <KartuRetest retest={retest} anak={studentId} />
-      <PetaTopik anak={studentId} topik={peta} langkah={langkah} />
+      {/* Jamnya dibaca DI SINI, bukan di dalam komponennya. `PetaTopik` dirender
+          di server lalu dihidrasi di browser, dan tanggal yang dibaca dua kali
+          pada dua mesin yang jamnya berbeda melahirkan HTML yang tidak cocok —
+          alasan yang sama dengan `sekarangIso` di `lib/waktu.ts`. */}
+      <PetaTopik
+        anak={studentId}
+        topik={peta}
+        langkah={langkah}
+        paket={paket}
+        hariIni={todayWib()}
+      />
     </div>
   )
 }

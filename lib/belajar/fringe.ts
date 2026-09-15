@@ -48,35 +48,28 @@ export interface PetaTerkelompok {
   tuntas: TopikPeta[]
 }
 
-/**
- * Urutan di dalam frontier.
+/*
+ * URUTAN DI DALAM FRONTIER: ikut kurikulum, titik.
  *
- * `sedang_dikerjakan` lebih dulu daripada apa pun: yang sudah dimulai punya
- * tarikan penyelesaian yang tidak dimiliki topik yang masih kosong, dan
- * menguburnya di bawah tawaran baru adalah cara termurah membuat orang
- * meninggalkan pekerjaan yang hampir selesai.
+ * Di sini dulu berdiri tabel prioritas — `sedang_dikerjakan` di puncak, lalu
+ * `butuh_pengulangan`, lalu yang belum disentuh, dan `eskalasi_tutor` paling
+ * bawah. Alasannya masuk akal satu per satu, tapi akibatnya di layar tidak:
+ * urutan kartu berubah setiap kali anak menutup sebuah paket. Topik yang
+ * kemarin di baris ketiga hari ini melompat ke puncak, dan peta yang seharusnya
+ * jadi tempat yang dikenali berubah susunannya persis pada saat anak paling
+ * sering menengoknya.
  *
- * `butuh_pengulangan` menyusul karena itulah corrective loop-nya Bloom — inti
- * mekanismenya, bukan hukumannya.
+ * Sekarang urutannya urutan kurikulum, sama seperti dua kelompok lain di layar
+ * ini — `topik_tersedia` memulangkan `order by t.urutan`, dan tidak ada yang
+ * mengacaknya lagi sesudah itu. Yang hilang cuma pengurutan yang kebetulan;
+ * yang didapat adalah letak yang tetap: D-01 selalu di atas D-04, kemarin, hari
+ * ini, dan sesudah anak mengerjakan apa pun.
  *
- * `eskalasi_tutor` JUSTRU PALING BAWAH, dan itu sengaja meski ia terdengar
- * paling mendesak. Topik yang tereskalasi sedang menunggu manusia; anak tidak
- * bisa membukanya sendiri betapapun ia mau. Menaruhnya di puncak berarti
- * memimpin layar dengan satu-satunya baris yang tidak bisa ia tindaklanjuti —
- * dan baris itu kebetulan juga yang menandai ia baru saja tersendat.
+ * Kabar yang dulu dibawa urutan itu tidak ikut hilang — ia cuma pindah ke
+ * tempat yang tidak menggeser apa-apa: kartunya sendiri menyebutkan paket mana
+ * yang sedang berjalan, mana yang gagal, dan mana yang menunggu tutor, lewat
+ * deret keping dan label statusnya.
  */
-const PRIORITAS: Record<string, number> = {
-  sedang_dikerjakan: 0,
-  butuh_pengulangan: 1,
-  siap_dikerjakan: 2,
-  eskalasi_tutor: 4,
-}
-
-/** Topik yang belum punya cetakan status sama sekali — belum pernah disentuh. */
-const PRIORITAS_TANPA_STATUS = 3
-
-const prioritas = (t: TopikPeta) =>
-  t.status === null ? PRIORITAS_TANPA_STATUS : PRIORITAS[t.status] ?? PRIORITAS_TANPA_STATUS
 
 /**
  * Kelompok sebuah topik.
@@ -96,9 +89,9 @@ export function kelompokTopik(t: TopikPeta): Kelompok {
  * Peta jadi tiga kelompok.
  *
  * `topik` DIANGGAP SUDAH URUT menurut kurikulum — `topik_tersedia` memulangkan
- * `order by t.urutan` — dan `sort` di sini stabil (dijamin spesifikasi sejak
- * ES2019), jadi urutan itu bertahan sebagai kunci kedua di dalam tiap
- * prioritas. Tidak ada nomor urut yang perlu ikut menyeberang dari server.
+ * `order by t.urutan` — dan pembagian ke tiga ember di bawah mempertahankan
+ * urutan itu apa adanya. Tidak ada nomor urut yang perlu ikut menyeberang dari
+ * server, dan tidak ada pengurutan ulang di sini (lihat catatan di atas).
  *
  * TIDAK MENYARING RETEST. Yang jatuh tempo sudah punya rumahnya sendiri di
  * `KartuRetest`, di atas seluruh peta ini — memasukkannya juga ke frontier
@@ -107,7 +100,6 @@ export function kelompokTopik(t: TopikPeta): Kelompok {
 export function kelompokkanPeta(topik: TopikPeta[]): PetaTerkelompok {
   const hasil: PetaTerkelompok = { siap: [], belum: [], tuntas: [] }
   for (const t of topik) hasil[kelompokTopik(t)].push(t)
-  hasil.siap.sort((a, b) => prioritas(a) - prioritas(b))
   return hasil
 }
 
