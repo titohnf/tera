@@ -196,6 +196,21 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
     })
   }
 
+  // Koreksi sesi hanya bermakna untuk potongan yang dihitung per pertemuan,
+  // jadi menandainya sekaligus membuka Qty dan memilih satuan pertemuan —
+  // admin tidak perlu tahu urutan Rinci → pertm lebih dulu.
+  function toggleKoreksiSesi(index: number) {
+    setLineItems(prev => {
+      const updated = [...prev]
+      const item = updated[index]
+      const next = !item.koreksi_sesi
+      updated[index] = next
+        ? { ...item, koreksi_sesi: true, show_qty: true, unit: 'pertemuan', months: Math.max(1, item.months) }
+        : { ...item, koreksi_sesi: false }
+      return updated
+    })
+  }
+
   function removeLineItem(index: number) {
     setLineItems(prev => prev.filter((_, i) => i !== index))
   }
@@ -476,23 +491,23 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                 >
                   {showQty ? 'Ringkas' : 'Rinci'}
                 </button>
-                {/* Hanya untuk potongan berunit pertemuan: bedakan koreksi sesi
-                    di kalender (ikut dihitung penanda selisih) dari kompensasi
-                    uang (tidak). Lihat lineItemQty di halaman Invoice. */}
-                {item.is_deduction && showQty && item.unit === 'pertemuan' && (
+                {/* Untuk setiap potongan: bedakan koreksi sesi di kalender (ikut
+                    dihitung penanda selisih) dari kompensasi uang (tidak). Lihat
+                    lineItemQty di halaman Invoice. */}
+                {item.is_deduction && (
                   <button
                     type="button"
-                    onClick={() => updateLineItem(index, 'koreksi_sesi', !item.koreksi_sesi)}
+                    onClick={() => toggleKoreksiSesi(index)}
                     title={item.koreksi_sesi
-                      ? 'Koreksi sesi: mengurangi jumlah pertemuan tertagih'
-                      : 'Kompensasi: tidak mengubah jumlah pertemuan tertagih'}
+                      ? 'Koreksi sesi: menyamakan tagihan dengan kalender, mengurangi jumlah pertemuan tertagih'
+                      : 'Potongan: diskon atau kompensasi yang tidak berhubungan dengan kalender'}
                     className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium whitespace-nowrap transition-colors ${
                       item.koreksi_sesi
                         ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                     }`}
                   >
-                    {item.koreksi_sesi ? 'Koreksi' : 'Kompensasi'}
+                    {item.koreksi_sesi ? 'Koreksi sesi' : 'Potongan'}
                   </button>
                 )}
               </div>
