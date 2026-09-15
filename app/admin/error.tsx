@@ -26,11 +26,36 @@ export default function AdminError({
 }) {
   const pathname = usePathname()
 
+  // Tab yang dibuka sebelum deploy terbaru masih memegang JavaScript lama, dan
+  // id Server Action berubah di setiap build. Aksi apa pun dari tab itu ditolak
+  // server dengan pesan ini. `reset()` tidak menolong karena merender ulang
+  // dengan JavaScript lama yang sama; yang menolong cuma muat ulang penuh.
+  const versiLama = /Server Action .* was not found on the server/.test(error.message ?? '')
+
   // Di produksi console browser adalah satu-satunya tempat stack trace aslinya
   // masih utuh; yang tampil di layar sudah dipotong Next.
   useEffect(() => {
     console.error('[admin] render gagal di', pathname, error)
   }, [error, pathname])
+
+  if (versiLama) {
+    return (
+      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-8">
+        <h1 className="text-lg font-semibold text-gray-900">Aplikasi baru saja diperbarui</h1>
+        <p className="text-sm text-gray-500 mt-1.5">
+          Halaman ini dibuka sebelum versi terbaru terpasang, jadi perubahan tadi belum
+          tersimpan. Muat ulang halaman, lalu ulangi langkah terakhir.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+        >
+          Muat Ulang Halaman
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-8">
