@@ -196,17 +196,23 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
     })
   }
 
-  // Koreksi sesi hanya bermakna untuk potongan yang dihitung per pertemuan,
-  // jadi menandainya sekaligus membuka Qty dan memilih satuan pertemuan —
-  // admin tidak perlu tahu urutan Rinci → pertm lebih dulu.
-  function toggleKoreksiSesi(index: number) {
+  // Jenis sebuah baris potongan menentukan bentuknya, jadi keduanya tidak
+  // pernah bisa berselisih: Potongan selalu ringkas (nominal saja), Koreksi
+  // sesi selalu rinci dengan satuan pertemuan. Dulu bentuk (Ringkas/Rinci)
+  // dan jenis (Potongan/Koreksi) dua tombol terpisah — yang satu menyebut
+  // aksinya, yang lain menyebut keadaannya — dan admin tidak bisa membaca
+  // baris mana yang sebenarnya dipilih.
+  //
+  // Nilai rupiah baris dipertahankan saat berpindah jenis: 4 × Rp120.000 yang
+  // diringkas jadi Rp480.000, bukan Rp120.000. Tanpa itu satu ketukan diam-diam
+  // mengubah total invoice.
+  function setJenisPotongan(index: number, jenis: 'potongan' | 'koreksi') {
     setLineItems(prev => {
       const updated = [...prev]
       const item = updated[index]
-      const next = !item.koreksi_sesi
-      updated[index] = next
+      updated[index] = jenis === 'koreksi'
         ? { ...item, koreksi_sesi: true, show_qty: true, unit: 'pertemuan', months: Math.max(1, item.months) }
-        : { ...item, koreksi_sesi: false }
+        : { ...item, koreksi_sesi: false, show_qty: false, months: 0, amount: lineSubtotal(item) }
       return updated
     })
   }
@@ -435,6 +441,12 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                       onChange={e => updateLineItem(index, 'months', Number(e.target.value))}
                       className="w-14 shrink-0 border rounded-lg px-2 py-2 text-sm text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {item.is_deduction && item.koreksi_sesi ? (
+                      // Koreksi sesi selalu per pertemuan — tidak ada pilihan bln.
+                      <div className="flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[10px] font-medium text-gray-500 h-[38px]">
+                        pertm
+                      </div>
+                    ) : (
                     <div className="flex flex-1 rounded-md overflow-hidden border border-slate-200 text-[10px] font-medium h-[38px]">
                       <button
                         type="button"
@@ -455,6 +467,7 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                         }`}
                       >pertm</button>
                     </div>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <input
@@ -483,31 +496,37 @@ export default function InvoiceForm({ students, classes, classStudents, billingR
                 >
                   {item.is_deduction ? '-' : '+'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => toggleShowQty(index)}
-                  title={showQty ? 'Sembunyikan Qty & Satuan (nominal tetap)' : 'Tampilkan Qty & Satuan'}
-                  className="px-1.5 py-0.5 text-[10px] rounded-full font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
-                >
-                  {showQty ? 'Ringkas' : 'Rinci'}
-                </button>
-                {/* Untuk setiap potongan: bedakan koreksi sesi di kalender (ikut
-                    dihitung penanda selisih) dari kompensasi uang (tidak). Lihat
-                    lineItemQty di halaman Invoice. */}
-                {item.is_deduction && (
+                {item.is_deduction ? (
+                  // Satu pilihan, dua opsi yang kelihatan sekaligus: yang
+                  // berwarna adalah yang sedang dipilih. Potongan = diskon atau
+                  // kompensasi (ringkas), Koreksi sesi = menyamakan tagihan
+                  // dengan kalender (rinci, dihitung di penanda selisih).
+                  <div className="flex flex-col w-full rounded-md overflow-hidden border border-slate-200 text-[10px] font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setJenisPotongan(index, 'potongan')}
+                      title="Potongan: diskon atau kompensasi yang tidak berhubungan dengan kalender"
+                      className={`px-1 py-1 whitespace-nowrap transition-colors ${
+                        !item.koreksi_sesi ? 'bg-blue-500 text-white' : 'bg-white text-gray-500 hover:bg-slate-50'
+                      }`}
+                    >Potongan</button>
+                    <button
+                      type="button"
+                      onClick={() => setJenisPotongan(index, 'koreksi')}
+                      title="Koreksi sesi: menyamakan tagihan dengan kalender, mengurangi jumlah pertemuan tertagih"
+                      className={`px-1 py-1 whitespace-nowrap border-t border-slate-200 transition-colors ${
+                        item.koreksi_sesi ? 'bg-amber-500 text-white' : 'bg-white text-gray-500 hover:bg-slate-50'
+                      }`}
+                    >Koreksi sesi</button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => toggleKoreksiSesi(index)}
-                    title={item.koreksi_sesi
-                      ? 'Koreksi sesi: menyamakan tagihan dengan kalender, mengurangi jumlah pertemuan tertagih'
-                      : 'Potongan: diskon atau kompensasi yang tidak berhubungan dengan kalender'}
-                    className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium whitespace-nowrap transition-colors ${
-                      item.koreksi_sesi
-                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
+                    onClick={() => toggleShowQty(index)}
+                    title={showQty ? 'Sembunyikan Qty & Satuan (nominal tetap)' : 'Tampilkan Qty & Satuan'}
+                    className="px-1.5 py-0.5 text-[10px] rounded-full font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
                   >
-                    {item.koreksi_sesi ? 'Koreksi sesi' : 'Potongan'}
+                    {showQty ? 'Ringkas' : 'Rinci'}
                   </button>
                 )}
               </div>
