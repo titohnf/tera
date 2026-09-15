@@ -89,6 +89,11 @@ const LineItemSchema = z.object({
   is_deduction: z.boolean(),
   unit: z.enum(['bulan', 'pertemuan']).optional(),
   show_qty: z.boolean().optional(),
+  // Potongan berunit pertemuan yang MENGOREKSI sesi di kalender kelas — mis.
+  // "Kelebihan bayar Agustus". Hanya baris bertanda ini yang mengurangi jumlah
+  // pertemuan tertagih di penanda selisih halaman Invoice; kompensasi uang
+  // untuk sesi di luar kalender tetap tidak ikut dihitung.
+  koreksi_sesi: z.boolean().optional(),
   // "YYYY-MM" — set on monthly-billed private-class invoices so the pertemuan
   // count is scoped to that month instead of the whole class enrollment.
   period: z.string().optional(),

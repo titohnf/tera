@@ -12,6 +12,7 @@ interface LineItem {
   is_deduction: boolean
   unit?: 'bulan' | 'pertemuan'
   show_qty?: boolean
+  koreksi_sesi?: boolean
 }
 
 interface Props {
@@ -69,6 +70,7 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
         // the Ringkas/Rinci toggle below.
         show_qty: !nextIsDeduction,
         months: nextIsDeduction ? 0 : 1,
+        koreksi_sesi: false,
       }
       return updated
     })
@@ -309,6 +311,25 @@ export default function InvoiceEditPageForm({ invoice, classes, students }: Prop
                 >
                   {showQty ? 'Ringkas' : 'Rinci'}
                 </button>
+                {/* Hanya untuk potongan berunit pertemuan: bedakan koreksi sesi
+                    di kalender (ikut dihitung penanda selisih) dari kompensasi
+                    uang (tidak). Lihat lineItemQty di halaman Invoice. */}
+                {item.is_deduction && showQty && item.unit === 'pertemuan' && (
+                  <button
+                    type="button"
+                    onClick={() => updateLineItem(index, 'koreksi_sesi', !item.koreksi_sesi)}
+                    title={item.koreksi_sesi
+                      ? 'Koreksi sesi: mengurangi jumlah pertemuan tertagih'
+                      : 'Kompensasi: tidak mengubah jumlah pertemuan tertagih'}
+                    className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium whitespace-nowrap transition-colors ${
+                      item.koreksi_sesi
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    {item.koreksi_sesi ? 'Koreksi' : 'Kompensasi'}
+                  </button>
+                )}
               </div>
               <div className="col-span-1 flex justify-center">
                 <button

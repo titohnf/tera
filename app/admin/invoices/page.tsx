@@ -16,7 +16,7 @@ type EnrollmentRow = {
   classes: { name: string; class_type: string | null; semester: number | null; academic_year: string | null } | null
 }
 
-type LineItem = { unit?: string; months?: number; period?: string; is_deduction?: boolean }
+type LineItem = { unit?: string; months?: number; period?: string; is_deduction?: boolean; koreksi_sesi?: boolean }
 
 type InvoiceRow = {
   id: string
@@ -45,17 +45,23 @@ type SessionGap = { billed: number; actual: number }
 /**
  * Jumlah pertemuan yang DITAGIHKAN di sebuah invoice.
  *
- * Baris potongan tidak ikut dikurangkan meski satuannya "pertemuan". Yang
- * ditemui di data — "Kompensasi Kelas Tidak Terlaksana (Bulan Juni)" dan
- * "Sisa pertemuan bulan sebelumnya" — adalah kompensasi UANG yang kebetulan
- * dihitung dalam satuan pertemuan; jumlah pertemuan yang ditagih bulan itu
+ * Baris potongan pada umumnya tidak ikut dikurangkan meski satuannya
+ * "pertemuan". Yang ditemui di data — "Kompensasi Kelas Tidak Terlaksana
+ * (Bulan Juni)" dan "Sisa pertemuan bulan sebelumnya" — adalah kompensasi UANG
+ * untuk sesi di luar kalender kelas; jumlah pertemuan yang ditagih bulan itu
  * tidak berubah karenanya. Mengurangkannya membuat siswa yang justru sudah
  * diberi kompensasi tampak kurang ditagih.
+ *
+ * Kecualinya potongan bertanda `koreksi_sesi`: "Kelebihan bayar Agustus"
+ * membatalkan satu pertemuan yang terlanjur ditagih di kalender yang sama,
+ * pasangan dari "Kekurangan bayar" (+) yang sudah ikut terhitung. Tanpa tanda
+ * ini, kelebihan tagih yang sudah dikompensasi terus tampil sebagai selisih.
+ * Tandanya dipasang admin di form invoice, bukan ditebak dari keterangannya.
  */
 function lineItemQty(items: LineItem[] | null): number {
   return (items ?? [])
-    .filter(i => i.unit === 'pertemuan' && !i.is_deduction)
-    .reduce((sum, i) => sum + (Number(i.months) || 0), 0)
+    .filter(i => i.unit === 'pertemuan' && (!i.is_deduction || i.koreksi_sesi))
+    .reduce((sum, i) => sum + (i.is_deduction ? -1 : 1) * (Number(i.months) || 0), 0)
 }
 
 function formatRupiah(n: number) {
