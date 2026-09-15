@@ -2,7 +2,9 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import InvoicePageFilters from '@/components/admin/invoices/InvoicePageFilters'
 import MetricCard from '@/components/dashboard/MetricCard'
 import InvoiceEnrollmentTable from '@/components/admin/invoices/InvoiceEnrollmentTable'
-import { coversSession } from '@/lib/enrollment'
+import { coversMonth, coversSession } from '@/lib/enrollment'
+import { labelBulan } from '@/lib/waktu'
+import { invoiceCoverageMonths } from '@/lib/invoice-line-items'
 
 type EnrollmentRow = {
   student_id: string
@@ -14,7 +16,7 @@ type EnrollmentRow = {
   classes: { name: string; class_type: string | null; semester: number | null; academic_year: string | null } | null
 }
 
-type LineItem = { unit?: string; months?: number; is_deduction?: boolean }
+type LineItem = { unit?: string; months?: number; period?: string; is_deduction?: boolean }
 
 type InvoiceRow = {
   id: string
@@ -82,9 +84,15 @@ function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; semester?: string; tahunAjaran?: string }>
+  searchParams: Promise<{ q?: string; status?: string; semester?: string; tahunAjaran?: string; bulan?: string }>
 }) {
-  const { q = '', status: statusFilter = '', semester: semesterFilter = '', tahunAjaran: tahunAjaranFilter = '' } = await searchParams
+  const {
+    q = '',
+    status: statusFilter = '',
+    semester: semesterFilter = '',
+    tahunAjaran: tahunAjaranFilter = '',
+    bulan: bulanFilter = '',
+  } = await searchParams
   const admin = createAdminClient()
 
   const [enrollmentsRes, invoicesRes] = await Promise.all([
@@ -103,18 +111,20 @@ export default async function InvoicesPage({
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: (InvoiceRow & { invoice_payments: { amount: number; paid_at: string }[] })[] | null }>,
   ])
 
-  // Sesi dipakai untuk mencocokkan jumlah pertemuan tertagih; hanya kelas yang
-  // ditagih per pertemuan yang perlu dicek.
-  const perSessionClassIds = [...new Set(
+  // Sesi dipakai untuk dua hal: mencocokkan jumlah pertemuan tertagih di kelas
+  // privat, dan mengisi kolom "Sesi" — berapa pertemuan yang benar-benar
+  // berlangsung di bulan yang sedang dilihat. Karena itu semua jenis kelas
+  // ikut diambil, bukan hanya yang ditagih per pertemuan.
+  const relevantClassIds = [...new Set(
     (enrollmentsRes.data ?? [])
-      .filter(e => e.classes?.class_type === 'private')
+      .filter(e => e.classes?.class_type !== 'yayasan')
       .map(e => e.class_id),
   )]
-  const { data: sessionRows } = perSessionClassIds.length > 0
+  const { data: sessionRows } = relevantClassIds.length > 0
     ? await admin
         .from('sessions')
         .select('class_id, scheduled_at, status')
-        .in('class_id', perSessionClassIds)
+        .in('class_id', relevantClassIds)
         .neq('status', 'cancelled')
         .limit(5000) as unknown as { data: { class_id: string; scheduled_at: string; status: string }[] | null }
     : { data: [] }
@@ -164,6 +174,8 @@ export default async function InvoicesPage({
     /** Keanggotaan kelasnya sudah berakhir — barisnya riwayat, bukan tagihan berjalan. */
     isFormer: boolean
     sessionGap: SessionGap | null
+    /** Pertemuan di kalender pada bulan yang sedang dipilih (semua bulan bila tidak difilter). */
+    sessionCount: number
   }
 
   // Mantan siswa hanya ikut kalau ia memang punya invoice. Tanpa syarat itu,
@@ -182,6 +194,9 @@ export default async function InvoicesPage({
    *
    * Invoice draft dikecualikan dari kedua sisi: isinya dikoreksi otomatis
    * mengikuti jadwal, jadi tidak pernah benar-benar melenceng.
+   *
+   * Saat filter bulan aktif, kedua sisi dipersempit ke bulan itu saja —
+   * `invs` sudah berisi invoice bulan tersebut, sesinya ikut dibatasi.
    */
   function computeSessionGap(e: EnrollmentRow, invs: InvoiceRow[]): SessionGap | null {
     if (e.classes?.class_type !== 'private') return null
@@ -194,15 +209,50 @@ export default async function InvoicesPage({
     )
     const billed = issued.reduce((sum, inv) => sum + lineItemQty(inv.line_items), 0)
     const actual = (sessionsByClass.get(e.class_id) ?? []).filter(at =>
-      at.slice(0, 7) <= lastBilledMonth && coversSession(e, at),
+      (bulanFilter ? at.slice(0, 7) === bulanFilter : at.slice(0, 7) <= lastBilledMonth) &&
+      coversSession(e, at),
     ).length
 
     return billed === actual ? null : { billed, actual }
   }
 
-  const allRows: Row[] = relevantEnrollments.map(e => {
+  // Baris yang ikut saat filter bulan aktif: yang punya invoice bulan itu, plus
+  // keanggotaan yang masih berjalan dan memang mencakup bulan itu — supaya yang
+  // BELUM ditagih bulan ini tetap kelihatan, bukan hanya yang sudah.
+  const monthEnrollments = bulanFilter
+    ? relevantEnrollments.filter(e => {
+        const invs = invoiceMap.get(`${e.student_id}__${e.class_id}`) ?? []
+        if (invs.some(inv => invoiceCoverageMonths(inv).includes(bulanFilter))) return true
+        return e.is_active && coversMonth(e, bulanFilter)
+      })
+    : relevantEnrollments
+
+  const allRows: Row[] = monthEnrollments.map(e => {
     const key = `${e.student_id}__${e.class_id}`
-    const invs = invoiceMap.get(key) ?? []
+    const semuaInvs = invoiceMap.get(key) ?? []
+
+    // Uang dan status menjawab dua pertanyaan berbeda, jadi keduanya menyaring
+    // invoice dengan cara berbeda pula:
+    //
+    // Uang — "berapa yang ditagihkan BULAN INI" — memakai bulan terbit. Nilai
+    // sebuah paket semester adalah uang bulan ia diterbitkan; membiarkannya
+    // muncul lagi di lima bulan berikutnya akan menghitung uang yang sama
+    // berkali-kali di kartu Total Invoice.
+    //
+    // Status — "tagihan Agustusnya sudah dikirim atau belum" — memakai bulan
+    // yang DICAKUP. Invoice grup terbit sekali untuk satu semester, jadi
+    // menilainya dari bulan terbit membuat siswa yang sudah ditagih terbaca
+    // "Belum Dikirim" sepanjang sisa semester.
+    //
+    // Akibatnya sebuah baris bisa berstatus "Angsuran" dengan Nilai Invoice
+    // "—": tagihannya memang mencakup bulan ini, tapi uangnya tercatat di
+    // bulan invoice itu terbit.
+    const invs = bulanFilter
+      ? semuaInvs.filter(inv => inv.issued_at.slice(0, 7) === bulanFilter)
+      : semuaInvs
+    const statusInvs = bulanFilter
+      ? semuaInvs.filter(inv => invoiceCoverageMonths(inv).includes(bulanFilter))
+      : semuaInvs
     // Total Invoice / Dibayar / Belum Dibayar must stay internally
     // consistent (Total Invoice − Belum Dibayar = Dibayar), so all three
     // are derived from the SAME set of invoices (every non-cancelled
@@ -213,12 +263,14 @@ export default async function InvoicesPage({
     const classPrice = billedInvs.reduce((sum, inv) => sum + inv.total_due, 0)
     const totalPaid = billedInvs.reduce((sum, inv) => sum + inv.payments.reduce((s, p) => s + p.amount, 0), 0)
     const kekurangan = Math.max(0, classPrice - totalPaid)
-    const activeInv = invs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
+    const activeInv = statusInvs.find(inv => inv.status === 'sent' || inv.status === 'partially_paid')
 
     // Month of the most recent payment actually recorded, for the
     // "Angsuran {bulan}" label — ground truth from paid_at, not a
-    // theoretical mapping onto the per-month breakdown.
-    const allRowPayments = invs.flatMap(inv => inv.payments)
+    // theoretical mapping onto the per-month breakdown. Dibaca dari invoice
+    // yang sama dengan yang menentukan lencananya, supaya label dan status
+    // tidak bercerita tentang tagihan yang berbeda.
+    const allRowPayments = statusInvs.flatMap(inv => inv.payments)
     const lastPayment = allRowPayments.length > 0
       ? allRowPayments.reduce((latest, p) => new Date(p.paid_at) > new Date(latest.paid_at) ? p : latest)
       : null
@@ -234,7 +286,7 @@ export default async function InvoicesPage({
       classPrice,
       kekurangan,
       totalPaid,
-      status: computeStatus(invs),
+      status: computeStatus(statusInvs),
       invoiceId: activeInv?.id ?? null,
       bulanLabel: activeInv ? new Date(activeInv.issued_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '',
       hasExisting: invs.length > 0,
@@ -243,12 +295,32 @@ export default async function InvoicesPage({
       lastPaymentMonth,
       isFormer: !e.is_active,
       sessionGap: computeSessionGap(e, billedInvs),
+      sessionCount: (sessionsByClass.get(e.class_id) ?? []).filter(at =>
+        (!bulanFilter || at.slice(0, 7) === bulanFilter) && coversSession(e, at),
+      ).length,
     }
   })
 
-  // Distinct filter options, sorted
-  const semesterOptions = [...new Set(allRows.map(r => r.semester).filter((s): s is number => s !== null))].sort((a, b) => a - b)
-  const tahunAjaranOptions = [...new Set(allRows.map(r => r.academicYear).filter((y): y is string => !!y))].sort()
+  // Pilihan filter diambil dari seluruh keanggotaan, bukan dari baris yang
+  // sudah disaring bulan — kalau tidak, memilih satu bulan ikut mengosongkan
+  // isi dropdown semester dan tahun ajaran.
+  const semesterOptions = [...new Set(
+    relevantEnrollments.map(e => e.classes?.semester).filter((s): s is number => s !== null && s !== undefined),
+  )].sort((a, b) => a - b)
+  const tahunAjaranOptions = [...new Set(
+    relevantEnrollments.map(e => e.classes?.academic_year).filter((y): y is string => !!y),
+  )].sort()
+
+  // Pilihan bulan datang dari dua sumber: bulan terbit invoice, dan bulan yang
+  // punya sesi di kalender. Sumber kedua penting supaya bulan yang sesinya
+  // sudah berjalan tapi belum ditagih sama sekali tetap bisa dibuka.
+  const bulanOptions = [...new Set([
+    ...invoices.map(inv => inv.issued_at.slice(0, 7)),
+    ...(sessionRows ?? []).map(row => row.scheduled_at.slice(0, 7)),
+  ])]
+    .sort()
+    .reverse()
+    .map(value => ({ value, label: labelBulan(value) }))
 
   // Filters
   let rows = allRows
@@ -270,7 +342,12 @@ export default async function InvoicesPage({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-gray-900">Invoice</h1>
+        <h1 className="text-xl font-semibold text-gray-900">
+          Invoice
+          {bulanFilter && (
+            <span className="ml-2 text-base font-normal text-gray-400">{labelBulan(bulanFilter)}</span>
+          )}
+        </h1>
       </div>
 
       {/* Cards */}
@@ -327,12 +404,14 @@ export default async function InvoicesPage({
         statusFilter={statusFilter}
         semesterFilter={semesterFilter}
         tahunAjaranFilter={tahunAjaranFilter}
+        bulanFilter={bulanFilter}
         semesterOptions={semesterOptions}
         tahunAjaranOptions={tahunAjaranOptions}
+        bulanOptions={bulanOptions}
       />
 
       {/* Table */}
-      <InvoiceEnrollmentTable rows={rows} />
+      <InvoiceEnrollmentTable rows={rows} bulanLabel={bulanFilter ? labelBulan(bulanFilter) : null} />
     </div>
   )
 }

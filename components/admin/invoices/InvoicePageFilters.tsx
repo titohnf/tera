@@ -7,8 +7,11 @@ interface Props {
   statusFilter: string
   semesterFilter: string
   tahunAjaranFilter: string
+  bulanFilter: string
   semesterOptions: number[]
   tahunAjaranOptions: string[]
+  /** "2026-09" beserta labelnya; diformat di server supaya nama bulannya konsisten. */
+  bulanOptions: { value: string; label: string }[]
 }
 
 export default function InvoicePageFilters({
@@ -16,8 +19,10 @@ export default function InvoicePageFilters({
   statusFilter,
   semesterFilter,
   tahunAjaranFilter,
+  bulanFilter,
   semesterOptions,
   tahunAjaranOptions,
+  bulanOptions,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,6 +47,16 @@ export default function InvoicePageFilters({
           className="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-300 bg-white"
         />
       </div>
+      <select
+        value={bulanFilter}
+        onChange={e => update('bulan', e.target.value)}
+        className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300"
+      >
+        <option value="">Semua Bulan</option>
+        {bulanOptions.map(b => (
+          <option key={b.value} value={b.value}>{b.label}</option>
+        ))}
+      </select>
       <select
         value={statusFilter}
         onChange={e => update('status', e.target.value)}

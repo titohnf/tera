@@ -9,10 +9,13 @@ interface Props {
   level: string
   type: string
   status: string
+  bulan: string
   availableLevels: string[]
+  /** "2026-09" beserta labelnya; diformat di server supaya nama bulannya konsisten. */
+  bulanOptions: { value: string; label: string }[]
 }
 
-export default function ClassFilters({ q, level, type, status, availableLevels }: Props) {
+export default function ClassFilters({ q, level, type, status, bulan, availableLevels, bulanOptions }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [searchValue, setSearchValue] = useState(q)
@@ -24,6 +27,7 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
       ...(level ? { level } : {}),
       ...(type ? { type } : {}),
       ...(status ? { status } : {}),
+      ...(bulan ? { bulan } : {}),
       ...overrides,
     }
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k] })
@@ -43,7 +47,7 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
 
   // Status "aktif" adalah keadaan bawaan halaman ini, jadi ia bukan sesuatu
   // yang perlu di-reset — kalau ikut dihitung, tombol Reset tidak pernah hilang.
-  const hasFilter = !!(q || level || type) || status !== DEFAULT_CLASS_STATUS
+  const hasFilter = !!(q || level || type || bulan) || status !== DEFAULT_CLASS_STATUS
 
   const selectCls = (active: boolean) =>
     `text-sm border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
@@ -83,6 +87,11 @@ export default function ClassFilters({ q, level, type, status, availableLevels }
         <option value="group">Reguler</option>
         <option value="private">Privat</option>
         <option value="yayasan">Yayasan</option>
+      </select>
+
+      <select value={bulan} onChange={e => router.push(buildUrl({ bulan: e.target.value }))} className={selectCls(!!bulan)}>
+        <option value="">Semua Bulan</option>
+        {bulanOptions.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
       </select>
 
       <select value={status} onChange={e => router.push(buildUrl({ status: e.target.value }))} className={selectCls(status !== ALL_CLASS_STATUS)}>

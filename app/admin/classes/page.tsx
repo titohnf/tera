@@ -4,6 +4,7 @@ import MetricCard from '@/components/dashboard/MetricCard'
 import ClassFilters from '@/components/admin/classes/ClassFilters'
 import { splitClassPrefix } from '@/lib/format-class-name'
 import { resolveClassStatus, ALL_CLASS_STATUS } from '@/lib/class-filters'
+import { labelBulan } from '@/lib/waktu'
 
 type ClassRow = {
   id: string
@@ -23,16 +24,20 @@ const LEVEL_ORDER = ['Calistung', 'SD', 'SMP', 'SMA', 'Umum']
 export default async function ClassesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string }>
+  searchParams: Promise<{ level?: string; status?: string; type?: string; q?: string; bulan?: string }>
 }) {
-  const { level: levelFilter = '', status: rawStatus, type: typeFilter = '', q = '' } = await searchParams
+  const {
+    level: levelFilter = '',
+    status: rawStatus,
+    type: typeFilter = '',
+    q = '',
+    bulan: bulanFilter = '',
+  } = await searchParams
 
   const statusFilter = resolveClassStatus(rawStatus)
   const admin = createAdminClient()
 
-  const now = new Date()
-
-  const [{ data: classes }, { data: enrollments }, { data: lastSessionsRaw }, { data: slotsRaw }, { data: subjectsRaw }, { data: completedSessionsRaw }, { data: allSessionsRaw }] = await Promise.all([
+  const [{ data: classes }, { data: enrollments }, { data: slotsRaw }, { data: subjectsRaw }, { data: sessionsRaw }] = await Promise.all([
     admin
       .from('classes')
       .select('id, name, level, is_active, class_type, status, start_date, end_date, profiles!tutor_id(full_name), class_subjects(subjects(name))')
@@ -41,25 +46,19 @@ export default async function ClassesPage({
       .from('class_students')
       .select('class_id, is_active, profiles!student_id(nickname, full_name)') as unknown as Promise<{ data: { class_id: string; is_active: boolean; profiles: { nickname: string | null; full_name: string } | null }[] | null }>,
     admin
-      .from('sessions')
-      .select('class_id, scheduled_at')
-      .eq('status', 'completed')
-      .order('scheduled_at', { ascending: false })
-      .limit(500),
-    admin
       .from('class_slots')
       .select('class_id, day_of_week, subject_ids')
       .order('slot_index', { ascending: true }) as unknown as Promise<{ data: { class_id: string; day_of_week: number | null; subject_ids: string[] }[] | null }>,
     admin
       .from('subjects')
       .select('id, name'),
+    // Satu query untuk seluruh sesi: jumlah selesai, jumlah total, dan pilihan
+    // bulan sama-sama diturunkan darinya, jadi ketiganya tidak mungkin
+    // menghitung himpunan sesi yang berbeda.
     admin
       .from('sessions')
-      .select('class_id')
-      .eq('status', 'completed'),
-    admin
-      .from('sessions')
-      .select('class_id'),
+      .select('class_id, scheduled_at, status')
+      .limit(5000) as unknown as Promise<{ data: { class_id: string; scheduled_at: string; status: string }[] | null }>,
   ])
 
   const allClasses = classes ?? []
@@ -85,12 +84,6 @@ export default async function ClassesPage({
     studentNamesByClass.set(classId, active.length > 0 ? active : formerNamesByClass.get(classId) ?? [])
   }
 
-  // Build sesi lookup: last completed per class
-  const lastSessionMap = new Map<string, string>()
-  for (const s of lastSessionsRaw ?? []) {
-    if (!lastSessionMap.has(s.class_id)) lastSessionMap.set(s.class_id, s.scheduled_at)
-  }
-
   const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
   const subjectNameMap = new Map<string, string>()
@@ -110,20 +103,40 @@ export default async function ClassesPage({
     jadwalMap.set(slot.class_id, existing)
   }
 
+  const allSessions = sessionsRaw ?? []
+
+  // Filter bulan memotong sesinya, bukan cuma menyembunyikan baris: kolom Sesi
+  // lalu terbaca sebagai "berapa yang berjalan bulan ini", dan kelas yang
+  // memang tidak punya sesi di bulan itu hilang dari tabel.
+  // Sesi yang dibatalkan tidak ikut dihitung di kedua sisi. Yang batal karena
+  // libur nasional tidak akan pernah berubah jadi "selesai", jadi menaruhnya di
+  // penyebut membuat kelas mustahil mencapai 100% — 17 Agustus sendirian
+  // menahan sebuah kelas privat di 8/10 padahal jadwal bulan itu memang 9.
+  const countableSessions = allSessions.filter(s => s.status !== 'cancelled')
+
+  const scopedSessions = bulanFilter
+    ? countableSessions.filter(s => s.scheduled_at.slice(0, 7) === bulanFilter)
+    : countableSessions
+
   // Completed session count per class
   const completedCountMap = new Map<string, number>()
-  for (const s of completedSessionsRaw ?? []) {
+  for (const s of scopedSessions) {
+    if (s.status !== 'completed') continue
     completedCountMap.set(s.class_id, (completedCountMap.get(s.class_id) ?? 0) + 1)
   }
 
-  // Total generated sessions per class (all statuses) — this is the actual
-  // denominator shown on the class detail page, so use it here too instead
-  // of estimating from slotsPerWeek × weeks (which can drift from the real
-  // generated count due to rounding).
+  // Jumlah sesi yang benar-benar dijadwalkan — dihitung dari sesi yang ada,
+  // bukan diperkirakan dari slotsPerWeek × minggu, yang bisa melenceng dari
+  // jumlah sesi yang sungguh dibuat karena pembulatan.
   const totalSessionCountMap = new Map<string, number>()
-  for (const s of allSessionsRaw ?? []) {
+  for (const s of scopedSessions) {
     totalSessionCountMap.set(s.class_id, (totalSessionCountMap.get(s.class_id) ?? 0) + 1)
   }
+
+  const bulanOptions = [...new Set(countableSessions.map(s => s.scheduled_at.slice(0, 7)))]
+    .sort()
+    .reverse()
+    .map(value => ({ value, label: labelBulan(value) }))
 
   // Progress: completed / target × 100
   function getProgress(cls: ClassRow): { completed: number; target: number | null; pct: number | null } {
@@ -134,19 +147,26 @@ export default async function ClassesPage({
     return { completed, target, pct }
   }
 
+  const classIdsWithSessions = new Set(scopedSessions.map(s => s.class_id))
+
   // Kartu ringkasan mengikuti filter status saja, bukan jenjang/tipe/pencarian.
   // Kalau ia menghitung seluruh kelas, angkanya berselisih dengan tabel di
   // bawahnya sejak halaman pertama kali dibuka; kalau ia ikut filter tipe,
   // memilih "Privat" membuat kartu Grup jadi 0 dan ketiganya kehilangan guna.
+  // Filter bulan ikut menyempitkannya, karena ia menentukan kelas mana yang
+  // ADA di tabel — sama seperti status, bukan sekadar cara memandang.
+  const bulanScoped = bulanFilter
+    ? allClasses.filter(c => classIdsWithSessions.has(c.id))
+    : allClasses
   const statusScoped = statusFilter === ALL_CLASS_STATUS
-    ? allClasses
-    : allClasses.filter(c => c.status === statusFilter)
+    ? bulanScoped
+    : bulanScoped.filter(c => c.status === statusFilter)
   const regularCount = statusScoped.filter(c => c.class_type === 'group').length
   const privateCount = statusScoped.filter(c => c.class_type === 'private').length
   const yayasanCount = statusScoped.filter(c => c.class_type === 'yayasan').length
 
   // Filter
-  let filtered = allClasses
+  let filtered = bulanScoped
   if (q) {
     const lq = q.toLowerCase()
     filtered = filtered.filter(c =>
@@ -163,7 +183,7 @@ export default async function ClassesPage({
 
   function filterUrl(overrides: Record<string, string>) {
     const p = new URLSearchParams()
-    const merged = { q, level: levelFilter, status: statusFilter, type: typeFilter, ...overrides }
+    const merged = { q, level: levelFilter, status: statusFilter, type: typeFilter, bulan: bulanFilter, ...overrides }
     Object.entries(merged).forEach(([k, v]) => { if (v) p.set(k, v) })
     const qs = p.toString()
     return qs ? `/admin/classes?${qs}` : '/admin/classes'
@@ -180,7 +200,12 @@ export default async function ClassesPage({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Manajemen Kelas</h1>
+        <h1 className="text-xl font-semibold text-gray-900">
+          Manajemen Kelas
+          {bulanFilter && (
+            <span className="ml-2 text-base font-normal text-gray-400">{labelBulan(bulanFilter)}</span>
+          )}
+        </h1>
         <div className="flex items-center gap-2">
           <Link
             href="/admin/sessions"
@@ -216,7 +241,9 @@ export default async function ClassesPage({
         level={levelFilter}
         type={typeFilter}
         status={statusFilter}
+        bulan={bulanFilter}
         availableLevels={availableLevels}
+        bulanOptions={bulanOptions}
       />
 
       {/* Table */}
@@ -237,7 +264,9 @@ export default async function ClassesPage({
                   <th className="pl-5 pr-4 py-3 text-left">Nama Kelas</th>
                   <th className="px-4 py-3 text-left">Siswa</th>
                   <th className="px-4 py-3 text-left hidden md:table-cell">Jadwal</th>
-                  <th className="px-4 py-3 text-left hidden sm:table-cell">Sesi</th>
+                  <th className="px-4 py-3 text-left hidden sm:table-cell">
+                    {bulanFilter ? `Sesi ${labelBulan(bulanFilter)}` : 'Sesi'}
+                  </th>
                   <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3" />
                 </tr>

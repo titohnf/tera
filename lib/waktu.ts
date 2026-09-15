@@ -107,3 +107,16 @@ export function waktuWib(iso: string): string {
   return `${tanggal}, ${jam}`
 }
 
+
+/**
+ * Kunci bulan "2026-09" menjadi label "September 2026".
+ *
+ * Dipakai filter bulan di halaman Invoice dan Manajemen Kelas. Bulannya
+ * dibangun sebagai tanggal lokal, bukan diparse dari string ISO: `new
+ * Date("2026-09")` dibaca sebagai tengah malam UTC dan, di zona waktu barat
+ * UTC, mundur menjadi Agustus.
+ */
+export function labelBulan(bulan: string): string {
+  const [tahun, nomor] = bulan.split('-').map(Number)
+  return new Date(tahun, nomor - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+}

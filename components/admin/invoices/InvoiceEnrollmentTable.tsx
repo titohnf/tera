@@ -18,6 +18,7 @@ export type EnrollmentRow = {
   lastPaymentMonth: string | null
   isFormer: boolean
   sessionGap: { billed: number; actual: number } | null
+  sessionCount: number
 }
 
 const CLASS_STATUS_BADGE: Record<string, string> = {
@@ -40,7 +41,7 @@ function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 }
 
-type SortKey = 'studentName' | 'className' | 'classPrice' | 'status'
+type SortKey = 'studentName' | 'className' | 'sessionCount' | 'classPrice' | 'status'
 type SortDir = 'asc' | 'desc'
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -64,9 +65,11 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 
 interface Props {
   rows: EnrollmentRow[]
+  /** Bulan yang sedang difilter, mis. "September 2026"; null berarti semua bulan. */
+  bulanLabel: string | null
 }
 
-export default function InvoiceEnrollmentTable({ rows }: Props) {
+export default function InvoiceEnrollmentTable({ rows, bulanLabel }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('className')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -79,6 +82,7 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
     let cmp = 0
     if (sortKey === 'studentName') cmp = a.studentName.localeCompare(b.studentName, 'id')
     else if (sortKey === 'className') cmp = a.className.localeCompare(b.className, 'id')
+    else if (sortKey === 'sessionCount') cmp = a.sessionCount - b.sessionCount
     else if (sortKey === 'classPrice') cmp = a.classPrice - b.classPrice
     else if (sortKey === 'status') cmp = STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
     if (cmp === 0) cmp = a.studentName.localeCompare(b.studentName, 'id')
@@ -96,7 +100,7 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
       <div className="px-5 pt-5 pb-3">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-          {rows.length} Enrollment
+          {rows.length} Enrollment{bulanLabel && ` · ${bulanLabel}`}
         </p>
       </div>
       {rows.length === 0 ? (
@@ -115,6 +119,12 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                 <span className="inline-flex items-center">
                   Nama Siswa
                   <SortIcon active={sortKey === 'studentName'} dir={sortDir} />
+                </span>
+              </th>
+              <th {...thProps('sessionCount', 'right')}>
+                <span className="inline-flex items-center justify-end w-full" title={bulanLabel ? `Pertemuan di kalender pada ${bulanLabel}` : 'Seluruh pertemuan di kalender selama siswa terdaftar'}>
+                  Sesi
+                  <SortIcon active={sortKey === 'sessionCount'} dir={sortDir} />
                 </span>
               </th>
               <th {...thProps('classPrice', 'right')}>
@@ -163,6 +173,13 @@ export default function InvoiceEnrollmentTable({ rows }: Props) {
                         Sudah berhenti
                       </span>
                     )}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {/* Pertemuan yang benar-benar ada di kalender pada bulan yang
+                      dipilih — pembanding cepat untuk nilai invoice di sebelahnya. */}
+                  <Link href={`/admin/invoices/siswa/${row.studentId}`} className="block tabular-nums text-gray-600">
+                    {row.sessionCount > 0 ? row.sessionCount : <span className="text-gray-300">—</span>}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
