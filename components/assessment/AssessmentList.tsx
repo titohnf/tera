@@ -15,6 +15,7 @@ interface AssessmentItem {
   max_score: number
   due_at: string | null
   link_url: string | null
+  pembahasan_url: string | null
   created_at: string
 }
 
@@ -39,6 +40,13 @@ const COMPREHENSION_LEVELS = [
   { value: 'L4', label: 'L4: Sangat Paham',                bg: 'bg-blue-200',   text: 'text-blue-900' },
   { value: 'L5', label: 'L5: Mahir',                       bg: 'bg-purple-200', text: 'text-purple-900' },
 ]
+
+/** Tautan yang diketik tanpa skema tetap tautan — jangan tolak, lengkapi. */
+function rapikanTautan(value: string): string | null {
+  const v = value.trim()
+  if (!v) return null
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`
+}
 
 function buildAutoTitle(
   subjectName: string | null | undefined,
@@ -90,6 +98,7 @@ export default function AssessmentList({
   const [newDescription, setNewDescription] = useState('')
   const [newMaxScore, setNewMaxScore] = useState(100)
   const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [newPembahasanUrl, setNewPembahasanUrl] = useState('')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const [grades, setGrades] = useState<Record<string, Record<string, { score: string; feedback: string }>>>({})
@@ -97,6 +106,7 @@ export default function AssessmentList({
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editLinkUrl, setEditLinkUrl] = useState('')
+  const [editPembahasanUrl, setEditPembahasanUrl] = useState('')
   const [editMaxScore, setEditMaxScore] = useState(100)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const knownIdsRef = useRef<Set<string>>(new Set(initialAssessments.map(a => a.id)))
@@ -144,8 +154,8 @@ export default function AssessmentList({
   }
 
   function handleCreateAssessment() {
-    let linkUrl: string | null = newLinkUrl.trim() || null
-    if (linkUrl && !/^https?:\/\//i.test(linkUrl)) linkUrl = `https://${linkUrl}`
+    const linkUrl = rapikanTautan(newLinkUrl)
+    const pembahasanUrl = rapikanTautan(newPembahasanUrl)
 
     startTransition(async () => {
       const result = await createAction(sessionId, {
@@ -153,6 +163,7 @@ export default function AssessmentList({
         description: newDescription || undefined,
         max_score: newMaxScore,
         link_url: linkUrl,
+        pembahasan_url: pembahasanUrl,
       })
       if (result.error) {
         setError(result.error)
@@ -162,6 +173,7 @@ export default function AssessmentList({
         setNewDescription('')
         setNewMaxScore(100)
         setNewLinkUrl('')
+        setNewPembahasanUrl('')
         setError('')
       }
     })
@@ -210,6 +222,7 @@ export default function AssessmentList({
     setEditTitle(assessment.title)
     setEditDescription(assessment.description ?? '')
     setEditLinkUrl(assessment.link_url ?? '')
+    setEditPembahasanUrl(assessment.pembahasan_url ?? '')
     setEditMaxScore(assessment.max_score)
   }
 
@@ -218,8 +231,8 @@ export default function AssessmentList({
     const title = editTitle.trim()
     if (!title) return
 
-    let linkUrl: string | null = editLinkUrl.trim() || null
-    if (linkUrl && !/^https?:\/\//i.test(linkUrl)) linkUrl = `https://${linkUrl}`
+    const linkUrl = rapikanTautan(editLinkUrl)
+    const pembahasanUrl = rapikanTautan(editPembahasanUrl)
 
     startTransition(async () => {
       const result = await updateAction(assessment.id, sessionId, {
@@ -228,6 +241,7 @@ export default function AssessmentList({
         max_score: editMaxScore,
         due_at: assessment.due_at ?? null,
         link_url: linkUrl,
+        pembahasan_url: pembahasanUrl,
       })
       if (result.error) {
         setError(result.error)
@@ -283,6 +297,18 @@ export default function AssessmentList({
                           value={editLinkUrl}
                           onChange={e => setEditLinkUrl(e.target.value)}
                           placeholder="https://forms.google.com/..."
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          Link Pembahasan Soal <span className="text-gray-400">(wajib)</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={editPembahasanUrl}
+                          onChange={e => setEditPembahasanUrl(e.target.value)}
+                          placeholder="https://docs.google.com/..."
                           className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
@@ -345,6 +371,26 @@ export default function AssessmentList({
                             </svg>
                             Buka link soal
                           </a>
+                        )}
+                        {assessment.pembahasan_url ? (
+                          <a
+                            href={assessment.pembahasan_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Buka pembahasan
+                          </a>
+                        ) : (
+                          // Soal tanpa pembahasan: murid yang keliru cuma tahu
+                          // ia keliru. Ditagih di sini, bukan cuma di panel
+                          // Kelengkapan Jurnal, supaya terbacanya di tempat
+                          // yang sama dengan tombol Edit yang memperbaikinya.
+                          <span className="text-xs font-medium text-orange-500">Pembahasan belum diisi</span>
                         )}
                       </div>
                     </>
@@ -514,6 +560,18 @@ export default function AssessmentList({
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Link Pembahasan Soal <span className="text-gray-400">(wajib)</span>
+              </label>
+              <input
+                type="url"
+                placeholder="https://docs.google.com/..."
+                value={newPembahasanUrl}
+                onChange={e => setNewPembahasanUrl(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <div className="flex items-center gap-3">
               <label className="text-xs text-gray-600 shrink-0">Skor Maksimal:</label>
               <input
@@ -540,6 +598,7 @@ export default function AssessmentList({
                   setNewDescription('')
                   setNewMaxScore(100)
                   setNewLinkUrl('')
+                  setNewPembahasanUrl('')
                   setError('')
                 }}
                 disabled={isPending}

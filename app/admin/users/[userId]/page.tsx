@@ -899,9 +899,16 @@ export default async function UserDetailPage({
                       <tbody className="divide-y divide-slate-100">
                         {tutorRecentSessions.map((s, idx) => {
                           const check = recentCompletionMap.get(s.id)
-                          const completedCount = check
-                            ? [check.hasTopic, check.hasAllAttendance, check.hasAllNotes, check.hasMaterials, check.hasAssessments].filter(Boolean).length
-                            : 0
+                          // Poin pembahasan hanya ikut dihitung untuk sesi yang
+                          // sudah kena aturannya — sesi lama tetap 5 poin, biar
+                          // angkanya tidak mendadak turun untuk kerja yang sudah
+                          // selesai.
+                          const poin = check
+                            ? [check.hasTopic, check.hasAllAttendance, check.hasAllNotes, check.hasMaterials, check.hasAssessments,
+                               ...(check.pembahasanWajib ? [check.hasPembahasan] : [])]
+                            : []
+                          const completedCount = poin.filter(Boolean).length
+                          const poinTotal = poin.length || 5
                           const canReview = check?.canComplete ?? false
                           const subjectName = classSubjectMap.get(s.class_id)
                           return (
@@ -925,8 +932,8 @@ export default async function UserDetailPage({
                               </td>
                               <td className="px-4 py-3">
                                 <Link href={`/admin/sessions/${s.id}`} className="flex items-center gap-2">
-                                  <span className={`text-sm font-semibold ${completedCount === 5 ? 'text-green-600' : completedCount >= 3 ? 'text-yellow-600' : 'text-red-500'}`}>
-                                    {completedCount}/5
+                                  <span className={`text-sm font-semibold ${completedCount === poinTotal ? 'text-green-600' : completedCount >= 3 ? 'text-yellow-600' : 'text-red-500'}`}>
+                                    {completedCount}/{poinTotal}
                                   </span>
                                   <span className="text-xs text-gray-400">selesai</span>
                                 </Link>

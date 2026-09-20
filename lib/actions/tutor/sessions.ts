@@ -77,6 +77,7 @@ export async function saveCustomTopicTutor(
 export async function saveSessionCpUrlsTutor(
   sessionId: string,
   cpUrls: Record<string, string>,
+  cpPembahasanUrls: Record<string, string> = {},
 ): Promise<{ error?: string }> {
   const user = await getUser()
   if (!user) return { error: 'Tidak terautentikasi' }
@@ -87,10 +88,14 @@ export async function saveSessionCpUrlsTutor(
 
   const { error } = await admin
     .from('sessions')
-    .update({ cp_urls: cpUrls, updated_at: new Date().toISOString() })
+    .update({ cp_urls: cpUrls, cp_pembahasan_urls: cpPembahasanUrls, updated_at: new Date().toISOString() })
     .eq('id', sessionId)
 
   if (error) return { error: error.message }
+
+  // Latihan soal dan pembahasannya ikut menentukan kelengkapan jurnal, jadi
+  // menyimpannya bisa membuat sesi ini genap selesai.
+  await checkAndCompleteSession(sessionId)
 
   revalidatePath(`/tutor/sessions/${sessionId}`)
   revalidatePath(`/admin/sessions/${sessionId}`)

@@ -24,7 +24,11 @@ type SaveTopicAction = (
   topicText: string,
   selectedCpIds: string[],
 ) => Promise<{ error?: string }>
-type SaveCpUrlsAction = (sessionId: string, cpUrls: Record<string, string>) => Promise<{ error?: string }>
+type SaveCpUrlsAction = (
+  sessionId: string,
+  cpUrls: Record<string, string>,
+  cpPembahasanUrls: Record<string, string>,
+) => Promise<{ error?: string }>
 type SaveCustomTopicAction = (
   sessionId: string,
   theme: string,
@@ -65,6 +69,7 @@ interface AssessmentItem {
   max_score: number
   due_at: string | null
   link_url: string | null
+  pembahasan_url: string | null
   created_at: string
 }
 
@@ -107,6 +112,7 @@ export default function SessionTabs({
   hasSubject,
   selectedCpIds,
   cpUrls,
+  cpPembahasanUrls,
   subjectName,
   grade,
   students,
@@ -141,6 +147,7 @@ export default function SessionTabs({
   hasSubject?: boolean
   selectedCpIds?: string[]
   cpUrls?: Record<string, string>
+  cpPembahasanUrls?: Record<string, string>
   subjectName?: string | null
   grade?: number | null
   isPrivateClass?: boolean
@@ -274,6 +281,7 @@ export default function SessionTabs({
               cpRows={curriculumTopics}
               customLearningOutcomes={customLearningOutcomes}
               initialCpUrls={cpUrls ?? {}}
+              initialCpPembahasanUrls={cpPembahasanUrls ?? {}}
               readOnly={!!readOnlyReason}
               saveAction={saveCpUrlsAction}
             />

@@ -20,6 +20,9 @@ const AssessmentSchema = z.object({
   max_score: z.number().min(1).max(1000).default(100),
   due_at: z.string().datetime().nullable().optional(),
   link_url: z.string().url().nullable().optional(),
+  // Pembahasan soal — pasangan `link_url`, diisi tutor setelah soalnya
+  // dikerjakan. Lihat migrasi 196.
+  pembahasan_url: z.string().url().nullable().optional(),
 })
 
 export async function createAssessmentAdmin(sessionId: string, data: unknown) {
@@ -40,6 +43,7 @@ export async function createAssessmentAdmin(sessionId: string, data: unknown) {
     max_score: parsed.data.max_score,
     due_at: parsed.data.due_at ?? null,
     link_url: parsed.data.link_url ?? null,
+    pembahasan_url: parsed.data.pembahasan_url ?? null,
   })
 
   if (error) return { error: error.message }
@@ -101,6 +105,7 @@ export async function updateAssessmentAdmin(assessmentId: string, sessionId: str
       max_score: parsed.data.max_score,
       due_at: parsed.data.due_at ?? null,
       link_url: parsed.data.link_url ?? null,
+      pembahasan_url: parsed.data.pembahasan_url ?? null,
     })
     .eq('id', assessmentId)
     .eq('session_id', sessionId)

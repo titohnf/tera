@@ -27,7 +27,7 @@ export default async function AssessmentPage({
 
   const { data: assessments } = await supabase
     .from('assessments')
-    .select('id, title, description, max_score, due_at, link_url, created_at')
+    .select('id, title, description, max_score, due_at, link_url, pembahasan_url, created_at')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: false })
 

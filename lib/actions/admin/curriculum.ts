@@ -338,13 +338,14 @@ export async function deleteTopic(ctx_: TopicContext): Promise<ActionState> {
 export async function saveSessionCpUrls(
   sessionId: string,
   cpUrls: Record<string, string>,
+  cpPembahasanUrls: Record<string, string> = {},
 ): Promise<{ error?: string }> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
   const { error } = await ctx.admin
     .from('sessions')
-    .update({ cp_urls: cpUrls })
+    .update({ cp_urls: cpUrls, cp_pembahasan_urls: cpPembahasanUrls })
     .eq('id', sessionId)
 
   if (error) return { error: error.message }

@@ -42,6 +42,7 @@ type SessionDetail = {
   curriculum_topic_id: string | null
   selected_cp_ids: string[] | null
   cp_urls: Record<string, string> | null
+  cp_pembahasan_urls: Record<string, string> | null
   custom_theme: string | null
   custom_learning_outcomes: string[] | null
   payroll_status: string
@@ -65,7 +66,7 @@ export default async function SessionPage({
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, custom_theme, custom_learning_outcomes, payroll_status, payroll_rejection_reason, payroll_reviewed_at, payroll_tutor_note, payroll_tutor_note_at, classes(name, level, class_type), subjects(name), tutor_id')
+    .select('id, class_id, subject_id, scheduled_at, duration_minutes, location, status, topic, curriculum_topic_id, selected_cp_ids, cp_urls, cp_pembahasan_urls, custom_theme, custom_learning_outcomes, payroll_status, payroll_rejection_reason, payroll_reviewed_at, payroll_tutor_note, payroll_tutor_note_at, classes(name, level, class_type), subjects(name), tutor_id')
     .eq('id', sessionId)
     .single() as { data: (SessionDetail & { tutor_id: string }) | null; error: unknown }
 
@@ -224,7 +225,7 @@ export default async function SessionPage({
       .order('created_at', { ascending: false }),
     supabase
       .from('assessments')
-      .select('id, title, description, max_score, due_at, link_url, created_at')
+      .select('id, title, description, max_score, due_at, link_url, pembahasan_url, created_at')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false }),
     supabase
@@ -422,6 +423,7 @@ export default async function SessionPage({
               hasSubject={!!session.subject_id}
               selectedCpIds={session.selected_cp_ids ?? []}
               cpUrls={session.cp_urls ?? {}}
+              cpPembahasanUrls={session.cp_pembahasan_urls ?? {}}
               subjectName={session.subjects?.name ?? null}
               grade={sessionGrade}
               students={students}
@@ -539,18 +541,30 @@ export default async function SessionPage({
               </p>
               <div className="space-y-1.5">
                 {[
-                  { label: 'Topik', ok: completionCheck.hasTopic },
-                  { label: `Materi (${completionCheck.materialsCount + completionCheck.materiKurikulumCount})`, ok: completionCheck.hasMaterials },
-                  { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance },
-                  { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes },
-                  { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.gradesRequired})`, ok: completionCheck.hasAssessments },
-                ].map(({ label, ok }) => (
-                  <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
+                  { label: 'Topik', ok: completionCheck.hasTopic, opsional: false },
+                  { label: `Materi (${completionCheck.materialsCount + completionCheck.materiKurikulumCount})`, ok: completionCheck.hasMaterials, opsional: false },
+                  { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance, opsional: false },
+                  { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes, opsional: false },
+                  { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.gradesRequired})`, ok: completionCheck.hasAssessments, opsional: false },
+                  // Pembahasan baru ditagih untuk sesi sejak September 2026.
+                  // Sesi sebelumnya tetap menampilkan poinnya — supaya terlihat
+                  // mana yang belum ada — tapi abu-abu, karena tidak menahan
+                  // apa pun.
+                  {
+                    label: `Pembahasan (${completionCheck.pembahasanCount}/${completionCheck.pembahasanRequired})`,
+                    ok: completionCheck.hasPembahasan,
+                    opsional: !completionCheck.pembahasanWajib,
+                  },
+                ].map(({ label, ok, opsional }) => (
+                  <div key={label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${ok ? 'bg-green-50 text-green-700' : opsional ? 'bg-gray-50 text-gray-500' : 'bg-orange-50 text-orange-700'}`}>
                     {ok
                       ? <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      : <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      : opsional
+                        ? <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+                        : <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     }
                     {label}
+                    {opsional && !ok && <span className="ml-auto text-[10px] uppercase tracking-wide">belum wajib</span>}
                   </div>
                 ))}
               </div>

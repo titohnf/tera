@@ -13,6 +13,9 @@ const AssessmentSchema = z.object({
   max_score: z.number().min(1).max(1000).default(100),
   due_at: z.string().datetime().nullable().optional(),
   link_url: z.string().url().nullable().optional(),
+  // Pembahasan soal — pasangan `link_url`, diisi tutor setelah soalnya
+  // dikerjakan. Lihat migrasi 196.
+  pembahasan_url: z.string().url().nullable().optional(),
 })
 
 export async function createAssessment(sessionId: string, data: unknown) {
@@ -34,6 +37,7 @@ export async function createAssessment(sessionId: string, data: unknown) {
     max_score: parsed.data.max_score,
     due_at: parsed.data.due_at ?? null,
     link_url: parsed.data.link_url ?? null,
+    pembahasan_url: parsed.data.pembahasan_url ?? null,
   })
 
   if (error) return { error: error.message }
@@ -52,6 +56,9 @@ const UpdateAssessmentSchema = z.object({
   max_score: z.number().min(1).max(1000).default(100),
   due_at: z.string().datetime().nullable().optional(),
   link_url: z.string().url().nullable().optional(),
+  // Pembahasan soal — pasangan `link_url`, diisi tutor setelah soalnya
+  // dikerjakan. Lihat migrasi 196.
+  pembahasan_url: z.string().url().nullable().optional(),
 })
 
 export async function updateAssessment(assessmentId: string, sessionId: string, data: unknown) {
@@ -73,11 +80,16 @@ export async function updateAssessment(assessmentId: string, sessionId: string, 
       max_score: parsed.data.max_score,
       due_at: parsed.data.due_at ?? null,
       link_url: parsed.data.link_url ?? null,
+      pembahasan_url: parsed.data.pembahasan_url ?? null,
     })
     .eq('id', assessmentId)
     .eq('session_id', sessionId)
 
   if (error) return { error: error.message }
+
+  // Menyunting asesmen bisa melengkapi jurnal — link pembahasan hampir selalu
+  // ditempel belakangan lewat Edit, bukan saat asesmennya pertama dibuat.
+  await checkAndCompleteSession(sessionId)
 
   revalidatePath(`/tutor/sessions/${sessionId}/assessment`)
   revalidatePath(`/tutor/sessions/${sessionId}`)

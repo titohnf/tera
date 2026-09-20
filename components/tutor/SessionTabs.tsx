@@ -40,6 +40,7 @@ interface AssessmentItem {
   max_score: number
   due_at: string | null
   link_url: string | null
+  pembahasan_url: string | null
   created_at: string
 }
 

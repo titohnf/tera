@@ -39,6 +39,26 @@ async function bolehLihatSesi(
   return session?.tutor_id === user.id
 }
 
+/**
+ * Sejak kapan pembahasan soal ikut menahan penyelesaian jurnal.
+ *
+ * Aturan ini lahir September 2026, dan sesi-sesi sebelumnya sudah lama selesai
+ * dan digaji. Menagihkannya surut berarti ratusan sesi lama serentak berubah
+ * jadi "belum lengkap" — panel review payroll-nya tersembunyi, dan tutor
+ * diminta melengkapi pekerjaan yang saat dikerjakan memang belum diminta.
+ * Jadi batas ini tanggal, bukan sakelar.
+ *
+ * Waktunya +07:00 karena `scheduled_at` selalu dibaca orang sebagai jam
+ * setempat: sesi 1 September pagi harus jatuh di sisi "wajib", dan dengan UTC
+ * sesi sebelum pukul 07.00 justru jatuh ke sisi sebelumnya.
+ */
+const PEMBAHASAN_WAJIB_SEJAK = new Date('2026-09-01T00:00:00+07:00')
+
+/** Tautan yang benar-benar terisi, bukan sekadar kolom yang ada. */
+function adaTautan(url: string | null | undefined): boolean {
+  return !!url?.trim()
+}
+
 export type CompletionCheck = {
   studentCount: number
   hasTopic: boolean
@@ -56,10 +76,17 @@ export type CompletionCheck = {
   gradedCount: number
   /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
   gradesRequired: number
+  /** Pembahasan yang sudah terisi, dari asesmen maupun kartu latihan soal. */
+  pembahasanCount: number
+  /** Berapa yang seharusnya ada: satu per asesmen/topik yang punya soal. */
+  pembahasanRequired: number
+  /** Sesi ini sudah kena aturan pembahasan? Lihat PEMBAHASAN_WAJIB_SEJAK. */
+  pembahasanWajib: boolean
   hasAllAttendance: boolean
   hasAllNotes: boolean
   hasMaterials: boolean
   hasAssessments: boolean
+  hasPembahasan: boolean
   canComplete: boolean
 }
 
@@ -69,7 +96,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
 
   const { data: session } = await admin
     .from('sessions')
-    .select('id, status, topic, class_id, scheduled_at, curriculum_topic_id, selected_cp_ids')
+    .select('id, status, topic, class_id, scheduled_at, curriculum_topic_id, selected_cp_ids, cp_urls, cp_pembahasan_urls')
     .eq('id', sessionId)
     .single()
 
@@ -92,7 +119,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     // A student may have up to one note per category — count distinct students, not rows
     admin.from('performance_notes').select('student_id').eq('session_id', sessionId),
     admin.from('materials').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
-    admin.from('assessments').select('id').eq('session_id', sessionId),
+    admin.from('assessments').select('id, link_url, pembahasan_url').eq('session_id', sessionId),
   ])
 
   // Materi yang datang dari Kurikulum tidak pernah menjadi baris `materials`:
@@ -128,6 +155,27 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   }
   const gradesRequired = assessmentsCount * presentLateCount
 
+  // SETIAP asesmen wajib punya pembahasan, punya tautan soal atau tidak: soal
+  // yang dikerjakan di kertas pun tetap perlu dibahas, dan "tidak ada tautan
+  // soal" terlalu mudah dipakai untuk melewati tagihan ini.
+  //
+  // Kartu latihan soal per topik beda: kartunya ADA untuk setiap CP yang
+  // dipilih, jadi menagih semuanya berarti menagih topik yang memang tidak
+  // diberi latihan soal. Di sana yang ditagih hanya kartu yang URL soalnya
+  // sudah terisi.
+  const cpUrls: Record<string, string> = session.cp_urls ?? {}
+  const cpPembahasanUrls: Record<string, string> = session.cp_pembahasan_urls ?? {}
+
+  const topikBersoal = Object.entries(cpUrls).filter(([, url]) => adaTautan(url))
+
+  const pembahasanRequired = assessmentsCount + topikBersoal.length
+  const pembahasanCount =
+    (assessmentList ?? []).filter(a => adaTautan(a.pembahasan_url)).length +
+    topikBersoal.filter(([key]) => adaTautan(cpPembahasanUrls[key])).length
+
+  const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
+  const hasPembahasan = pembahasanCount >= pembahasanRequired
+
   const hasTopic = !!(session.topic?.trim())
   const hasAllAttendance = (attendanceCount ?? 0) >= sc && sc > 0
   // Notes required for present/late students; skip only if attendance is fully submitted and none are present/late
@@ -145,6 +193,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
       ? true
       : assessmentsCount >= 1 && gradedCount >= gradesRequired
   const canComplete = hasTopic && hasAllAttendance && hasAllNotes && hasMaterials && hasAssessments
+    && (!pembahasanWajib || hasPembahasan)
 
   return {
     studentCount: sc,
@@ -157,10 +206,14 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     assessmentsCount,
     gradedCount,
     gradesRequired,
+    pembahasanCount,
+    pembahasanRequired,
+    pembahasanWajib,
     hasAllAttendance,
     hasAllNotes,
     hasMaterials,
     hasAssessments,
+    hasPembahasan,
     canComplete,
   }
 }
