@@ -302,7 +302,7 @@ export default function AssessmentList({
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">
-                          Link Pembahasan Soal <span className="text-gray-400">(wajib)</span>
+                          Link Pembahasan Soal <span className="text-gray-400">(opsional)</span>
                         </label>
                         <input
                           type="url"
@@ -385,13 +385,7 @@ export default function AssessmentList({
                             </svg>
                             Buka pembahasan
                           </a>
-                        ) : (
-                          // Soal tanpa pembahasan: murid yang keliru cuma tahu
-                          // ia keliru. Ditagih di sini, bukan cuma di panel
-                          // Kelengkapan Jurnal, supaya terbacanya di tempat
-                          // yang sama dengan tombol Edit yang memperbaikinya.
-                          <span className="text-xs font-medium text-orange-500">Pembahasan belum diisi</span>
-                        )}
+                        ) : null}
                       </div>
                     </>
                   )}
@@ -562,7 +556,7 @@ export default function AssessmentList({
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">
-                Link Pembahasan Soal <span className="text-gray-400">(wajib)</span>
+                Link Pembahasan Soal <span className="text-gray-400">(opsional)</span>
               </label>
               <input
                 type="url"

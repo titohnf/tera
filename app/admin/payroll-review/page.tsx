@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import MetricCard from '@/components/dashboard/MetricCard'
 import PayrollReviewFilters from '@/components/admin/payroll/PayrollReviewFilters'
@@ -54,9 +55,18 @@ export default async function PayrollReviewPage({
   // Sesi yang belum `completed` berarti jurnalnya belum lengkap — belum bisa
   // direview sama sekali. Ditampilkan sebagai status tersendiri supaya sesi
   // yang mandek tidak menghilang begitu saja dari layar admin.
+  //
+  // `payroll_status` bawaannya 'pending' dan tidak pernah ditarik mundur, jadi
+  // sesi `completed` yang syaratnya berubah sesudahnya dicek ulang di sini.
+  const pendingReviewIds = (sessions ?? [])
+    .filter(s => s.status === 'completed' && s.payroll_status === 'pending')
+    .map(s => s.id)
+  const pendingReviewChecks = await Promise.all(pendingReviewIds.map(id => getSessionCompletionStatus(id)))
+  const belumLengkap = new Set(pendingReviewIds.filter((_, i) => !pendingReviewChecks[i]?.canComplete))
+
   const allSessions = (sessions ?? []).map(s => ({
     ...s,
-    reviewStatus: s.status === 'completed' ? s.payroll_status : 'incomplete',
+    reviewStatus: s.status === 'completed' && !belumLengkap.has(s.id) ? s.payroll_status : 'incomplete',
   }))
 
   // Dua sesi di kelas dan tanggal yang sama hampir selalu berarti satu

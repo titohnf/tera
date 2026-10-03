@@ -323,7 +323,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   // mana yang belum ada — tapi abu-abu, karena tidak menahan
                   // apa pun.
                   {
-                    label: `Pembahasan (${completionCheck.pembahasanCount}/${completionCheck.pembahasanRequired})`,
+                    label: `Latihan Soal (${completionCheck.pembahasanCount}/${completionCheck.pembahasanRequired})`,
                     ok: completionCheck.hasPembahasan,
                     opsional: !completionCheck.pembahasanWajib,
                   },

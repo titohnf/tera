@@ -102,7 +102,10 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="block text-xs text-gray-500">Link Soal</label>
+                <label className="block text-xs text-gray-500">
+                  Link Soal{' '}
+                  {!url.trim() && <span className="text-orange-500 font-medium">— belum diisi</span>}
+                </label>
                 <input
                   type="url"
                   value={url}
@@ -132,7 +135,7 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
               <div className="space-y-1">
                 <label className="block text-xs text-gray-500">
                   Link Pembahasan Soal{' '}
-                  {url.trim() && !pembahasanUrl.trim() && (
+                  {!pembahasanUrl.trim() && (
                     <span className="text-orange-500 font-medium">— belum diisi</span>
                   )}
                 </label>

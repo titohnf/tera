@@ -6,6 +6,7 @@ import SessionForm from '@/components/admin/sessions/SessionForm'
 import { createSession } from '@/lib/actions/admin/sessions'
 const PAYROLL_BADGE: Record<string, { label: string; cls: string }> = {
   unavailable: { label: 'Belum Tersedia', cls: 'bg-gray-100 text-gray-500' },
+  incomplete: { label: 'Belum Lengkap', cls: 'bg-orange-100 text-orange-700' },
   pending: { label: 'Menunggu Review', cls: 'bg-yellow-100 text-yellow-700' },
   approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
   rejected: { label: 'Ditolak', cls: 'bg-red-100 text-red-700' },

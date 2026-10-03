@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { getSessionCompletionStatus } from '@/lib/actions/session-completion'
 import ClassSessions from '@/components/admin/classes/ClassSessions'
 import DeleteClassButton from '@/components/admin/classes/DeleteClassButton'
 import CompleteClassButton from '@/components/admin/classes/CompleteClassButton'
@@ -152,8 +153,18 @@ export default async function ClassDetailPage({
     ((reasonRes.data ?? []) as { id: string; cancellation_reason: string | null }[])
       .map(r => [r.id, r.cancellation_reason]),
   )
+  // `payroll_status` bawaannya 'pending' dan tidak pernah ditarik mundur, jadi
+  // sesi yang syaratnya berubah sesudah selesai (mis. aturan pembahasan)
+  // tetap tampak "Menunggu Review". Dicek ulang di sini, sama seperti halaman tutor.
+  const pendingReviewIds = (sessions ?? [])
+    .filter(s => s.status === 'completed' && s.payroll_status === 'pending')
+    .map(s => s.id)
+  const pendingReviewChecks = await Promise.all(pendingReviewIds.map(id => getSessionCompletionStatus(id)))
+  const belumLengkap = new Set(pendingReviewIds.filter((_, i) => !pendingReviewChecks[i]?.canComplete))
+
   const sessionsWithReason = (sessions ?? []).map(sess => ({
     ...sess,
+    payroll_status: belumLengkap.has(sess.id) ? 'incomplete' : sess.payroll_status,
     cancellation_reason: reasonById.get(sess.id) ?? null,
   }))
 

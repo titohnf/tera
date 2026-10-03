@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { rosterForSession } from '@/lib/enrollment'
 import { materiKurikulumSesi } from '@/lib/materi-sesi'
+import { CUSTOM_TOPIC_KEY } from '@/lib/latihan-soal-topics'
 
 /**
  * Boleh melihat / memicu penyelesaian sesi ini?
@@ -76,9 +77,9 @@ export type CompletionCheck = {
   gradedCount: number
   /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
   gradesRequired: number
-  /** Pembahasan yang sudah terisi, dari asesmen maupun kartu latihan soal. */
+  /** Topik yang latihan soalnya lengkap (link soal + pembahasan). Pembahasan asesmen opsional, tidak dihitung. */
   pembahasanCount: number
-  /** Berapa yang seharusnya ada: satu per asesmen/topik yang punya soal. */
+  /** Berapa yang seharusnya ada: satu per topik sesi. */
   pembahasanRequired: number
   /** Sesi ini sudah kena aturan pembahasan? Lihat PEMBAHASAN_WAJIB_SEJAK. */
   pembahasanWajib: boolean
@@ -96,7 +97,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
 
   const { data: session } = await admin
     .from('sessions')
-    .select('id, status, topic, class_id, scheduled_at, curriculum_topic_id, selected_cp_ids, cp_urls, cp_pembahasan_urls')
+    .select('id, status, topic, class_id, scheduled_at, curriculum_topic_id, selected_cp_ids, cp_urls, cp_pembahasan_urls, custom_learning_outcomes')
     .eq('id', sessionId)
     .single()
 
@@ -155,23 +156,35 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   }
   const gradesRequired = assessmentsCount * presentLateCount
 
-  // SETIAP asesmen wajib punya pembahasan, punya tautan soal atau tidak: soal
-  // yang dikerjakan di kertas pun tetap perlu dibahas, dan "tidak ada tautan
-  // soal" terlalu mudah dipakai untuk melewati tagihan ini.
+  // Pembahasan asesmen opsional: asesmen menguji, bukan mengajari, jadi tutor
+  // boleh mengisinya tapi tidak ditagih. Yang wajib adalah latihan soal: SETIAP
+  // topik sesi harus punya link soal DAN link pembahasannya. Pembahasan tanpa
+  // soal tidak berarti apa-apa, jadi satu topik baru terhitung bila keduanya
+  // terisi.
   //
-  // Kartu latihan soal per topik beda: kartunya ADA untuk setiap CP yang
-  // dipilih, jadi menagih semuanya berarti menagih topik yang memang tidak
-  // diberi latihan soal. Di sana yang ditagih hanya kartu yang URL soalnya
-  // sudah terisi.
+  // Daftar topiknya dibangun sama persis dengan kartu di `LatihanSoalTab`
+  // (CP terpilih yang punya capaian, dikelompokkan per topik, ditambah satu
+  // kartu 'custom' untuk CP bebas kelas privat) — kunci yang beda berarti
+  // topik yang ditagih tapi tidak punya kolom untuk diisi.
   const cpUrls: Record<string, string> = session.cp_urls ?? {}
   const cpPembahasanUrls: Record<string, string> = session.cp_pembahasan_urls ?? {}
 
-  const topikBersoal = Object.entries(cpUrls).filter(([, url]) => adaTautan(url))
+  const selectedCpIds: string[] = session.selected_cp_ids ?? []
+  const { data: cpRows } = selectedCpIds.length > 0
+    ? await admin
+        .from('curriculum_topics')
+        .select('id, group_id, learning_outcomes')
+        .in('id', selectedCpIds)
+    : { data: [] as { id: string; group_id: string | null; learning_outcomes: string | null }[] }
+  const kunciTopik = new Set<string>(
+    (cpRows ?? []).filter(r => r.learning_outcomes).map(r => r.group_id ?? r.id),
+  )
+  const customOutcomes: string[] = session.custom_learning_outcomes ?? []
+  if (customOutcomes.some(t => t?.trim())) kunciTopik.add(CUSTOM_TOPIC_KEY)
 
-  const pembahasanRequired = assessmentsCount + topikBersoal.length
-  const pembahasanCount =
-    (assessmentList ?? []).filter(a => adaTautan(a.pembahasan_url)).length +
-    topikBersoal.filter(([key]) => adaTautan(cpPembahasanUrls[key])).length
+  const pembahasanRequired = kunciTopik.size
+  const pembahasanCount = [...kunciTopik]
+    .filter(key => adaTautan(cpUrls[key]) && adaTautan(cpPembahasanUrls[key])).length
 
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
   const hasPembahasan = pembahasanCount >= pembahasanRequired
