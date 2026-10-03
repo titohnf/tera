@@ -138,6 +138,12 @@ export default function SessionTopicEditor({
     customOutcomes.length !== savedCustomOutcomes.length ||
     customOutcomes.some((v, i) => v !== savedCustomOutcomes[i])
 
+  // Tema, topik, dan minimal satu CP wajib terisi sebelum topik bisa disimpan.
+  const customLengkap =
+    !!customTheme.trim() && !!customTopic.trim() && customOutcomes.some(o => o.trim())
+  const kurikulumLengkap =
+    !!selectedGroup && (selectedGroup.cpRows.length === 0 || selectedCpIds.size > 0)
+
   function updateOutcome(index: number, value: string) {
     setCustomOutcomes(prev => prev.map((v, i) => (i === index ? value : v)))
   }
@@ -250,7 +256,7 @@ export default function SessionTopicEditor({
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Tema
+              Tema <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -264,7 +270,7 @@ export default function SessionTopicEditor({
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Topik
+              Topik <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -278,7 +284,7 @@ export default function SessionTopicEditor({
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Capaian Pembelajaran
+              Capaian Pembelajaran <span className="text-red-500">*</span>
             </label>
             <div className="space-y-2">
               {customOutcomes.map((value, i) => (
@@ -322,7 +328,7 @@ export default function SessionTopicEditor({
               <button
                 type="button"
                 onClick={saveCustom}
-                disabled={!isCustomDirty || isPending}
+                disabled={!isCustomDirty || !customLengkap || isPending}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               >
                 {isPending ? 'Menyimpan...' : 'Simpan Topik'}
@@ -351,7 +357,7 @@ export default function SessionTopicEditor({
           {/* Step 1: Select Topic */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Topik
+              Topik <span className="text-red-500">*</span>
             </label>
             <select
               value={selectedGroupKey}
@@ -374,7 +380,7 @@ export default function SessionTopicEditor({
           {selectedGroup && (
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                Capaian Pembelajaran
+                Capaian Pembelajaran <span className="text-red-500">*</span>
                 {selectedCpIds.size > 0 && (
                   <span className="ml-2 normal-case font-normal text-blue-600">({selectedCpIds.size} dipilih)</span>
                 )}
@@ -416,7 +422,7 @@ export default function SessionTopicEditor({
               <button
                 type="button"
                 onClick={save}
-                disabled={!isDirty || isPending}
+                disabled={!isDirty || !kurikulumLengkap || isPending}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               >
                 {isPending ? 'Menyimpan...' : 'Simpan Topik'}

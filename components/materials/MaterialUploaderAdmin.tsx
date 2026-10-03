@@ -98,7 +98,7 @@ export default function MaterialUploaderAdmin({
     <div className="border border-slate-200 rounded-xl p-4">
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Judul</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Judul <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={linkTitle}
@@ -108,7 +108,7 @@ export default function MaterialUploaderAdmin({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">URL / Link</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">URL / Link <span className="text-red-500">*</span></label>
           <input
             type="url"
             value={linkUrl}

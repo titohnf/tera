@@ -272,7 +272,7 @@ export default function AssessmentList({
                   {editingId === assessment.id ? (
                     <div className="space-y-2" onClick={e => e.stopPropagation()}>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Judul Asesmen</label>
+                        <label className="block text-xs text-gray-500 mb-1">Judul Asesmen <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           value={editTitle}
@@ -292,7 +292,7 @@ export default function AssessmentList({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(wajib)</span></label>
+                        <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-red-500">*</span></label>
                         <input
                           type="url"
                           value={editLinkUrl}
@@ -546,7 +546,7 @@ export default function AssessmentList({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(wajib)</span></label>
+              <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-red-500">*</span></label>
               <input
                 type="url"
                 placeholder="https://forms.google.com/..."

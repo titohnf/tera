@@ -103,7 +103,7 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
               </div>
               <div className="space-y-1">
                 <label className="block text-xs text-gray-500">
-                  Link Soal{' '}
+                  Link Soal <span className="text-red-500">*</span>{' '}
                   {!url.trim() && <span className="text-orange-500 font-medium">— belum diisi</span>}
                 </label>
                 <input
@@ -134,7 +134,7 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
                   harus dicari sendiri. */}
               <div className="space-y-1">
                 <label className="block text-xs text-gray-500">
-                  Link Pembahasan Soal{' '}
+                  Link Pembahasan Soal <span className="text-red-500">*</span>{' '}
                   {!pembahasanUrl.trim() && (
                     <span className="text-orange-500 font-medium">— belum diisi</span>
                   )}

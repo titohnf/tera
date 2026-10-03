@@ -115,7 +115,7 @@ export default function MaterialUploader({
     <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Judul</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Judul <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={linkTitle}
@@ -125,7 +125,7 @@ export default function MaterialUploader({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">URL / Link</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">URL / Link <span className="text-red-500">*</span></label>
           <input
             type="url"
             value={linkUrl}
