@@ -233,6 +233,7 @@ export default function AssessmentList({
 
     const linkUrl = rapikanTautan(editLinkUrl)
     const pembahasanUrl = rapikanTautan(editPembahasanUrl)
+    if (!linkUrl) return
 
     startTransition(async () => {
       const result = await updateAction(assessment.id, sessionId, {
@@ -291,7 +292,7 @@ export default function AssessmentList({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(opsional)</span></label>
+                        <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(wajib)</span></label>
                         <input
                           type="url"
                           value={editLinkUrl}
@@ -326,7 +327,7 @@ export default function AssessmentList({
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => handleSaveEdit(assessment)}
-                          disabled={isPending || !editTitle.trim()}
+                          disabled={isPending || !editTitle.trim() || !rapikanTautan(editLinkUrl)}
                           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                         >
                           {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -545,7 +546,7 @@ export default function AssessmentList({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(opsional)</span></label>
+              <label className="block text-xs text-gray-500 mb-1">Link Soal <span className="text-gray-400">(wajib)</span></label>
               <input
                 type="url"
                 placeholder="https://forms.google.com/..."
@@ -581,7 +582,7 @@ export default function AssessmentList({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCreateAssessment}
-                disabled={isPending || !newTitle.trim()}
+                disabled={isPending || !newTitle.trim() || !rapikanTautan(newLinkUrl)}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               >
                 {isPending ? 'Menyimpan...' : 'Simpan'}

@@ -189,6 +189,8 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
   const hasPembahasan = pembahasanCount >= pembahasanRequired
 
+  const asesmenTanpaLink = (assessmentList ?? []).filter(a => !adaTautan(a.link_url)).length
+
   const hasTopic = !!(session.topic?.trim())
   const hasAllAttendance = (attendanceCount ?? 0) >= sc && sc > 0
   // Notes required for present/late students; skip only if attendance is fully submitted and none are present/late
@@ -205,6 +207,9 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     : presentLateCount === 0
       ? true
       : assessmentsCount >= 1 && gradedCount >= gradesRequired
+        // Link soal asesmen wajib sejak PEMBAHASAN_WAJIB_SEJAK; sesi lama
+        // yang asesmennya tanpa link tidak ikut menjadi belum lengkap.
+        && (!pembahasanWajib || asesmenTanpaLink === 0)
   const canComplete = hasTopic && hasAllAttendance && hasAllNotes && hasMaterials && hasAssessments
     && (!pembahasanWajib || hasPembahasan)
 
