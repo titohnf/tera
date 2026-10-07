@@ -1,4 +1,5 @@
 import type { createAdminClient } from './supabase/server-admin'
+import { getSessionCompletionStatus } from './actions/session-completion'
 
 /**
  * Sesi yang dibayar = sesi yang jadwalnya sudah lewat dan tidak dibatalkan.
@@ -37,6 +38,7 @@ export function countUnapproved(counts: JournalStatusCounts): number {
 }
 
 type SessionStatusRow = {
+  id: string
   tutor_id: string | null
   status: string
   scheduled_at: string
@@ -69,18 +71,26 @@ export async function fetchJournalStatusByTutor(
 
   const { data } = await admin
     .from('sessions')
-    .select('tutor_id, status, scheduled_at, payroll_status')
+    .select('id, tutor_id, status, scheduled_at, payroll_status')
     .neq('status', 'cancelled')
     .gte('scheduled_at', monthStart)
     .lt('scheduled_at', monthEnd)
     .lte('scheduled_at', nowIso) as unknown as { data: SessionStatusRow[] | null }
 
+  // `payroll_status` bawaannya 'pending' dan tidak pernah ditarik mundur, jadi
+  // sesi `completed` yang syaratnya berubah sesudahnya (aturan jurnal diperketat)
+  // dicek ulang. Tanpa ini slip menyebutnya "menunggu review" padahal Review Gaji
+  // menganggapnya belum lengkap — angka kedua halaman harus sama.
+  const sessions = (data ?? []).filter(s => s.tutor_id && hasTakenPlace(s, nowIso))
+  const toRecheck = sessions.filter(s => s.status === 'completed' && s.payroll_status === 'pending')
+  const checks = await Promise.all(toRecheck.map(s => getSessionCompletionStatus(s.id)))
+  const belumLengkap = new Set(toRecheck.filter((_, i) => !checks[i]?.canComplete).map(s => s.id))
+
   const byTutor: Record<string, JournalStatusCounts> = {}
-  for (const session of data ?? []) {
-    if (!session.tutor_id) continue
-    if (!hasTakenPlace(session, nowIso)) continue
-    byTutor[session.tutor_id] ??= emptyJournalCounts()
-    addSession(byTutor[session.tutor_id], session)
+  for (const session of sessions) {
+    const tutorId = session.tutor_id!
+    byTutor[tutorId] ??= emptyJournalCounts()
+    addSession(byTutor[tutorId], belumLengkap.has(session.id) ? { ...session, status: 'incomplete' } : session)
   }
   return byTutor
 }
