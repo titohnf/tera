@@ -14,9 +14,11 @@
  *   1. KODE di jalur folder — `[t-9f3a2c]` di nama folder mana pun. Pengenal
  *      yang sama persis dengan yang ditampilkan di halaman admin Materi dan
  *      Latihan Soal. Menang atas semua yang lain.
- *   2. PETA keputusan manual (`scripts/materi-pemetaan.json`) — jalur folder
- *      yang pernah diputuskan seseorang. Berkas baru di folder yang sama ikut
- *      terdaftar tanpa ditanya lagi.
+ *   2. PETA keputusan manual (`lib/materi-pemetaan.json`) — jalur folder yang
+ *      pernah diputuskan seseorang, berlaku juga untuk subfoldernya. Berkas baru
+ *      di folder yang sama ikut terdaftar tanpa ditanya lagi. Folder bernama
+ *      `Ringkasan` di bawah kelas adalah aturan tetap: tujuannya satu topik
+ *      Review yang ditentukan admin per mapel dan kelas.
  *   3. NAMA PERSIS — mapel, kelas, dan topik sama setelah dinormalkan.
  *
  * Yang tidak lolos ketiganya TIDAK didaftarkan; ia dilaporkan, dan manusia yang
@@ -151,7 +153,13 @@ export function cocokkan(jalur: string[], indeks: IndeksTopik): HasilCocok {
     return grup ? { status: 'cocok', grup, cara: 'kode' } : { status: 'kode-tak-dikenal', kode }
   }
 
-  const dariPeta = indeks.peta.get(normalisasi(kunciJalur(jalur)))
+  // Peta berlaku untuk folder yang dipetakan DAN semua subfolder di dalamnya:
+  // dicoba dari jalur terpanjang ke terpendek, jadi entri yang lebih spesifik
+  // menang atas yang lebih umum.
+  let dariPeta: string | undefined
+  for (let n = jalur.length; n >= 2 && !dariPeta; n--) {
+    dariPeta = indeks.peta.get(normalisasi(kunciJalur(jalur.slice(0, n))))
+  }
   if (dariPeta) {
     const grup = indeks.perKode.get(dariPeta)
     return grup ? { status: 'cocok', grup, cara: 'peta' } : { status: 'peta-tak-dikenal', kode: dariPeta }

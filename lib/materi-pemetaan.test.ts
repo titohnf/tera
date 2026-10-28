@@ -62,6 +62,19 @@ describe('cocokkan', () => {
   it('peta manual dipakai sebelum nama', () => {
     expect(cocokkan(['Bahasa Indonesia', 'Kelas 2', 'Kalimat Tanya'], indeks)).toMatchObject({ status: 'cocok', cara: 'peta' })
   })
+  it('peta berlaku untuk subfolder, dan entri yang lebih spesifik menang', () => {
+    const idx = bangunIndeks(grup, [
+      { jalur: 'IPA/Kelas 7/Ringkasan', kode: kodeTopik(grup[0].id) },
+      { jalur: 'IPA/Kelas 7/Ringkasan/Khusus', kode: kodeTopik(grup[2].id) },
+    ])
+    expect(cocokkan(['IPA', 'Kelas 7', 'Ringkasan'], idx)).toMatchObject({ status: 'cocok', cara: 'peta' })
+    expect(cocokkan(['IPA', 'Kelas 7', 'Ringkasan', 'Bab 1'], idx).grup.id).toBe(grup[0].id)
+    expect(cocokkan(['IPA', 'Kelas 7', 'Ringkasan', 'Khusus', 'Bab 2'], idx).grup.id).toBe(grup[2].id)
+    expect(cocokkan(['IPA', 'Kelas 8', 'Ringkasan'], idx).status).toBe('tak-ada')
+  })
+  it('folder Ringkasan tanpa entri peta tidak ditebak', () => {
+    expect(cocokkan(['Matematika', 'Kelas 5', 'Ringkasan'], indeks).status).toBe('tak-ada')
+  })
   it('nama persis, dengan tanda baca Drive dan "SD"', () => {
     expect(cocokkan(['Science', 'Kelas 4', 'Where Do Plants Grow Better- & Spot'], indeks)).toMatchObject({ status: 'cocok', cara: 'nama' })
     expect(cocokkan(['IPA', 'Kelas 7 SD', 'Pengenalan Gaya'], indeks)).toMatchObject({ status: 'cocok', cara: 'nama' })

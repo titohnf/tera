@@ -70,6 +70,11 @@
     "topik": "Latihan Soal Intensif / Latihan Gabungan Semua Topik Bahasa Indonesia"
   },
   {
+    "jalur": "Bahasa Indonesia/Kelas 9/Ringkasan",
+    "kode": "t-d328c8",
+    "topik": "Asesmen & Diagnostik / Review & Tes Formatif Literasi  (aturan tetap folder \"Ringkasan\")"
+  },
+  {
     "jalur": "Bahasa Inggris/Kelas 11/Determiners & Quantity Expressions",
     "kode": "t-38366e",
     "topik": "Determiners & Quantity Expressions / Determiners; expressions of quantity."
@@ -273,6 +278,11 @@
     "jalur": "Matematika/Kelas 9/Pola Bilangan & Barisan",
     "kode": "t-350022",
     "topik": "Aljabar / Barisan dan Deret"
+  },
+  {
+    "jalur": "Matematika/Kelas 9/Ringkasan",
+    "kode": "t-0f5fad",
+    "topik": "Asesmen & Diagnostik / Review & Tes Formatif Numerasi  (aturan tetap folder \"Ringkasan\")"
   },
   {
     "jalur": "Math/Kelas 4/ Shapes & Tessellation ",
