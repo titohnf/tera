@@ -105,26 +105,29 @@ export default function SiswaSidebar({
               const isi = (
                 <>
                   <p className="text-sm font-medium text-gray-700">{cls.name}</p>
+                  {/*
+                    Hari dan mapel tidak dipasangkan: kelas hanya menyimpan
+                    daftar hari dan daftar mapel, tanpa tahu hari mana untuk
+                    mapel mana. Memasangkan menurut urutan menampilkan
+                    pasangan yang bisa saja terbalik.
+                  */}
                   <div className="mt-2 space-y-0.5">
-                    {Array.from(
-                      { length: Math.max(cls.schedule_days.length, cls.subject_names.length, 1) },
-                      (_, i) => {
-                        const hari = cls.schedule_days[i]
-                        const mapel = cls.subject_names[i]
-                        return (
-                          <div key={i} className="flex items-center justify-between gap-2">
-                            <span className="text-sm text-gray-500">
-                              {hari !== undefined ? HARI[hari] : '—'}
-                              {cls.schedule_time && `, ${cls.schedule_time.slice(0, 5)}`}
-                            </span>
-                            {mapel && (
-                              <span className="text-sm font-medium text-gray-700 shrink-0">{mapel}</span>
-                            )}
-                          </div>
-                        )
-                      },
+                    {cls.schedule_days.length === 0 ? (
+                      <p className="text-sm text-gray-500">—</p>
+                    ) : (
+                      cls.schedule_days.map((hari, i) => (
+                        <p key={i} className="text-sm text-gray-500">
+                          {HARI[hari]}
+                          {cls.schedule_time && `, ${cls.schedule_time.slice(0, 5)}`}
+                        </p>
+                      ))
                     )}
                   </div>
+                  {cls.subject_names.length > 0 && (
+                    <p className="mt-1.5 text-sm font-medium text-gray-700">
+                      {cls.subject_names.join(' · ')}
+                    </p>
+                  )}
                 </>
               )
               return classHref ? (

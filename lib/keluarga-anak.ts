@@ -33,7 +33,7 @@ export type KelasAnak = {
   is_active: boolean
   enrolled_at: string | null
   unenrolled_at: string | null
-  classes: { name: string; schedule_days: number[] | null; schedule_time: string | null } | null
+  classes: { name: string; is_active: boolean; schedule_days: number[] | null; schedule_time: string | null } | null
 }
 
 export async function muatKelasDanSesi(studentId: string) {
@@ -41,7 +41,7 @@ export async function muatKelasDanSesi(studentId: string) {
 
   const { data: kelasRows } = await supabase
     .from('class_students')
-    .select('class_id, is_active, enrolled_at, unenrolled_at, classes(name, schedule_days, schedule_time)')
+    .select('class_id, is_active, enrolled_at, unenrolled_at, classes(name, is_active, schedule_days, schedule_time)')
     .eq('student_id', studentId)
 
   const kelas = (kelasRows ?? []) as unknown as KelasAnak[]
@@ -85,16 +85,28 @@ export async function muatKelasDanSesi(studentId: string) {
   const sessionTutorMap: Record<string, string> = {}
   for (const s of sesi) if (s.tutor_id) sessionTutorMap[s.id] = namaTutor.get(s.tutor_id) ?? ''
 
-  const kelasAktif = kelas.filter((k) => k.is_active)
+  // Aturan admin: keanggotaan aktif DAN kelasnya sendiri belum ditutup.
+  const kelasAktif = kelas.filter((k) => k.is_active && k.classes?.is_active !== false)
   const kelasLampau = kelas.filter((k) => !k.is_active)
   const idKelasAktif = new Set(kelasAktif.map((k) => k.class_id))
   const sesiAktif = sesi.filter((s) => idKelasAktif.has(s.class_id))
 
-  // Mapel per kelas disimpulkan dari sesinya — sama seperti yang dilakukan
-  // halaman admin, karena kelas tidak menyimpan daftar mapelnya sendiri.
+  // Mapel per kelas dari `class_subjects`, sama seperti halaman admin. Sesi
+  // hanya jadi cadangan untuk kelas yang daftarnya kosong.
+  const { data: csRows } = classIds.length
+    ? await supabase.from('class_subjects').select('class_id, subject_id').in('class_id', classIds)
+    : { data: null }
   const mapelPerKelas = new Map<string, string[]>()
+  for (const r of csRows ?? []) {
+    const nama = subjectNameMap[r.subject_id as string]
+    if (!nama) continue
+    const daftar = mapelPerKelas.get(r.class_id as string) ?? []
+    if (!daftar.includes(nama)) daftar.push(nama)
+    mapelPerKelas.set(r.class_id as string, daftar)
+  }
+  const adaDiTabel = new Set(mapelPerKelas.keys())
   for (const s of sesi) {
-    if (!s.subject_id) continue
+    if (!s.subject_id || adaDiTabel.has(s.class_id)) continue
     const nama = subjectNameMap[s.subject_id]
     if (!nama) continue
     const daftar = mapelPerKelas.get(s.class_id) ?? []

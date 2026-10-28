@@ -14,6 +14,7 @@ import JadwalTable from '@/components/siswa/JadwalTable'
 import SiswaTabs from '@/components/siswa/SiswaTabs'
 import TagihanList, { type PembayaranRow } from '@/components/siswa/TagihanList'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
+import { ringkasPembayaran } from '@/lib/tagihan'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
 
@@ -270,7 +271,7 @@ export default async function SiswaDetailPage({
       ? admin.from('sessions').select('id, class_id, scheduled_at, topic, status, cancellation_reason, subject_id').in('class_id', allClassIds).eq('status', 'completed').order('scheduled_at', { ascending: false }).limit(200) as unknown as Promise<{ data: SessionRow[] | null }>
       : Promise.resolve({ data: [] as SessionRow[] }),
     admin.from('attendances').select('session_id, status').eq('student_id', studentId) as unknown as Promise<{ data: AttendanceRow[] | null }>,
-    admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes, classes(name)').eq('student_id', studentId).order('issued_at', { ascending: false }).limit(24) as unknown as Promise<{ data: InvoiceRow[] | null }>,
+    admin.from('invoices').select('id, invoice_number, total_due, status, due_date, issued_at, notes, classes(name)').eq('student_id', studentId).order('issued_at', { ascending: false }) as unknown as Promise<{ data: InvoiceRow[] | null }>,
     // Sesi yang sudah LEWAT dan tidak dibatalkan — apa pun statusnya.
     //
     // Dipakai khusus untuk "kapan terakhir siswa ini les" (W-SESI dan KC-04),
@@ -420,8 +421,7 @@ export default async function SiswaDetailPage({
   const hadirCount = completedSessions.filter(s => { const st = attendanceMap.get(s.id); return st === 'present' || st === 'late' }).length
   const hadirPct = completedSessions.length > 0 ? Math.round((hadirCount / completedSessions.length) * 100) : null
   const overdueInvoices = invoices.filter(inv => inv.status !== 'paid' && inv.due_date && inv.due_date < today)
-  const unpaidTotal = invoices.filter(inv => inv.status !== 'paid' && inv.status !== 'cancelled').reduce((s, i) => s + i.total_due, 0)
-  const paidTotal = invoices.filter(inv => inv.status === 'paid').reduce((s, i) => s + i.total_due, 0)
+  const { sudahBayar: paidTotal, belumBayar: unpaidTotal } = ringkasPembayaran(invoices, pembayaran)
 
   const now2 = new Date()
   const startOfMonth = new Date(now2.getFullYear(), now2.getMonth(), 1)
@@ -494,7 +494,9 @@ export default async function SiswaDetailPage({
     nextScheduledSessionDate,
     tutorIsActive,
     maxOverdueDays: overdueInvoices.length > 0 ? Math.max(...overdueInvoices.map(inv => daysBetween(new Date(inv.due_date!), now2))) : 0,
-    totalOutstanding: unpaidTotal,
+    // Nilai kotor, sama dengan studentCriticalQueries — kartu ini dan daftar
+    // siswa kritis tidak boleh menilai murid yang sama dengan angka berbeda.
+    totalOutstanding: invoices.filter(inv => inv.status !== 'paid' && inv.status !== 'cancelled').reduce((s, i) => s + i.total_due, 0),
     monthlyBaseRate: 500_000,
   }
 

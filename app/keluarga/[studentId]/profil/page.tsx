@@ -3,6 +3,7 @@ import { kodeReferal } from '@/lib/referal'
 import { createClient } from '@/lib/supabase/server'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { hitungKehadiran } from '@/lib/kehadiran'
+import { ringkasPembayaran } from '@/lib/tagihan'
 import SiswaHeaderCard from '@/components/siswa/SiswaHeaderCard'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import KartuAkun from '@/components/apps/KartuAkun'
@@ -54,20 +55,25 @@ export default async function ProfilAnak({
 
   const { data: invoiceRows } = await supabase
     .from('invoices')
-    .select('total_due, status')
+    .select('id, total_due, status')
     .eq('student_id', studentId)
     .neq('status', 'draft')
-  const invoices = (invoiceRows ?? []) as { total_due: number; status: string }[]
+  const invoices = (invoiceRows ?? []) as { id: string; total_due: number; status: string }[]
 
   const { kelasAktif, sesi, attendanceMap, mapelPerKelas } = await muatKelasDanSesi(studentId)
   const { total, persen } = hitungKehadiran(sesi, new Map(Object.entries(attendanceMap)))
 
-  const sudahBayar = invoices
-    .filter((i) => i.status === 'paid')
-    .reduce((s, i) => s + Number(i.total_due), 0)
-  const belumBayar = invoices
-    .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
-    .reduce((s, i) => s + Number(i.total_due), 0)
+  // Klien ber-RLS, kebijakan "Families read own payments" (migrasi 076).
+  const { data: bayarRows } = invoices.length
+    ? await supabase
+        .from('invoice_payments')
+        .select('invoice_id, amount')
+        .in('invoice_id', invoices.map((i) => i.id))
+    : { data: null }
+  const { sudahBayar, belumBayar } = ringkasPembayaran(
+    invoices,
+    (bayarRows ?? []) as { invoice_id: string; amount: number }[],
+  )
 
   return (
     <div className="space-y-5">

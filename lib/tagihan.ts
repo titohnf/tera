@@ -151,3 +151,39 @@ export function warnaBilahTagihan(
   if (tagihanTerlambat(status, dueDate, hariIni, bayarTerakhir)) return 'bg-red-400'
   return BILAH[status] ?? 'bg-slate-200'
 }
+
+/**
+ * Sudah bayar dan belum bayar seorang murid, dihitung dari pembayaran yang
+ * tercatat — bukan dari status invoice saja.
+ *
+ * Invoice semesteran yang dicicil berstatus `partially_paid`, dan membaca
+ * statusnya saja membuat anak yang sudah menyetor tampil "Sudah bayar Rp 0"
+ * dengan "Belum bayar" sebesar tagihan penuh. Beranda keluarga sudah
+ * mengurangi cicilan (`ringkasanTagihan`); dua layar profil kini memakai
+ * fungsi ini supaya angkanya tidak berbeda dari sana.
+ *
+ * Draft dan yang dibatalkan tidak dihitung: belum terbit atau sudah batal,
+ * keduanya bukan utang siapa pun. Yang berstatus `paid` dihitung lunas penuh
+ * meski barisnya belum punya catatan pembayaran. Kelebihan bayar di satu invoice
+ * dipotong di nilainya, supaya tidak menutupi sisa invoice lain.
+ */
+export function ringkasPembayaran(
+  invoices: { id: string; total_due: number | string; status: string }[],
+  pembayaran: { invoice_id: string; amount: number | string }[],
+): { sudahBayar: number; belumBayar: number } {
+  const dibayar = new Map<string, number>()
+  for (const p of pembayaran) {
+    dibayar.set(p.invoice_id, (dibayar.get(p.invoice_id) ?? 0) + Number(p.amount))
+  }
+
+  let sudahBayar = 0
+  let belumBayar = 0
+  for (const i of invoices) {
+    if (i.status === 'draft' || i.status === 'cancelled') continue
+    const total = Number(i.total_due)
+    const terbayar = i.status === 'paid' ? total : Math.min(total, dibayar.get(i.id) ?? 0)
+    sudahBayar += terbayar
+    belumBayar += total - terbayar
+  }
+  return { sudahBayar, belumBayar }
+}
