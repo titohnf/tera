@@ -378,8 +378,19 @@ export async function updateClass(classId: string, prevState: ActionState, formD
     return from !== undefined && from !== '' && dateKey < from
   }
 
+  // Sesi yang tanggalnya sudah lewat tidak pernah dihapus. Sesi yang belum
+  // ditutup tutor masih berstatus 'scheduled' tanpa kehadiran, jadi tampak
+  // "belum disentuh" — padahal pertemuannya sudah terjadi. Menghapusnya sama
+  // dengan menghilangkan pertemuan yang sudah berlangsung: yang tampak saat
+  // pergantian tutor, ketika Rabu dicabut dari slot dan seluruh sesi Rabu
+  // Oktober yang belum ditutup ikut lenyap, lalu invoice yang sudah terkirim
+  // tidak cocok lagi dengan kalender. Yang perlu diubah di masa lalu dikerjakan
+  // lewat tanggal berlaku slot atau hapus sesi satu per satu.
+  const hariIni = localDateKey(new Date().toISOString())
+  const sudahLewat = (iso: string) => localDateKey(iso) < hariIni
+
   const idsToDelete = scheduledSessions
-    .filter(s => !filledSessionIds.has(s.id) && !isBeforeRebuild(s.scheduled_at))
+    .filter(s => !filledSessionIds.has(s.id) && !isBeforeRebuild(s.scheduled_at) && !sudahLewat(s.scheduled_at))
     .map(s => s.id)
   const deletedIds = new Set(idsToDelete)
   // Berapa sesi yang masih dipegang tiap tanggal — termasuk yang sudah selesai
