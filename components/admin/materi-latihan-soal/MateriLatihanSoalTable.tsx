@@ -9,9 +9,12 @@ import {
 } from '@/components/ui/dialog'
 import type { ResourceKind, TopicContext, ActionState } from '@/lib/actions/admin/curriculum-resources'
 import { extractDriveFileId } from '@/lib/curriculum-resource-links'
+import { kodeTopik } from '@/lib/materi-pemetaan'
 
 type Topic = {
   id: string
+  /** Grup topik (migrasi 060) — dasar kode topik yang dipakai menamai folder Drive. */
+  group_id?: string | null
   curriculum: string
   subject_id: string
   grade_level: string
@@ -698,6 +701,29 @@ function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraU
 
 const PAGE_SIZE = 10
 
+/**
+ * Kode topik, bisa diketuk untuk menyalin "[t-xxxxxx]" — bagian yang ditulis di
+ * nama folder Drive. Kecil dan abu-abu: ia alat kerja, bukan isi halaman.
+ */
+function KodeTopik({ kode }: { kode: string }) {
+  const [tersalin, setTersalin] = useState(false)
+  return (
+    <button
+      type="button"
+      title={`Salin "[${kode}]" lalu tulis di nama folder Drive topik ini`}
+      onClick={() => {
+        void navigator.clipboard?.writeText(`[${kode}]`).then(() => {
+          setTersalin(true)
+          setTimeout(() => setTersalin(false), 1500)
+        })
+      }}
+      className="mt-1 ml-3 font-mono text-xs text-gray-400 hover:text-blue-600 transition-colors"
+    >
+      {tersalin ? 'tersalin' : kode}
+    </button>
+  )
+}
+
 export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
@@ -740,6 +766,15 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
     const kunci = `${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`
     const ada = urutanByKunci.get(kunci)
     if (ada == null || t.sort_order < ada) urutanByKunci.set(kunci, t.sort_order)
+  }
+
+  // Kode topik per topik, dikunci sama dengan di atas. Kode inilah yang ditulis di
+  // nama folder Drive ("Pengenalan Gaya [t-9f3a2c]") supaya skrip sinkron
+  // mendaftarkan materinya tanpa menebak dari teks. Lihat lib/materi-pemetaan.ts.
+  const kodeByKunci = new Map<string, string>()
+  for (const t of allTopics) {
+    if (!t.theme || !t.topic || !t.group_id) continue
+    kodeByKunci.set(`${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`, kodeTopik(t.group_id))
   }
 
   const semua = groupByTopic(rows, urutanByKunci)
@@ -835,6 +870,9 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
                       />
                       <span className="line-clamp-2">{g.topic}</span>
                     </span>
+                    {g.topicSource === 'kurikulum' && kodeByKunci.get(g.key) && (
+                      <KodeTopik kode={kodeByKunci.get(g.key)!} />
+                    )}
                   </td>
                   <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{g.tutorLabel}</td>
                   <td className="px-4 py-2.5 max-w-xs">

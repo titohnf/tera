@@ -386,17 +386,20 @@ export default async function MateriLatihanSoalPage() {
   // `curriculum_resources` saja — itu satu-satunya sumber yang dibaca
   // `/belajar` (lihat `materiTopik()`), jadi menghitung yang lain akan
   // menghasilkan angka yang tidak menjelaskan layar mana pun.
-  const pdfByFileId = new Map((duplicationRows ?? []).map(r => [r.drive_file_id, r.pdf_path]))
+  //
+  // "Terbaca" berarti `readable_at` terisi (migrasi 127), bukan `pdf_path` di
+  // tabel salinan: sejak materi dibaca langsung dari Drive, bucket kosong dan
+  // `pdf_path` tidak lagi menyatakan apa-apa — panel ini dulu menulis "0 dari
+  // 168" untuk 158 materi yang sebenarnya terbuka.
   let terbaca = 0
   let menungguAkses = 0
   let tautanLuar = 0
   for (const r of resources ?? []) {
     if (r.kind !== 'materi') continue
-    const fileId = extractDriveFileId(r.link_url)
     // Bukan berkas Drive: folder, Google Form terbitan, atau situs lain.
     // Ketiganya tidak bisa disemat, dan tidak ada yang bisa kita perbuat.
-    if (!fileId) tautanLuar++
-    else if (pdfByFileId.get(fileId)) terbaca++
+    if (!extractDriveFileId(r.link_url)) tautanLuar++
+    else if (r.readable_at) terbaca++
     else menungguAkses++
   }
 

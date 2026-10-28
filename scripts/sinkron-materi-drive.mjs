@@ -1,27 +1,22 @@
 /**
  * Menyamakan katalog materi Tera dengan folder "Materi Kurikulum" di Drive.
  *
- * Katalog (`curriculum_resources`, kind = 'materi') hanya terisi kalau admin
- * mengetik satu tautan per topik, sementara tutor terus menaruh PDF baru di
- * Drive. Selisihnya tidak terlihat di mana pun: isi berkas yang sudah
- * terdaftar tampil mutakhir karena halaman membacanya langsung dari Drive, tapi
- * berkas yang BELUM terdaftar tidak pernah sampai ke layar keluarga. Skrip ini
- * menutup selisih itu.
+ * Katalog (`curriculum_resources`, kind = 'materi') hanya terisi kalau ada baris,
+ * sementara tutor terus menaruh PDF baru di Drive. Selisihnya tidak terlihat di
+ * mana pun: isi berkas yang sudah terdaftar tampil mutakhir karena halaman
+ * membacanya langsung dari Drive, tapi berkas yang BELUM terdaftar tidak pernah
+ * sampai ke layar keluarga. Skrip ini menutup selisih itu.
  *
- * Aturan pencocokan — persis susunan yang dibuat `rapikan-materi-drive.mjs`:
+ * Aturan pencocokan ada di `lib/materi-pemetaan.ts`, dan tidak pernah menebak:
  *
- *   Materi Kurikulum / <Mapel> / <Kelas> / <Topik> / berkas.pdf
+ *   1. kode topik di nama folder   —  "Pengenalan Gaya [t-9f3a2c]"
+ *   2. peta keputusan manual       —  scripts/materi-pemetaan.json
+ *   3. nama persis                 —  Mapel / Kelas / Topik sama setelah dinormalkan
  *
- * Berkas dihubungkan ke grup topik Tera yang mapelnya, kelasnya, dan topiknya
- * sama setelah dinormalkan (huruf kecil, tanda baca jadi spasi) — normalisasi
- * itu perlu karena Drive mengganti `/`, `?`, dan `:` di nama folder dengan `-`.
- * "Kelas 5 SD" dibaca sebagai "Kelas 5".
- *
- * HANYA YANG COCOK PERSIS yang didaftarkan. Pencocokan berdasarkan kemiripan
- * sengaja tidak dipakai: salah menaruh materi di topik lain berarti anak
- * membaca bahan yang keliru, kegagalan yang tak tampak sebagai kegagalan. Yang
- * tidak cocok dilaporkan beserta saran terdekatnya, untuk diputuskan manusia —
- * sering kali topiknya memang belum ada di kurikulum Tera, dan itu urusan lain.
+ * Yang tidak lolos dilaporkan beserta saran terdekatnya (hanya petunjuk), dan
+ * manusia yang memutuskan: tambahkan kode topik ke nama foldernya, atau satu
+ * baris ke peta manual. Kode topik tampil di halaman admin Materi dan Latihan
+ * Soal, dan `--daftar-kode` mencetak semuanya.
  *
  * Tidak ada yang dihapus. Baris materi yang berkasnya sudah tidak ada di folder
  * hanya dilaporkan; ia tidak ditampilkan ke anak selama `readable_at`-nya null
@@ -30,19 +25,56 @@
  * Aman diulang: berkas yang file id-nya sudah ada di katalog dilewati.
  *
  * Sesudah menulis, jalankan `pindai-materi-drive.mjs --tulis` supaya baris baru
- * ditandai siap dibaca (`readable_at`). Tanpa itu, materinya terdaftar tapi
- * belum disebut kepada anak.
+ * ditandai siap dibaca (`readable_at`). Tanpa itu materinya terdaftar tapi belum
+ * disebut kepada anak.
  *
- *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --kunci ~/kunci.json          # laporan
- *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --kunci ~/kunci.json --tulis   # mendaftarkan
+ *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --kunci ~/kunci.json              # laporan
+ *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --kunci ~/kunci.json --tulis      # mendaftarkan
+ *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --daftar-kode > kode-topik.csv     # semua kode topik
+ *   node --env-file=.env.local scripts/sinkron-materi-drive.mjs --kunci ~/kunci.json --beri-kode   # folder mana yang akan diberi kode
+ *   ... --beri-kode --tulis                                                                       # benar-benar mengganti nama folder
+ *
+ * `--beri-kode` HANYA mengganti nama folder topik (menambah " [t-xxxxxx]" di
+ * belakangnya) dan hanya untuk folder yang sudah cocok. Isi dan file id tidak
+ * berubah, jadi tautan di katalog tetap hidup; dan nama folder tinggal dibalikkan
+ * kalau tidak cocok dengan kebiasaan tutor.
  */
 import { readFileSync } from 'fs'
 import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
+import {
+  bangunIndeks, cocokkan, judulDariNama, kemiripan, kodeTopik, kunciJalur, tanpaKode,
+} from '../lib/materi-pemetaan.ts'
 
 const TULIS = process.argv.includes('--tulis')
+const BERI_KODE = process.argv.includes('--beri-kode')
+const DAFTAR_KODE = process.argv.includes('--daftar-kode')
 const ROOT = '1uYbssLlmPq1oaKKdTqWJBuSd63SRXs4v' // folder bimbel, sama dengan rapikan-materi-drive.mjs
 
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+const { data: grup, error: eGrup } = await db
+  .from('curriculum_topic_groups')
+  .select('id, curriculum, subject_id, grade_level, semester, theme, topic, subjects(name)')
+if (eGrup) { console.error(eGrup.message); process.exit(1) }
+
+// ── Daftar kode: tidak perlu Drive ──────────────────────────────────────────
+if (DAFTAR_KODE) {
+  const { data: materi } = await db.from('curriculum_resources').select('group_id, readable_at').eq('kind', 'materi')
+  const jumlah = new Map()
+  for (const m of materi ?? []) if (m.readable_at) jumlah.set(m.group_id, (jumlah.get(m.group_id) ?? 0) + 1)
+  const sel = s => `"${String(s ?? '').replace(/"/g, '""')}"`
+  console.log('kode,mapel,kelas,semester,tema,topik,materi_siap_baca')
+  for (const g of [...grup].sort((a, b) =>
+    (a.subjects?.name ?? '').localeCompare(b.subjects?.name ?? '') ||
+    a.grade_level.localeCompare(b.grade_level, 'id', { numeric: true }) ||
+    a.semester - b.semester || a.theme.localeCompare(b.theme) || a.topic.localeCompare(b.topic))) {
+    console.log([kodeTopik(g.id), g.subjects?.name, g.grade_level, g.semester, g.theme, g.topic, jumlah.get(g.id) ?? 0].map(sel).join(','))
+  }
+  process.exit(0)
+}
+
+// ── Drive ───────────────────────────────────────────────────────────────────
 const iKunci = process.argv.indexOf('--kunci')
 if (iKunci !== -1) {
   const jalur = process.argv[iKunci + 1]
@@ -60,11 +92,14 @@ if (!email || !key) {
   console.error('GOOGLE_SERVICE_ACCOUNT_EMAIL / _PRIVATE_KEY belum diatur. Pakai --kunci <berkas.json>.')
   process.exit(1)
 }
-
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 const drive = google.drive({
   version: 'v3',
-  auth: new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive.readonly'] }),
+  auth: new google.auth.JWT({
+    email,
+    key,
+    // Menulis (mengganti nama folder) hanya bila diminta dua kali: --beri-kode --tulis.
+    scopes: [BERI_KODE && TULIS ? 'https://www.googleapis.com/auth/drive' : 'https://www.googleapis.com/auth/drive.readonly'],
+  }),
 })
 
 async function isiFolder(id) {
@@ -87,9 +122,10 @@ async function isiFolder(id) {
 
 // Satu tingkat folder sekali jalan, dengan banyak folder sekaligus: pohonnya
 // ratusan folder, dan menelusurinya satu per satu memakan beberapa menit.
+// `ids` sejajar dengan `jalur` — id folder tiap segmen, dipakai `--beri-kode`.
 async function ambilBerkas(rootId) {
   const berkas = []
-  let tingkat = [{ id: rootId, jalur: [] }]
+  let tingkat = [{ id: rootId, jalur: [], ids: [] }]
   while (tingkat.length) {
     const hasil = []
     for (let i = 0; i < tingkat.length; i += 8) {
@@ -101,9 +137,9 @@ async function ambilBerkas(rootId) {
     for (const { f, isi } of hasil) {
       for (const x of isi) {
         if (x.mimeType === 'application/vnd.google-apps.folder') {
-          tingkat.push({ id: x.id, jalur: [...f.jalur, x.name] })
+          tingkat.push({ id: x.id, jalur: [...f.jalur, x.name], ids: [...f.ids, x.id] })
         } else {
-          berkas.push({ id: x.id, name: x.name, mimeType: x.mimeType, jalur: f.jalur })
+          berkas.push({ id: x.id, name: x.name, mimeType: x.mimeType, jalur: f.jalur, ids: f.ids })
         }
       }
     }
@@ -111,19 +147,8 @@ async function ambilBerkas(rootId) {
   return berkas
 }
 
-const norm = s => (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim()
-const kelasDari = s => (s.match(/Kelas\s+\d+/i)?.[0] ?? s).replace(/\s+/g, ' ')
-const idDari = u => u?.match(/[-\w]{25,}/g) ?? []
-const tok = s => new Set(norm(s).split(' ').filter(w => w.length > 2))
-const jaccard = (a, b) => {
-  const i = [...a].filter(x => b.has(x)).length
-  return i / (a.size + b.size - i || 1)
-}
-
-/** "18. Materi_7 SMP_IPA_Pengenalan Gaya.docx.pdf" → "Materi_7 SMP_IPA_Pengenalan Gaya" */
-const judulDari = nama => nama.replace(/\.(docx?|pptx?)?\.?pdf$/i, '').replace(/\.pdf$/i, '').replace(/^\d+\.\s*/, '').trim()
-
 const adalahPdf = b => b.mimeType === 'application/pdf' || /\.pdf$/i.test(b.name)
+const idDari = u => u?.match(/[-\w]{25,}/g) ?? []
 
 console.log('membaca folder Drive…')
 const akarMateri = (await isiFolder(ROOT)).find(f => f.name === 'Materi Kurikulum')
@@ -133,66 +158,75 @@ if (!akarMateri) {
 }
 const berkas = (await ambilBerkas(akarMateri.id)).filter(adalahPdf)
 
-const [{ data: grup }, { data: katalog }] = await Promise.all([
-  db.from('curriculum_topic_groups').select('id, curriculum, subject_id, grade_level, semester, theme, topic, subjects(name)'),
-  db.from('curriculum_resources').select('id, kind, title, link_url'),
-])
-
+const peta = JSON.parse(readFileSync(new URL('./materi-pemetaan.json', import.meta.url), 'utf8'))
+const indeks = bangunIndeks(grup, peta)
+const { data: katalog } = await db.from('curriculum_resources').select('id, kind, title, link_url')
 const terdaftar = new Set((katalog ?? []).flatMap(r => idDari(r.link_url)))
-const idxGrup = new Map()
-for (const g of grup ?? []) {
-  const kunci = [norm(g.subjects?.name), norm(g.grade_level), norm(g.topic)].join('|')
-  idxGrup.set(kunci, [...(idxGrup.get(kunci) ?? []), g])
-}
 
 const baru = []
+const dilewati = { sudah: 0 }
+const cara = { kode: 0, peta: 0, nama: 0 }
 const ambigu = []
+const kodeAsing = []
 const tanpaCocok = []
-let sudah = 0
+const foldersCocok = new Map() // id folder topik → { jalur, grup, namaSekarang }
+
 for (const b of berkas) {
-  if (terdaftar.has(b.id)) { sudah++; continue }
-  const [mapel, kelas, ...sisa] = b.jalur
-  // Topiknya folder ketiga; berkas di bawah subfolder tambahan (mis. "TKA Kelas 6")
-  // dicoba dengan folder paling dalamnya.
-  const calon = [sisa[0], sisa.at(-1)].filter(Boolean)
-  let cocok = []
-  for (const t of calon) {
-    cocok = idxGrup.get([norm(mapel), norm(kelasDari(kelas ?? '')), norm(t)].join('|')) ?? []
-    if (cocok.length) break
+  const h = cocokkan(b.jalur, indeks)
+  if (h.status === 'cocok') {
+    // Folder topik = segmen ketiga (Mapel / Kelas / Topik). Dipakai --beri-kode.
+    if (b.ids[2] && !foldersCocok.has(b.ids[2])) {
+      foldersCocok.set(b.ids[2], { jalur: b.jalur.slice(0, 3), grup: h.grup, nama: b.jalur[2] })
+    }
   }
-  if (cocok.length === 1) baru.push({ b, g: cocok[0] })
-  else if (cocok.length > 1) ambigu.push({ b, cocok })
-  else tanpaCocok.push(b)
+  if (terdaftar.has(b.id)) { dilewati.sudah++; continue }
+  if (h.status === 'cocok') { baru.push({ b, g: h.grup }); cara[h.cara]++ }
+  else if (h.status === 'ambigu') ambigu.push({ b, calon: h.calon })
+  else if (h.status === 'tak-ada') tanpaCocok.push(b)
+  else kodeAsing.push({ b, status: h.status, kode: h.kode })
 }
 
 console.log(`\nberkas PDF di Materi Kurikulum : ${berkas.length}`)
-console.log(`sudah terdaftar                : ${sudah}`)
-console.log(`akan didaftarkan (cocok persis): ${baru.length}`)
+console.log(`sudah terdaftar                : ${dilewati.sudah}`)
+console.log(`akan didaftarkan               : ${baru.length}  (lewat kode ${cara.kode}, peta ${cara.peta}, nama persis ${cara.nama})`)
 console.log(`ambigu (lebih dari satu grup)  : ${ambigu.length}`)
+console.log(`kode/peta tak dikenal          : ${kodeAsing.length}`)
 console.log(`tanpa kecocokan                : ${tanpaCocok.length}`)
 console.log(`mode                           : ${TULIS ? 'TULIS' : 'LAPORAN SAJA (tidak menulis apa pun)'}\n`)
 
 if (ambigu.length) {
-  console.log('AMBIGU — perlu diputuskan:')
-  for (const a of ambigu) console.log(`  ${a.b.jalur.join(' / ')}  →  ${a.cocok.map(c => c.theme).join(' | ')}`)
+  console.log('AMBIGU — beri kode topik di nama folder:')
+  for (const a of ambigu) console.log(`  ${a.b.jalur.join(' / ')}  →  ${a.calon.map(c => `${kodeTopik(c.id)} ${c.theme}`).join(' | ')}`)
+  console.log()
+}
+
+if (kodeAsing.length) {
+  console.log('KODE / PETA TAK DIKENAL — grup topiknya sudah dihapus atau kodenya salah ketik:')
+  for (const a of kodeAsing) console.log(`  ${a.b.jalur.join(' / ')}  →  ${a.kode} (${a.status})`)
   console.log()
 }
 
 if (tanpaCocok.length) {
-  console.log('TANPA KECOCOKAN — topiknya tidak ada di kurikulum Tera dengan nama yang sama.')
-  console.log('Saran terdekat hanya petunjuk, bukan keputusan:\n')
+  // Satu baris per FOLDER, bukan per berkas: yang perlu diputuskan folder-nya.
+  const perFolder = new Map()
   for (const b of tanpaCocok) {
-    const [mapel, kelas, ...sisa] = b.jalur
+    const k = kunciJalur(b.jalur)
+    perFolder.set(k, [...(perFolder.get(k) ?? []), b])
+  }
+  console.log(`TANPA KECOCOKAN — ${perFolder.size} folder. Untuk mendaftarkannya, beri kode topik di nama foldernya,`)
+  console.log('atau tambahkan satu baris ke scripts/materi-pemetaan.json. Saran terdekat hanya petunjuk:\n')
+  for (const [k, daftar] of perFolder) {
+    const [mapel, kelas, ...sisa] = k.split('/')
     const topik = sisa.at(-1) ?? ''
-    const kolam = (grup ?? []).filter(g => norm(g.subjects?.name) === norm(mapel) && norm(g.grade_level) === norm(kelasDari(kelas ?? '')))
+    const kolam = grup.filter(g => g.subjects?.name === mapel && g.grade_level === (kelas?.match(/Kelas\s+\d+/i)?.[0] ?? kelas))
     const terdekat = kolam
-      .map(g => ({ g, s: jaccard(tok(g.topic), tok(topik)) }))
+      .map(g => ({ g, s: kemiripan(g.topic, topik) }))
       .sort((x, y) => y.s - x.s)[0]
-    console.log(`  ${b.jalur.join(' / ')}`)
+    console.log(`  ${k}  (${daftar.length} berkas)`)
     console.log(
       kolam.length === 0
         ? '      (tidak ada topik untuk mapel + kelas ini di Tera)'
-        : `      terdekat (${terdekat.s.toFixed(2)}): ${terdekat.g.theme} / ${terdekat.g.topic}`,
+        : `      terdekat ${kodeTopik(terdekat.g.id)} (${terdekat.s.toFixed(2)}): ${terdekat.g.theme} / ${terdekat.g.topic}`,
     )
   }
   console.log()
@@ -207,8 +241,31 @@ if (hilang.length) {
   console.log()
 }
 
+// ── Memberi kode pada nama folder ───────────────────────────────────────────
+if (BERI_KODE) {
+  const antre = [...foldersCocok.entries()].filter(([, f]) => !f.nama.includes(`[${kodeTopik(f.grup.id)}]`) && !/\[t-[0-9a-f]{6}\]/i.test(f.nama))
+  console.log(`FOLDER YANG AKAN DIBERI KODE: ${antre.length} dari ${foldersCocok.size} folder yang cocok`)
+  for (const [, f] of antre.slice(0, 8)) console.log(`  ${f.jalur.join(' / ')}  →  "${tanpaKode(f.nama)} [${kodeTopik(f.grup.id)}]"`)
+  if (antre.length > 8) console.log(`  … dan ${antre.length - 8} lainnya`)
+  if (!TULIS) {
+    console.log('\nTambahkan --tulis untuk benar-benar mengganti nama folder.')
+  } else {
+    let ok = 0
+    for (const [id, f] of antre) {
+      try {
+        await drive.files.update({ fileId: id, requestBody: { name: `${tanpaKode(f.nama)} [${kodeTopik(f.grup.id)}]` }, supportsAllDrives: true })
+        ok++
+      } catch (e) {
+        console.error(`  GAGAL ${f.jalur.join(' / ')}: ${e.message}`)
+      }
+    }
+    console.log(`nama folder diganti: ${ok} dari ${antre.length}`)
+  }
+  console.log()
+}
+
 if (!TULIS) {
-  console.log('Tambahkan --tulis untuk mendaftarkan yang cocok persis.')
+  console.log('Tambahkan --tulis untuk mendaftarkan yang cocok.')
   process.exit(0)
 }
 
@@ -223,7 +280,7 @@ for (let i = 0; i < baru.length; i += 25) {
     topic: g.topic,
     group_id: g.id,
     kind: 'materi',
-    title: judulDari(b.name),
+    title: judulDariNama(b.name),
     link_url: `https://drive.google.com/file/d/${b.id}/view`,
   }))
   const { error } = await db.from('curriculum_resources').insert(paket)
@@ -234,4 +291,4 @@ for (let i = 0; i < baru.length; i += 25) {
   berhasil += paket.length
 }
 console.log(`terdaftar: ${berhasil} dari ${baru.length}`)
-console.log('Jalankan pindai-materi-drive.mjs --tulis supaya baris baru ditandai siap dibaca.')
+if (berhasil) console.log('Jalankan pindai-materi-drive.mjs --tulis supaya baris baru ditandai siap dibaca.')

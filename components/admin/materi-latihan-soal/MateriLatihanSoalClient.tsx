@@ -7,6 +7,7 @@ import { CURRICULA, SEMESTERS, gradesFor, hasSemester } from '@/lib/curriculum-c
 
 type Topic = {
   id: string
+  group_id?: string | null
   curriculum: string
   subject_id: string
   grade_level: string
