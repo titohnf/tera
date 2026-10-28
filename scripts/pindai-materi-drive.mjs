@@ -22,10 +22,10 @@
  * atau dicabut izinnya harus BERHENTI dijanjikan, dan pemindai yang cuma bisa
  * menyalakan akan mempertahankan janji yang sudah lama tidak bisa ditepati.
  *
- * Dijalankan dengan tangan, bukan dari aplikasi: satu berkas menuntut satu
- * panggilan Drive API, dan halaman yang menggambar daftar mapel tidak boleh
- * menunggu lima puluh panggilan lebih dulu. Jalankan setiap kali admin
- * menambah, mengganti, atau memindahkan materi di folder bimbel.
+ * Logikanya ada di `pindaiMateri()` (lib/materi-pemetaan.ts), yang juga dipanggil
+ * `sinkronkanMateri()` — jadi tombol "Sinkronkan sekarang" di halaman admin dan
+ * tugas harian menandai dengan aturan yang sama. Skrip ini hanya pembungkus
+ * untuk menjalankannya dari terminal tanpa mendaftarkan apa pun.
  *
  * Butuh GOOGLE_SERVICE_ACCOUNT_EMAIL dan _PRIVATE_KEY (atau --kunci <berkas>),
  * plus NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.
@@ -36,6 +36,7 @@
 import { readFileSync } from 'fs'
 import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
+import { pindaiMateri } from '../lib/materi-pemetaan.ts'
 
 const TULIS = process.argv.includes('--tulis')
 
@@ -62,125 +63,21 @@ const drive = google.drive({
   version: 'v3',
   auth: new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive.readonly'] }),
 })
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-/** Sama dengan `extractDriveFileId()` di aplikasi; disalin agar skrip ini berdiri sendiri. */
-function idBerkas(url) {
-  try {
-    const u = new URL(url)
-    if (!['docs.google.com', 'drive.google.com'].includes(u.hostname)) return null
-    if (u.pathname.includes('/forms/d/e/')) return null
-    const m = u.pathname.match(/\/d\/([a-zA-Z0-9_-]{15,})/)
-    return m ? m[1] : null
-  } catch {
-    return null
-  }
-}
+const h = await pindaiMateri({ db, drive, tulis: TULIS })
 
-/** Bentuk yang benar-benar tampil di dalam halaman. Selebihnya akan terunduh. */
-const BISA_TAMPIL = new Set([
-  'application/pdf',
-  'application/vnd.google-apps.document',
-  'application/vnd.google-apps.presentation',
-  'application/vnd.google-apps.spreadsheet',
-])
-
-/**
- * Nama yang dikenali manusia untuk sebuah mimeType.
- *
- * Laporan ini adalah daftar kerja, dan "document" bisa berarti `.docx` maupun
- * Google Docs — dua hal yang nasibnya berlawanan di sini. Menyebutnya dengan
- * nama yang dipakai orang saat membicarakannya menghilangkan tebakan itu.
- */
-const NAMA_JENIS = {
-  'application/pdf': 'PDF',
-  'application/vnd.google-apps.document': 'Google Docs',
-  'application/vnd.google-apps.presentation': 'Google Slides',
-  'application/vnd.google-apps.spreadsheet': 'Google Sheets',
-  'application/vnd.google-apps.folder': 'folder Drive, bukan berkas',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-}
-
-const { data: materi, error } = await sb
-  .from('curriculum_resources')
-  .select('id, title, link_url, readable_at')
-  .eq('kind', 'materi')
-if (error) {
-  console.error('Gagal membaca curriculum_resources:', error.message)
-  process.exit(1)
-}
-
-const siap = []
-const belum = []
-
-for (const r of materi) {
-  const fileId = idBerkas(r.link_url)
-  if (!fileId) {
-    // Tautan folder, Google Form, atau situs luar seperti Wordwall. Ketiganya
-    // tidak bisa disajikan `/api/materi/[id]`, dan yang mana persisnya cuma
-    // bisa dilihat dari tautannya sendiri.
-    belum.push({ r, sebab: 'bukan tautan berkas Drive', tautan: r.link_url })
-    continue
-  }
-  try {
-    const { data: meta } = await drive.files.get({
-      fileId,
-      fields: 'mimeType, name, trashed',
-      supportsAllDrives: true,
-    })
-    // Berkas di Sampah masih bisa dibaca service account, dan itu justru
-    // menyesatkan: ia akan hilang sendiri dalam 30 hari tanpa ada yang tahu.
-    if (meta.trashed) belum.push({ r, sebab: 'ada di Sampah Drive' })
-    else if (!BISA_TAMPIL.has(meta.mimeType ?? '')) {
-      const jenis = NAMA_JENIS[meta.mimeType ?? ''] ?? (meta.mimeType ?? 'jenis tak dikenal')
-      belum.push({ r, sebab: `${jenis} — akan terunduh, bukan tampil di halaman` })
-    } else siap.push(r)
-  } catch (e) {
-    const sebab = e?.code === 404 ? 'berkasnya tidak ada' : 'service account tidak boleh membaca'
-    belum.push({ r, sebab })
-  }
-}
-
-console.log(`materi di katalog : ${materi.length}`)
-console.log(`  siap dibaca     : ${siap.length}`)
-console.log(`  belum           : ${belum.length}`)
-if (belum.length) {
+console.log(`materi di katalog : ${h.total}`)
+console.log(`  siap dibaca     : ${h.siap}`)
+console.log(`  belum           : ${h.belum.length}`)
+if (h.belum.length) {
   console.log('\nyang belum siap:')
   const perSebab = {}
-  for (const b of belum) {
-    (perSebab[b.sebab] ??= []).push(b.tautan ? `${b.r.title}\n          ${b.tautan.slice(0, 90)}` : b.r.title)
-  }
+  for (const b of h.belum) (perSebab[b.sebab] ??= []).push(b.judul)
   for (const [sebab, judul] of Object.entries(perSebab).sort((a, b) => b[1].length - a[1].length)) {
     console.log(`  ${judul.length}× ${sebab}`)
     for (const j of judul) console.log(`      - ${j}`)
   }
 }
-
-// Perubahan yang akan terjadi, disebut sebelum ditulis — sebuah materi yang
-// BERHENTI siap adalah kabar, bukan detail.
-const nyala = siap.filter(r => !r.readable_at)
-const padam = belum.filter(b => b.r.readable_at)
-console.log(`\nperubahan: ${nyala.length} jadi siap, ${padam.length} berhenti siap`)
-for (const b of padam) console.log(`  ! berhenti siap: ${b.r.title.slice(0, 60)} — ${b.sebab}`)
-
-if (!TULIS) {
-  console.log('\n== LAPORAN SAJA. Tambahkan --tulis untuk menandai. ==')
-  process.exit(0)
-}
-
-const stempel = new Date().toISOString()
-let ok = 0
-for (const r of siap) {
-  const { error } = await sb.from('curriculum_resources').update({ readable_at: stempel }).eq('id', r.id)
-  if (error) console.error('gagal menandai', r.id, error.message)
-  else ok++
-}
-let mati = 0
-for (const b of padam) {
-  const { error } = await sb.from('curriculum_resources').update({ readable_at: null }).eq('id', b.r.id)
-  if (error) console.error('gagal menghapus tanda', b.r.id, error.message)
-  else mati++
-}
-console.log(`\nditandai siap: ${ok} | tanda dicabut: ${mati}`)
+console.log(`\nperubahan: ${h.menyala} jadi siap, ${h.padam} berhenti siap${h.tidakPasti ? `, ${h.tidakPasti} gagal diperiksa (tidak diubah)` : ''}`)
+console.log(TULIS ? `\nditandai: ${h.menyala} jadi siap | ${h.padam} tanda dicabut` : '\n== LAPORAN SAJA. Tambahkan --tulis untuk menandai. ==')

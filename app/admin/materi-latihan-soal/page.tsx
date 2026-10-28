@@ -4,6 +4,10 @@ import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import MateriLatihanSoalClient from '@/components/admin/materi-latihan-soal/MateriLatihanSoalClient'
 import StatusMateriPanel from '@/components/admin/materi-latihan-soal/StatusMateriPanel'
 
+// Tombol "Sinkronkan dengan Drive sekarang" membaca folder Drive dan memeriksa ratusan
+// berkas; aksinya mewarisi batas waktu halaman ini.
+export const maxDuration = 300
+
 type TutorRef = { full_name: string; nickname: string | null } | null
 
 // Prefer the tutor's nickname; fall back to just their first name (not the

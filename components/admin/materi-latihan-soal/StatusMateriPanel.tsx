@@ -1,3 +1,5 @@
+import SinkronMateriTombol from './SinkronMateriTombol'
+
 interface Props {
   terbaca: number
   menungguAkses: number
@@ -42,6 +44,7 @@ export default function StatusMateriPanel({ terbaca, menungguAkses, tautanLuar }
           didaftarkan lewat <code className="text-gray-500">scripts/sinkron-materi-drive.mjs</code>.
         </p>
       )}
+      <SinkronMateriTombol otomatis={Boolean(process.env.CRON_SECRET)} />
     </div>
   )
 }

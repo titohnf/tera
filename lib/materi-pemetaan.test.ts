@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  bacaKode, bangunIndeks, cocokkan, judulDariNama, kelasDari, kodeTopik, kunciJalur, normalisasi, periksaKode,
+  bacaKode, bangunIndeks, cocokkan, idBerkas, jenisBerkas, judulDariNama, kelasDari, kodeTopik, kunciJalur, normalisasi, periksaKode,
 } from './materi-pemetaan'
 
 const G = (id, mapel, kelas, tema, topik) => ({
@@ -71,5 +71,29 @@ describe('cocokkan', () => {
   })
   it('kunci jalur membuang kode', () => {
     expect(kunciJalur(['IPA', 'Kelas 7', 'Gaya [t-9f3a2c]'])).toBe('IPA/Kelas 7/Gaya')
+  })
+})
+
+describe('idBerkas', () => {
+  it('membaca id dari tautan berkas Drive dan Docs', () => {
+    expect(idBerkas('https://drive.google.com/file/d/1ksrYrz-gv2JU2T0BoQnqleotD1zx_y9W/view')).toBe('1ksrYrz-gv2JU2T0BoQnqleotD1zx_y9W')
+    expect(idBerkas('https://docs.google.com/document/d/1DanrZuvi3zcikdV6UyBXXhS3gslgsM1W/edit?usp=sharing')).toBe('1DanrZuvi3zcikdV6UyBXXhS3gslgsM1W')
+  })
+  it('menolak yang bukan berkas: folder, Form terbitan, situs lain, sampah', () => {
+    expect(idBerkas('https://drive.google.com/drive/folders/17kMocfBYxOKYNqf-2OKZJHNcF0WQwYSn')).toBeNull()
+    expect(idBerkas('https://docs.google.com/forms/d/e/1FAIpQLSabcdefghijklmnop/viewform')).toBeNull()
+    expect(idBerkas('https://qrco.de/bfN47O')).toBeNull()
+    expect(idBerkas('bukan url')).toBeNull()
+    expect(idBerkas(null)).toBeNull()
+  })
+})
+
+describe('jenisBerkas', () => {
+  it('PDF dan Google Docs tampil di halaman; .docx tidak, dan disebut namanya', () => {
+    expect(jenisBerkas('application/pdf').tampil).toBe(true)
+    expect(jenisBerkas('application/vnd.google-apps.document').tampil).toBe(true)
+    const docx = jenisBerkas('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    expect(docx.tampil).toBe(false)
+    expect(docx.nama).toBe('.docx')
   })
 })
