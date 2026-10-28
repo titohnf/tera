@@ -85,8 +85,9 @@ export async function muatKelasDanSesi(studentId: string) {
   const sessionTutorMap: Record<string, string> = {}
   for (const s of sesi) if (s.tutor_id) sessionTutorMap[s.id] = namaTutor.get(s.tutor_id) ?? ''
 
-  // Aturan admin: keanggotaan aktif DAN kelasnya sendiri belum ditutup.
-  const kelasAktif = kelas.filter((k) => k.is_active && k.classes?.is_active !== false)
+  // Keanggotaan aktif — aturan yang dipakai tab Jadwal admin. Sidebar profil
+  // menambah saringan kelas yang belum ditutup sendiri (lihat halaman Profil).
+  const kelasAktif = kelas.filter((k) => k.is_active)
   const kelasLampau = kelas.filter((k) => !k.is_active)
   const idKelasAktif = new Set(kelasAktif.map((k) => k.class_id))
   const sesiAktif = sesi.filter((s) => idKelasAktif.has(s.class_id))

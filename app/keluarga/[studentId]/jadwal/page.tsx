@@ -1,6 +1,7 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { sekarangIso } from '@/lib/waktu'
+import { stripClassUniqueTag } from '@/lib/format-class-name'
 import SesiKartuList from '@/components/keluarga/SesiKartuList'
 import SesiTable from '@/components/keluarga/SesiTable'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
@@ -56,12 +57,14 @@ export default async function JadwalAnak({
   } = await muatKelasDanSesi(studentId)
 
   const ringkasanLampau = kelasLampau.map((k) => {
+    // Hanya sesi yang terlaksana, seperti riwayat kelas di halaman admin —
+    // sesi terjadwal dan yang dibatalkan bukan bagian dari "berapa kali les".
     const sesiKelas = sesi
-      .filter((s) => s.class_id === k.class_id)
+      .filter((s) => s.class_id === k.class_id && s.status === 'completed')
       .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
     return {
       id: k.class_id,
-      name: k.classes?.name ?? 'Kelas',
+      name: stripClassUniqueTag(k.classes?.name ?? 'Kelas'),
       subject_names: mapelPerKelas.get(k.class_id) ?? [],
       jumlahSesi: sesiKelas.length,
       mulai: sesiKelas[0]?.scheduled_at ?? null,

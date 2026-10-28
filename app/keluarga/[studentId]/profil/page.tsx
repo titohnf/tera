@@ -3,7 +3,7 @@ import { kodeReferal } from '@/lib/referal'
 import { createClient } from '@/lib/supabase/server'
 import { muatKelasDanSesi } from '@/lib/keluarga-anak'
 import { hitungKehadiran } from '@/lib/kehadiran'
-import { ringkasPembayaran } from '@/lib/tagihan'
+import { stripClassUniqueTag } from '@/lib/format-class-name'
 import SiswaHeaderCard from '@/components/siswa/SiswaHeaderCard'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import KartuAkun from '@/components/apps/KartuAkun'
@@ -11,6 +11,9 @@ import KartuReferal from '@/components/keluarga/KartuReferal'
 
 /**
  * Profil anak: identitasnya, ringkasan angkanya, dan akun keluarganya.
+ *
+ * Pembayaran sengaja tidak ada di sini: tagihan punya halaman sendiri dan kartu
+ * di beranda, dan angka yang sama di tiga tempat pernah berselisih.
  *
  * Empat pintu yang dulu ada di sini — Tagihan, Laporan Bulanan, Materi,
  * Penguasaan — pindah ke beranda sebagai petak ikon
@@ -53,27 +56,8 @@ export default async function ProfilAnak({
     .eq('id', studentId)
     .maybeSingle()
 
-  const { data: invoiceRows } = await supabase
-    .from('invoices')
-    .select('id, total_due, status')
-    .eq('student_id', studentId)
-    .neq('status', 'draft')
-  const invoices = (invoiceRows ?? []) as { id: string; total_due: number; status: string }[]
-
   const { kelasAktif, sesi, attendanceMap, mapelPerKelas } = await muatKelasDanSesi(studentId)
   const { total, persen } = hitungKehadiran(sesi, new Map(Object.entries(attendanceMap)))
-
-  // Klien ber-RLS, kebijakan "Families read own payments" (migrasi 076).
-  const { data: bayarRows } = invoices.length
-    ? await supabase
-        .from('invoice_payments')
-        .select('invoice_id, amount')
-        .in('invoice_id', invoices.map((i) => i.id))
-    : { data: null }
-  const { sudahBayar, belumBayar } = ringkasPembayaran(
-    invoices,
-    (bayarRows ?? []) as { invoice_id: string; amount: number }[],
-  )
 
   return (
     <div className="space-y-5">
@@ -86,17 +70,19 @@ export default async function ProfilAnak({
       />
 
       <SiswaSidebar
-        kelasAktif={kelasAktif.map((k) => ({
-          id: k.class_id,
-          name: k.classes?.name ?? null,
-          schedule_days: k.classes?.schedule_days ?? [],
-          schedule_time: k.classes?.schedule_time ?? null,
-          subject_names: mapelPerKelas.get(k.class_id) ?? [],
-        }))}
+        kelasAktif={kelasAktif
+          .filter((k) => k.classes?.is_active !== false)
+          .map((k) => ({
+            id: k.class_id,
+            // Akhiran unik (nama murid) hanya untuk membedakan kelas di admin.
+            name: k.classes?.name ? stripClassUniqueTag(k.classes.name) : null,
+            schedule_days: k.classes?.schedule_days ?? [],
+            schedule_time: k.classes?.schedule_time ?? null,
+            subject_names: mapelPerKelas.get(k.class_id) ?? [],
+          }))}
         totalSesi={total}
         hadirPersen={persen}
-        sudahBayar={sudahBayar}
-        belumBayar={belumBayar}
+        tampilkanPembayaran={false}
         bergabung={(profil?.created_at as string | null) ?? null}
         studentId={studentId}
         tampilkanId={false}

@@ -65,18 +65,20 @@ export default function SiswaSidebar({
   kelasAktif,
   totalSesi,
   hadirPersen,
-  sudahBayar,
-  belumBayar,
+  sudahBayar = 0,
+  belumBayar = 0,
   bergabung,
   studentId,
   tampilkanId = true,
   classHref,
+  tampilkanPembayaran = true,
 }: {
   kelasAktif: SidebarKelas[]
   totalSesi: number
   hadirPersen: number | null
-  sudahBayar: number
-  belumBayar: number
+  /** Hanya dipakai bila `tampilkanPembayaran`. */
+  sudahBayar?: number
+  belumBayar?: number
   bergabung: string | null
   studentId: string
   /**
@@ -86,6 +88,12 @@ export default function SiswaSidebar({
    */
   tampilkanId?: boolean
   classHref?: (id: string) => string
+  /**
+   * Blok Pembayaran. Portal keluarga mematikannya: tagihan anak sudah punya
+   * halaman sendiri (Tagihan) dan kartu di beranda, dan angka yang sama di tiga
+   * tempat adalah resep untuk selisih. Admin tetap melihatnya.
+   */
+  tampilkanPembayaran?: boolean
 }) {
   const masaBergabung = (() => {
     if (!bergabung) return '—'
@@ -159,18 +167,24 @@ export default function SiswaSidebar({
         </div>
       </Bagian>
 
-      <Bagian judul="Pembayaran">
-        <div className="space-y-2">
-          <Baris label="Sudah bayar">
-            <span className="font-semibold text-gray-800">{rupiah(sudahBayar)}</span>
-          </Baris>
-          <Baris label="Belum bayar">
-            <span className={`font-semibold ${belumBayar > 0 ? 'text-red-600' : 'text-gray-400'}`}>
-              {rupiah(belumBayar)}
-            </span>
-          </Baris>
-        </div>
-      </Bagian>
+      {tampilkanPembayaran && (
+        <Bagian judul="Pembayaran">
+          <div className="space-y-2">
+            {/* Jumlah keduanya: yang diterbitkan, selain draft dan yang dibatalkan. */}
+            <Baris label="Total tagihan">
+              <span className="font-semibold text-gray-800">{rupiah(sudahBayar + belumBayar)}</span>
+            </Baris>
+            <Baris label="Sudah bayar">
+              <span className="font-semibold text-gray-800">{rupiah(sudahBayar)}</span>
+            </Baris>
+            <Baris label="Belum bayar">
+              <span className={`font-semibold ${belumBayar > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                {rupiah(belumBayar)}
+              </span>
+            </Baris>
+          </div>
+        </Bagian>
+      )}
 
       <Bagian judul="Akun">
         <div className="space-y-2">
