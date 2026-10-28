@@ -451,7 +451,7 @@ export default async function RincianGrup({
                           Putaran {i + 1}
                         </span>
                         {!r.selesai && (
-                          <span className="block text-[10px] text-gray-400">ditinggalkan</span>
+                          <span className="block text-xs text-gray-400">ditinggalkan</span>
                         )}
                       </div>
 

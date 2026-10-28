@@ -56,7 +56,7 @@ export default function KartuTagihan({
         <span className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-900">Tagihan</span>
           <span
-            className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
+            className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${
               merah ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
             }`}
           >

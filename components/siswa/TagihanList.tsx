@@ -9,6 +9,7 @@ import {
 } from '@/components/invoices/PembayaranBlok'
 import MenuTitikTiga, { ItemMenu } from '@/components/invoices/MenuTitikTiga'
 import { stripClassUniqueTag } from '@/lib/format-class-name'
+import KartuTagihanKeluarga from '@/components/siswa/KartuTagihanKeluarga'
 
 /** Bentuk tombol "Lihat", sama dengan yang dipakai halaman invoice admin. */
 const TOMBOL =
@@ -75,23 +76,21 @@ function rupiah(n: number): string {
   }).format(n)
 }
 
+/**
+ * Kartu untuk admin. Portal keluarga punya kartunya sendiri
+ * (`KartuTagihanKeluarga`): admin memindai banyak invoice sekaligus, jadi di sini
+ * semuanya tertutup dan rapat; orang tua membaca satu-dua dan butuh sisanya.
+ */
 function KartuTagihan({
   invoice,
   pembayaran,
   hariIni,
-  untuk,
 }: {
   invoice: TagihanRow
   pembayaran: PembayaranRow[]
   hariIni: string
-  untuk: 'admin' | 'keluarga'
 }) {
-  // Di portal keluarga tagihan yang belum lunas langsung terbuka: rincian
-  // cicilan dan sisanya yang dicari orang tua. Admin memindai banyak kartu
-  // sekaligus, jadi di sana semuanya tetap tertutup.
-  const [terbuka, setTerbuka] = useState(
-    untuk === 'keluarga' && invoice.status !== 'paid' && invoice.status !== 'cancelled',
-  )
+  const [terbuka, setTerbuka] = useState(false)
   /* Angsuran dinilai dari diamnya, bukan dari jatuh temponya — lihat
      `tagihanTerlambat`. Tanpa tanggal ini, angsuran yang berhenti berbulan-
      bulan tetap berlencana kuning "Angsuran". */
@@ -107,26 +106,13 @@ function KartuTagihan({
           terpotong dan tombolnya berdesakan jadi sasaran sentuh sempit. */}
       <div className="px-4 sm:px-5 pt-4 pb-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
         <div className="min-w-0">
-          {/* Di portal keluarga lencananya berdiri di ATAS nomor invoice.
-              Nomornya panjang dan bertipe mono; disandingkan sebaris, lencana
-              terdorong jauh ke kanan atau membungkus, dan status — hal pertama
-              yang dicari orang tua — jadi yang paling sulit ditemukan. Admin
-              memindai banyak kartu sekaligus, jadi di sana barisnya tetap rapat
-              seperti kartu di halaman invoice. */}
-          {untuk === 'keluarga' && (
-            <span className={`inline-flex whitespace-nowrap text-xs font-medium px-2.5 py-1 rounded-lg mb-1.5 ${st.cls}`}>
-              {st.label}
-            </span>
-          )}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-gray-900 font-mono truncate">
               {invoice.invoice_number ?? invoice.notes ?? '—'}
             </span>
-            {untuk === 'admin' && (
-              <span className={`inline-flex whitespace-nowrap text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${st.cls}`}>
-                {st.label}
-              </span>
-            )}
+            <span className={`inline-flex whitespace-nowrap text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 ${st.cls}`}>
+              {st.label}
+            </span>
           </div>
           {/* Nama kelas sebagai label nomor invoice, sama dengan kartu di
               halaman invoice admin. Tanggal terbit dan jatuh tempo tidak
@@ -140,64 +126,60 @@ function KartuTagihan({
         <span className="hidden sm:block flex-1" />
         {/* Label di atas nominal: angka tunggal di kepala kartu tak menyebut
             apa yang dihitungnya, padahal di bawahnya ada dua angka lain. */}
-        <div className="shrink-0 sm:text-right">
-          <p className="text-xs text-gray-400">Total tagihan</p>
-          <p className="text-lg sm:text-sm font-semibold text-gray-900 sm:text-gray-700 tabular-nums">
-            {rupiah(Number(invoice.total_due))}
-          </p>
+        {/* Di ponsel nominal total dan aksinya (Lihat, titik tiga) sebaris;
+            panah rincian turun ke baris sendiri dengan tulisan. Di layar lebar
+            semuanya sebaris seperti semula (`sm:contents`). */}
+        <div className="flex items-center justify-between gap-2 sm:contents">
+          {/* Label di atas nominal: angka tunggal di kepala kartu tak menyebut
+              apa yang dihitungnya, padahal di bawahnya ada dua angka lain. */}
+          <div className="shrink-0 sm:text-right">
+            <p className="text-xs text-gray-400">Total tagihan</p>
+            <p className="text-lg sm:text-sm font-semibold text-gray-900 sm:text-gray-700 tabular-nums">
+              {rupiah(Number(invoice.total_due))}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 sm:contents">
+            {/* "Lihat" membuka, titik tiga mengunduh — pasangan yang sama dengan
+                halaman invoice admin. */}
+            <a
+              href={`/api/invoices/${invoice.id}/pdf?preview=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={TOMBOL}
+            >
+              Lihat
+            </a>
+            <MenuTitikTiga label="Aksi tagihan">
+              {tutup => (
+                <>
+                  <ItemMenu
+                    href={`/api/invoices/${invoice.id}/pdf`}
+                    onClick={tutup}
+                    ikon={<IkonUnduh />}
+                  >
+                    Unduh PDF
+                  </ItemMenu>
+                  <div className="border-t border-slate-100 my-0.5" />
+                  <ItemMenu
+                    href={`/admin/invoices/${invoice.id}`}
+                    onClick={tutup}
+                    ikon={<IkonDetail />}
+                  >
+                    Buka Invoice
+                  </ItemMenu>
+                </>
+              )}
+            </MenuTitikTiga>
+          </div>
         </div>
-        <div className="flex items-center gap-2 sm:contents">
-        {/* "Lihat" membuka, titik tiga mengunduh — pasangan yang sama dengan
-            halaman invoice admin. */}
-        <a
-          href={`/api/invoices/${invoice.id}/pdf?preview=1`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={TOMBOL}
-        >
-          Lihat
-        </a>
-        {/* Menu titik tiga hanya berisi "Unduh PDF" di portal keluarga — satu
-            isi tak perlu disembunyikan di balik ikon yang asing di ponsel,
-            jadi tombolnya langsung. Admin punya isi kedua (Buka Invoice),
-            jadi menunya tetap. */}
-        {untuk === 'keluarga' ? (
-          <a href={`/api/invoices/${invoice.id}/pdf`} className={TOMBOL}>
-            Unduh
-          </a>
-        ) : (
-          <MenuTitikTiga label="Aksi tagihan">
-            {tutup => (
-              <>
-                <ItemMenu
-                  href={`/api/invoices/${invoice.id}/pdf`}
-                  onClick={tutup}
-                  ikon={<IkonUnduh />}
-                >
-                  Unduh PDF
-                </ItemMenu>
-                {untuk === 'admin' && (
-                  <>
-                    <div className="border-t border-slate-100 my-0.5" />
-                    <ItemMenu
-                      href={`/admin/invoices/${invoice.id}`}
-                      onClick={tutup}
-                      ikon={<IkonDetail />}
-                    >
-                      Buka Invoice
-                    </ItemMenu>
-                  </>
-                )}
-              </>
-            )}
-          </MenuTitikTiga>
-        )}
+        {/* Layar lebar: panah kecil di ujung baris. Di ponsel penggantinya
+            adalah tombol bertulisan di bawah bilah pembayaran. */}
         <button
           type="button"
           onClick={() => setTerbuka(v => !v)}
           aria-expanded={terbuka}
-          aria-label={terbuka ? 'Tutup rincian' : 'Lihat rincian pembayaran'}
-          className="w-11 h-11 sm:w-7 sm:h-7 flex items-center justify-center text-gray-400 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+          aria-label={terbuka ? 'Tutup riwayat pembayaran' : 'Lihat riwayat pembayaran'}
+          className="hidden sm:flex w-7 h-7 items-center justify-center text-gray-400 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
         >
           <svg
             className={`w-4 h-4 transition-transform ${terbuka ? 'rotate-180' : ''}`}
@@ -208,15 +190,28 @@ function KartuTagihan({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setTerbuka(v => !v)}
+        aria-expanded={terbuka}
+        className="sm:hidden w-full min-h-11 flex items-center justify-center gap-1.5 text-sm text-gray-500 border-t border-slate-100 hover:bg-slate-50 transition-colors"
+      >
+        {terbuka ? 'Sembunyikan riwayat pembayaran' : 'Lihat riwayat pembayaran'}
+        <svg
+          className={`w-4 h-4 transition-transform ${terbuka ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
       {terbuka && (
         <div className="border-t border-slate-100 px-4 sm:px-5 py-4 space-y-4">
-          <KemajuanBayar
-            totalDue={invoice.total_due}
-            pembayaran={pembayaran}
-          />
+          <KemajuanBayar totalDue={invoice.total_due} pembayaran={pembayaran} />
           {/* Garis pemisah antara ringkasan angka dan riwayatnya. */}
           <div className="border-t border-slate-200 pt-4 -mx-4 sm:-mx-5 px-4 sm:px-5">
             <RiwayatPembayaran
@@ -232,12 +227,17 @@ function KartuTagihan({
                   >
                     Lihat
                   </a>
-                  <a
-                  href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf`}
-                  className={TOMBOL}
-                >
-                  Unduh
-                </a>
+                  <MenuTitikTiga label="Aksi pembayaran">
+                    {tutup => (
+                      <ItemMenu
+                        href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf`}
+                        onClick={tutup}
+                        ikon={<IkonUnduh />}
+                      >
+                        Unduh Kuitansi
+                      </ItemMenu>
+                    )}
+                  </MenuTitikTiga>
                 </>
               )}
             />
@@ -275,13 +275,21 @@ export default function TagihanList({
   return (
     <div className="space-y-3">
       {tagihan.map(inv => (
-        <KartuTagihan
-          key={inv.id}
-          invoice={inv}
-          pembayaran={perInvoice.get(inv.id) ?? []}
-          hariIni={hariIni}
-          untuk={untuk}
-        />
+        untuk === 'keluarga' ? (
+          <KartuTagihanKeluarga
+            key={inv.id}
+            invoice={inv}
+            pembayaran={perInvoice.get(inv.id) ?? []}
+            hariIni={hariIni}
+          />
+        ) : (
+          <KartuTagihan
+            key={inv.id}
+            invoice={inv}
+            pembayaran={perInvoice.get(inv.id) ?? []}
+            hariIni={hariIni}
+          />
+        )
       ))}
     </div>
   )

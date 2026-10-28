@@ -214,7 +214,7 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
           {TANDA_SUMBU.map(v => (
             <span
               key={v}
-              className="absolute right-1.5 -translate-y-1/2 text-[10px] tabular-nums text-gray-400"
+              className="absolute right-1.5 -translate-y-1/2 text-xs tabular-nums text-gray-400"
               style={{ top: `${y(v)}%` }}
             >
               {v}
@@ -296,7 +296,7 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
           {bulan.map((b, i) => (
             <span
               key={b + i}
-              className="absolute -translate-x-1/2 text-[10px] tabular-nums text-gray-400"
+              className="absolute -translate-x-1/2 text-xs tabular-nums text-gray-400"
               style={{ left: `${x(i)}%` }}
             >
               {b}

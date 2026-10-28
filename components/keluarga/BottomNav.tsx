@@ -137,14 +137,14 @@ export default function BottomNav({
                     /* Lencananya menempel di ikon, bukan di sel — kalau ia ikut
                        aliran teks, label di bawahnya bergeser saat angkanya
                        muncul dan seluruh bilah tampak bergoyang. */
-                    className="absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold leading-4 text-center"
+                    className="absolute -top-2 -right-3 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs font-semibold leading-5 text-center"
                     aria-label={`${belumDibaca} notifikasi belum dibaca`}
                   >
                     {belumDibaca > 9 ? '9+' : belumDibaca}
                   </span>
                 )}
               </span>
-              <span className="text-[11px] font-medium">{it.label}</span>
+              <span className="text-xs font-medium">{it.label}</span>
             </Link>
           )
         })}
