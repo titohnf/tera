@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
-import { kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
+import { dasarBagiKelas, kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
 import { kodePaket } from '@/lib/belajar/nama-paket'
 import { labelSesiWib } from '@/lib/waktu'
 import { namaTema } from '@/lib/belajar/tema-topik'
@@ -65,12 +65,18 @@ import { mulaiLangkahTopik } from '@/app/belajar/actions'
  */
 export default function PetaTopik({
   anak,
+  kelas,
   topik,
   langkah,
   paket,
   hariIni,
 }: {
   anak: string | undefined
+  /**
+   * Kelas anak (1–12), atau null kalau belum diisi. Null berarti tidak ada
+   * pemisahan jenjang sama sekali — lihat `diAtasKelas` di `fringe.ts`.
+   */
+  kelas: number | null
   topik: TopikPeta[]
   /**
    * Langkah berikutnya tiap topik (migrasi 190), dibawa server bersama
@@ -93,7 +99,7 @@ export default function PetaTopik({
    */
   hariIni: string
 }) {
-  const { siap, belum, tuntas } = useMemo(() => kelompokkanPeta(topik), [topik])
+  const { siap, diAtas, belum, tuntas } = useMemo(() => kelompokkanPeta(topik, kelas), [topik, kelas])
 
   // Kode topik ke namanya, untuk keterangan prasyarat. Seluruh topik ikut,
   // bukan cuma yang terlipat: prasyarat sebuah topik di `belum` bisa saja topik
@@ -114,6 +120,7 @@ export default function PetaTopik({
     return m
   }, [paket])
 
+  const [lihatDiAtas, setLihatDiAtas] = useState(false)
   const [lihatBelum, setLihatBelum] = useState(false)
   const [lihatTuntas, setLihatTuntas] = useState(false)
 
@@ -127,6 +134,7 @@ export default function PetaTopik({
       key={t.id}
       topik={t}
       anak={anak}
+      kelas={kelas}
       langkah={perTopik.get(t.id)}
       paket={paketTopik.get(t.id) ?? []}
       namaTopik={namaTopik}
@@ -142,17 +150,27 @@ export default function PetaTopik({
       {siap.length > 0 && (
         <div className="space-y-2">
           <div className="pt-4 pb-1">
+            {/* Dua keadaan, dua kalimat. Anak yang belum menuntaskan apa pun
+                belum "melewati" prasyarat apa pun — kalimat itu benar hanya
+                sesudah ada yang tuntas, dan sebelumnya terbaca seperti
+                tagihan atas sesuatu yang tidak pernah ia kerjakan. Yang ia
+                lihat di awal adalah titik masuk: topik yang memang tidak
+                bersyarat. */}
             <h2 className="font-semibold tracking-tight text-gray-900">
-              Siap untuk kamu sekarang
+              {tuntas.length === 0 ? 'Mulai dari sini' : 'Siap untuk kamu sekarang'}
             </h2>
             {/* Kenapa yang lain tidak ada di sini, dikatakan sebelum ditanyakan.
                 Tanpa baris ini, "belum siap (14)" di bawah terbaca sebagai
                 empat belas hal yang ketinggalan — terutama oleh orang tua yang
                 ikut memegang ponselnya. */}
             <p className="mt-0.5 text-xs text-gray-400">
-              {siap.length === 1
-                ? 'Satu topik yang prasyaratnya sudah kamu lewati.'
-                : `${siap.length} topik yang prasyaratnya sudah kamu lewati. Kerjakan yang mana saja.`}
+              {tuntas.length === 0
+                ? siap.length === 1
+                  ? 'Satu topik yang bisa langsung kamu kerjakan, tanpa harus menyelesaikan topik lain dulu.'
+                  : `${siap.length} topik yang bisa langsung kamu kerjakan, tanpa harus menyelesaikan topik lain dulu. Pilih yang mana saja.`
+                : siap.length === 1
+                  ? 'Satu topik yang syaratnya sudah kamu selesaikan.'
+                  : `${siap.length} topik yang syaratnya sudah kamu selesaikan. Pilih yang mana saja.`}
             </p>
           </div>
           {/* Jarak antar kartu 16px, bukan 8px. Kartunya sudah bukan baris
@@ -168,7 +186,7 @@ export default function PetaTopik({
       {/* Frontier kosong sementara masih ada topik yang belum tuntas: keadaan
           yang wajar di awal, bukan galat. Kalimatnya menunjuk ke lipatan di
           bawah alih-alih membiarkan layar tampak habis. */}
-      {siap.length === 0 && belum.length > 0 && (
+      {siap.length === 0 && diAtas.length === 0 && belum.length > 0 && (
         <div className="mt-4 rounded-xl bg-white p-4 shadow-kartu">
           <p className="text-sm font-semibold text-gray-900">Belum ada yang terbuka</p>
           <p className="mt-1 text-sm leading-relaxed text-gray-500">
@@ -177,6 +195,21 @@ export default function PetaTopik({
           </p>
         </div>
       )}
+
+      {/* DI ATAS JENJANG ANAK, dan terlipat. Topiknya boleh dikerjakan — layar
+          ini memberi tahu, tidak melarang — tapi ia bukan tawaran utama untuk
+          anak yang kelasnya di bawahnya. Kalimatnya menerangkan TOPIKNYA
+          ("biasanya dipelajari di kelas 7"), bukan anaknya: pembandingan
+          dengan anak lain adalah yang membuat orang merasa kecil. */}
+      <Lipatan
+        judul="Untuk jenjang di atasmu"
+        jumlah={diAtas.length}
+        terbuka={lihatDiAtas}
+        onKetuk={() => setLihatDiAtas(!lihatDiAtas)}
+        keterangan={`Biasanya dipelajari di kelas ${Math.min(...diAtas.map(t => t.kelasMulai ?? 99))} ke atas. Kalau terasa sulit, itu wajar. Kamu boleh mencoba, atau kembali ke topik yang pas untuk kelasmu.`}
+      >
+        {diAtas.map(baris)}
+      </Lipatan>
 
       <Lipatan
         judul="Belum siap"
@@ -287,6 +320,7 @@ function Lipatan({
 function Baris({
   topik: t,
   anak,
+  kelas,
   langkah,
   paket,
   namaTopik,
@@ -294,6 +328,7 @@ function Baris({
 }: {
   topik: TopikPeta
   anak: string | undefined
+  kelas: number | null
   langkah?: LangkahTopik
   paket: PaketRingkas[]
   namaTopik: Map<string, string>
@@ -386,6 +421,15 @@ function Baris({
             belas kali untuk ketiadaan. */}
         {ringkas && (
           <span className="mt-1 block text-xs text-gray-400">{ringkas}</span>
+        )}
+
+        {/* Topik dasar bagi anak yang lebih besar: dikatakan sebagai fondasi,
+            supaya anak kelas 11 yang melihat topik kelas 1 tidak merasa
+            diturunkan ke soal anak kecil. */}
+        {dasarBagiKelas(t, kelas) && (
+          <span className="mt-1 block text-xs text-gray-400">
+            Topik dasar dari kelas {t.kelasMulai}, bagus untuk menguatkan fondasi.
+          </span>
         )}
 
         <span className="mt-3 block">

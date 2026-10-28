@@ -43,6 +43,11 @@ export type Kelompok = 'siap' | 'belum' | 'tuntas'
 export interface PetaTerkelompok {
   /** Frontier: prasyaratnya terpenuhi dan topiknya belum tuntas. */
   siap: TopikPeta[]
+  /**
+   * Syaratnya terpenuhi, tapi biasanya baru dipelajari di kelas di atas kelas
+   * anak ini. Kosong kalau kelas anak tidak diketahui.
+   */
+  diAtas: TopikPeta[]
   /** Prasyaratnya belum lengkap. TETAP BISA DIBUKA — cuma terlipat. */
   belum: TopikPeta[]
   tuntas: TopikPeta[]
@@ -97,10 +102,39 @@ export function kelompokTopik(t: TopikPeta): Kelompok {
  * `KartuRetest`, di atas seluruh peta ini — memasukkannya juga ke frontier
  * berarti satu topik yang sama muncul dua kali di satu layar.
  */
-export function kelompokkanPeta(topik: TopikPeta[]): PetaTerkelompok {
-  const hasil: PetaTerkelompok = { siap: [], belum: [], tuntas: [] }
-  for (const t of topik) hasil[kelompokTopik(t)].push(t)
+export function kelompokkanPeta(topik: TopikPeta[], kelas: number | null): PetaTerkelompok {
+  const hasil: PetaTerkelompok = { siap: [], diAtas: [], belum: [], tuntas: [] }
+  for (const t of topik) {
+    const k = kelompokTopik(t)
+    // Hanya yang `siap` yang dipisah. Topik di atas jenjang yang prasyaratnya
+    // belum terpenuhi sudah berada di "Belum siap", dan yang sudah tuntas tetap
+    // tuntas — menyembunyikan capaian anak karena kelasnya adalah keliru.
+    if (k === 'siap' && diAtasKelas(t, kelas)) hasil.diAtas.push(t)
+    else hasil[k].push(t)
+  }
   return hasil
+}
+
+/**
+ * Apakah topik ini biasanya baru dipelajari di kelas di atas `kelas`.
+ *
+ * Kelas anak yang tidak diketahui (`null`, `profiles.grade` boleh kosong) atau
+ * kelas mulai topik yang belum diisi berarti TIDAK ADA pemisahan: menebak
+ * jenjang anak berarti menyembunyikan topik dari orang yang tidak berbuat salah
+ * apa pun.
+ */
+export function diAtasKelas(t: TopikPeta, kelas: number | null): boolean {
+  return kelas != null && t.kelasMulai != null && t.kelasMulai > kelas
+}
+
+/**
+ * Topik dasar yang jauh di bawah kelas anak (selisih dua kelas atau lebih).
+ *
+ * Selisih satu kelas tidak ditandai: itu pengulangan biasa, dan label di setiap
+ * kartu membuat label itu sendiri jadi kebisingan.
+ */
+export function dasarBagiKelas(t: TopikPeta, kelas: number | null): boolean {
+  return kelas != null && t.kelasMulai != null && t.kelasMulai <= kelas - 2
 }
 
 /**

@@ -46,7 +46,7 @@ export default async function PaketTopikPage({
   params: Promise<{ studentId: string }>
 }) {
   const { studentId } = await params
-  const { learnerId } = await belajarContext(studentId)
+  const { learnerId, kelas } = await belajarContext(studentId)
 
   // `catatKunjungan` MENULIS, jadi ia berdiri sendiri dan hanya di sini:
   // halaman inilah permukaan tempat anak mendarat (FR12). Memanggilnya dari
@@ -84,6 +84,7 @@ export default async function PaketTopikPage({
           alasan yang sama dengan `sekarangIso` di `lib/waktu.ts`. */}
       <PetaTopik
         anak={studentId}
+        kelas={kelas}
         topik={peta}
         langkah={langkah}
         paket={paket}

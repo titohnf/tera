@@ -25,6 +25,13 @@ export interface TopikPeta {
   nama: string
   elemen: string
   jenjangKelas: string
+  /**
+   * Kelas tempat topik ini pertama diperkenalkan (`topik.kelas_mulai`, migrasi
+   * 180), atau null kalau belum diisi. Dipakai membandingkan topik dengan kelas
+   * anak: yang `kelasMulai`-nya di atas kelas anak ditawarkan di lipatan
+   * tersendiri, bukan di tawaran utama.
+   */
+  kelasMulai: number | null
   /** Titik lemah nasional: `ekstra` atau `ekstra_wajib`, selain itu `biasa`. */
   penandaRemediasi: string
   jumlahPaket: number
@@ -171,6 +178,18 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
   const statusTopik = new Map(
     (cetakan.data ?? []).map(b => [b.topik_id as string, b.status as string])
   )
+  // Kelas mulai dibaca dari tabel `topik` (RLS: pengguna masuk boleh membaca),
+  // bukan ditambahkan ke keluaran `topik_tersedia`: menambah kolom keluaran
+  // fungsi berarti `drop function` lalu membuatnya lagi, dan layar ini tidak
+  // pantas bergantung pada migrasi untuk satu angka yang sudah ada di tabel.
+  // Gagalnya pertanyaan ini hanya menghilangkan pemisahan jenjang — daftar
+  // topiknya sendiri tetap lengkap.
+  const kelas = await supabase.from('topik').select('id, kelas_mulai')
+  if (kelas.error) console.error('[peta] gagal membaca kelas mulai topik:', kelas.error)
+  const kelasMulai = new Map(
+    (kelas.data ?? []).map(b => [b.id as string, (b.kelas_mulai as number | null) ?? null])
+  )
+
   const hariIni = new Date().toISOString().slice(0, 10)
   const retestTopik = new Map(
     (jadwal.data ?? [])
@@ -183,6 +202,7 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     nama: b.nama,
     elemen: b.elemen,
     jenjangKelas: b.jenjang_kelas,
+    kelasMulai: kelasMulai.get(b.topik_id) ?? null,
     penandaRemediasi: b.penanda_remediasi,
     jumlahPaket: angka(b.jumlah_paket),
     prasyaratTerpenuhi: b.prasyarat_terpenuhi,
