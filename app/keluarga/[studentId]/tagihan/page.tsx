@@ -47,14 +47,13 @@ export default async function TagihanAnak({
       <p className="text-sm text-gray-500">
         Tagihan yang sudah diterbitkan, beserta pembayaran yang tercatat.
       </p>
-      <div className="bg-white rounded-xl shadow-kartu p-4 sm:p-5">
-        <TagihanList
-          tagihan={invoices as unknown as TagihanRow[]}
-          pembayaran={(pembayaranRows ?? []) as unknown as PembayaranRow[]}
-          hariIni={todayWib()}
-          untuk="keluarga"
-        />
-      </div>
+      {/* Tanpa kartu pembungkus: tiap invoice sudah berupa kartu sendiri. */}
+      <TagihanList
+        tagihan={invoices as unknown as TagihanRow[]}
+        pembayaran={(pembayaranRows ?? []) as unknown as PembayaranRow[]}
+        hariIni={todayWib()}
+        untuk="keluarga"
+      />
     </div>
   )
 }

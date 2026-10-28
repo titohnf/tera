@@ -7,7 +7,7 @@ import { stripClassUniqueTag } from '@/lib/format-class-name'
 import { getMonthlyBreakdown, getInstallmentPlan, splitAcrossMonths, monthNameOf, formatPeriodLabel, type MonthlyInstallment, type BillingLineItem } from '@/lib/billing-message'
 import { KemajuanBayar, RiwayatPembayaran, urutkanPembayaran } from '@/components/invoices/PembayaranBlok'
 import MenuTitikTiga from '@/components/invoices/MenuTitikTiga'
-import { statusTagihan, tanggalBayarTerakhir, warnaBilahTagihan } from '@/lib/tagihan'
+import { statusTagihan, tanggalBayarTerakhir } from '@/lib/tagihan'
 import { todayWib } from '@/lib/daily-message'
 import { waktuWib } from '@/lib/waktu'
 
@@ -439,7 +439,6 @@ function InvoiceCard({
           <KemajuanBayar
             totalDue={invoice.total_due}
             pembayaran={invoice.payments}
-            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, today, terakhirBayar)}
           />
 
           {/* Riwayat pembayaran — komponen yang sama dipakai tab Tagihan di

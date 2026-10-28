@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { statusTagihan, tanggalBayarTerakhir, warnaBilahTagihan } from '@/lib/tagihan'
+import { statusTagihan, tanggalBayarTerakhir } from '@/lib/tagihan'
 import {
   KemajuanBayar,
   RiwayatPembayaran,
@@ -86,7 +86,12 @@ function KartuTagihan({
   hariIni: string
   untuk: 'admin' | 'keluarga'
 }) {
-  const [terbuka, setTerbuka] = useState(false)
+  // Di portal keluarga tagihan yang belum lunas langsung terbuka: rincian
+  // cicilan dan sisanya yang dicari orang tua. Admin memindai banyak kartu
+  // sekaligus, jadi di sana semuanya tetap tertutup.
+  const [terbuka, setTerbuka] = useState(
+    untuk === 'keluarga' && invoice.status !== 'paid' && invoice.status !== 'cancelled',
+  )
   /* Angsuran dinilai dari diamnya, bukan dari jatuh temponya — lihat
      `tagihanTerlambat`. Tanpa tanggal ini, angsuran yang berhenti berbulan-
      bulan tetap berlencana kuning "Angsuran". */
@@ -133,9 +138,14 @@ function KartuTagihan({
           </p>
         </div>
         <span className="hidden sm:block flex-1" />
-        <span className="text-lg sm:text-sm font-semibold text-gray-900 sm:text-gray-700 shrink-0 tabular-nums">
-          {rupiah(Number(invoice.total_due))}
-        </span>
+        {/* Label di atas nominal: angka tunggal di kepala kartu tak menyebut
+            apa yang dihitungnya, padahal di bawahnya ada dua angka lain. */}
+        <div className="shrink-0 sm:text-right">
+          <p className="text-xs text-gray-400">Total tagihan</p>
+          <p className="text-lg sm:text-sm font-semibold text-gray-900 sm:text-gray-700 tabular-nums">
+            {rupiah(Number(invoice.total_due))}
+          </p>
+        </div>
         <div className="flex items-center gap-2 sm:contents">
         {/* "Lihat" membuka, titik tiga mengunduh — pasangan yang sama dengan
             halaman invoice admin. */}
@@ -147,31 +157,41 @@ function KartuTagihan({
         >
           Lihat
         </a>
-        <MenuTitikTiga label="Aksi tagihan">
-          {tutup => (
-            <>
-              <ItemMenu
-                href={`/api/invoices/${invoice.id}/pdf`}
-                onClick={tutup}
-                ikon={<IkonUnduh />}
-              >
-                Unduh PDF
-              </ItemMenu>
-              {untuk === 'admin' && (
-                <>
-                  <div className="border-t border-slate-100 my-0.5" />
-                  <ItemMenu
-                    href={`/admin/invoices/${invoice.id}`}
-                    onClick={tutup}
-                    ikon={<IkonDetail />}
-                  >
-                    Buka Invoice
-                  </ItemMenu>
-                </>
-              )}
-            </>
-          )}
-        </MenuTitikTiga>
+        {/* Menu titik tiga hanya berisi "Unduh PDF" di portal keluarga — satu
+            isi tak perlu disembunyikan di balik ikon yang asing di ponsel,
+            jadi tombolnya langsung. Admin punya isi kedua (Buka Invoice),
+            jadi menunya tetap. */}
+        {untuk === 'keluarga' ? (
+          <a href={`/api/invoices/${invoice.id}/pdf`} className={TOMBOL}>
+            Unduh
+          </a>
+        ) : (
+          <MenuTitikTiga label="Aksi tagihan">
+            {tutup => (
+              <>
+                <ItemMenu
+                  href={`/api/invoices/${invoice.id}/pdf`}
+                  onClick={tutup}
+                  ikon={<IkonUnduh />}
+                >
+                  Unduh PDF
+                </ItemMenu>
+                {untuk === 'admin' && (
+                  <>
+                    <div className="border-t border-slate-100 my-0.5" />
+                    <ItemMenu
+                      href={`/admin/invoices/${invoice.id}`}
+                      onClick={tutup}
+                      ikon={<IkonDetail />}
+                    >
+                      Buka Invoice
+                    </ItemMenu>
+                  </>
+                )}
+              </>
+            )}
+          </MenuTitikTiga>
+        )}
         <button
           type="button"
           onClick={() => setTerbuka(v => !v)}
@@ -196,34 +216,32 @@ function KartuTagihan({
           <KemajuanBayar
             totalDue={invoice.total_due}
             pembayaran={pembayaran}
-            warnaBilah={warnaBilahTagihan(invoice.status, invoice.due_date, hariIni, terakhir)}
           />
-          <RiwayatPembayaran
-            pembayaran={pembayaran}
-            aksi={p => (
-              <>
-                <a
-                  href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf?preview=1`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          {/* Garis pemisah antara ringkasan angka dan riwayatnya. */}
+          <div className="border-t border-slate-200 pt-4 -mx-4 sm:-mx-5 px-4 sm:px-5">
+            <RiwayatPembayaran
+              garisPenuh
+              pembayaran={pembayaran}
+              aksi={p => (
+                <>
+                  <a
+                    href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf?preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={TOMBOL}
+                  >
+                    Lihat
+                  </a>
+                  <a
+                  href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf`}
                   className={TOMBOL}
                 >
-                  Lihat
+                  Unduh
                 </a>
-                <MenuTitikTiga label="Aksi pembayaran">
-                  {tutup => (
-                    <ItemMenu
-                      href={`/api/invoices/${invoice.id}/kuitansi/${p.id}/pdf`}
-                      onClick={tutup}
-                      ikon={<IkonUnduh />}
-                    >
-                      Unduh Kuitansi
-                    </ItemMenu>
-                  )}
-                </MenuTitikTiga>
-              </>
-            )}
-          />
+                </>
+              )}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -63,33 +63,40 @@ export function hitungPembayaran(totalDue: number, daftar: Pembayaran[]) {
 export function KemajuanBayar({
   totalDue,
   pembayaran,
-  warnaBilah,
 }: {
   totalDue: number
   pembayaran: Pembayaran[]
-  /** Kelas warna bilah, ditentukan pemanggil dari status efektifnya. */
-  warnaBilah: string
 }) {
-  const { kurang, persen } = hitungPembayaran(totalDue, pembayaran)
+  const { dibayar, kurang, persen } = hitungPembayaran(totalDue, pembayaran)
   return (
     <div>
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <span className="text-xs text-gray-400">
-          {kurang > 0 ? (
-            <>
-              Kurang <span className="font-medium text-gray-600">{rupiah(kurang)}</span>
-            </>
-          ) : (
-            'Lunas'
-          )}
-        </span>
-        <span className="text-xs font-medium text-gray-500 shrink-0">{persen}%</span>
-      </div>
-      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${warnaBilah}`}
-          style={{ width: `${persen}%` }}
-        />
+      {/* Dua angka berlabel: yang sudah masuk dan yang masih harus dibayar.
+          Total tagihan tidak diulang — nominalnya sudah ada di kepala kartu.
+          Bilahnya hanya gambar dari kedua angka itu, dengan warna yang sama
+          (hijau = sudah dibayar, merah muda = sisa); dulu warnanya mengikuti
+          status invoice, jadi kuning di samping angka hijau dan merah tanpa
+          ada yang menjelaskan apa hubungannya. Invoice lunas menulis "Lunas"
+          di kolom kedua, bukan "Rp 0" yang terbaca seperti tunggakan. */}
+      <dl className="grid grid-cols-2 gap-3 mb-2.5">
+        <div className="min-w-0">
+          <dt className="text-xs text-gray-400">Sudah dibayar</dt>
+          <dd className="text-sm font-semibold text-green-600 tabular-nums">{rupiah(dibayar)}</dd>
+        </div>
+        <div className="min-w-0 text-right">
+          <dt className="text-xs text-gray-400">Belum dibayar</dt>
+          <dd
+            className={`text-sm font-semibold tabular-nums ${kurang > 0 ? 'text-red-600' : 'text-green-600'}`}
+          >
+            {kurang > 0 ? rupiah(kurang) : 'Lunas'}
+          </dd>
+        </div>
+      </dl>
+      <div
+        className={`w-full h-1.5 rounded-full overflow-hidden ${kurang > 0 ? 'bg-red-200' : 'bg-green-500'}`}
+        role="img"
+        aria-label={`${persen}% sudah dibayar`}
+      >
+        <div className="h-full bg-green-500 transition-all" style={{ width: `${persen}%` }} />
       </div>
     </div>
   )
@@ -100,6 +107,7 @@ export function RiwayatPembayaran<T extends Pembayaran>({
   aksi,
   bawahBaris,
   kosong = 'Belum ada pembayaran tercatat.',
+  garisPenuh = false,
 }: {
   pembayaran: T[]
   /** Tombol/tautan di ujung tiap baris. `tahap` untuk penamaan kuitansi. */
@@ -108,6 +116,9 @@ export function RiwayatPembayaran<T extends Pembayaran>({
    *  sunting pembayaran yang terbuka di tempat. */
   bawahBaris?: (p: T, tahap: number) => ReactNode
   kosong?: string
+  /** Garis pemisah antar baris menjangkau tepi kartu pembungkusnya (yang
+   *  berpadding `px-4 sm:px-5`), bukan berhenti di batas isi. */
+  garisPenuh?: boolean
 }) {
   const urut = urutkanPembayaran(pembayaran)
 
@@ -120,12 +131,15 @@ export function RiwayatPembayaran<T extends Pembayaran>({
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
         Riwayat Pembayaran
       </p>
-      <div className="space-y-2.5">
+      <div className="divide-y divide-slate-200">
         {/* Terbaru di atas, tapi nomor tahapnya tetap dari urutan aslinya. */}
         {[...urut].reverse().map((p, i) => {
           const tahap = urut.length - i
           return (
-            <div key={p.id} className="space-y-2">
+            <div
+              key={p.id}
+              className={`space-y-2 py-2.5 first:pt-0 last:pb-0 ${garisPenuh ? '-mx-4 sm:-mx-5 px-4 sm:px-5' : ''}`}
+            >
               {/* Di ponsel barisnya pecah dua: keterangan di atas, nominal dan
                   aksinya di bawah. Sebaris seperti di layar lebar, keenam benda
                   ini menuntut ~368px sementara panel hanya punya ~303px di
