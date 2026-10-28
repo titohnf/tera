@@ -372,7 +372,7 @@ export default function DaftarPaket({
               // bisa diapa-apakan.
               <span className="flex">
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     !bisa
                       ? 'bg-white text-gray-400 ring-1 ring-gray-200'
                       : p.pengayaan

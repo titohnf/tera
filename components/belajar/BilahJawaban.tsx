@@ -274,7 +274,7 @@ export function TitikHasil({ nomor, hasil }: { nomor: number; hasil: HasilSoal }
   return (
     <span
       aria-hidden
-      className={`flex aspect-square w-full items-center justify-center rounded-full text-[10px] font-semibold tabular-nums ${WARNA[hasil]} ${TEKS[hasil]}`}
+      className={`flex aspect-square w-full items-center justify-center rounded-full text-xs font-semibold leading-none tabular-nums ${WARNA[hasil]} ${TEKS[hasil]}`}
     >
       {nomor}
     </span>

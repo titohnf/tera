@@ -380,7 +380,7 @@ function Baris({
             dengan kodenya ("D-01") di samping namanya, dan tanpa kode di kartu
             ini anak harus mencocokkan nama panjang yang dua di antaranya
             berawal sama. */}
-        <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-500">
+        <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-gray-500">
           {t.id}
         </span>
         {/* Tema lebih dulu, jumlah paket sesudahnya: yang pertama menjawab "ini
@@ -611,7 +611,7 @@ function DeretPaket({
           <span key={p.paketId} className="flex items-center gap-1">
             <span
               title={`${kodeRingkas(p)} — ${k.sebut}`}
-              className={`flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[11px] font-semibold ${k.kelas}`}
+              className={`flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-xs font-semibold ${k.kelas}`}
             >
               {k.ikon === 'lolos' && <IkonCentang />}
               {k.ikon === 'kunci' && <IkonGembok />}
@@ -956,7 +956,7 @@ function LabelStatus({ status }: { status: string | null }) {
   const l = status ? label[status] : undefined
   if (!l) return null
   return (
-    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${l.kelas}`}>
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${l.kelas}`}>
       {l.teks}
     </span>
   )
