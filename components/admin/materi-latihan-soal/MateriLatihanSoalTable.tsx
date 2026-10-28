@@ -728,6 +728,7 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
   const [saringKelengkapan, setSaringKelengkapan] = useState<'' | 'belum' | Kelengkapan>('')
+  const [sumber, setSumber] = useState<'kurikulum' | 'tutor'>('kurikulum')
   const [sortKey, setSortKey] = useState<SortKey>('subjectName')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [prevRows, setPrevRows] = useState(rows)
@@ -777,10 +778,21 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
     kodeByKunci.set(`${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`, kodeTopik(t.group_id))
   }
 
-  const semua = groupByTopic(rows, urutanByKunci)
+  // Dua kelompok yang beda sifat, jadi dua tab: topik KURIKULUM punya kode, bisa
+  // dihitung "lengkap atau belum", dan tampil ke semua anak sekelas; topik BUATAN
+  // TUTOR diketik tutor di jurnal sesi (permintaan khusus kelas privat), tidak
+  // punya kode, tidak punya patokan "lengkap", dan materinya hidup sebagai
+  // lampiran sesi — bukan di katalog `/belajar`. Dicampur, yang kedua menjadi
+  // noise di angka "lengkap" milik yang pertama.
+  const semuaGrup = groupByTopic(rows, urutanByKunci)
+  const jumlahSumber = {
+    kurikulum: semuaGrup.filter((g) => g.topicSource === 'kurikulum').length,
+    tutor: semuaGrup.filter((g) => g.topicSource === 'tutor').length,
+  }
+  const semua = semuaGrup.filter((g) => g.topicSource === sumber)
   // "Belum lengkap" adalah yang paling sering dicari — sisanya disediakan satu
   // per satu supaya pertanyaan "mana yang perlu materi saja" juga terjawab.
-  const tersaring = saringKelengkapan
+  const tersaring = sumber === 'kurikulum' && saringKelengkapan
     ? semua.filter((g) =>
         saringKelengkapan === 'belum'
           ? kelengkapan(g) !== 'lengkap'
@@ -795,9 +807,42 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
 
   return (
     <>
+      <div role="tablist" aria-label="Sumber topik" className="flex gap-1 px-5 pt-3 border-b border-gray-100">
+        {([
+          ['kurikulum', 'Kurikulum', 'bg-blue-500'],
+          ['tutor', 'Buatan Tutor', 'bg-amber-400'],
+        ] as const).map(([nilai, label, warna]) => (
+          <button
+            key={nilai}
+            type="button"
+            role="tab"
+            aria-selected={sumber === nilai}
+            onClick={() => {
+              setSumber(nilai)
+              setPage(1)
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              sumber === nilai
+                ? 'border-blue-600 text-blue-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${warna}`} />
+            {label}
+            <span className="text-xs font-normal text-gray-400">{jumlahSumber[nilai]}</span>
+          </button>
+        ))}
+      </div>
+      {sumber === 'tutor' && (
+        <p className="px-5 py-2.5 text-xs text-gray-500 bg-amber-50/50 border-b border-amber-100">
+          Topik yang diketik tutor di jurnal sesi, umumnya permintaan khusus kelas privat. Tidak masuk katalog
+          &ldquo;Belajar&rdquo;; materinya tampil sebagai lampiran sesi di Jadwal keluarga anak itu.
+        </p>
+      )}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <p className="text-sm font-semibold text-gray-700">{topicCount} topik</p>
+          {sumber === 'kurikulum' && (
           <select
             value={saringKelengkapan}
             onChange={(e) => {
@@ -815,9 +860,12 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
               </option>
             ))}
           </select>
-          <span className="text-xs text-gray-400">
-            {semua.filter((g) => kelengkapan(g) === 'lengkap').length} lengkap
-          </span>
+          )}
+          {sumber === 'kurikulum' && (
+            <span className="text-xs text-gray-400">
+              {semua.filter((g) => kelengkapan(g) === 'lengkap').length} lengkap
+            </span>
+          )}
         </div>
         <button
           onClick={() => setShowAdd(true)}
