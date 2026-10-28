@@ -398,12 +398,21 @@ export default async function MateriLatihanSoalPage() {
   let terbaca = 0
   let menungguAkses = 0
   let tautanLuar = 0
+  // Kapan terakhir disinkronkan: setiap sinkron (tombol, tugas harian, atau
+  // skrip) menandai ulang `readable_at` semua materi yang siap, jadi yang
+  // terbaru di antaranya adalah waktu sinkron terakhir. Ditaruh di database,
+  // bukan dibaca dari env: halaman ini berjalan di dua server (Vercel dan
+  // Netlify) dan hanya satu yang menjadwalkan tugasnya.
+  let terakhirSinkron: string | null = null
   for (const r of resources ?? []) {
     if (r.kind !== 'materi') continue
     // Bukan berkas Drive: folder, Google Form terbitan, atau situs lain.
     // Ketiganya tidak bisa disemat, dan tidak ada yang bisa kita perbuat.
     if (!extractDriveFileId(r.link_url)) tautanLuar++
-    else if (r.readable_at) terbaca++
+    else if (r.readable_at) {
+      terbaca++
+      if (!terakhirSinkron || r.readable_at > terakhirSinkron) terakhirSinkron = r.readable_at
+    }
     else menungguAkses++
   }
 
@@ -414,7 +423,7 @@ export default async function MateriLatihanSoalPage() {
         <p className="text-sm text-gray-500 mt-0.5">Kumpulan materi, latihan soal, dan asesmen per topik, mengikuti struktur Kurikulum</p>
       </div>
 
-      <StatusMateriPanel terbaca={terbaca} menungguAkses={menungguAkses} tautanLuar={tautanLuar} />
+      <StatusMateriPanel terbaca={terbaca} menungguAkses={menungguAkses} tautanLuar={tautanLuar} terakhirSinkron={terakhirSinkron} />
 
       <MateriLatihanSoalClient
         topics={topics ?? []}

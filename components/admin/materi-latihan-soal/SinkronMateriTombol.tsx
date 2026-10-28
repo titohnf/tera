@@ -10,10 +10,29 @@ import type { HasilSinkron } from '@/lib/materi-pemetaan'
  * ditulis terang: berapa yang didaftarkan, dan — yang paling berguna — daftar
  * kerja yang tersisa, karena yang tidak cocok pasti tidak pernah ditebak.
  */
-export default function SinkronMateriTombol({ otomatis }: { otomatis: boolean }) {
+/** Lebih lama dari ini tanpa sinkron berarti tugas harian (tiap 24 jam) tampaknya tidak berjalan. */
+const BATAS_BASI_JAM = 36
+
+function tanggalWib(iso: string): string {
+  return new Date(iso).toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export default function SinkronMateriTombol({ terakhirSinkron }: { terakhirSinkron: string | null }) {
   const [sedang, mulai] = useTransition()
   const [hasil, setHasil] = useState<HasilSinkron | null>(null)
   const [galat, setGalat] = useState<string | null>(null)
+  // Waktu sekarang dibaca sekali saat dipasang; selisihnya hanya dipakai untuk
+  // peringatan, jadi tak perlu hidup.
+  const [sekarang] = useState(() => Date.now())
+  const basi = terakhirSinkron
+    ? sekarang - new Date(terakhirSinkron).getTime() > BATAS_BASI_JAM * 3600_000
+    : false
 
   function jalankan() {
     setGalat(null)
@@ -42,9 +61,11 @@ export default function SinkronMateriTombol({ otomatis }: { otomatis: boolean })
         <span className="text-xs text-gray-500">
           {sedang
             ? 'Membaca folder Drive dan memeriksa tiap materi; bisa memakan beberapa menit.'
-            : otomatis
-              ? 'Berjalan otomatis tiap hari pukul 03.00 WIB. Tombol ini untuk yang tidak mau menunggu.'
-              : 'Tugas harian belum aktif: pasang CRON_SECRET di server. Sementara, jalankan dengan tombol ini.'}
+            : terakhirSinkron
+              ? basi
+                ? `Terakhir disinkronkan ${tanggalWib(terakhirSinkron)} WIB — sudah lebih dari 1,5 hari. Tugas harian (03.00 WIB, Vercel) tampaknya belum berjalan; periksa CRON_SECRET di Vercel, atau pakai tombol ini.`
+                : `Terakhir disinkronkan ${tanggalWib(terakhirSinkron)} WIB. Tugas harian berjalan tiap pukul 03.00 WIB; tombol ini untuk yang tidak mau menunggu.`
+              : 'Belum pernah disinkronkan. Tugas harian berjalan tiap pukul 03.00 WIB; tombol ini untuk yang tidak mau menunggu.'}
         </span>
       </div>
 

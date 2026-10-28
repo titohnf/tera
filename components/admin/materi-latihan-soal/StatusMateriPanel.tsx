@@ -4,6 +4,8 @@ interface Props {
   terbaca: number
   menungguAkses: number
   tautanLuar: number
+  /** ISO waktu sinkron terakhir (readable_at terbaru), atau null bila belum pernah. */
+  terakhirSinkron: string | null
 }
 
 /**
@@ -16,7 +18,7 @@ interface Props {
  * layar ini adalah angkanya: berapa materi yang benar-benar terbuka bagi anak,
  * dan berapa yang belum — daftar kerja yang nyata.
  */
-export default function StatusMateriPanel({ terbaca, menungguAkses, tautanLuar }: Props) {
+export default function StatusMateriPanel({ terbaca, menungguAkses, tautanLuar, terakhirSinkron }: Props) {
   const total = terbaca + menungguAkses + tautanLuar
   if (total === 0) return null
 
@@ -44,7 +46,7 @@ export default function StatusMateriPanel({ terbaca, menungguAkses, tautanLuar }
           didaftarkan lewat <code className="text-gray-500">scripts/sinkron-materi-drive.mjs</code>.
         </p>
       )}
-      <SinkronMateriTombol otomatis={Boolean(process.env.CRON_SECRET)} />
+      <SinkronMateriTombol terakhirSinkron={terakhirSinkron} />
     </div>
   )
 }
