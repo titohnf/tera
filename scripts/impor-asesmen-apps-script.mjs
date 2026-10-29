@@ -149,7 +149,7 @@ function uraikanSkrip(sumber) {
       return
     }
 
-    const pilihan = [...blok.matchAll(new RegExp(`\\w+\\.createChoice\\((${LITERAL})\\s*,\\s*(true|false)\\s*\\)`, 'g'))].map(x => ({
+    const pilihan = [...blok.matchAll(new RegExp(`\\w+\\.createChoice\\((${LITERAL})\\s*(?:,\\s*(true|false)\\s*)?\\)`, 'g'))].map(x => ({
       teks: tanpaHuruf(bacaLiteral(x[1])),
       benar: x[2] === 'true',
     }))
