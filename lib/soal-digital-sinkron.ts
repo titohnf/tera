@@ -528,13 +528,17 @@ export async function sinkronkanSoalDigital(opsi: {
         const { data: tag } = await db.from('question_curriculum_tags').select('question_bank_items(prompt)').eq('group_id', cocok.grup.id)
         const sudah = new Set(((tag ?? []) as { question_bank_items: { prompt: string } | null }[]).map(t => norm(t.question_bank_items?.prompt ?? '')))
         const baru = u.soal.filter(s => !sudah.has(norm(s.prompt)))
+        const waktuDasar = Date.now()
         if (baru.length) {
           const { data: masuk, error: eButir } = await db.from('question_bank_items').insert(
-            baru.map(s => ({
+            baru.map((s, i) => ({
               created_by: penulis, type: s.type, prompt: s.prompt, options: s.options, correct_answer: s.correct_answer,
               weight: 1, explanation: s.pembahasan, status_verifikasi: 'draf', sumber_pembuatan: 'manual',
               // Satu form = satu paket di Belajar (migrasi 203).
               paket_kunci: `form:${f.id}`,
+              // Berselang 1 ms menurut nomor soal: satu INSERT memberi semua baris `created_at`
+              // yang sama, dan Sora/Belajar mengurutkan lewat `created_at, id` (urutan jadi acak).
+              created_at: new Date(waktuDasar + i).toISOString(),
             })),
           ).select('id')
           if (eButir || !masuk) throw new Error(`butir bank soal gagal ditulis: ${eButir?.message}`)

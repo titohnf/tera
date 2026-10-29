@@ -36,6 +36,8 @@ import { createClient } from '@supabase/supabase-js'
 const TULIS = process.argv.includes('--tulis')
 // Mengisi `paket_kunci` ("doc:<id berkas soal>") pada butir yang SUDAH ada, dicocokkan lewat kalimat soal.
 const ISI_KUNCI = process.argv.includes('--isi-paket-kunci')
+// Memulihkan urutan butir yang sudah ada (semuanya ber-`created_at` sama, jadi tampil acak): urutan dokumen.
+const URUTKAN = process.argv.includes('--urutkan')
 // Sumber lain: latihan soal TANPA file pembahasan dan asesmen berupa berkas Drive (bukan form).
 // Tidak ada kunci di dokumen, jadi semua butir menunggu kunci buatan (`--kerja` lalu `--jawaban`).
 const TANPA_PEMBAHASAN = process.argv.includes('--tanpa-pembahasan')
@@ -722,6 +724,32 @@ if (BERKAS_KERJA) {
   console.log(`\n${kerja.length} butir kerja ditulis ke ${BERKAS_KERJA}`)
 }
 console.log(`\n${ringkas.pasangan} pasangan diperiksa (${ringkas.pasanganLewat} dilewati utuh); ${ringkas.butirSiap} butir siap, ${ringkas.butirLewat} butir dilewati.`)
+if (URUTKAN) {
+  let diurut = 0, tanpaPasangan = 0
+  for (const h of hasilSemua) {
+    const { data: tag } = await db.from('question_curriculum_tags').select('question_bank_items(id, prompt, created_at, paket_kunci)').eq('group_id', h.groupId)
+    const ada = (tag ?? []).map(t => t.question_bank_items).filter(x => x && x.paket_kunci === h.paketKunci)
+    if (!ada.length) continue
+    const dasar = Math.min(...ada.map(x => new Date(x.created_at).getTime()))
+    const pakai = new Set()
+    h.siap.forEach((b, i) => {
+      // Awal kalimat saja yang dibandingkan: instruksi templat di ujung pernah dibersihkan belakangan.
+      const kunciB = norm(b.prompt).slice(0, 60)
+      const cocok = ada.find(x => !pakai.has(x.id) && norm(x.prompt).slice(0, 60) === kunciB)
+      if (!cocok) { tanpaPasangan++; return }
+      pakai.add(cocok.id)
+      cocok.urutan = new Date(dasar + i + 1).toISOString()
+    })
+    for (const x of ada) {
+      if (!x.urutan) continue
+      const { error } = await db.from('question_bank_items').update({ created_at: x.urutan }).eq('id', x.id)
+      if (error) { console.error(`GAGAL    ${h.nama}: ${error.message}`); process.exit(1) }
+      diurut++
+    }
+  }
+  console.log(`\n${diurut} butir diurutkan menurut nomor soal di dokumen; ${tanpaPasangan} butir hasil uraian tidak berpasangan di bank.`)
+  process.exit(0)
+}
 if (ISI_KUNCI) {
   // Tidak menulis butir baru: hanya menempelkan penanda paket pada butir yang sudah ada.
   let terisi = 0, tanpaPasangan = 0
@@ -754,11 +782,15 @@ for (const h of hasilSemua) {
   const sudah = new Set((ada ?? []).map(a => norm(a.question_bank_items?.prompt ?? '')))
   const baru = h.siap.filter(b => !sudah.has(norm(b.prompt)))
   if (!baru.length) { console.log(`ADA      ${h.nama}: semua butir sudah ada`); continue }
+  const waktuDasar = Date.now()
   const { data: dimasukkan, error } = await db.from('question_bank_items').insert(
     baru.map(b => ({
       created_by: penulis, type: b.type, prompt: b.prompt, options: b.options, correct_answer: b.correct_answer,
       weight: b.weight, explanation: b.explanation, bloom_level: b.bloom, status_verifikasi: 'draf', sumber_pembuatan: 'manual',
       paket_kunci: h.paketKunci,
+      // Satu perintah INSERT memberi semua baris `created_at` yang sama, dan Sora/Belajar mengurutkan
+      // lewat `created_at, id` — urutan soal jadi acak. Dibuat berselang 1 ms menurut nomor soal.
+      created_at: new Date(waktuDasar + baru.indexOf(b)).toISOString(),
     })),
   ).select('id')
   if (error || !dimasukkan) { console.error(`GAGAL    ${h.nama}: ${error?.message}`); continue }
