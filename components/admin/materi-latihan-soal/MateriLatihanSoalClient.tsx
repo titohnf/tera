@@ -52,6 +52,7 @@ type TutorResourceRow = {
   classSemester: number | null
   jumlahSoal?: number
   jumlahPembahasan?: number
+  terjangkau?: boolean
   cpIds?: string[]
   namaSumber?: string
 }
@@ -151,7 +152,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
         ...tautanUntuk(r.href),
         source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
-        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan, cpIds: r.cpIds, namaSumber: r.namaSumber,
+        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan, terjangkau: r.terjangkau, cpIds: r.cpIds, namaSumber: r.namaSumber,
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a

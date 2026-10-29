@@ -77,7 +77,8 @@ export type DisplayRow = {
   /**
    * Sudah dipastikan bisa dibuka anak di `/belajar` — berkasnya ada di folder
    * bimbel, terbaca service account, dan berbentuk yang tampil di halaman
-   * (migrasi 127). Hanya terisi pada baris materi katalog.
+   * (migrasi 127). Pada asesmen, latihan soal, dan bank soal: sudah menjadi paket soal
+   * aktif yang bisa dikerjakan anak di `/belajar`.
    */
   terjangkau?: boolean
   /**
@@ -744,6 +745,13 @@ function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: D
                 bimbel adalah kemajuan. Sejak materi HIDUP di folder itu, penanda
                 tersebut menyala untuk berkas yang kebetulan pernah disalin dan
                 mati untuk yang justru sudah benar tempatnya — persis terbalik. */}
+            {r.kind !== 'materi' && r.terjangkau && (
+              <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <title>Sudah jadi paket soal digital, bisa dikerjakan anak di /belajar</title>
+                <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.5 12.5l2.5 2.5 4.5-5" />
+              </svg>
+            )}
             {r.kind === 'materi' && (
               r.terjangkau ? (
                 <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

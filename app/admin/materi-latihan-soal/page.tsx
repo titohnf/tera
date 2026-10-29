@@ -85,12 +85,17 @@ export type TutorResourceRow = {
   /** Hanya pada baris `bank_soal`: bahan kolom kelengkapan. */
   jumlahSoal?: number
   jumlahPembahasan?: number
+  /** Sudah bisa dikerjakan anak di /belajar: ada butir aktif yang berasal dari sumber ini. */
+  terjangkau?: boolean
   // Best-effort Kelas/Semester for entries with no formal curriculum link —
   // derived from the session's class (its own `semester` column, and the
   // mode grade of its enrolled students) so the columns aren't just "—".
   classGradeLevel: string | null
   classSemester: number | null
 }
+
+/** Id terbit sebuah Google Form: `/forms/d/e/<id>/viewform`. */
+const idTerbit = (u: string | null | undefined): string | null => /\/forms\/d\/e\/([\w-]+)/.exec(u ?? '')?.[1] ?? null
 
 function toTutorResources(
   rows: MaterialSourceRow[],
@@ -188,7 +193,7 @@ function toLatihanSoalResources(
  */
 function toBankSoalResources(
   tags: { group_id: string; question_bank_item_id: string }[],
-  butir: Map<string, { adaPembahasan: boolean; kunci: string | null }>,
+  butir: Map<string, { adaPembahasan: boolean; kunci: string | null; aktif: boolean }>,
   topicByGroupId: Map<string, { topic: string; representativeCpId: string }>,
   soraUrl: string | null,
   /** CP dan nama sumber tiap paket (kunci `form:<id>` / `doc:<id>`), bila diketahui. */
@@ -199,15 +204,16 @@ function toBankSoalResources(
   // Satu baris per PAKET (satu sumber soal), bukan per topik: dengan begitu tiap paket
   // bisa menunjuk CP-nya, dan paket-paket satu topik bisa dibandingkan dengan
   // materi, asesmen, dan latihan soal yang berlabel CP sama.
-  const perPaket = new Map<string, { groupId: string; kunci: string | null; n: number; p: number }>()
+  const perPaket = new Map<string, { groupId: string; kunci: string | null; n: number; p: number; aktif: number }>()
   for (const t of tags) {
     if (!t.group_id) continue
     const info = butir.get(t.question_bank_item_id)
     const kunci = info?.kunci ?? null
     const k = `${t.group_id}__${kunci ?? 'bebas'}`
-    const e = perPaket.get(k) ?? { groupId: t.group_id, kunci, n: 0, p: 0 }
+    const e = perPaket.get(k) ?? { groupId: t.group_id, kunci, n: 0, p: 0, aktif: 0 }
     e.n++
     if (info?.adaPembahasan) e.p++
+    if (info?.aktif) e.aktif++
     perPaket.set(k, e)
   }
 
@@ -226,6 +232,7 @@ function toBankSoalResources(
       title: `${e.n} soal · ${e.p} pembahasan`,
       jumlahSoal: e.n,
       jumlahPembahasan: e.p,
+      terjangkau: e.aktif > 0,
       cpIds: sumber?.cpIds ?? [],
       namaSumber: sumber?.nama ?? undefined,
       href: `${soraUrl}/dashboard/bank/${e.groupId}`,
@@ -404,11 +411,11 @@ export default async function MateriLatihanSoalPage() {
   // Pembahasan kosong dan pembahasan berisi spasi sama saja bagi murid yang
   // menjawab salah.
   const idBertag = [...new Set((bankTagRows ?? []).map(t => t.question_bank_item_id))]
-  const butirInfo = new Map<string, { adaPembahasan: boolean; kunci: string | null }>()
+  const butirInfo = new Map<string, { adaPembahasan: boolean; kunci: string | null; aktif: boolean }>()
   for (let i = 0; i < idBertag.length; i += 200) {
-    const { data } = await admin.from('question_bank_items').select('id, explanation, paket_kunci').in('id', idBertag.slice(i, i + 200))
-    for (const x of (data ?? []) as { id: string; explanation: string | null; paket_kunci: string | null }[]) {
-      butirInfo.set(x.id, { adaPembahasan: (x.explanation ?? '').trim() !== '', kunci: x.paket_kunci })
+    const { data } = await admin.from('question_bank_items').select('id, explanation, paket_kunci, status_verifikasi').in('id', idBertag.slice(i, i + 200))
+    for (const x of (data ?? []) as { id: string; explanation: string | null; paket_kunci: string | null; status_verifikasi: string | null }[]) {
+      butirInfo.set(x.id, { adaPembahasan: (x.explanation ?? '').trim() !== '', kunci: x.paket_kunci, aktif: x.status_verifikasi === 'aktif' })
     }
   }
 
@@ -416,9 +423,13 @@ export default async function MateriLatihanSoalPage() {
   // (kolom `cp_ids`, migrasi 205; tabelnya bisa belum ada/lengkap, jadi galat dilewati).
   // Paket dari DOKUMEN: dari sesi yang menautkan berkas soal itu sebagai latihan soal.
   const sumberPaket = new Map<string, { cpIds: string[]; nama: string | null }>()
-  const { data: catatanForm } = await admin.from('sinkron_soal_drive').select('file_id, nama, cp_ids')
-  for (const f of (catatanForm ?? []) as { file_id: string; nama: string; cp_ids: string[] | null }[]) {
+  // Paket yang sudah punya butir AKTIF = bisa dikerjakan anak di /belajar (butir draf tidak tampil).
+  const paketAktif = new Set([...butirInfo.values()].filter(b => b.aktif && b.kunci).map(b => b.kunci as string))
+  const formAktif = new Set<string>()
+  const { data: catatanForm } = await admin.from('sinkron_soal_drive').select('file_id, nama, cp_ids, terbit_id')
+  for (const f of (catatanForm ?? []) as { file_id: string; nama: string; cp_ids: string[] | null; terbit_id: string | null }[]) {
     sumberPaket.set(`form:${f.file_id}`, { cpIds: f.cp_ids ?? [], nama: f.nama })
+    if (f.terbit_id && paketAktif.has(`form:${f.file_id}`)) formAktif.add(f.terbit_id)
   }
   for (const sesi of sessionCpUrlRows ?? []) {
     for (const url of Object.values(sesi.cp_urls ?? {})) {
@@ -437,6 +448,18 @@ export default async function MateriLatihanSoalPage() {
     ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
     ...toBankSoalResources(bankTagRows ?? [], butirInfo, topicByGroupId, soraUrl, sumberPaket),
   ]
+
+  // Asesmen (Google Form) dan latihan soal (dokumen) yang sudah didigitalkan jadi paket
+  // soal aktif ditandai bisa dikerjakan di /belajar.
+  for (const r of tutorResources) {
+    if (r.kind === 'asesmen') {
+      const id = idTerbit(r.href)
+      if (id && formAktif.has(id)) r.terjangkau = true
+    } else if (r.kind === 'latihan_soal') {
+      const f = extractDriveFileId(r.href)
+      if (f && paketAktif.has(`doc:${f}`)) r.terjangkau = true
+    }
+  }
 
   // Berapa materi yang benar-benar terbaca di dalam halaman. Dihitung dari
   // `curriculum_resources` saja — itu satu-satunya sumber yang dibaca
