@@ -25,15 +25,22 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  let user = null
+  // `getClaims()`, bukan `getUser()`: proyek ini menandatangani token dengan kunci asimetrik
+  // (ES256, lihat /auth/v1/.well-known/jwks.json), jadi tanda tangannya diperiksa LOKAL dengan
+  // JWKS yang di-cache — tanpa perjalanan ke layanan auth di setiap permintaan, termasuk setiap
+  // prefetch dan perpindahan halaman. Penyegaran token kedaluwarsa tetap berjalan seperti
+  // biasa (cookie ditulis lewat `setAll`). Yang hilang hanyalah pengecekan "sesi ini dicabut
+  // dari server?" per permintaan; di sini penjaga cuma menjawab "sudah masuk atau belum", dan
+  // izin sebenarnya tetap ditegakkan layout/halaman (`getUser()` di lib/supabase/get-user) dan RLS.
+  let user: { id: string } | null = null
   try {
     const { data } = await Promise.race([
-      supabase.auth.getUser(),
+      supabase.auth.getClaims(),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('auth timeout')), 8000)
       ),
     ])
-    user = data.user
+    user = data?.claims?.sub ? { id: data.claims.sub } : null
   } catch {
     // Auth service unreachable/slow: let the request through rather than
     // hanging the edge function until the platform kills it.

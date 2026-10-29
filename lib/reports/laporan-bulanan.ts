@@ -133,36 +133,39 @@ export function groupNotesByCategory(notes: LaporanNote[]): { category: string; 
   return Array.from(groups.entries()).map(([category, groupNotes]) => ({ category, notes: groupNotes }))
 }
 
+type EnrollRow = {
+  enrolled_at: string
+  unenrolled_at: string | null
+  is_active: boolean
+  classes: {
+    id: string
+    name: string
+    level: string | null
+    profiles: { full_name: string } | null
+  } | null
+}
+
 export async function getLaporanBulananData(studentId: string, month: string): Promise<LaporanBulananData | null> {
   const admin = createAdminClient()
   const { startIso, endIso, label } = monthRange(month)
 
-  const { data: studentData } = await admin
-    .from('profiles')
-    .select('id, full_name, nickname, level, grade, parent_name, parent_phone')
-    .eq('id', studentId)
-    .eq('role', 'student')
-    .single()
+  // Siswa dan pendaftarannya hanya butuh studentId: dijalankan bersamaan, bukan beruntun
+  // (tiap kueri ke database membayar satu perjalanan pulang-pergi penuh).
+  const [{ data: studentData }, { data: enrollData }] = await Promise.all([
+    admin
+      .from('profiles')
+      .select('id, full_name, nickname, level, grade, parent_name, parent_phone')
+      .eq('id', studentId)
+      .eq('role', 'student')
+      .single(),
+    admin
+      .from('class_students')
+      .select('enrolled_at, unenrolled_at, is_active, classes(id, name, level, profiles!tutor_id(full_name))')
+      .eq('student_id', studentId) as unknown as Promise<{ data: EnrollRow[] | null }>,
+  ])
 
   const student = studentData as LaporanStudent | null
   if (!student) return null
-
-  type EnrollRow = {
-    enrolled_at: string
-    unenrolled_at: string | null
-    is_active: boolean
-    classes: {
-      id: string
-      name: string
-      level: string | null
-      profiles: { full_name: string } | null
-    } | null
-  }
-
-  const { data: enrollData } = await admin
-    .from('class_students')
-    .select('enrolled_at, unenrolled_at, is_active, classes(id, name, level, profiles!tutor_id(full_name))')
-    .eq('student_id', studentId) as unknown as { data: EnrollRow[] | null }
 
   const enrollments = (enrollData ?? []).filter(e => e.classes !== null)
 
@@ -207,16 +210,6 @@ export async function getLaporanBulananData(studentId: string, month: string): P
   })
   const sessionIds = sessionRows.map(s => s.id)
 
-  const { data: attendanceData } = sessionIds.length > 0
-    ? await admin
-      .from('attendances')
-      .select('session_id, status')
-      .eq('student_id', studentId)
-      .in('session_id', sessionIds) as unknown as { data: { session_id: string; status: string }[] | null }
-    : { data: [] as { session_id: string; status: string }[] }
-
-  const attendanceMap = new Map((attendanceData ?? []).map(a => [a.session_id, a.status]))
-
   type NoteRow = {
     id: string
     session_id: string
@@ -227,16 +220,25 @@ export async function getLaporanBulananData(studentId: string, month: string): P
     profiles: { full_name: string } | null
   }
 
-  let allNotes: NoteRow[] = []
-  if (sessionIds.length > 0) {
-    const { data: noteData } = await admin
-      .from('performance_notes')
-      .select('id, session_id, category, body, created_at, sessions(scheduled_at), profiles!tutor_id(full_name)')
-      .eq('student_id', studentId)
-      .in('session_id', sessionIds)
-      .order('created_at', { ascending: true }) as unknown as { data: NoteRow[] | null }
-    allNotes = noteData ?? []
-  }
+  // Presensi dan catatan sama-sama hanya butuh id sesi: satu putaran, bukan dua.
+  const [{ data: attendanceData }, { data: noteData }] = sessionIds.length > 0
+    ? await Promise.all([
+        admin
+          .from('attendances')
+          .select('session_id, status')
+          .eq('student_id', studentId)
+          .in('session_id', sessionIds) as unknown as Promise<{ data: { session_id: string; status: string }[] | null }>,
+        admin
+          .from('performance_notes')
+          .select('id, session_id, category, body, created_at, sessions(scheduled_at), profiles!tutor_id(full_name)')
+          .eq('student_id', studentId)
+          .in('session_id', sessionIds)
+          .order('created_at', { ascending: true }) as unknown as Promise<{ data: NoteRow[] | null }>,
+      ])
+    : [{ data: [] as { session_id: string; status: string }[] }, { data: [] as NoteRow[] }]
+
+  const attendanceMap = new Map((attendanceData ?? []).map(a => [a.session_id, a.status]))
+  const allNotes: NoteRow[] = noteData ?? []
 
   const attitudeBySession = new Map<string, string>()
   for (const n of allNotes) {

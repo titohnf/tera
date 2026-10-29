@@ -48,11 +48,12 @@ export default async function AnakLayout({
   params: Promise<{ studentId: string }>
 }) {
   const { studentId } = await params
-  const { anak } = await keluargaContext()
+  // Konteks keluarga dan notifikasi dimulai bersamaan: `notifikasiAnak` hanya butuh id dari URL,
+  // dan kueri-kuerinya berjalan lewat klien ber-RLS, jadi id yang bukan milik keluarga ini pulang
+  // kosong dan dibuang di bawah. Beruntun, dua perjalanan database menumpuk sebelum layar pertama.
+  const [{ anak }, { items: notifikasi }] = await Promise.all([keluargaContext(), notifikasiAnak(studentId)])
   const ini = anak.find((a) => a.id === studentId)
   if (!ini) redirect('/keluarga')
-
-  const { items: notifikasi } = await notifikasiAnak(ini.id)
 
   return (
     <>

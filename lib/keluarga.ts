@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUser } from '@/lib/supabase/get-user'
+import { getUserCepat as getUser } from '@/lib/supabase/get-user'
 import { namaPendek } from '@/lib/nama'
 
 export interface Anak {

@@ -35,7 +35,15 @@ export default async function BelajarBeranda({
   // menyusul di layar topik, tempat mapelnya sudah diketahui.
   const jenjang = kelas ? [`Kelas ${kelas}`] : []
   // Daftar mapel untuk layar pertama.
-  const mapel = await mapelLatihan(learnerId, jenjang)
+  // Mapel, kerabat portal, dan tugas kelas hanya butuh hasil `belajarContext()` — semuanya
+  // dijalankan bersamaan. Dulu dua yang terakhir menunggu mapel selesai dulu, sehingga
+  // layar ini membayar dua putaran database beruntun padahal tak saling bergantung.
+  const mapelP = mapelLatihan(learnerId, jenjang)
+  const keluargaP = studentId ? Promise.all([keluargaContext(), asesmenAnak(studentId)]) : null
+  // Penanda 'sudah ditangani': kalau mapel gagal lebih dulu, penolakan yang menyusul tidak boleh
+  // jadi unhandled rejection (proses Node 24 mati karenanya).
+  keluargaP?.catch(() => {})
+  const mapel = await mapelP
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
   // portal keluarga dan tombol "Ulangi Topik Ini" di halaman hasil. Yang
@@ -82,9 +90,7 @@ export default async function BelajarBeranda({
   // `studentId` terisi hanya untuk jalur keluarga, jadi pelanggan langganan
   // melewati kueri ini sama sekali; `keluargaContext()` bahkan akan
   // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
-  const [keluarga, tugas] = studentId
-    ? await Promise.all([keluargaContext(), asesmenAnak(studentId)])
-    : [null, []]
+  const [keluarga, tugas] = keluargaP ? await keluargaP : [null, []]
 
   return (
     <div className="space-y-4">

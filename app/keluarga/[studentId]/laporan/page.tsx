@@ -46,14 +46,16 @@ export default async function LaporanAnak({
 
   const bulanDipilih = bulanOpsi.includes(month ?? '') ? (month as string) : bulanOpsi[1]
 
-  const { data: catatanRow } = await supabase
-    .from('monthly_report_notes')
-    .select('mastered, needs_practice, other_notes')
-    .eq('student_id', studentId)
-    .eq('month', bulanDipilih)
-    .maybeSingle()
-
-  const report = await getLaporanBulananData(studentId, bulanDipilih)
+  // Catatan bulanan dan data laporan tidak saling bergantung: satu putaran.
+  const [{ data: catatanRow }, report] = await Promise.all([
+    supabase
+      .from('monthly_report_notes')
+      .select('mastered, needs_practice, other_notes')
+      .eq('student_id', studentId)
+      .eq('month', bulanDipilih)
+      .maybeSingle(),
+    getLaporanBulananData(studentId, bulanDipilih),
+  ])
 
   const namaBulan = (m: string) => {
     const [y, mo] = m.split('-').map(Number)
