@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adalahVideo } from './sematan'
-import { ALL_GRADES } from '@/lib/curriculum-config'
+import { ALL_GRADES, SEMUA_KELAS } from '@/lib/curriculum-config'
 import type { OpsiSoal, SoalLatihan, TipeSoal } from './tipe-soal'
 import { TIPE_TANPA_NILAI_OTOMATIS } from './tipe-soal'
 import type { PitaPenguasaan } from './penguasaan'
@@ -667,7 +667,9 @@ export async function topikLatihan(
     }),
     kemajuanTopik(learnerId, subjectId),
   ])
-  const mentah = (data as BarisTopik[] | null) ?? []
+  // Fondasi Berhitung (`Semua Kelas`) disembunyikan dari permukaan belajar
+  // dulu: ia dibuat untuk dipilih tutor di sesi, bukan untuk menu latihan anak.
+  const mentah = ((data as BarisTopik[] | null) ?? []).filter(t => t.grade_level !== SEMUA_KELAS)
   if (mentah.length === 0) return []
 
   const perTopik = new Map((kemajuan ?? []).map(k => [k.group_id, k]))

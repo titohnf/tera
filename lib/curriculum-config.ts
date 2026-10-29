@@ -4,10 +4,20 @@
  * which is how TKA ended up in the database but invisible in the UI.
  */
 
-export const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge', 'TKA'] as const
+export const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge', 'TKA', 'Fondasi Berhitung'] as const
 export type Curriculum = typeof CURRICULA[number]
 
 export const TKA: Curriculum = 'TKA'
+export const FONDASI: Curriculum = 'Fondasi Berhitung'
+
+/**
+ * Fondasi Berhitung (aritmetika dasar: penjumlahan sampai rasio) bukan bagian
+ * dari kelas mana pun — tutor memilihnya di kelas berapa pun yang sedang ia
+ * ajar. `grade_level` itu `not null`, jadi topiknya diarsipkan di bawah nilai
+ * ini, dan `allowedCurriculumGradeLevels` selalu menyertakannya di dropdown
+ * topik tutor. Bukan "Kelas N", jadi tidak ikut `ALL_GRADES`.
+ */
+export const SEMUA_KELAS = 'Semua Kelas'
 
 export const ALL_GRADES = Array.from({ length: 12 }, (_, i) => `Kelas ${i + 1}`)
 export const SEMESTERS = [1, 2]
@@ -28,14 +38,15 @@ export const TKA_GRADES = ['Kelas 6', 'Kelas 9', 'Kelas 12']
 export const TKA_SEMESTER = 1
 
 export function gradesFor(curriculum: string): string[] {
+  if (curriculum === FONDASI) return [SEMUA_KELAS]
   return curriculum === TKA ? TKA_GRADES : ALL_GRADES
 }
 
 export function hasSemester(curriculum: string): boolean {
-  return curriculum !== TKA
+  return curriculum !== TKA && curriculum !== FONDASI
 }
 
-/** The semester to file a row under: the chosen one, or TKA's filler. */
+/** The semester to file a row under: the chosen one, or the filler for curricula without semesters. */
 export function semesterFor(curriculum: string, chosen: number): number {
   return hasSemester(curriculum) ? chosen : TKA_SEMESTER
 }

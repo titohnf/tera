@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
+import { SEMUA_KELAS } from '@/lib/curriculum-config'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
 import type { MateriTopik } from '@/lib/belajar/sematan'
@@ -88,7 +89,9 @@ export async function muatTopik(
   return {
     topik,
     materi: await materiTopik(topik.map((t) => t.group_id)),
-    jenjang: jenjang ?? [],
+    // `Semua Kelas` (Fondasi Berhitung) milik dropdown tutor; di sini ia bukan
+    // kelas siapa pun dan topiknya sudah disembunyikan di `topikLatihan`.
+    jenjang: (jenjang ?? []).filter((j) => j !== SEMUA_KELAS),
   }
 }
 

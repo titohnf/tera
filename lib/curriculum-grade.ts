@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { SEMUA_KELAS } from '@/lib/curriculum-config'
 
 /**
  * Jenjang kurikulum mana yang boleh muncul di dropdown topik sebuah sesi.
@@ -12,6 +13,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * Pengecualian bersifat MENAMBAH, bukan mengganti: kelas asli sesi tetap ada di
  * daftar, jadi kalau siswa yang dikecualikan duduk sekelas dengan siswa lain,
  * tutor tetap melihat kurikulum kelas reguler dan tinggal memilih yang dipakai.
+ *
+ * `Semua Kelas` (Fondasi Berhitung) selalu ikut: topiknya tidak milik kelas
+ * mana pun, dan tutor boleh memilihnya di kelas berapa pun.
  *
  * Mengembalikan `null` kalau tidak ada penyaringan sama sekali — tidak ada
  * siswa berkelas di sesi ini, dan menyaring hanya akan menyisakan dropdown
@@ -27,7 +31,7 @@ export async function allowedCurriculumGradeLevels(
 ): Promise<string[] | null> {
   if (sessionGrade == null) return null
 
-  const levels = [`Kelas ${sessionGrade}`]
+  const levels = [`Kelas ${sessionGrade}`, SEMUA_KELAS]
   if (!subjectId || studentIds.length === 0) return levels
 
   const { data } = await (client
