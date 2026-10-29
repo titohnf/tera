@@ -1,0 +1,1601 @@
+{
+ "1rVEzbjtxTU_d0MjbKTINALR8FgNsFRfm#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: 'Museum Fatahillah' dan nama hari 'Minggu' diawali huruf kapital.\n2) Salah: tidak ada koma sebelum keterangan waktu 'besok malam' yang berada di akhir kalimat setelah keterangan tempat.\n3) Benar: 'ditandatangani' ditulis serangkai sebagai satu kata kerja pasif, dan 'ketua panitia' tidak perlu kapital karena bukan nama jabatan yang diikuti nama orang."
+ },
+ "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#1": {
+  "jawab": 1,
+  "pembahasan": "Aturan habis dibagi 5: angka satuan (digit terakhir) harus 0 atau 5. Contoh: 135 dan 270 habis dibagi 5. Menjumlahkan semua digit adalah aturan untuk 3 dan 9, bukan untuk 5."
+ },
+ "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#3": {
+  "jawab": 2,
+  "pembahasan": "Bilangan 6 = 2 × 3, dan 2 serta 3 tidak punya faktor persekutuan. Karena itu suatu bilangan habis dibagi 6 jika dan hanya jika ia habis dibagi 2 (angka satuan genap) sekaligus habis dibagi 3 (jumlah digit kelipatan 3)."
+ },
+ "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#6": {
+  "jawab": 2,
+  "pembahasan": "Suatu bilangan habis dibagi 9 jika jumlah digitnya kelipatan 9.\n1.234 → 1+2+3+4 = 10 (bukan).\n5.612 → 5+6+1+2 = 14 (bukan).\n8.127 → 8+1+2+7 = 18 (kelipatan 9, jadi habis dibagi 9).\n4.015 → 4+0+1+5 = 10 (bukan)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#1": {
+  "jawab": 0,
+  "pembahasan": "Suhu yang tepat di tengah dua suhu adalah rata-ratanya: (-14 + 4) : 2 = -10 : 2 = -5ºC. Cek dengan selisih jarak: dari -14 ke -5 berjarak 9, dari -5 ke 4 juga berjarak 9."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Awal: -240 m. Naik 80 m → -240 + 80 = -160, yaitu 160 m di bawah permukaan (pernyataan 1 benar, pernyataan 2 salah karena bukan 80 m). Menyelam 150 m → -160 - 150 = -310, yaitu 310 m di bawah permukaan (pernyataan 3 benar). Selisih posisi awal dan akhir: 310 - 240 = 70 m (pernyataan 4 benar)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#3": {
+  "jawab": 2,
+  "pembahasan": "Dari pukul 08.00 sampai 14.00 ada 6 jam, sehingga ada 6 : 2 = 3 kali pembelahan. Jumlah bakteri = 5 × 2 × 2 × 2 = 5 × 2³ = 40 sel."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#4": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Jumlah paket maksimal adalah FPB dari 48, 72, dan 96, yaitu 24 paket (pernyataan 1 benar). Isi tiap paket: masker 48 : 24 = 2 (benar), hand sanitizer 72 : 24 = 3 (pernyataan 3 salah karena bukan 4), vitamin 96 : 24 = 4 (benar)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "KPK dari 6, 8, dan 12 adalah 24, sehingga ketiga regu berpatroli bersama lagi setiap 24 hari (pernyataan 1 benar). Patroli bersama kedua: 5 November + 24 hari = 29 November (benar). Patroli bersama ketiga terjadi 2 × 24 = 48 hari sejak 5 November, bukan 36 hari (salah)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#6": {
+  "jawab": 2,
+  "pembahasan": "Dina menjawab 35 soal dan 5 soal tidak dijawab. Misal benar = x, salah = 35 - x. Skor: 4x - 2(35 - x) - 5 = 105 → 4x - 70 + 2x - 5 = 105 → 6x = 180 → x = 30. Jadi 30 soal dijawab benar."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Perebusan 30 menit = 10 kali selang 3 menit, naik 10 × 4 = 40ºC (pernyataan 1 benar). Suhu sesudah direbus: -18 + 40 = 22ºC (pernyataan 2 benar, pernyataan 3 salah). Didiamkan 15 menit = 3 kali selang 5 menit, turun 3 × 2 = 6ºC, sehingga suhu 22 - 6 = 16ºC (pernyataan 4 benar)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "KPK dari 3, 4, dan 6 adalah 12, sehingga tanpa perubahan mereka bersama lagi 2 Maret + 12 hari = 14 Maret (pernyataan 1 benar). Dengan jadwal baru 3, 4, 9: KPK = 36 hari (pernyataan 2 benar). Bersama untuk kedua kalinya: 2 Maret + 36 hari. Maret masih tersisa 29 hari (sampai 31 Maret), sisanya 36 - 29 = 7, jadi 7 April, bukan 8 April (pernyataan 3 salah)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Semula FPB dari 120, 90, 60 adalah 30, jadi maksimal 30 anak (pernyataan 1 benar). Setelah dikurangi: buku tulis 108, pensil 84, penghapus 60, FPB-nya 12, jadi paling banyak 12 paket (pernyataan 2 benar). Tiap paket berisi 108 : 12 = 9 buku tulis, bukan 5 (salah). Pensil per paket 84 : 12 = 7 dan penghapus 60 : 12 = 5, selisihnya 2 (pernyataan 4 benar)."
+ },
+ "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#10": {
+  "jawab": 2,
+  "pembahasan": "Jumlah pasien menjadi 3 kali lipat setiap 4 hari: hari ke-1 = 5, hari ke-5 = 15, hari ke-9 = 45, hari ke-13 = 135, hari ke-17 = 405. Pada hari ke-13 jumlahnya 135 (belum lewat 400), dan pada hari ke-17 jumlahnya 405 (lebih dari 400). Jadi bantuan darurat pertama kali bisa diminta pada hari ke-17."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#1": {
+  "jawab": 1,
+  "pembahasan": "Jika satu besaran bertambah dan pasangannya ikut bertambah dengan perbandingan tetap, hubungan itu disebut perbandingan senilai. Pada perbandingan berbalik nilai, besaran yang satu bertambah justru besaran yang lain berkurang."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#2": {
+  "jawab": [
+   1,
+   3
+  ],
+  "pembahasan": "Perbandingan senilai: kedua besaran sama-sama naik atau sama-sama turun. Semakin banyak bensin, semakin mahal total harga (senilai). Semakin banyak barang, semakin tinggi total biaya (senilai). Pekerja bertambah → waktu berkurang, dan kecepatan naik → waktu berkurang adalah contoh perbandingan berbalik nilai."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#4": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Pada perbandingan berbalik nilai, pekerja bertambah → waktu berkurang (pernyataan 1 salah). Hasil kali kedua besaran tetap: A₁ × B₁ = A₂ × B₂ (benar), sehingga fungsinya y = k/x (benar). Bentuk pecahan A₁/B₁ = A₂/B₂ adalah rumus untuk perbandingan senilai, bukan berbalik nilai (salah)."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#6": {
+  "jawab": 1,
+  "pembahasan": "Perbandingan senilai: 2 liter menempuh 60 km, jadi 1 liter menempuh 30 km. Dengan 5 liter: 5 × 30 = 150 km."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Skala 1 : 300.000 berarti 1 cm pada peta = 300.000 cm = 3 km sebenarnya. Jarak 15 cm → 15 × 3 km = 45 km (pernyataan 1 dan 3 benar). 4,5 km salah. Menghitung dengan membagi 15 cm dengan 300.000 salah; jarak sebenarnya diperoleh dengan mengalikan jarak peta dengan penyebut skala."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Waktu yang tersisa: 40 - 10 - 5 = 25 hari (pernyataan 1 benar). Sisa pekerjaan setara 24 pekerja × 30 hari = 720 pekerja-hari (pernyataan 2 benar). Untuk selesai dalam 25 hari dibutuhkan 720 : 25 = 28,8 ≈ 29 pekerja, bukan 24 (pernyataan 3 salah), sehingga tambahan pekerjanya sekitar 5 orang, bukan 10 (pernyataan 4 salah)."
+ },
+ "19WBfhQqBt_paBMegxGNOd-Ki6E6f8GQc#10": {
+  "jawab": 0,
+  "pembahasan": "Kemiringan (laju perubahan) = jarak : volume bensin = 12 km : 1 liter = 12 km/liter. Nilainya sama di setiap titik karena grafiknya garis lurus melalui (0,0): 24 : 2 = 12 dan 36 : 3 = 12."
+ },
+ "1ess-A0jgstsXbSbtkifSDglwr5eFOdxs#1": {
+  "jawab": 1,
+  "pembahasan": "Informasi yang tertulis langsung dan jelas dalam teks, sehingga mudah ditemukan tanpa penafsiran mendalam, disebut informasi eksplisit atau tersurat. Lawannya adalah informasi tersirat."
+ },
+ "1ess-A0jgstsXbSbtkifSDglwr5eFOdxs#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Informasi tersurat tertulis harfiah di dalam kalimat dan biasanya berupa fakta, data, waktu, atau tempat yang jelas. Informasi yang perlu penafsiran dan pesan moral tersembunyi termasuk informasi tersirat."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#1": {
+  "jawab": 2,
+  "pembahasan": "J.J. Thomson menemukan elektron lewat percobaan tabung sinar katoda. Dalton mengemukakan teori atom sebagai bola pejal, Rutherford menemukan inti atom, Bohr mengusulkan lintasan kulit, dan Chadwick menemukan neutron."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#2": {
+  "jawab": [
+   1,
+   2,
+   4
+  ],
+  "pembahasan": "Produk kimia di bidang pertanian: pupuk urea sintetis, pestisida, dan herbisida. Plastik polietilena adalah produk industri kemasan, dan vaksin mRNA adalah produk bidang kesehatan."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#3": {
+  "jawab": 1,
+  "pembahasan": "Kelemahan utama model Rutherford: menurut fisika klasik, elektron yang mengelilingi inti akan memancarkan energi dan jatuh ke inti, namun kenyataannya atom stabil. Bohr menyempurnakannya dengan lintasan (kulit) stasioner."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Isotop: nomor atom sama (¹²₆C dan ¹⁴₆C). Isobar: nomor massa sama (¹⁴₇N dan ¹⁴₆C). Isoton: jumlah neutron sama (¹⁴₆C dan ¹⁶₈O, sama-sama 8 neutron). Pernyataan 2 salah karena nomor massa yang sama adalah isobar, bukan isoton."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#5": {
+  "jawab": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "pembahasan": "Na: nomor atom 11, nomor massa 23. Atom netral punya 11 proton dan 11 elektron (benar). Neutron = 23 - 11 = 12, bukan 23 (salah). Na⁺ terbentuk saat atom melepas 1 elektron (benar), sehingga elektronnya 10, bukan 12 (salah)."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#6": {
+  "jawab": 0,
+  "pembahasan": "Z = 35 berarti 35 elektron. Kapasitas kulit: K = 2, L = 8, M = 18, N = 32. Pengisian: 2, 8, 18, sisa 35 - 28 = 7. Konfigurasi: 2, 8, 18, 7."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#7": {
+  "jawab": [
+   0,
+   2,
+   4
+  ],
+  "pembahasan": "Fe (Z = 26): [Ar] 4s² 3d⁶ (benar). Subkulit terakhir yang diisi adalah 3d (benar). Pada 3d⁶ terdapat 4 elektron tidak berpasangan sesuai aturan Hund (benar), bukan 6. Elektron valensi Fe berada di kulit terluar (4s), bukan hanya 3d."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#8": {
+  "jawab": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "pembahasan": "V (Z = 23): [Ar] 4s² 3d³ (benar). Saat membentuk ion, elektron dilepas lebih dulu dari kulit terluar 4s: V²⁺ = [Ar] 3d³ (benar), V³⁺ = [Ar] 3d² (benar). Karena itu V³⁺ tidak melepas ketiga elektronnya dari 3d (pernyataan 2 salah)."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#9": {
+  "jawab": [
+   0,
+   3
+  ],
+  "pembahasan": "Tembaga menyimpang dari aturan Aufbau karena subkulit 3d yang terisi penuh (3d¹⁰) lebih stabil. Satu elektron 4s berpindah ke 3d, dan energi promosi itu dikompensasi oleh kestabilan struktur penuh. Tolakan 4s dan turunnya Z efektif bukan penyebabnya."
+ },
+ "1dFXDnJSbscKwEwOSmus3UtyIQGZBsXZV#10": {
+  "jawab": 1,
+  "pembahasan": "Ion X²⁻ memiliki 18 elektron, jadi atom netral X memiliki 18 - 2 = 16 elektron (nomor atom 16, belerang). Konfigurasi: 1s² 2s² 2p⁶ 3s² 3p⁴. Jumlah neutron (16) tidak memengaruhi konfigurasi elektron."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#1": {
+  "jawab": 2,
+  "pembahasan": "Pelengkap melengkapi predikat tetapi tidak dapat menjadi subjek ketika kalimat dipasifkan, berbeda dengan objek yang bisa menjadi subjek kalimat pasif."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Syarat kalimat efektif antara lain kesepadanan struktur, kehematan kata, dan keparalelan bentuk. Majas yang mendominasi bukan syarat kalimat efektif."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#3": {
+  "jawab": 2,
+  "pembahasan": "'Banyak para tamu' memakai dua kata bermakna jamak sekaligus (banyak dan para), sehingga boros. Kalimat efektif cukup 'Banyak tamu undangan' atau 'Para tamu undangan'. Kesalahan ini melanggar syarat kehematan kata."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#4": {
+  "jawab": [
+   1,
+   3
+  ],
+  "pembahasan": "Kalimat 'Waktu dan tempat kami persilakan' tidak logis karena waktu dan tempat tidak dapat dipersilakan. 'Untuk mempersingkat waktu' juga tidak logis karena waktu tidak dapat dipersingkat; yang logis 'menghemat waktu'. 'Bapak Kepala Sekolah kami persilakan' maknanya dapat diterima."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: objek berada di belakang predikat aktif transitif dan dapat menjadi subjek pada kalimat pasif.\n2) Salah: keterangan memiliki posisi yang fleksibel; boleh di awal, tengah, atau akhir kalimat.\n3) Benar: predikat adalah inti kalimat yang menyatakan tindakan, keadaan, atau sifat subjek."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#6": {
+  "jawab": 1,
+  "pembahasan": "Rincian 'menyiapkan', 'pembentukan', 'menjemurnya' tidak sejajar. Yang berbentuk kata kerja aktif adalah 'menyiapkan' dan 'menjemurnya', sehingga 'pembentukan' harus diganti menjadi 'membentuk' agar sejajar."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#7": {
+  "jawab": [
+   1,
+   3
+  ],
+  "pembahasan": "Kalimat yang diawali preposisi (Bagi..., Di dalam...) membuat subjeknya tidak jelas. 'Semua siswa kelas 9 wajib mengikuti ujian praktik' dan 'Buku sejarah ini menceritakan perjuangan para pahlawan nasional' memiliki subjek dan predikat yang jelas."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: 'istri bupati yang gemuk' bisa berarti istrinya atau bupatinya yang gemuk (ambigu).\n2) Benar: tanda hubung/pengaturan tanda baca dapat memperjelas siapa yang dimaksud.\n3) Salah: 'pelukis yang terkenal' dapat merujuk pada lukisan atau pelukis yang terkenal, sehingga kalimat itu masih ambigu."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#9": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Kalimat (2) 'berbagai macam-macam' boros (jamak dua kali). Kalimat (4) tidak paralel: rapi dan sistematis (kata sifat) disandingkan dengan penjilidan (kata benda). Kalimat (3) tidak menyisipkan preposisi di antara predikat dan objek, dan 'menghemat waktu' pada kalimat (1) sudah logis."
+ },
+ "1WM8Y0B6q8Xj8jI_Nxrt8ydYDQ_zl4cuI#10": {
+  "jawab": 1,
+  "pembahasan": "Struktur: Pemerintah daerah (S), mengalokasikan (P), dana bantuan (O), bagi masyarakat yang terdampak bencana alam (keterangan tujuan, ditandai kata 'bagi' yang menyatakan peruntukan). Jadi unsur (3) objek dan unsur (4) keterangan tujuan."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#2": {
+  "jawab": [
+   0,
+   3
+  ],
+  "pembahasan": "Kebutuhan pokok adalah hal yang mutlak dipenuhi agar aktivitas belajar berjalan. Sepatu sekolah yang pas serta buku pelajaran dan alat tulis termasuk kebutuhan pokok pelajar. Mainan action figure terbaru dan jajan minuman manis setiap hari adalah keinginan karena tidak dipenuhi pun kegiatan sekolah tetap berjalan."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Produsen yang bijak memakai bahan baku secara efisien agar tidak boros dan menetapkan harga yang masuk akal tanpa menurunkan kualitas. Membuang limbah sembarangan merusak lingkungan, dan mencampur bahan berbahaya adalah tindakan curang yang membahayakan pembeli."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: kebutuhan adalah hal yang mutlak dipenuhi agar hidup dan aktivitas berjalan aman.\n2) Salah: yang harus diprioritaskan adalah kebutuhan pokok lebih dahulu, baru keinginan.\n3) Benar: menabung yang bijak dilakukan dengan menyisihkan uang saat menerima uang saku, bukan menunggu sisa."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#7": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Tas Rina yang lama masih layak pakai, jadi tas diskon hanyalah keinginan; mengabaikannya adalah bijak. Menabung uang saku untuk keperluan mendadak juga bijak. Membeli tas hanya karena murah (agar tidak menyesal) dan meminjam uang untuk barang diskon adalah keputusan yang boros dan tidak bijak."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#8": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: konsumen bijak membandingkan isi, kualitas, dan harga sebelum membeli.\n2) Salah: harga mahal tidak otomatis berarti fungsi dan kualitas paling sempurna.\n3) Benar: barang yang bila tidak dibeli tidak mengganggu aktivitas belajar tergolong keinginan."
+ },
+ "1qjCmdZBr_cuRU0lyfpSua6S-4ezd3UzR#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Andi memilih buku latihan soal (kebutuhan jangka panjang di bidang pendidikan) dan menabung sisanya, sehingga keputusannya tepat. Memilih satu pilihan berarti melepas pilihan lain: kesenangan membaca komik edisi spesial adalah biaya peluang. Menabung bermanfaat bagi masa depan, dan uangnya tidak terbuang karena sebagian dipakai membeli buku yang bermanfaat serta sisanya ditabung."
+ },
+ "1YlpY7sPf8gThec8bgwJdIooT4XbinuA2#1": {
+  "jawab": 2,
+  "pembahasan": "Kalimat perintah positif (positive imperative) diawali kata kerja bentuk dasar (Verb 1) tanpa subjek, misalnya 'Open the door.' dan 'Sit down.'."
+ },
+ "1YlpY7sPf8gThec8bgwJdIooT4XbinuA2#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Kata kerja (action verb) yang lazim dipakai dalam kalimat perintah adalah 'Open' (membuka) dan 'Listen' (mendengarkan). 'Beautiful' adalah kata sifat (adjective), sedangkan 'Book' dalam konteks ini adalah kata benda (buku)."
+ },
+ "1YlpY7sPf8gThec8bgwJdIooT4XbinuA2#3": {
+  "jawab": 3,
+  "pembahasan": "Kalimat perintah positif memakai kata kerja bentuk dasar tanpa tambahan -s, -ing, atau -ed. Jadi 'Close the door, please.' benar, sedangkan Opens, Opening, dan Opened salah."
+ },
+ "1YlpY7sPf8gThec8bgwJdIooT4XbinuA2#6": {
+  "jawab": 1,
+  "pembahasan": "Kelas gelap sehingga siswa tidak bisa melihat papan tulis. Perintah yang paling sesuai adalah 'Turn on the lamp, please.' (Tolong nyalakan lampu)."
+ },
+ "1YlpY7sPf8gThec8bgwJdIooT4XbinuA2#10": {
+  "jawab": 1,
+  "pembahasan": "Kelas sangat kotor: banyak sampah di lantai dan papan tulis penuh tulisan. Perintah yang paling mungkin diucapkan guru adalah 'Clean the whiteboard and sweep the floor.' (bersihkan papan tulis dan sapu lantai)."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#1": {
+  "jawab": 1,
+  "pembahasan": "Pemuaian adalah bertambahnya ukuran benda (panjang, luas, atau volume) karena menerima kalor atau suhunya naik. Berkurangnya ukuran karena didinginkan disebut penyusutan, dan perubahan padat menjadi cair disebut melebur."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Pemuaian dapat terjadi pada zat padat, zat cair, dan zat gas bila menerima kalor. Ruang hampa tidak berisi zat sehingga tidak dapat memuai."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#3": {
+  "jawab": 1,
+  "pembahasan": "ΔL = L₀ × α × ΔT. Kenaikan suhu ΔT = 70 - 20 = 50°C. ΔL = 10 × 0,000017 × 50 = 0,0085 meter."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#4": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Koefisien muai luas β = 2α = 2 × 0,000012 = 0,000024/°C. Kenaikan suhu 80 - 30 = 50°C. ΔA = A₀ × β × ΔT = 2 × 0,000024 × 50 = 0,0024 m². Luas akhir = 2 + 0,0024 = 2,0024 m², bukan 2,0012 m²."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: koefisien muai volume γ = 3α = 3 × 0,000024 = 0,000072/°C.\n2) Benar: ΔV = V₀ × γ × ΔT = 1 × 0,000072 × 50 = 0,0036 m³.\n3) Salah: benda memuai sehingga volume akhir = 1 + 0,0036 = 1,0036 m³, bukan menyusut menjadi 0,9964 m³."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "ΔT = 80 - 20 = 60°C. ΔV = V₀ × γ × ΔT = 50 × 0,00021 × 60 = 0,63 liter. Volume akhir = 50 + 0,63 = 50,63 liter. Zat cair juga memuai ketika dipanaskan, jadi air tidak menyusut dan volumenya berubah."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: β = 2α = 2 × 0,000009 = 0,000018/°C.\n2) Benar: ΔT = 45 - 15 = 30°C, ΔA = A₀ × β × ΔT = 3 × 0,000018 × 30 = 0,00162 m².\n3) Salah: kaca memuai saat panas, jadi bingkai perlu diberi celah agar kaca tidak pecah."
+ },
+ "1e-mH1wquAApoTunJd9wwbs0oS2urpsVY#9": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "ΔL = L₀ × α × ΔT. Kuningan: 2 × 0,000019 × 100 = 0,0038 m (3,8 mm). Besi: 2 × 0,000012 × 100 = 0,0024 m, lebih kecil dari kuningan. Selisih = 0,0038 - 0,0024 = 0,0014 m (1,4 mm). Panjang akhir besi = 2 + 0,0024 = 2,0024 m."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#1": {
+  "jawab": 2,
+  "pembahasan": "Menanam kembali pohon di hutan yang gundul disebut reboisasi. Deforestasi adalah penebangan hutan, eksploitasi adalah pemanfaatan berlebihan, dan polusi udara adalah pencemaran udara."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#2": {
+  "jawab": 2,
+  "pembahasan": "Mengolah barang bekas atau sampah menjadi barang baru yang bermanfaat (misalnya daun kering menjadi kompos) disebut Recycle atau mendaur ulang. Reduce berarti mengurangi pemakaian, Reuse berarti memakai kembali tanpa mengolah."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#3": {
+  "jawab": 1,
+  "pembahasan": "Bom ikan menghancurkan terumbu karang yang menjadi rumah dan tempat berkembang biak ikan, sehingga keseimbangan ekosistem laut rusak dan populasi ikan menurun dalam jangka panjang."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#4": {
+  "jawab": 1,
+  "pembahasan": "Hewan liar masuk ke perkampungan karena hutan, yang menjadi rumah dan sumber makanannya, telah ditebang atau rusak akibat ulah manusia, sehingga mereka kehilangan tempat tinggal dan makanan."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#5": {
+  "jawab": 0,
+  "pembahasan": "Pupuk kimia dan pestisida berlebihan membunuh makhluk hidup penyubur tanah seperti cacing, sehingga lama-kelamaan tanah menjadi tandus dan keras."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#8": {
+  "jawab": [
+   true,
+   false,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: sampah plastik di laut dapat tertelan dan membahayakan penyu, paus, dan biota laut lainnya.\n2) Salah: plastik tidak terurai dalam sehari dan tidak menjadi makanan sehat bagi ikan.\n3) Salah: menanam mangrove adalah tindakan melestarikan, bukan merusak laut.\n4) Benar: akar mangrove meredam ombak dan mencegah abrasi pantai."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Ular adalah pemangsa alami tikus. Jika ular diburu habis, populasi tikus meledak (pernyataan 1 benar) dan tikus memakan padi sehingga petani berpotensi gagal panen (pernyataan 2 benar). Hasil panen tidak akan melimpah, dan kesuburan tanah tidak naik karena elang berpindah memakan rumput."
+ },
+ "1G8i-TWXuaOEIN0i6n3uaAVOy8tIC5vN1#10": {
+  "jawab": [
+   false,
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Salah: banjir bandang berhubungan sebab-akibat dengan penebangan hutan di bukit.\n2) Benar: tanpa akar pohon, tanah miring tidak punya pengikat untuk menahan air hujan.\n3) Benar: hutan berperan sebagai spons raksasa penyerap air bagi wilayah di bawahnya.\n4) Salah: membakar rumput justru memperparah kerusakan; solusinya reboisasi (menanam kembali pohon)."
+ },
+ "1H9HwSctYaXD-JMQPkeuMbOWmMs5FccAI#1": {
+  "jawab": 1,
+  "pembahasan": "Gaya tarik tak terlihat yang menarik semua benda ke pusat Bumi disebut gravitasi (gravity). Friction adalah gesekan, heat adalah panas, dan sound adalah bunyi."
+ },
+ "1H9HwSctYaXD-JMQPkeuMbOWmMs5FccAI#3": {
+  "jawab": 1,
+  "pembahasan": "Membuka pintu dengan menggerakkannya mendekat ke arah kita berarti kita menarik pintu, jadi gaya yang dipakai adalah tarikan (a pull)."
+ },
+ "1H9HwSctYaXD-JMQPkeuMbOWmMs5FccAI#6": {
+  "jawab": 1,
+  "pembahasan": "Televisi yang dihubungkan ke listrik mengubah energi listrik (electrical energy) menjadi energi cahaya (light) pada layar dan energi bunyi (sound) pada pengeras suara."
+ },
+ "1H9HwSctYaXD-JMQPkeuMbOWmMs5FccAI#10": {
+  "jawab": 0,
+  "pembahasan": "Pemanggang roti (toaster) mengubah energi listrik (electrical energy) menjadi energi panas (heat) yang memanggang roti dan sedikit cahaya (light) dari kawat yang membara."
+ },
+ "1H1obBCZdCaFQ3yh-e-jn8pPSHy3yrvvC#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "Skala 1 : 200.000 artinya 1 cm di peta = 200.000 cm = 2 km sebenarnya.\n1) Benar: 12 km : 2 km = 6 cm.\n2) Salah: 8 cm × 2 km = 16 km, bukan 160 km.\n3) Benar: 30 km : 2 km = 15 cm."
+ },
+ "1H1obBCZdCaFQ3yh-e-jn8pPSHy3yrvvC#8": {
+  "jawab": [
+   true,
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Skala 1 : 150 artinya 1 cm = 150 cm = 1,5 m. Kamar A: 4 cm × 1,5 = 6 m dan 3 cm × 1,5 = 4,5 m, luasnya 6 × 4,5 = 27 m² (pernyataan 1 dan 2 benar). Kamar B: 3 × 1,5 = 4,5 m, luasnya 4,5 × 4,5 = 20,25 m² (benar). Selisih luas = 27 - 20,25 = 6,75 m², bukan 10 m² (salah)."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#1": {
+  "jawab": 1,
+  "pembahasan": "Kata 'kurangnya dari', 'selisih', dan 'sisa' menunjukkan operasi pengurangan."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Variabel mewakili nilai yang belum diketahui (benar). Pada persamaan linear, pangkat variabel harus satu (benar). Satu nilai tidak boleh diwakili banyak huruf berbeda dalam satu persamaan (salah), dan variabel tidak harus selalu huruf x (salah)."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Permen mula-mula p dikurangi 8 yang dibagikan, tersisa 15: p - 8 = 15. Persamaan yang ekuivalen: p = 15 + 8 (p = 23). Bentuk p + 8 = 15 salah karena menjumlahkan, dan 15 - p = 8 menghasilkan p = 7 yang tidak sesuai."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#6": {
+  "jawab": 1,
+  "pembahasan": "Uang yang dibayarkan untuk apel = 50.000 - 8.000 = Rp42.000. Misal harga 1 kg = a: 3a = 42.000 → a = 14.000. Jadi harga 1 kg apel Rp14.000,00."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#7": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Misal lebar = y, panjang = y + 4. Keliling: 2(y + (y + 4)) = 40 → 2(2y + 4) = 40 → 2y + 4 = 20 → y = 8. Lebar 8 m dan panjang 8 + 4 = 12 m. Jadi pernyataan model keliling dan lebar 8 m benar; panjang bukan 10 m dan lebar bukan 12 m."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Tarif dasar Rp10.000 hanya dibayar sekali, dan Rp5.000 dibayar per jam. Model yang benar: 5000h + 10000 = 35000. Model anak (10000h + 5000 = 35000) keliru karena angka tarif tertukar. Penyelesaian: 5000h = 25000 → h = 5 jam."
+ },
+ "1wIgEtOeiH__zshlrrDklevN5oVpSZSao#10": {
+  "jawab": 1,
+  "pembahasan": "Biaya kedua kurir sama: 8000x = 15000 + 5000x → 8000x - 5000x = 15000 → 3000x = 15000 → x = 5 kg."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#1": {
+  "jawab": 1,
+  "pembahasan": "Eritrosit (sel darah merah) berbentuk bulat pipih bikonkaf, tidak berinti, dan mengandung hemoglobin. Leukosit berinti dan berukuran paling besar, sedangkan trombosit berbentuk keping kecil."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Leukosit menghasilkan antibodi dan memfagosit bakteri. Trombosit berperan dalam pembekuan darah/penutupan luka lewat pembentukan benang fibrin. Mengangkut oksigen adalah tugas eritrosit."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#3": {
+  "jawab": 1,
+  "pembahasan": "Bilik kiri memompa darah kaya oksigen ke seluruh tubuh (tekanan tinggi), sehingga dindingnya paling tebal dan berotot. Memompa darah ke paru-paru adalah tugas bilik kanan."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#4": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Ciri vena: dinding tipis dan kurang elastis, terletak dekat permukaan kulit dan tampak kebiruan, serta memiliki katup untuk mencegah aliran balik. Darah memancar saat terluka adalah ciri arteri."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: arteri pulmonalis membawa darah kaya CO₂ dari jantung ke paru-paru.\n2) Benar: pertukaran zat dan gas terjadi di kapiler.\n3) Salah: darah kaya oksigen dari paru-paru lewat vena pulmonalis masuk ke serambi kiri, bukan serambi kanan."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#6": {
+  "jawab": 1,
+  "pembahasan": "Gejala cepat lelah, lemah, dan pucat menandakan kurang sel darah merah (anemia). Makanan kaya zat besi membantu pembentukan hemoglobin."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#7": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Urutan penutupan luka: trombosit pecah dan mengeluarkan trombokinase → protrombin berubah menjadi trombin → fibrinogen berubah menjadi benang fibrin yang menjerat sel darah dan menutup luka. Sel darah putih tidak membentuk jaring penutup luka."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#8": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: tekanan darah 140/90 mmHg tergolong hipertensi dan dianjurkan mengurangi garam.\n2) Salah: leukemia ditandai produksi sel darah putih abnormal yang berlebihan, bukan penurunan drastis.\n3) Benar: hemofilia adalah kelainan genetik yang membuat darah sulit membeku."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Darah dari bilik kiri ke aorta kaya O₂ (benar). Di seluruh tubuh (3) darah melepas O₂ ke sel dan mengambil CO₂ (benar). Vena cava (4) membawa darah kaya CO₂, bukan kaya O₂ (salah). Saat tiba di serambi kanan (5), darah kaya CO₂ (benar)."
+ },
+ "14HujSJXg9_MMePgKLNfenGp3Mc8xAxU7#10": {
+  "jawab": 0,
+  "pembahasan": "Arteri koroner menyuplai oksigen dan nutrisi ke otot jantung. Bila tersumbat plak kolesterol, pasokan oksigen ke otot jantung berkurang sehingga kerja jantung memompa darah terganggu (dapat menyebabkan nyeri dada atau serangan jantung)."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#1": {
+  "jawab": 1,
+  "pembahasan": "Pola bilangan adalah susunan angka yang berurutan mengikuti aturan atau ritme tertentu yang tetap, misalnya selalu ditambah 3 atau selalu dikali 2."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#2": {
+  "jawab": 3,
+  "pembahasan": "Angka yang menyusut drastis (turun jauh) biasanya dihasilkan oleh pembagian, misalnya 640, 320, 160 yang dibagi 2 tiap langkah. Penjumlahan dan perkalian membuat angka membesar, sedangkan pengurangan menurunkan angka secara perlahan."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#3": {
+  "jawab": 1,
+  "pembahasan": "Selisih angka yang berdekatan: 19 - 12 = 7, 26 - 19 = 7, 33 - 26 = 7, 40 - 33 = 7. Jadi pola tersebut selalu ditambah 7."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#4": {
+  "jawab": 2,
+  "pembahasan": "2 × 5 = 10, 10 × 5 = 50, 50 × 5 = 250. Aturan polanya adalah selalu dikali 5."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#5": {
+  "jawab": 2,
+  "pembahasan": "Pola turun 12 setiap langkah: 100 - 12 = 88, 88 - 12 = 76, 76 - 12 = 64, 64 - 12 = 52. Jadi angka yang hilang adalah 64."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#6": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "640 : 2 = 320, 320 : 2 = 160, sehingga aturan polanya selalu dibagi 2. [A] = 160 : 2 = 80 dan [B] = 80 : 2 = 40. Jadi pernyataan 'dibagi 2', '[A] = 80', dan '[B] = 40' benar, sedangkan '[A] = 100' salah."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#7": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "5 × 3 = 15, 15 × 3 = 45, 45 × 3 = 135, jadi aturannya dikali 3. Angka berikutnya 135 × 3 = 405. Selisih antarangkanya tidak tetap (10, 30, 90), sehingga bukan pola penjumlahan tetap."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Pola 5, 9, 13 selisihnya selalu 4, jadi aturannya ditambah 4 (pernyataan 1 benar). Lembar keempat = 13 + 4 = 17 (benar). Pola ini memakai penjumlahan tetap, bukan perkalian (pernyataan 3 salah)."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Bakteri membelah menjadi 2 bagian tiap menit, jadi dikali 2: menit ke-0 = 3, ke-1 = 6, ke-2 = 12, ke-3 = 24, ke-4 = 48. Pada menit ke-3 jumlahnya 24, bukan 15."
+ },
+ "1ahQX4HeTOW-ErXjJ8Fn4HCTjS8wYdzl9#10": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Saldo awal Rp25.000 ditambah Rp5.000 tiap minggu: 25.000, 30.000, 35.000, 40.000 (pernyataan 1 benar); minggu ke-4 = Rp45.000 (benar). Polanya penjumlahan tetap (ditambah 5.000), bukan perkalian (pernyataan 3 salah)."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#1": {
+  "jawab": 2,
+  "pembahasan": "Gagasan pokok atau ide dasar yang menjiwai seluruh cerita disebut tema. Alur adalah rangkaian peristiwa, latar adalah tempat-waktu-suasana, amanat adalah pesan moral."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#3": {
+  "jawab": 1,
+  "pembahasan": "Tokoh protagonis adalah tokoh utama yang mewakili nilai positif dan menggerakkan cerita, sedangkan tokoh antagonis menentang protagonis dan memicu konflik."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: alur maju bergerak kronologis dari awal hingga akhir.\n2) Salah: pengenalan tokoh dan latar terjadi pada tahap pengenalan (eksposisi), bukan klimaks. Klimaks adalah puncak konflik.\n3) Benar: peleraian (antiklimaks) terjadi setelah puncak dan ketegangan menurun menuju penyelesaian."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#6": {
+  "jawab": 1,
+  "pembahasan": "Pengarang tidak menyebut langsung perasaan Anka, melainkan menunjukkan lewat tindakan dan kondisi fisiknya (melangkah gontai, berkeringat, menghela napas). Metode ini disebut penokohan dramatik."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#8": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: penggalan memakai kata 'aku' sehingga sudut pandangnya orang pertama.\n2) Salah: Hafiz mendobrak pintu rumah tokoh aku, jadi latarnya rumah, bukan lapangan terbuka.\n3) Benar: Hafiz berteriak panik dan terengah-engah, menunjukkan tindakan terburu-buru."
+ },
+ "1Smta2TpGUYD-kzfXEHmKNPEogYqbzgbk#10": {
+  "jawab": 1,
+  "pembahasan": "Biji mahoni digambarkan tersenyum, mensyukuri, dan berbisik seperti manusia, itu majas personifikasi. Amanatnya: tetap optimis dan pantang menyerah meskipun berada di lingkungan yang sulit."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#1": {
+  "jawab": 3,
+  "pembahasan": "Garis pecahan utama menyatakan operasi pembagian: pembilang dibagi penyebut."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Untuk mengubah desimal berulang menjadi pecahan: satu digit yang berulang dikalikan 10, dua digit berulang dikalikan 100, lalu kedua persamaan dikurangkan agar bagian desimal tak terhingganya hilang. Tidak semua desimal berulang harus dikali 100; pengali bergantung pada banyak digit yang berulang."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#3": {
+  "jawab": 2,
+  "pembahasan": "Faktor pengali = 120 : 8 = 15. Setiap bahan dikalikan 15."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#4": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Pembilang dan penyebut utama diselesaikan terpisah menjadi pecahan tunggal; setelah itu bentuk vertikal dapat ditulis sebagai pembagian horizontal. Pembagian pecahan dikerjakan dengan mengalikan pecahan pertama dengan kebalikan pecahan pembagi. Pecahan campuran harus diubah dulu ke pecahan biasa sebelum dikalikan, jadi pernyataan itu salah."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#5": {
+  "jawab": [
+   false,
+   true,
+   true
+  ],
+  "pembahasan": "1) Salah: 0,333... = 1/3 adalah bilangan rasional karena dapat ditulis sebagai pecahan.\n2) Benar: dimulai dengan x = 0,555... lalu kalikan 10 agar bagian desimal berulangnya sejajar.\n3) Benar: 100x - x = 18,1818... - 0,1818... = 18, sehingga 99x = 18."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#6": {
+  "jawab": 2,
+  "pembahasan": "35 porsi : 5 porsi = 7 kali. Air yang dibutuhkan = 7 × 2½ liter = 7 × 2,5 = 17,5 liter."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Pembilang: ½ + ⅓ = 3/6 + 2/6 = 5/6 (benar). Penyebut: ⅔ - ¼ = 8/12 - 3/12 = 5/12 (benar). Pembagian dikerjakan dengan mengalikan kebalikan: 5/6 × 12/5, bukan 5/6 × 5/12 (salah). Hasil: 5/6 × 12/5 = 60/30 = 2 (benar)."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: x = 0,777..., 10x - x = 7 → 9x = 7 → x = 7/9.\n2) Benar: 100x - x = 45 → 99x = 45 → x = 45/99 = 5/11.\n3) Salah: 0,1515... = 15/99 = 5/33, bukan 15/100."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "250 : 50 = 5, jadi semua bahan dikali 5 (pernyataan 1 benar). Sari buah: 0,8 × 5 = 4,0 liter (benar). Gula: 1½ × 5 = 7½ kg = 7,5 kg (benar). Air: 4.500 mL × 5 = 22.500 mL = 22,5 liter, bukan 225 liter (salah)."
+ },
+ "1jfzdzWBjnMaDYVZ6qYXo9ZGSBshqm6_i#10": {
+  "jawab": 1,
+  "pembahasan": "Pembilang: 1 + ½ = 3/2. Penyebut: 1 - ⅓ = 2/3. y = 3/2 : 2/3 = 3/2 × 3/2 = 9/4. Maka 1/y = 4/9 = 0,444..."
+ },
+ "19nRX6iD-xbwvFl-l2IwHQ-0CDffYRVGi#5": {
+  "jawab": [
+   true,
+   true,
+   false,
+   false
+  ],
+  "pembahasan": "1) Benar: gerak otot kerongkongan yang mendorong makanan disebut gerak peristaltik.\n2) Benar: hati menghasilkan empedu yang mengemulsi lemak di usus halus.\n3) Salah: penyerapan sari makanan terjadi di usus halus, sedangkan usus besar menyerap air.\n4) Salah: renin bekerja pada lambung bayi untuk menggumpalkan protein susu; pada remaja seperti Budi, protein dicerna oleh pepsin."
+ },
+ "19nRX6iD-xbwvFl-l2IwHQ-0CDffYRVGi#8": {
+  "jawab": [
+   true,
+   false,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: kurang serat dan air menyebabkan sembelit.\n2) Salah: makanan berlemak justru membuat hati dan kantung empedu bekerja lebih berat.\n3) Salah: makanan cepat saji berkalori tinggi belum tentu mencukupi vitamin dan mineral.\n4) Benar: asupan yang tidak seimbang mengganggu metabolisme dan pembuangan zat sisa."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#1": {
+  "jawab": 2,
+  "pembahasan": "Bentuk eksponen aⁿ berarti a dikalikan dengan dirinya sendiri sebanyak n kali. Jadi 5⁴ = 5 × 5 × 5 × 5 = 625."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#2": {
+  "jawab": [
+   0,
+   3
+  ],
+  "pembahasan": "Sifat yang benar: aᵐ : aⁿ = aᵐ⁻ⁿ dan (aᵐ)ⁿ = aᵐˣⁿ. Pangkat nol dari bilangan bukan nol bernilai 1 (bukan 0), dan pangkat negatif menyatakan kebalikan (a⁻ⁿ = 1/aⁿ), bukan bilangan minus."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#3": {
+  "jawab": 1,
+  "pembahasan": "∛64 = p berarti p × p × p = 64, yaitu mencari bilangan yang dikalikan dengan dirinya sendiri sebanyak 3 kali menghasilkan 64. Karena 4 × 4 × 4 = 64, maka p = 4."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Dekomposisi yang tepat memecah bilangan menjadi perkalian bilangan kuadrat sempurna dan faktor lain: √50 = √(25 × 2) dan √27 = √(9 × 3). Pemecahan √40 pada pilihan kedua tidak menghasilkan 40, dan 10 × 3,2 pada √32 tidak memuat kuadrat sempurna."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#5": {
+  "jawab": [
+   false,
+   true,
+   true
+  ],
+  "pembahasan": "1) Salah: 3√2 + 4√2 = 7√2 (hanya koefisien yang dijumlahkan, bentuk akarnya tetap).\n2) Benar: 2√3 × 4√5 = (2 × 4)√(3 × 5) = 8√15.\n3) Benar: √12 + √27 harus didekomposisi dulu menjadi 2√3 + 3√3 = 5√3."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#6": {
+  "jawab": 1,
+  "pembahasan": "(2⁵ × 2³) : 2⁶ = 2⁸ : 2⁶ = 2² = 4. Basis sama: kalikan berarti jumlahkan pangkat, bagi berarti kurangkan pangkat."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "√75 = √(25 × 3) = 5√3 (benar). √12 = 2√3 dan √27 = 3√3. Maka √75 - √12 + √27 = 5√3 - 2√3 + 3√3 = 6√3 (benar). √75 - √12 = 3√3 = √27, bukan √63 (salah). Operasi bisa diselesaikan dengan dekomposisi, jadi pernyataan terakhir salah."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#8": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "(3²)³ = 3⁶, lalu 3⁶ × 3⁻⁴ = 3⁶⁻⁴ = 3² = 9. Jadi bentuk sederhananya 3² (benar), hasil akhirnya 9 bukan 27 (salah), dan (3²)³ = 3⁶ (benar)."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "8² = (2³)² = 2⁶ (benar). 4³ = (2²)³ = 2⁶, sehingga pembilang 2⁶ × 2⁶ = 2¹² (benar). Pembagian: 2¹² : 2⁵ = 2¹²⁻⁵ = 2⁷ = 128 (nilai 4 salah). Pada pembagian basis sama, eksponen dikurangkan, bukan dijumlahkan."
+ },
+ "1MoxYqkGFltqicFDA_v4FVj9BU9pcio7N#10": {
+  "jawab": 1,
+  "pembahasan": "√72 : √2 = √(72 : 2) = √36 = 6. Lalu 2⁻² = 1/4. Hasil: 6 × 1/4 = 1,5."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#2": {
+  "jawab": [
+   0,
+   3
+  ],
+  "pembahasan": "Pada ²log 8 = 3: angka 2 adalah basis, angka 8 adalah numerus (bilangan yang dicari logaritmanya), dan angka 3 adalah hasil logaritma (pangkat). Jadi pernyataan yang tepat: 2 sebagai basis dan 8 sebagai numerus."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Aturan: aᵇ = c ⇔ ᵃlog c = b. 3⁴ = 81 → ³log 81 = 4 (benar). 2⁻³ = 1/8 → ²log (1/8) = -3 (benar). 5² = 25 → ⁵log 25 = 2 (bukan ²log 25 = 5). 4³ = 64 → ⁴log 64 = 3 (bukan ⁴log 3 = 64)."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#5": {
+  "jawab": [
+   false,
+   true,
+   true
+  ],
+  "pembahasan": "1) Salah: ⁵log 125 = 3 berarti 5³ = 125 (5 dipangkatkan 3), bukan 5 dikalikan 3.\n2) Benar: ³log 9 = 2 karena 3² = 9.\n3) Benar: logaritma mencari pangkat yang diperlukan basis untuk menghasilkan numerus."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#6": {
+  "jawab": 1,
+  "pembahasan": "²log 32 mencari pangkat dari 2 yang menghasilkan 32. Karena 2⁵ = 32, maka ²log 32 = 5."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "³log 27 = 3 karena 3³ = 27 (benar). ⁷log 49 = 2 karena 7² = 49 (benar). ⁵log 1 = 0 karena 5⁰ = 1, bukan 5 (salah). ²log (1/2) = -1 karena 2⁻¹ = 1/2 (benar)."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Syarat logaritma: basis > 0 dan ≠ 1, numerus > 0. ¹log 25 tidak terdefinisi karena basis 1. ³log (-9) tidak terdefinisi karena numerus negatif. ²log 0 tidak terdefinisi karena numerus 0. (½)log 8 terdefinisi karena basis ½ memenuhi syarat."
+ },
+ "1B8lWAYAxsfjaJ6A8KKp9DWnusLoyOdqG#10": {
+  "jawab": 0,
+  "pembahasan": "Jika y = x³, maka ˣlog y = ˣlog x³ = 3 · ˣlog x = 3. Artinya z = 3, karena x harus dipangkatkan 3 untuk menghasilkan y."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#1": {
+  "jawab": 2,
+  "pembahasan": "4,5 × 10⁵ = 4,5 × 100.000 = 450.000. Pangkat positif 5 menggeser koma 5 tempat ke kanan."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Bentuk baku: a × 10ⁿ dengan 1 ≤ a < 10. 3,5 × 10⁵ dan 9,9 × 10⁻⁴ memenuhi. 45 × 10³ tidak baku karena 45 ≥ 10, dan 0,7 × 10⁻² tidak baku karena 0,7 < 1."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#3": {
+  "jawab": 1,
+  "pembahasan": "5,2 × 10⁴ berarti 5,2 dikalikan 10.000 (10⁴), sehingga nilai aslinya 52.000."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#4": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "7,8 × 10⁻³ = 7,8 : 1.000 = 0,0078. Pangkat negatif menunjukkan bilangan yang sangat kecil (pecahan desimal). Dikalikan 3.000 tidak sesuai."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#6": {
+  "jawab": 3,
+  "pembahasan": "0,000008 = 8 × 10⁻⁶ karena koma digeser 6 tempat ke kanan sehingga pangkatnya negatif 6."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "125.000 = 1,25 × 10⁵ (benar). 0,0047 = 4,7 × 10⁻³ (benar). 0,000015 = 1,5 × 10⁻⁵ (benar). 8.900.000 = 8,9 × 10⁶, bukan 89 × 10⁵ (89 ≥ 10 sehingga bukan bentuk baku)."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Bakteri P = 2,5 × 10⁻⁵ = 0,000025 m dan Q = 9,1 × 10⁻⁶ = 0,0000091 m. Untuk bilangan berpangkat negatif, pangkat yang lebih dekat ke nol bernilai lebih besar (10⁻⁵ > 10⁻⁶), jadi P lebih besar dan pendapat Anton salah."
+ },
+ "1DvI16BnxD5gc1GrAZkFb4gKybjksXXf7#10": {
+  "jawab": 2,
+  "pembahasan": "Jarak = (3 × 10⁸) × 500 = 1500 × 10⁸. Agar baku, 1500 = 1,5 × 10³, maka 1,5 × 10³ × 10⁸ = 1,5 × 10¹¹ meter."
+ },
+ "1KnmbZjUaDTSYjf6LlOgLvvhY5KASduxS#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: skala utama membaca 2,1 cm.\n2) Benar: garis nonius ke-6 yang berimpit → 6 × 0,01 = 0,06 cm.\n3) Salah: hasil = 2,1 + 0,06 = 2,16 cm, bukan 2,7 cm."
+ },
+ "1KnmbZjUaDTSYjf6LlOgLvvhY5KASduxS#8": {
+  "jawab": [
+   false,
+   true,
+   true,
+   true
+  ],
+  "pembahasan": "1) Salah: skala utama menunjukkan angka 2 tanpa garis bawah, jadi nilainya 2,0 mm (bukan 2,5 mm).\n2) Benar: skala nonius 15 × 0,01 mm = 0,15 mm.\n3) Benar: diameter = 2,0 + 0,15 = 2,15 mm.\n4) Benar: 2 menit 10 detik = (2 × 60) + 10 = 130 sekon."
+ },
+ "1moMrf5egyBhxAn1JE0xpdqvun8ZsIwdf#2": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Termometer zat cair bekerja berdasarkan pemuaian volume zat cair, dan termometer bimetal melengkung karena dua logam berbeda memuai tidak sama. Termometer inframerah mengukur dari jauh tanpa dimasukkan ke dalam benda, dan titik beku air pada skala Kelvin adalah 273 K, bukan 0."
+ },
+ "1moMrf5egyBhxAn1JE0xpdqvun8ZsIwdf#4": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Interval 1°C sama dengan 1 K. Perbandingan Celsius : Fahrenheit adalah 100 : 180 = 5 : 9, sehingga 40 langkah Celsius setara 40 × 9/5 = 72 langkah Fahrenheit. Skala Reamur memiliki rentang 80 (bukan 100), dan 0°C tidak berarti partikel diam total; partikel diam total terjadi pada 0 K."
+ },
+ "1moMrf5egyBhxAn1JE0xpdqvun8ZsIwdf#7": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "150°C → °F: (150 × 9/5) + 32 = 270 + 32 = 302°F. 150°C → K: 150 + 273 = 423 K. Cara konversi ke Fahrenheit memang mengalikan dengan 1,8 lalu menambah 32. Dalam skala Reamur: 150 × 4/5 = 120°R, bukan 130°R."
+ },
+ "1moMrf5egyBhxAn1JE0xpdqvun8ZsIwdf#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Titik beku air 32°F, sehingga 5°F berada 32 - 5 = 27 derajat di bawahnya. Konversi: (5 - 32) × 5/9 = -15°C. Karena -15°C berada di bawah 0°C, air di luar ruangan pasti membeku. Nol mutlak adalah 0 K (-273°C), jauh lebih rendah dari suhu ini."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#1": {
+  "jawab": 1,
+  "pembahasan": "Satuan SI untuk gaya adalah Newton (N), dan alat ukur gaya adalah dinamometer (neraca pegas)."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#2": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Gaya tak sentuh bekerja tanpa kontak fisik: gaya gravitasi dan gaya magnet. Gaya pegas dan gaya gesek adalah gaya sentuh."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#3": {
+  "jawab": 2,
+  "pembahasan": "Gaya adalah besaran vektor: ia memiliki nilai (besar) sekaligus arah yang pasti, misalnya dorongan 10 N ke kanan."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#4": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Memukul balik kok mengubah arah gerak kok, dan meremas botol plastik mengubah bentuk botol. Motor yang mengerem berhenti (mengubah kecepatan) dan kiper yang melompat berubah dari diam ke bergerak; keduanya bukan perubahan arah dan bentuk."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: tubuh terdorong ke depan karena kelembaman, yaitu Hukum I Newton.\n2) Benar: bus bermassa besar lebih sulit dipercepat (a = F/m), yaitu Hukum II Newton.\n3) Salah: tubuh terdorong ke depan karena tubuh mempertahankan geraknya (inersia), bukan karena gaya roda yang merasuki penumpang."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#6": {
+  "jawab": 1,
+  "pembahasan": "Dua gaya berlawanan arah dikurangkan: 150 N - 120 N = 30 N. Resultan searah dengan gaya yang lebih besar, yaitu Tim A, sehingga arahnya ke kiri."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#7": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Mendayung air ke belakang (aksi) dibalas air yang mendorong tubuh ke depan (reaksi) dengan gaya sama besar tetapi berlawanan arah. Itu Hukum III Newton. Gaya dayung tangan adalah gaya aksi, bukan reaksi. Air tetap memiliki gesekan."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Gaya ke kanan: 40 + 50 + 30 = 120 N (pernyataan 1 benar). Gaya gesek 100 N ke kiri. Resultan = 120 - 100 = 20 N ke kanan (benar). Karena resultan tidak nol, lemari bergerak ke kanan, bukan diam (pernyataan 3 salah)."
+ },
+ "1mPnNNxlAigZBYV9qdU9ingSzkT-1ZLzM#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Gesekan ban dengan aspal memberi cengkeraman agar sepeda tidak tergelincir. Kampas rem menjepit pelek dan menimbulkan gaya gesek berlawanan arah putaran roda sehingga sepeda berhenti. Gaya gesek tidak mempercepat ban, dan gesekan tidak menguapkan aspal."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#1": {
+  "jawab": 1,
+  "pembahasan": "Tanda sama dengan (=) melambangkan keseimbangan: nilai di sisi kiri sama dengan nilai di sisi kanan, seperti timbangan."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#2": {
+  "jawab": 2,
+  "pembahasan": "Nilai yang belum diketahui lazim dilambangkan dengan kotak kosong, tanda tanya, atau huruf seperti n. Tanda tambah (+) adalah lambang operasi hitung, bukan nilai yang hilang."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#3": {
+  "jawab": 1,
+  "pembahasan": "Total = bagian + bagian. Untuk mencari bagian yang hilang: total dikurangi bagian lain, yaitu 800 - 350 = 450."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#4": {
+  "jawab": 0,
+  "pembahasan": "[ ] : 5 = 120. Pembagian dibalik dengan perkalian: [ ] = 120 × 5 = 600."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#5": {
+  "jawab": 1,
+  "pembahasan": "Dengan sifat komutatif penjumlahan, urutan penjumlahan boleh ditukar: 150 + [ ] + 50 = 150 + 50 + [ ] = 400."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#6": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "[ ] + 150 = 450 → [ ] = 300. 800 - [ ] = 500 → [ ] = 300. [ ] - 100 = 400 → [ ] = 500 (bukan 300). 1200 : [ ] = 4 → [ ] = 300."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#7": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Kertas dibagi sama rata ke 6 siswa, tiap siswa 15 lembar: [ ] : 6 = 15. Jumlah awal = 15 × 6 = 90 lembar. Kalimat [ ] × 6 = 15 salah karena kertas dibagi, bukan dikalikan."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: [ ] = 500 + 250 = 750.\n2) Benar: [ ] = 320 : 8 = 40.\n3) Salah: [ ] = 900 - 600 = 300, bukan 1.500."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#9": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Sisi kiri: 120 + 80 = 200. Sisi kanan [ ] × 4 harus 200, jadi [ ] = 200 : 4 = 50. Operasi mencarinya pembagian (200 : 4), bukan perkalian. Jika diisi 50, sisi kanan 50 × 4 = 200, seimbang dengan sisi kiri."
+ },
+ "13K8rHTX7eesLRHImFuWe02s68pNbGi8x#10": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Kalimat matematika: [ ] - 150 + 300 = 850 (benar). Menggabungkan -150 dan +300 menjadi +150: [ ] + 150 = 850 (benar). Maka [ ] = 850 - 150 = 700 buku, bukan 1.000 (salah)."
+ },
+ "1ksxuubjKLW4OkosBPMDQTWSJWQzISxwf#1": {
+  "jawab": 1,
+  "pembahasan": "Benda dikatakan bergerak jika posisinya berubah terhadap titik acuan (titik referensi)."
+ },
+ "1ksxuubjKLW4OkosBPMDQTWSJWQzISxwf#2": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Jarak adalah besaran skalar (hanya nilai) berupa panjang lintasan, sedangkan perpindahan adalah besaran vektor (nilai dan arah) berupa selisih posisi awal dan akhir. Pernyataan yang menukar definisi jarak dan perpindahan salah."
+ },
+ "1ksxuubjKLW4OkosBPMDQTWSJWQzISxwf#3": {
+  "jawab": 2,
+  "pembahasan": "Benda bisa dikatakan diam atau bergerak bergantung titik acuannya. Sifat ini disebut relatif."
+ },
+ "1AKprtQaBX-vYchoDP5qOvEGO92ACx-bi#5": {
+  "jawab": [
+   false,
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "Lebah mendapat nektar dan bunga terbantu penyerbukan: keduanya diuntungkan, sehingga hubungannya simbiosis mutualisme.\n1) Salah: bukan parasitisme.\n2) Benar: lebah memperoleh nektar.\n3) Salah: bunga tidak dirugikan, justru terbantu penyerbukan.\n4) Benar: simbiosis mutualisme."
+ },
+ "1AKprtQaBX-vYchoDP5qOvEGO92ACx-bi#8": {
+  "jawab": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: suhu panas dan api (komponen abiotik) sangat mempengaruhi makhluk hidup (biotik).\n2) Salah: pemangsa tidak langsung meningkat; mangsa dan makanan mereka berkurang.\n3) Benar: kelinci dan rusa harus mencari makanan lain atau bermigrasi.\n4) Salah: rumput adalah produsen, bukan konsumen tingkat I."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#1": {
+  "jawab": 2,
+  "pembahasan": "Pertumbuhan ekonomi berfokus pada kenaikan output (misalnya PDB), sedangkan pembangunan ekonomi berfokus pada peningkatan kualitas hidup masyarakat dan pemerataan."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "IPM dibentuk tiga dimensi: kesehatan (angka harapan hidup), pendidikan (rata-rata dan harapan lama sekolah), dan standar hidup layak (pengeluaran per kapita). Rasio Gini dan jumlah pabrik bukan dimensi IPM."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#5": {
+  "jawab": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: pendapatan per kapita memakai PDB riil agar tidak terpengaruh inflasi.\n2) Salah: TPT = pengangguran terbuka dibagi angkatan kerja, bukan total populasi.\n3) Benar: tingkat kemiskinan P₀ adalah proporsi penduduk di bawah garis kemiskinan.\n4) Salah: transformasi struktur yang berhasil ditandai pergeseran dari pertanian tradisional ke industri dan jasa, bukan sebaliknya."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#6": {
+  "jawab": 0,
+  "pembahasan": "Pengangguran = 40 juta - 36 juta = 4 juta. TPT = 4 juta : 40 juta × 100% = 10%. Karena target maksimal 5%, TPT 10% melampaui target, sehingga pembangunan gagal mencapai target pemerataan lapangan kerja."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#7": {
+  "jawab": [
+   1,
+   2,
+   3
+  ],
+  "pembahasan": "Yang rendah adalah dimensi pendidikan, jadi langkahnya harus meningkatkan pendidikan: beasiswa wajib belajar 12 tahun, perbaikan sekolah dan penambahan guru, serta kejar paket untuk menaikkan rata-rata lama sekolah. Rumah sakit (kesehatan) dan subsidi industri besar tidak langsung menaikkan indeks pendidikan."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#8": {
+  "jawab": [
+   false,
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Gagal (Salah): PDB tumbuh tetapi ketimpangan memburuk (Rasio Gini naik).\n2) Berhasil (Benar): IPM meningkat.\n3) Gagal (Salah): pengangguran melonjak menunjukkan transformasi yang tidak menyerap tenaga kerja.\n4) Berhasil (Benar): persentase penduduk miskin turun dari 12% menjadi 8%."
+ },
+ "1WIqsvcyYWq7pc1S6Pu98xzBERp6tfeai#10": {
+  "jawab": 1,
+  "pembahasan": "IPM memakai rata-rata geometrik (akar pangkat tiga dari hasil kali tiga indeks). Jika satu indeks mendekati nol, hasil kalinya mendekati nol sehingga IPM ikut hancur, meski indeks lain tinggi. Artinya ketiga dimensi harus berkembang seimbang."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#1": {
+  "jawab": 2,
+  "pembahasan": "Q = m × c × ΔT = 1 × 4.200 × 10 = 42.000 J."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#2": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "100°C = 100 + 273 = 373 K (benar). 0°C = 32°F (benar). 80°R sama dengan 100°C (bukan 0°C), dan 273 K sama dengan 0°C (bukan 100°C)."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#3": {
+  "jawab": 1,
+  "pembahasan": "ΔL = L₀ × α × ΔT = 100 × 0,000012 × 50 = 0,06 cm."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#4": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "β = 2α = 2 × 0,000017 = 0,000034/°C dan γ = 3α = 3 × 0,000017 = 0,000051/°C. β adalah dua kali α (bukan tiga kali, bukan setengah)."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "40°C → Reamur: 40 × 4/5 = 32°R (benar). Fahrenheit: 40 × 9/5 + 32 = 104°F (benar). Kelvin: 40 + 273 = 313 K, bukan 303 K (salah)."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#6": {
+  "jawab": 3,
+  "pembahasan": "ΔT = 70 - 20 = 50°C. Q = m × c × ΔT = 2 × 2.000 × 50 = 200.000 J."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#7": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Menaikkan suhu es: Q₁ = 1 × 2.100 × 5 = 10.500 J (benar). Meleburkan es: Q₂ = 1 × 336.000 = 336.000 J (benar). Total = 10.500 + 336.000 = 346.500 J, bukan 300.000 J. Peleburan tetap membutuhkan kalor."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#8": {
+  "jawab": [
+   true,
+   true,
+   false,
+   false
+  ],
+  "pembahasan": "Suhu akhir (massa dan kalor jenis sama) adalah rata-rata: (90 + 10) : 2 = 50°C (pernyataan 2 benar). Q lepas air panas = 100 × 1 × (90 - T) (pernyataan 1 benar). Air dingin menerima kalor, bukan melepas (3 salah). Kalor berpindah = 0,1 kg × 4.200 × 40 = 16.800 J, bukan 4.200 J (4 salah)."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "ΔL = L₀ × α × ΔT. Logam P: 50 × 2 × 10⁻⁵ × 100 = 0,1 cm. Logam Q: 50 × 1 × 10⁻⁵ × 100 = 0,05 cm. Pertambahan keduanya berbeda. Bimetal melengkung ke arah logam yang pemuaiannya lebih kecil (Q), karena P memanjang lebih banyak di sisi luar lengkungan."
+ },
+ "1rRWzEYwNiPoyNW4HxeJTPjRwLNb5zyAg#10": {
+  "jawab": 2,
+  "pembahasan": "Asas Black: kalor lepas = kalor terima. 50 × (80 - T) = 150 × (T - 40) → 4.000 - 50T = 150T - 6.000 → 10.000 = 200T → T = 50°C."
+ },
+ "16FiZ6PCp1uiPVOcARGSkoxqLwWt5mbdh#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Yang hanya ada pada sel tumbuhan: dinding sel (selulosa) dan plastida seperti kloroplas. Membran plasma dimiliki semua sel, sedangkan sentrosom dan sentriol hanya ditemukan pada sel hewan."
+ },
+ "16FiZ6PCp1uiPVOcARGSkoxqLwWt5mbdh#4": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "RE kasar dilekati ribosom sehingga menjadi tempat sintesis protein. RE halus tidak dilekati ribosom dan berperan dalam sintesis lipid, glikogen, dan steroid. Respirasi pembentuk ATP terjadi di mitokondria, dan RNA dibuat di nukleus."
+ },
+ "16FiZ6PCp1uiPVOcARGSkoxqLwWt5mbdh#7": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Vakuola menjaga tekanan turgor dan nilai osmotik sel, menampung metabolit sekunder seperti alkaloid, serta menyimpan kristal kalsium oksalat dan pigmen antosianin. Enzim hidrolitik untuk pembelahan sel hewan bukan peran vakuola tumbuhan."
+ },
+ "16FiZ6PCp1uiPVOcARGSkoxqLwWt5mbdh#9": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Alur sekresi protein: ribosom pada RE kasar menyintesis protein, lalu vesikel membawanya ke sisi cis Badan Golgi (bukan dari peroksisom), di Golgi protein diproses dan dimodifikasi, kemudian vesikel sekretori berfusi dengan membran plasma dan mengeluarkan sekret lewat eksositosis."
+ },
+ "1wcQbtFFPJ6lC9VTMJ38NzAoBzwupwe6j#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Kebutuhan primer adalah kebutuhan pokok yang harus dipenuhi untuk bertahan hidup: sandang (pakaian), pangan (makanan dan minuman bergizi), dan papan. Perhiasan berlian dan mobil sport adalah kebutuhan tersier (kemewahan)."
+ },
+ "1wcQbtFFPJ6lC9VTMJ38NzAoBzwupwe6j#4": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Produksi adalah kegiatan menghasilkan atau menambah nilai guna barang. Nelayan menangkap ikan dan penjahit mengubah kain menjadi seragam adalah kegiatan produksi. Membeli buku adalah kegiatan konsumsi (atau jual-beli), dan memakan apel adalah konsumsi."
+ },
+ "1wcQbtFFPJ6lC9VTMJ38NzAoBzwupwe6j#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Konsumsi adalah kegiatan menggunakan atau menghabiskan barang dan jasa. Menghabiskan bekal dan memakai listrik untuk televisi adalah konsumsi. Mengolah kedelai menjadi tahu adalah produksi, dan mengantarkan paket adalah distribusi."
+ },
+ "1wcQbtFFPJ6lC9VTMJ38NzAoBzwupwe6j#9": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Gagal panen membuat pasokan cabai menurun. Distributor kekurangan muatan untuk diangkut, dan harga cabai di pasar melonjak karena barang langka. Penjual ayam geprek justru sulit mendapat cabai murah, dan tidak logis jika seluruh nelayan beralih menjadi petani cabai."
+ },
+ "1E3ZE5_p621lb8Prg4y-cPovpAhe9Ou2j#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Jari-jari atom menyatakan ukuran atom. Afinitas elektron adalah energi yang dilepas atau diserap saat atom gas menerima satu elektron. Keelektronegatifan adalah kemampuan atom menarik pasangan elektron ikatan. Energi ionisasi adalah energi minimum untuk melepas elektron (bukan energi maksimum untuk menarik atom lain), dan efek perisai adalah tolakan elektron kulit dalam terhadap elektron luar, bukan penambahan proton."
+ },
+ "1E3ZE5_p621lb8Prg4y-cPovpAhe9Ou2j#4": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Makin banyak kulit, elektron makin jauh dari inti dan tarikan inti melemah. Tarikan inti yang melemah membuat elektron luar mudah dilepas (energi ionisasi kecil), bukan membutuhkan energi besar. Dalam satu periode ke kanan muatan inti efektif meningkat sehingga atom mudah menangkap elektron. Ke bawah dalam golongan, keelektronegatifan menurun. Penambahan proton tanpa tambahan kulit justru memperkecil jari-jari atom."
+ },
+ "1E3ZE5_p621lb8Prg4y-cPovpAhe9Ou2j#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: dalam satu golongan dari atas ke bawah jari-jari atom bertambah, sehingga K lebih besar dari Na.\n2) Salah: energi ionisasi berkurang ke bawah, jadi Li memiliki energi ionisasi lebih besar daripada K.\n3) Benar: keelektronegatifan berkurang dari Li ke K."
+ },
+ "1E3ZE5_p621lb8Prg4y-cPovpAhe9Ou2j#8": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "Dalam satu golongan, dari atas ke bawah jari-jari atom bertambah, energi ionisasi berkurang, dan sifat logam bertambah.\n1) Benar: R paling bawah sehingga energi ionisasinya paling kecil.\n2) Salah: P paling atas, jadi jari-jarinya paling kecil.\n3) Benar: R memiliki jari-jari lebih besar sehingga lebih bersifat logam daripada P."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#1": {
+  "jawab": 0,
+  "pembahasan": "Delapan puluh lima ribu = 85.000; empat ratus dua belas = 412. Jadi bilangannya 85.412."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Bilangan desimal ditulis dengan tanda koma, seperti 0,75 dan 12,5. ¾ adalah pecahan biasa dan 15% adalah persen."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#3": {
+  "jawab": 2,
+  "pembahasan": "Pada 76.543, angka 6 berada di tempat ribuan sehingga nilai sebenarnya 6 × 1.000 = 6.000."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "KPK dipakai untuk mencari kapan dua kejadian berulang bertemu bersamaan, seperti bus yang berangkat dengan jeda berbeda dan jadwal piket berulang. Membagi barang secara merata dan memotong pita sama panjang tanpa sisa memakai FPB."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#5": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: 1/2 > 1/4.\n2) Benar: pada penjumlahan desimal, koma diluruskan agar nilai tempat sama dijumlahkan.\n3) Salah: 3/4 = 0,75, bukan 0,50."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#6": {
+  "jawab": 1,
+  "pembahasan": "24.450 + 18.300 = 42.750 unit."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Kedua lampu menyala bersama setiap KPK dari 15 dan 20 = 60 detik. Jadi bersama lagi setelah 60 detik, dan untuk kedua kalinya setelah 120 detik. Konsep yang dipakai KPK, bukan FPB, dan kelipatan pertama yang sama bukan 30."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "2½ - 1¼ = 10/4 - 5/4 = 5/4 = 1¼ kg. Penyebut disamakan menjadi 4 (benar). Sisa 1¼ kg (benar). Dalam desimal 1¼ = 1,25 kg, bukan 1,5 kg (salah)."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Papan A 2,5 m paling panjang (benar). 2,05 > 1,75 sehingga C lebih panjang dari B (benar). Selisih A dan B = 2,5 - 1,75 = 0,75 m, bukan 1,25 m (salah). Total = 2,5 + 1,75 + 2,05 = 6,3 m, lebih dari 6 m (benar)."
+ },
+ "176abxM3ZCr7Jwv_E5aLOiTOTAcT2bYf6#10": {
+  "jawab": 1,
+  "pembahasan": "FPB dari 48 dan 72 adalah 24, sehingga bisa dibuat 24 kantong. Total uang = 24 × Rp15.500 = Rp372.000."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#1": {
+  "jawab": 1,
+  "pembahasan": "Paragraf yang diawali rincian atau fakta khusus lalu ditutup kalimat utama atau kesimpulan umum adalah paragraf induktif."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#2": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Paragraf yang baik memenuhi syarat kesatuan (satu tema), kepaduan (hubungan antarkalimat logis dan runtut), dan kelengkapan (kalimat utama dengan penjelas yang memadai). Struktur subjek-predikat tanpa konjungsi adalah syarat kalimat efektif, bukan paragraf."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#3": {
+  "jawab": 2,
+  "pembahasan": "Paragraf diawali gagasan umum, lalu dijabarkan dengan fakta-fakta khusus. Pola ini adalah pola umum-khusus (deduktif)."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#4": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Kalimat penjelas berisi rincian, data, contoh, atau fakta yang mendukung dan menguraikan kalimat utama. Inti permasalahan pokok ada di kalimat utama, bukan di kalimat penjelas."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#5": {
+  "jawab": [
+   true,
+   false,
+   false
+  ],
+  "pembahasan": "1) Benar: kalimat (1) dan (4) sama-sama memuat gagasan utama, jadi paragrafnya campuran.\n2) Salah: kalimat (2) adalah kalimat penjelas.\n3) Salah: ide pokoknya adalah manfaat membawa tumbler bagi lingkungan dan tubuh, bukan dampak negatif sampah plastik."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#6": {
+  "jawab": 0,
+  "pembahasan": "Kalimat (1) memperkenalkan gagasan utama, yaitu maraknya cyberbullying di kalangan remaja. Kalimat (2) dan (3) menjelaskan penyebab dan dampaknya, sedangkan kalimat (4) berisi imbauan penanganan."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Kalimat (3) tentang beruang madu menyimpang dari ide pokok manfaat madu sehingga menjadi kalimat sumbang dan merusak kesatuan paragraf. Kalimat (4) masih relevan karena membahas manfaat madu. Tanpa kalimat (3), ide pokok di kalimat (1) diikuti penjelas sehingga paragraf deduktif yang padu."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: paragraf memaparkan sebab (hujan badai, penebangan liar) lalu akibat (longsor dan banjir bandang).\n2) Benar: kalimat (4) adalah akibat klimaks dari rentetan peristiwa sebelumnya.\n3) Salah: kalimat (2) hanyalah salah satu rincian peristiwa, bukan ide pokok pengendali."
+ },
+ "1hxTIuBbaf7kBvwt_Sy9xk4hNCey2_8PO#9": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Kalimat (2) dan (3) membandingkan gula rafinasi dengan protein dan karbohidrat kompleks (pola pertentangan/perbandingan). Kalimat (4) tentang kesukaan anak pada kemasan jajanan tidak relevan dengan dampak gizi (kalimat sumbang). Paragraf diawali pernyataan umum (1) dan ditutup kesimpulan (5), sehingga campuran. Pola pengembangannya umum-khusus, bukan khusus-umum."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#1": {
+  "jawab": 1,
+  "pembahasan": "Energi panas yang berpindah dari benda bersuhu tinggi ke bersuhu rendah disebut kalor."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Kalor berpindah melalui konduksi (zat padat), konveksi (zat cair dan gas), dan radiasi (tanpa medium). Evaporasi (penguapan) adalah perubahan wujud, bukan cara perpindahan kalor."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#3": {
+  "jawab": 2,
+  "pembahasan": "Q = m × c × ΔT = 2 × 4.200 × 50 = 420.000 Joule."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Perubahan wujud yang menyerap (membutuhkan) kalor: mencair (melebur) dan menguap. Membeku dan mengembun melepaskan kalor."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: kalor jenis air 4.200 lebih besar dari minyak goreng 2.000.\n2) Salah: minyak goreng membutuhkan kalor lebih sedikit untuk naik 1°C karena kalor jenisnya lebih kecil.\n3) Benar: pada kalor yang sama, benda berkalor jenis lebih kecil mengalami kenaikan suhu lebih besar."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#6": {
+  "jawab": 1,
+  "pembahasan": "ΔT = Q : (m × c) = 84.000 : (2 × 4.200) = 10°C. Suhu akhir = 20 + 10 = 30°C."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Asas Black: kalor yang dilepas air panas sama dengan kalor yang diterima air dingin. Massa dan kalor jenis sama, sehingga suhu akhir = (90 + 30) : 2 = 60°C. Kalor mengalir dari air 90°C ke air 30°C; air 30°C yang menerima kalor, bukan melepaskannya."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Q₁ = m × c × ΔT = 0,5 × 2.100 × 5 = 5.250 J (benar). Q₂ = m × L = 0,5 × 336.000 = 168.000 J (benar). Total = 5.250 + 168.000 = 173.250 J, bukan 168.000 J (salah)."
+ },
+ "1f7IQkuHfv4_jCEhthNXnZxa103Q3CIU1#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Q air = 0,5 × 4.200 × (30 - 20) = 21.000 J (benar). Menurut Asas Black, kalor yang dilepas logam = 21.000 J (benar). c logam = 21.000 : (0,5 × 70) = 600 J/kg°C (benar). Kalor jenis logam 600 lebih kecil dari air 4.200 (pernyataan terakhir salah)."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#1": {
+  "jawab": 1,
+  "pembahasan": "Grafik perbandingan senilai berupa garis lurus yang melewati titik (0,0) dengan laju perubahan yang konstan."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Laju perubahan konstan berarti pertambahan nilai selalu sama untuk tiap satu satuan, persamaannya y = ax, dan grafiknya garis lurus. Semakin besar laju perubahan (a), garis justru semakin curam, bukan landai."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#4": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Hari ke-4: A = 3 × 4 = 12 cm (benar), B = 5 × 4 = 20 cm (bukan 15 cm). Hari ke-6: A = 18 cm dan B = 30 cm, selisihnya 12 cm (benar). B mencapai 25 cm: 5x = 25 → x = 5 hari (benar)."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#5": {
+  "jawab": [
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "1) Benar: 6.000 × 5 = Rp30.000.\n2) Salah: Rp64.000 : Rp8.000 = 8 jam, bukan 9 jam.\n3) Benar: untuk 10 jam, X = Rp60.000 dan Y = Rp80.000, selisihnya Rp20.000."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#6": {
+  "jawab": 1,
+  "pembahasan": "Total bahan bakar = jarak : laju = 210 km : 14 km/liter = 15 liter."
+ },
+ "1vRtGxpAmkun3-QfvxYkvNa-uDkzwXpGR#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Laju Alpha = 250 : 5 = 50 kotak/menit dan laju Beta = 420 : 7 = 60 kotak/menit (benar). Dalam 30 menit: Alpha 50 × 30 = 1.500 kotak (benar) dan Beta 60 × 30 = 1.800 kotak (benar). Total keduanya 1.500 + 1.800 = 3.300 kotak, bukan 3.000."
+ },
+ "1wuIgv8MmYVYdnbEK1a2AgD04rJUQcPNO#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Awalan SI: kilo = 10³, mili = 10⁻³ (bukan 10³), mikro = 10⁻⁶, nano = 10⁻⁹. Jadi pernyataan Kilo, Mikro, dan Nano benar."
+ },
+ "1wuIgv8MmYVYdnbEK1a2AgD04rJUQcPNO#3": {
+  "jawab": 2,
+  "pembahasan": "Bentuk baku a × 10ⁿ mensyaratkan 1 ≤ a < 10. Hanya 2,05 × 10⁶ yang memenuhi. 15,2 dan 10,0 lebih dari atau sama dengan 10, sedangkan 0,35 dan 0,99 kurang dari 1."
+ },
+ "1wuIgv8MmYVYdnbEK1a2AgD04rJUQcPNO#4": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "0,0250 m memiliki angka penting 2, 5, 0 (nol di belakang angka desimal ikut dihitung) = 3 angka penting. 1,05 kg = 3 angka penting. 1,50 × 10⁴ m = 3 angka penting. 1500 sekon tidak jelas jumlah angka pentingnya (nol akhir tanpa koma), sehingga bukan tepat tiga."
+ },
+ "1wuIgv8MmYVYdnbEK1a2AgD04rJUQcPNO#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: 72 km/jam = 72 × 1.000 m : 3.600 s = 20 m/s.\n2) Benar: 0,0000456 = 4,56 × 10⁻⁵ (koma digeser 5 tempat ke kanan).\n3) Salah: 1 g/cm³ = 1.000 kg/m³, bukan 10 kg/m³."
+ },
+ "1wuIgv8MmYVYdnbEK1a2AgD04rJUQcPNO#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Angka 0,0125 dan 21,1 sama-sama memiliki 3 angka penting, sehingga hasil kali dibulatkan menjadi 3 angka penting: 0,26375 → 0,264 cm² = 2,64 × 10⁻¹ cm². Menulis 0,26375 utuh mengklaim ketelitian palsu. Mengubah satuan tidak menambah ketelitian pengukuran."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#1": {
+  "jawab": 1,
+  "pembahasan": "Perbandingan yang salah satu besarannya bernilai 1 (misalnya Rp3.000 per 1 buah) disebut rasio satuan."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#2": {
+  "jawab": 2,
+  "pembahasan": "Kata 'per' menunjukkan rasio satuan, misalnya Rp3.000 per buah atau 60 km per jam."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#3": {
+  "jawab": 3,
+  "pembahasan": "Harga 1 buku = total harga : jumlah buku = 15.000 : 5 = Rp3.000."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#4": {
+  "jawab": 0,
+  "pembahasan": "Total harga = harga satuan × jumlah = Rp3.000 × 4 = Rp12.000."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#5": {
+  "jawab": 2,
+  "pembahasan": "'60 kilometer per jam' berarti sepeda motor menempuh jarak 60 km dalam waktu 1 jam."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#6": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Rasio satuan: 200 g : 10 donat = 20 g per donat (benar). 20 donat butuh 20 × 20 = 400 g (benar). 5 donat butuh 5 × 20 = 100 g (benar). Dengan 100 g gula hanya bisa membuat 100 : 20 = 5 donat, bukan 10."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "120 km : 3 liter = 40 km per liter (benar). 200 km butuh 200 : 40 = 5 liter (benar). 4 liter menempuh 4 × 40 = 160 km (benar). 60 km butuh 60 : 40 = 1,5 liter, bukan setengah liter."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "Harga satu bungkus = 18.000 : 6 = Rp3.000 (benar). 10 bungkus = 10 × 3.000 = Rp30.000 (benar). Rp12.000 hanya cukup untuk 12.000 : 3.000 = 4 bungkus, bukan 5 (salah)."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Paket A: 20.000 : 4 = Rp5.000 per botol. Paket B: 27.000 : 6 = Rp4.500 per botol. Harga satuan Paket B lebih murah, jadi lebih menguntungkan. Membandingkan harga total saja keliru karena jumlah botol berbeda."
+ },
+ "14eqnGQ1WMNZ5VnBQC0zCv13du8Z4SPY4#10": {
+  "jawab": [
+   true,
+   true,
+   false,
+   true
+  ],
+  "pembahasan": "Kecepatan mesin = 150 : 30 = 5 roti per menit (benar). 400 roti butuh 400 : 5 = 80 menit (benar). Dalam 60 menit mesin menghasilkan 5 × 60 = 300 roti, bukan 350 (salah). Dalam 40 menit satu mesin hanya menghasilkan 200 roti, kurang dari 400 (benar)."
+ }
+}

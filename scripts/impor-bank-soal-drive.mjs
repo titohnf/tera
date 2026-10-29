@@ -40,6 +40,8 @@ const arg = nama => {
 }
 const JALUR = arg('--jalur')
 const BERKAS_KUNCI = arg('--kunci')
+const BERKAS_KERJA = arg('--kerja') // ekspor butir yang soalnya terbaca tapi kuncinya tidak pasti
+const BERKAS_JAWABAN = arg('--jawaban') // kunci+pembahasan buatan (JSON) untuk butir dari --kerja
 const FOLDER = '115fSYDrele2qIHKnfJlkrVEQgdy2afMB'
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 const GDOC = 'application/vnd.google-apps.document'
@@ -548,8 +550,41 @@ for (let d = 0; ; d += 1000) {
   if (data.length < 1000) break
 }
 
+/**
+ * Kunci + pembahasan BUATAN (ditulis Claude, 29 Okt 2026) untuk butir yang
+ * soalnya terbaca tapi kuncinya tidak pasti di dokumen. Dikunci `soalId#nomor`.
+ * Berbeda dari kunci dokumen: ini hasil mengerjakan soalnya, bukan membaca
+ * kunci tutor — jadi butirnya masuk draf dan tercatat di manifes tinjauan
+ * (`docs/bank-soal/butir-kunci-buatan-claude.json`) supaya pemeriksa tahu
+ * mana yang kuncinya tidak berasal dari dokumen sumber.
+ */
+const buatan = BERKAS_JAWABAN ? JSON.parse(readFileSync(BERKAS_JAWABAN, 'utf8')) : {}
+
+function dariJawabanBuatan(s, jw) {
+  const opsi = s.tipe === 'pilihan' ? s.pilihan.map(x => x.teks) : s.pernyataan
+  const penjelasan = (jw.pembahasan ?? '').trim()
+  if (!penjelasan) return 'jawaban buatan tanpa pembahasan'
+  if (s.tipe === 'statement_grid') {
+    if (!Array.isArray(jw.jawab) || jw.jawab.length !== opsi.length || jw.jawab.some(v => typeof v !== 'boolean')) return 'kunci grid buatan tidak sesuai jumlah baris'
+    return { prompt: s.prompt, weight: 1, explanation: penjelasan, bloom: s.bloom, type: 'statement_grid',
+      options: { statements: opsi, answer_labels: s.kolom ?? ['Benar', 'Salah'] },
+      correct_answer: { answers: jw.jawab, grading_mode: 'proportional' } }
+  }
+  const idx = [].concat(jw.jawab)
+  if (!idx.length || idx.some(i => !Number.isInteger(i) || i < 0 || i >= opsi.length)) return 'indeks kunci buatan di luar pilihan'
+  if (new Set(opsi).size !== opsi.length) return 'pilihan kembar'
+  const banyak = Array.isArray(jw.jawab)
+  if (banyak && idx.length < 2) return 'kunci buatan multi hanya satu'
+  let prompt = s.prompt
+  // Soal yang punya lebih dari satu kunci harus memberi tahu murid.
+  if (banyak && !PETUNJUK_BANYAK.test(prompt)) prompt = `${prompt}\n(Pilih lebih dari satu jawaban yang benar)`
+  return { prompt, weight: 1, explanation: penjelasan, bloom: s.bloom, type: banyak ? 'mcq_multi' : 'mcq_single',
+    options: { choices: opsi }, correct_answer: banyak ? idx.map(i => opsi[i]) : opsi[idx[0]] }
+}
+
 const ringkas = { pasangan: 0, butirSiap: 0, butirLewat: 0, pasanganLewat: 0 }
 const hasilSemua = []
+const kerja = []
 
 for (const p of unik.values()) {
   const groupId = grupSah.has(p.kunciTopik) ? p.kunciTopik : cpKeGrup.get(p.kunciTopik) ?? null
@@ -598,7 +633,29 @@ for (const p of unik.values()) {
       continue
     }
     const k = kunciButir(s, pembahasan.get(s.nomor))
-    if (k.lewat) { lewat.push(`${s.nomor}: ${k.lewat}`); continue }
+    const jwBuatan = k.lewat ? buatan[`${p.soalId}#${s.nomor}`] : null
+    if (jwBuatan) {
+      const b = dariJawabanBuatan(s, jwBuatan)
+      if (typeof b === 'string') { lewat.push(`${s.nomor}: ${b}`); continue }
+      const salah = await periksaKunci(b)
+      if (salah) { lewat.push(`${s.nomor}: kunci buatan ditolak penilai (${salah})`); continue }
+      siap.push({ ...b, buatan: `${p.soalId}#${s.nomor}`, nomor: s.nomor })
+      continue
+    }
+    if (k.lewat) {
+      lewat.push(`${s.nomor}: ${k.lewat}`)
+      const ph = pembahasan.get(s.nomor)
+      kerja.push({
+        id: `${p.soalId}#${s.nomor}`, groupId, sumber: nama.replace(/^\//, ''), nomor: s.nomor, bloom: s.bloom,
+        tipe: s.tipe, prompt: s.prompt,
+        pilihan: s.tipe === 'pilihan' ? s.pilihan.map(x => x.teks) : s.pernyataan,
+        kolom: s.kolom ?? null,
+        alasanLewat: k.lewat,
+        kunciDokumen: ph?.kepala ?? null,
+        pembahasanDokumen: ph ? ph.isi.join('\n').slice(0, 1500) : null,
+      })
+      continue
+    }
     const butir = jadikanButir(s, k)
     if (!butir || !butir.prompt) { lewat.push(`${s.nomor}: pilihan kembar / kalimat soal kosong`); continue }
     const salah = await periksaKunci(butir)
@@ -611,6 +668,10 @@ for (const p of unik.values()) {
   hasilSemua.push({ groupId, nama, siap })
 }
 
+if (BERKAS_KERJA) {
+  writeFileSync(BERKAS_KERJA, JSON.stringify(kerja, null, 1))
+  console.log(`\n${kerja.length} butir kerja ditulis ke ${BERKAS_KERJA}`)
+}
 console.log(`\n${ringkas.pasangan} pasangan diperiksa (${ringkas.pasanganLewat} dilewati utuh); ${ringkas.butirSiap} butir siap, ${ringkas.butirLewat} butir dilewati.`)
 if (!TULIS) {
   console.log('Belum ditulis. Tambahkan --tulis untuk memasukkan yang SIAP sebagai butir draf.')
@@ -642,6 +703,16 @@ for (const h of hasilSemua) {
     continue
   }
   masuk += dimasukkan.length
+  // Manifes butir yang kuncinya buatan Claude: id baris di bank + asal dokumen.
+  const manifes = baru
+    .map((b, i) => (b.buatan ? { id: dimasukkan[i].id, ref: b.buatan, sumber: h.nama.replace(/^\//, ''), nomor: b.nomor } : null))
+    .filter(Boolean)
+  if (manifes.length) {
+    const jalurManifes = 'docs/bank-soal/butir-kunci-buatan-claude.json'
+    let lama = []
+    try { lama = JSON.parse(readFileSync(jalurManifes, 'utf8')) } catch {}
+    writeFileSync(jalurManifes, JSON.stringify([...lama, ...manifes], null, 1))
+  }
   console.log(`DITULIS  ${h.nama}: ${dimasukkan.length} butir (draf)`)
 }
 console.log(`\n${masuk} butir masuk sebagai draf.`)
