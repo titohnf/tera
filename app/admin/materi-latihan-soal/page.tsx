@@ -3,6 +3,7 @@ import { createCurriculumResource, deleteCurriculumResource } from '@/lib/action
 import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import MateriLatihanSoalClient from '@/components/admin/materi-latihan-soal/MateriLatihanSoalClient'
 import StatusMateriPanel from '@/components/admin/materi-latihan-soal/StatusMateriPanel'
+import SinkronSoalPanel, { type RingkasanSoal } from '@/components/admin/materi-latihan-soal/SinkronSoalPanel'
 
 // Tombol "Sinkronkan dengan Drive sekarang" membaca folder Drive dan memeriksa ratusan
 // berkas; aksinya mewarisi batas waktu halaman ini.
@@ -416,6 +417,27 @@ export default async function MateriLatihanSoalPage() {
     else menungguAkses++
   }
 
+  // Buku catatan sinkron soal digital (migrasi 202). Tabelnya bisa belum ada
+  // selama migrasi belum dijalankan: panelnya sekadar tidak ditampilkan.
+  let ringkasanSoal: RingkasanSoal | null = null
+  {
+    const { data: catatan, error } = await admin
+      .from('sinkron_soal_drive')
+      .select('nama, jalur, status, catatan, diperiksa_at')
+      .order('diperiksa_at', { ascending: false })
+      .limit(1000)
+    if (!error) {
+      const baris = (catatan ?? []) as { nama: string; jalur: string; status: string; catatan: string | null; diperiksa_at: string }[]
+      ringkasanSoal = {
+        selesai: baris.filter(b => b.status === 'selesai' || b.status === 'tanpa_topik').length,
+        tanpaTopik: baris.filter(b => b.status === 'tanpa_topik').map(b => ({ nama: b.nama, jalur: b.jalur })),
+        perluTinjauan: baris.filter(b => b.status === 'perlu_tinjauan').map(b => ({ nama: b.nama, catatan: b.catatan })),
+        galat: baris.filter(b => b.status === 'galat').map(b => ({ nama: b.nama, catatan: b.catatan })),
+        terakhir: baris[0]?.diperiksa_at ?? null,
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -424,6 +446,8 @@ export default async function MateriLatihanSoalPage() {
       </div>
 
       <StatusMateriPanel terbaca={terbaca} menungguAkses={menungguAkses} tautanLuar={tautanLuar} terakhirSinkron={terakhirSinkron} />
+
+      {ringkasanSoal && <SinkronSoalPanel ringkasan={ringkasanSoal} />}
 
       <MateriLatihanSoalClient
         topics={topics ?? []}

@@ -55,7 +55,7 @@ function rapikanKunci(mentah: string): string {
  * Kurikulum" — SETELAH RLS memutuskan pemintanya berhak. Service account harus
  * punya akses baca ke folder itu; ia tidak bisa dan tidak perlu menulis.
  */
-export function getDriveClient() {
+function buatAuth(scopes: string[]) {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim()
   const mentah = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
   if (!email || !mentah) {
@@ -71,10 +71,24 @@ export function getDriveClient() {
       'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY tidak berbentuk PEM — periksa tanda kutip pembungkus atau baris yang terpotong',
     )
   }
-  const auth = new google.auth.JWT({
-    email,
-    key,
-    scopes: ['https://www.googleapis.com/auth/drive'],
+  return new google.auth.JWT({ email, key, scopes })
+}
+
+export function getDriveClient() {
+  return google.drive({ version: 'v3', auth: buatAuth(['https://www.googleapis.com/auth/drive']) })
+}
+
+/**
+ * Klien Google Forms, hanya-baca. Dipakai sinkron soal digital untuk membaca
+ * soal dan kunci jawaban form asesmen di Drive. Membutuhkan Google Forms API
+ * aktif di project Google Cloud dan form yang dibagikan ke service account.
+ */
+export function getFormsClient() {
+  return google.forms({
+    version: 'v1',
+    auth: buatAuth([
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/forms.body.readonly',
+    ]),
   })
-  return google.drive({ version: 'v3', auth })
 }

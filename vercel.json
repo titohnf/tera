@@ -1,5 +1,12 @@
 {
   "crons": [
-    { "path": "/api/cron/sinkron-materi", "schedule": "0 20 * * *" }
+    {
+      "path": "/api/cron/sinkron-materi",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/sinkron-soal",
+      "schedule": "30 20 * * *"
+    }
   ]
 }
