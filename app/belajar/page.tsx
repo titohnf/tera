@@ -4,6 +4,8 @@ import { mapelLatihan } from '@/lib/belajar/sesi'
 import { keluargaContext } from '@/lib/keluarga'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
 import PulangKe from '@/components/belajar/PulangKe'
+import TugasKelas from '@/components/belajar/TugasKelas'
+import { asesmenAnak } from '@/lib/belajar/asesmen'
 
 /**
  * Pintu masuk permukaan belajar: memilih apa yang mau dilatih.
@@ -23,9 +25,9 @@ import PulangKe from '@/components/belajar/PulangKe'
 export default async function BelajarBeranda({
   searchParams,
 }: {
-  searchParams: Promise<{ anak?: string; topik?: string; mapel?: string; lingkup?: string }>
+  searchParams: Promise<{ anak?: string; topik?: string; mapel?: string; lingkup?: string; asesmen?: string }>
 }) {
-  const { anak, topik, mapel: mapelDiminta, lingkup } = await searchParams
+  const { anak, topik, mapel: mapelDiminta, lingkup, asesmen } = await searchParams
   const { learnerId, namaPelajar, avatar, kelas, studentId } = await belajarContext(anak)
   // Pengecualian jenjang per mapel (migrasi 105) TIDAK ikut di sini: ia
   // bergantung pada mapel mana yang dibuka, dan yang sedang disusun justru
@@ -80,7 +82,9 @@ export default async function BelajarBeranda({
   // `studentId` terisi hanya untuk jalur keluarga, jadi pelanggan langganan
   // melewati kueri ini sama sekali; `keluargaContext()` bahkan akan
   // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
-  const keluarga = studentId ? await keluargaContext() : null
+  const [keluarga, tugas] = studentId
+    ? await Promise.all([keluargaContext(), asesmenAnak(studentId)])
+    : [null, []]
 
   return (
     <div className="space-y-4">
@@ -90,6 +94,10 @@ export default async function BelajarBeranda({
           anak={keluarga.anak}
           aktif={studentId}
         />
+      )}
+
+      {studentId && (
+        <TugasKelas tugas={tugas} anak={studentId} baruSelesai={asesmen === 'selesai'} />
       )}
 
       <PemilihLatihan

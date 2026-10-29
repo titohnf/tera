@@ -120,7 +120,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     // A student may have up to one note per category — count distinct students, not rows
     admin.from('performance_notes').select('student_id').eq('session_id', sessionId),
     admin.from('materials').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
-    admin.from('assessments').select('id, link_url, pembahasan_url').eq('session_id', sessionId),
+    admin.from('assessments').select('id, link_url, pembahasan_url, quiz_id').eq('session_id', sessionId),
   ])
 
   // Materi yang datang dari Kurikulum tidak pernah menjadi baris `materials`:
@@ -189,7 +189,9 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
   const hasPembahasan = pembahasanCount >= pembahasanRequired
 
-  const asesmenTanpaLink = (assessmentList ?? []).filter(a => !adaTautan(a.link_url)).length
+  // Asesmen dari Sora (`quiz_id` terisi) dikerjakan di Belajar, jadi tidak punya
+  // tautan dan tidak boleh ditagih satu.
+  const asesmenTanpaLink = (assessmentList ?? []).filter(a => !a.quiz_id && !adaTautan(a.link_url)).length
 
   const hasTopic = !!(session.topic?.trim())
   const hasAllAttendance = (attendanceCount ?? 0) >= sc && sc > 0

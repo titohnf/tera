@@ -22,7 +22,7 @@ export type JadwalSessionDetail = {
    * pun yang membahas topik itu.
    */
   materi_list: { id: string; title: string; groupId: string }[]
-  assessments: { id: string; title: string; score: number | null; max_score: number; link_url: string | null; level: string | null }[]
+  assessments: { id: string; title: string; score: number | null; max_score: number; link_url: string | null; level: string | null; dariSora: boolean }[]
   catatan: string | null
   attendance_notes: string | null
 }
@@ -89,10 +89,10 @@ export async function getJadwalSessionDetail(
       .maybeSingle() as unknown as Promise<{ data: { body: string } | null }>,
   ])
 
-  type AssessmentRow = { id: string; title: string; max_score: number; link_url: string | null }
+  type AssessmentRow = { id: string; title: string; max_score: number; link_url: string | null; quiz_id: string | null }
   const assessmentQuery = await (admin
     .from('assessments')
-    .select('id, title, max_score, link_url')
+    .select('id, title, max_score, link_url, quiz_id')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true }) as unknown as Promise<{ data: AssessmentRow[] | null }>)
   const assessmentRows = assessmentQuery.data
@@ -174,6 +174,7 @@ export async function getJadwalSessionDetail(
       score: resultMap.get(a.id)?.score ?? null,
       max_score: a.max_score,
       link_url: a.link_url,
+      dariSora: a.quiz_id !== null,
       level: resultMap.get(a.id)?.feedback ?? null,
     }))
   }

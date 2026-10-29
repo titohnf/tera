@@ -77,7 +77,7 @@ export default function RincianSesi({
         </div>
       ),
     })
-  const soalAsesmenList = (detail.assessments ?? []).filter(a => a.link_url)
+  const soalAsesmenList = (detail.assessments ?? []).filter(a => a.dariSora || a.link_url)
   const chipCls = "inline-flex items-center gap-1 text-xs text-blue-600 border border-blue-200 bg-white px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors"
 
   // Materi menuju `/belajar`, bukan ke berkasnya langsung.
@@ -115,7 +115,13 @@ export default function RincianSesi({
       node: (
         <div className="flex flex-wrap gap-1.5">
           {soalAsesmenList.map((a, i) => (
-            <Link key={a.id} href={a.link_url!} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={chipCls}>
+            <Link
+              key={a.id}
+              // Asesmen dari Sora dikerjakan di Belajar (daftar "Tugas dari
+              // kelas"), bukan di tab baru; yang dari Google Form tetap ke tautannya.
+              href={a.dariSora ? `/belajar${anakId ? `?anak=${anakId}` : ''}` : a.link_url!}
+              {...(a.dariSora ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+              onClick={e => e.stopPropagation()} className={chipCls}>
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               {soalAsesmenList.length > 1 ? `Asesmen ${i + 1}` : 'Asesmen'}
             </Link>
