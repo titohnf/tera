@@ -77,7 +77,7 @@ export type CompletionCheck = {
   gradedCount: number
   /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
   gradesRequired: number
-  /** Topik yang latihan soalnya lengkap (link soal + pembahasan, ATAU soal digital aktif di Belajar). Pembahasan asesmen opsional, tidak dihitung. */
+  /** Topik yang latihan soalnya lengkap (link soal + pembahasan). Pembahasan asesmen opsional, tidak dihitung. */
   pembahasanCount: number
   /** Berapa yang seharusnya ada: satu per topik sesi. */
   pembahasanRequired: number
@@ -182,34 +182,9 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   const customOutcomes: string[] = session.custom_learning_outcomes ?? []
   if (customOutcomes.some(t => t?.trim())) kunciTopik.add(CUSTOM_TOPIC_KEY)
 
-  // Topik yang sudah punya soal DIGITAL aktif di Belajar tidak lagi menagih tautan
-  // PDF: anak mengerjakannya di sana dan pembahasannya ikut setelah selesai.
-  // Ambangnya setengah paket (5 butir `aktif` bertag topik itu, tanpa esai/unggah),
-  // supaya satu butir iseng tidak menggugurkan kewajiban. Butir `draf` tidak
-  // terhitung — hanya yang aktif yang sampai ke murid.
-  const BUTIR_AKTIF_MINIMAL = 5
-  const kunciGrup = [...kunciTopik].filter(k => k !== CUSTOM_TOPIC_KEY)
-  const aktifPerGrup = new Map<string, number>()
-  if (kunciGrup.length > 0) {
-    const { data: bertag } = await admin
-      .from('question_curriculum_tags')
-      .select('group_id, question_bank_items!inner(status_verifikasi, type)')
-      .in('group_id', kunciGrup)
-      .eq('question_bank_items.status_verifikasi', 'aktif')
-      .limit(5000)
-    for (const t of (bertag ?? []) as unknown as { group_id: string; question_bank_items: { type: string } | { type: string }[] }[]) {
-      const butir = Array.isArray(t.question_bank_items) ? t.question_bank_items[0] : t.question_bank_items
-      if (!butir || butir.type === 'essay' || butir.type === 'upload_file') continue
-      aktifPerGrup.set(t.group_id, (aktifPerGrup.get(t.group_id) ?? 0) + 1)
-    }
-  }
-
   const pembahasanRequired = kunciTopik.size
   const pembahasanCount = [...kunciTopik]
-    .filter(key =>
-      (adaTautan(cpUrls[key]) && adaTautan(cpPembahasanUrls[key])) ||
-      (aktifPerGrup.get(key) ?? 0) >= BUTIR_AKTIF_MINIMAL,
-    ).length
+    .filter(key => adaTautan(cpUrls[key]) && adaTautan(cpPembahasanUrls[key])).length
 
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
   const hasPembahasan = pembahasanCount >= pembahasanRequired
