@@ -9,15 +9,15 @@
  },
  "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#1": {
   "jawab": 1,
-  "pembahasan": "Aturan habis dibagi 5: angka satuan (digit terakhir) harus 0 atau 5. Contoh: 135 dan 270 habis dibagi 5. Menjumlahkan semua digit adalah aturan untuk 3 dan 9, bukan untuk 5."
+  "pembahasan": "Aturan habis dibagi 5: angka satuan harus 0 atau 5."
  },
  "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#3": {
   "jawab": 2,
-  "pembahasan": "Bilangan 6 = 2 × 3, dan 2 serta 3 tidak punya faktor persekutuan. Karena itu suatu bilangan habis dibagi 6 jika dan hanya jika ia habis dibagi 2 (angka satuan genap) sekaligus habis dibagi 3 (jumlah digit kelipatan 3)."
+  "pembahasan": "6 = 2 × 3, sehingga bilangan habis dibagi 6 jika habis dibagi 2 dan 3 sekaligus."
  },
  "1xJqNM_AhfOy2bvOBMqiVe_y73vlE4mxL#6": {
   "jawab": 2,
-  "pembahasan": "Suatu bilangan habis dibagi 9 jika jumlah digitnya kelipatan 9.\n1.234 → 1+2+3+4 = 10 (bukan).\n5.612 → 5+6+1+2 = 14 (bukan).\n8.127 → 8+1+2+7 = 18 (kelipatan 9, jadi habis dibagi 9).\n4.015 → 4+0+1+5 = 10 (bukan)."
+  "pembahasan": "Habis dibagi 9 jika jumlah digit kelipatan 9. 8.127 → 8+1+2+7 = 18 (kelipatan 9). Yang lain: 1.234 → 10, 5.612 → 14, 4.015 → 10."
  },
  "1-Cf0ryc2QB_MpM06HFEehxay2UcN1vNB#1": {
   "jawab": 0,
@@ -1597,5 +1597,333 @@
    true
   ],
   "pembahasan": "Kecepatan mesin = 150 : 30 = 5 roti per menit (benar). 400 roti butuh 400 : 5 = 80 menit (benar). Dalam 60 menit mesin menghasilkan 5 × 60 = 300 roti, bukan 350 (salah). Dalam 40 menit satu mesin hanya menghasilkan 200 roti, kurang dari 400 (benar)."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#1": {
+  "jawab": 2,
+  "pembahasan": "Tempat alami tempat tumbuhan atau hewan hidup dan mendapat makanan, air, serta tempat berlindung disebut habitat. Climate adalah iklim, epiphyte adalah tumbuhan yang menempel di pohon, dan canopy adalah tajuk pohon."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#2": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Kalajengking (scorpions), kaktus (cacti), dan unta (camels) hidup di gurun. Beruang kutub (polar bears) hidup di daerah dingin seperti tundra dan kutub."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#3": {
+  "jawab": 1,
+  "pembahasan": "Epifit (epiphyte) menempel pada kulit batang pohon tinggi di udara dan tidak tumbuh di tanah. Akarnya menyerap kelembapan dari udara."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#6": {
+  "jawab": 2,
+  "pembahasan": "Teratai (water lily) berdaun lebar mengapung dan akarnya harus terendam lumpur basah, jadi tempat yang tepat adalah kolam berair tawar dengan lumpur di dasarnya."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#7": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Anggrek tropis membutuhkan udara lembap (humidifier), cahaya tidak langsung (kain peneduh), dan suhu hangat. Pendingin udara bersuhu sangat dingin akan membunuh anggrek."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#9": {
+  "jawab": [
+   0,
+   1,
+   2
+  ],
+  "pembahasan": "Di tundra suhunya sangat dingin, tidak ada pohon tinggi tempat anggrek epifit menempel, dan udaranya kering sehingga akar anggrek tidak bisa menyerap kelembapan. Sinar matahari di tundra pada musim dingin lemah, bukan terik."
+ },
+ "1kcibOL2Q0qR0k9IMBmZRCbiWVy1DL2dz#10": {
+  "jawab": 0,
+  "pembahasan": "Tanah tundra membeku permanen (permafrost) dan anginnya kencang, sehingga akar pohon tinggi tidak bisa tumbuh dalam. Karena itu tundra hanya ditumbuhi rumput pendek, semak rendah, dan lumut."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#1": {
+  "jawab": 2,
+  "pembahasan": "Uncountable noun adalah benda yang tidak bisa dihitung satu per satu, misalnya sand (pasir). Coin, table, dan student bisa dihitung (countable)."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Book dan pencil dapat dihitung (a book, two pencils), jadi countable. Water dan air tidak bisa dihitung satu per satu, jadi uncountable."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#3": {
+  "jawab": 1,
+  "pembahasan": "'an apple' benar karena apple countable dan diawali huruf vokal. 'a milks', 'two water', dan 'a rices' salah karena milk, water, dan rice uncountable."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#4": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "'three books' benar karena book countable. 'a lot of money' benar karena money uncountable dan 'a lot of' boleh dipakai. 'a water' dan 'two rices' salah karena water dan rice uncountable."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#6": {
+  "jawab": 1,
+  "pembahasan": "Sugar (gula) uncountable, jadi pertanyaannya memakai 'How much'. 'How many' dipakai untuk benda yang bisa dihitung."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "'Two eggs' benar karena egg countable. 'Three glasses of water' benar karena benda uncountable dihitung lewat wadahnya. 'A sugar' dan 'One salt' salah karena sugar dan salt uncountable."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#9": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "'pencils and erasers' dan 'a lot of snacks' benar. 'We need 50 paper' salah karena paper uncountable (seharusnya 50 sheets of paper), dan 'many water' salah karena water uncountable (seharusnya 'much water')."
+ },
+ "17v9XsdhHk_M4IDTCj2fIHD5-VmRARG9P#10": {
+  "jawab": 1,
+  "pembahasan": "Water uncountable, sehingga 'two waters' salah. 'A bag of rice' dan 'three pencils' sudah benar."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#1": {
+  "jawab": 3,
+  "pembahasan": "Sekitar dua pertiga (2/3) wilayah Indonesia berupa perairan dan sepertiganya daratan."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#2": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Bali dan Sulawesi termasuk Waktu Indonesia Tengah (WITA). Sumatra termasuk WIB dan Papua termasuk WIT."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#3": {
+  "jawab": 2,
+  "pembahasan": "Julukan 'Zamrud Khatulistiwa' diberikan karena daratan Indonesia di sekitar khatulistiwa tampak hijau subur oleh hutan hujan tropis, seperti batu zamrud."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#4": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Potensi agraris sesuai relief: perkebunan teh dan sayuran di dataran tinggi, serta sawah padi di dataran rendah. Budidaya kerang mutiara dan pelabuhan kargo adalah kegiatan maritim."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#5": {
+  "jawab": [
+   false,
+   true,
+   false
+  ],
+  "pembahasan": "1) Salah: laut dan selat justru menjadi jalur penghubung antarpulau, bukan pemisah mutlak.\n2) Benar: tanah vulkanis yang subur dari deretan gunung berapi membuat Indonesia cocok sebagai negara agraris.\n3) Salah: Indonesia beriklim tropis di khatulistiwa sehingga tidak memiliki musim salju dan gugur."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#6": {
+  "jawab": 2,
+  "pembahasan": "Berangkat pukul 08.00 WIB dan terbang 4 jam, tiba pukul 12.00 WIB. WIT lebih cepat 2 jam dari WIB, jadi pukul 14.00 WIT."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#7": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Di pesisir berperairan dangkal, profesi yang cocok adalah petani rumput laut dan nelayan tangkap. Peternak sapi perah dan petani kopi tidak sesuai dengan potensi pesisir."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#8": {
+  "jawab": [
+   true,
+   true,
+   false
+  ],
+  "pembahasan": "1) Benar: Indonesia tidak punya musim dingin dan sinar matahari melimpah sepanjang tahun, sehingga padi dapat ditanam dan dipanen terus.\n2) Benar: WITA lebih cepat 1 jam dari WIB, jadi pukul 10.00 WITA sama dengan 09.00 WIB.\n3) Salah: angin muson tidak menyebabkan salju di pantai Indonesia."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#9": {
+  "jawab": [
+   0,
+   1
+  ],
+  "pembahasan": "Posisi silang di antara dua benua dan dua samudra menjadikan perairan Indonesia jalur pelayaran dunia, dan interaksi dengan bangsa pedagang memunculkan keragaman budaya, bahasa, dan agama. Posisi ini tidak mengikis daratan, dan penduduk pedalaman tidak otomatis lebih kaya."
+ },
+ "1m_J8nV5ZdUse6ABnyfqCn7tXc929oz2p#10": {
+  "jawab": 2,
+  "pembahasan": "Wilayah pegunungan sulit dijangkau karena jalannya menanjak dan berliku, sehingga ikan segar lambat sampai dan perlu diawetkan (ikan asin) atau dikalengkan (sarden)."
+ },
+ "184PI9v56VneC6uC3LdPzKYJG0Nm3DEJ2#1": {
+  "jawab": 1,
+  "pembahasan": "Bilangan yang kurang dari nol disebut bilangan negatif (negative numbers)."
+ },
+ "184PI9v56VneC6uC3LdPzKYJG0Nm3DEJ2#3": {
+  "jawab": 3,
+  "pembahasan": "Pada garis bilangan, -2 lebih dekat ke nol daripada -10 dan berada lebih ke kanan, sehingga nilainya lebih besar. Makin dekat ke nol, bilangan negatif makin besar."
+ },
+ "184PI9v56VneC6uC3LdPzKYJG0Nm3DEJ2#6": {
+  "jawab": 2,
+  "pembahasan": "Dengan 'bridging through zero': turun 4 derajat dari 4°C sampai 0°C, lalu turun 3 derajat lagi (7 - 4 = 3) menjadi -3°C. Atau 4 - 7 = -3."
+ },
+ "184PI9v56VneC6uC3LdPzKYJG0Nm3DEJ2#10": {
+  "jawab": 1,
+  "pembahasan": "Burung berada di +6 m. Ikan 8 m di bawah burung: 6 - 8 = -2 m, yaitu 2 meter di bawah permukaan laut."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#1": {
+  "jawab": 2,
+  "pembahasan": "'Yesterday' (kemarin) adalah keterangan waktu lampau yang dipakai pada Simple Past Tense. Tomorrow dan next week adalah masa depan, today masa sekarang."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#2": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "Went (dari go) dan ate (dari eat) adalah irregular verbs karena bentuk lampaunya berubah. Played dan washed adalah regular verbs yang cukup ditambah -ed."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#3": {
+  "jawab": 1,
+  "pembahasan": "Kalimat lampau memakai Verb 2: 'Budi played football yesterday.' (play → played)."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#6": {
+  "jawab": 1,
+  "pembahasan": "'Last night' menunjukkan masa lampau, jadi memakai Verb 2 dari drink, yaitu drank."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#7": {
+  "jawab": [
+   0,
+   3
+  ],
+  "pembahasan": "'They ate sandwiches' dan 'They went home' benar karena memakai Verb 2. 'Alman play' salah (seharusnya played), dan 'did not cooked' salah (setelah did not, kata kerja kembali ke bentuk dasar: did not cook)."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#9": {
+  "jawab": [
+   0,
+   2
+  ],
+  "pembahasan": "'Yesterday, I wake up' salah (seharusnya woke up). 'I didn't ate' salah karena setelah didn't kata kerja harus bentuk dasar (didn't eat). 'washed' dan 'went' sudah benar."
+ },
+ "15px6FaGhsVA8lOLifVsZe6PqLVpTzZlK#10": {
+  "jawab": 1,
+  "pembahasan": "Setelah 'didn't', kata kerja harus kembali ke bentuk dasar (Verb 1): 'Budi didn't know about it.' Kata 'knew' tidak dipakai bersama didn't."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#1": {
+  "jawab": 1,
+  "pembahasan": "Besaran pokok SI beserta satuannya: panjang (meter), intensitas cahaya (candela), dan jumlah zat (mol). Gram bukan satuan SI untuk massa (kilogram), kecepatan, gaya, dan luas adalah besaran turunan, dan Celcius bukan satuan SI untuk suhu (Kelvin)."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Dimensi suhu mutlak [θ], kuat arus listrik [I], dan intensitas cahaya [J]. Dimensi jumlah zat adalah [N], bukan [M] ([M] adalah dimensi massa)."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#3": {
+  "jawab": 3,
+  "pembahasan": "Sikap ilmiah berarti jujur dan objektif: mencatat data apa adanya meskipun berbeda dari prediksi, tidak memanipulasi data, tidak menyerah pada kegagalan pertama, dan terbuka pada masukan."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#4": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "Massa jenis = massa/volume → [M][L]⁻³. Gaya = massa × percepatan → [M][L][T]⁻². Momentum = massa × kecepatan → [M][L][T]⁻¹. Usaha = gaya × jarak (bukan gaya × waktu), dimensinya [M][L]²[T]⁻²."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#6": {
+  "jawab": 2,
+  "pembahasan": "P = ρ·g·h: dimensi ρ = [M][L]⁻³, g = [L][T]⁻², h = [L]. Hasilnya [M][L]⁻³ · [L][T]⁻² · [L] = [M][L]⁻¹[T]⁻²."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#7": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "s = v·t + ½at² benar (semua suku berdimensi [L]). v = √(2Ek/m) benar (√([M][L]²[T]⁻²/[M]) = [L][T]⁻¹). W = ½mv² benar ([M][L]²[T]⁻²). F = m·v/t² salah: dimensinya [M][L][T]⁻³, bukan [M][L][T]⁻²."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#9": {
+  "jawab": [
+   1,
+   2
+  ],
+  "pembahasan": "Suhu adalah variabel bebas dan daya baterai variabel terikat (pernyataan 1 terbalik, salah). Udara panas lebih renggang sehingga motor harus berputar lebih cepat, dan gaya angkat terkait massa jenis fluida sehingga suhu memengaruhi efisiensi energi (benar). Tinggi terbang tidak bertambah linear terhadap kenaikan suhu."
+ },
+ "173Dyxid5IwVIOZpw-8xWTpeo6h3BCKpJ#10": {
+  "jawab": 1,
+  "pembahasan": "Dari H = k·A·ΔT/L, maka k = H·L/(A·ΔT). H = kg·m²·s⁻³, L = m, A = m², ΔT = K. Sehingga k = kg·m·s⁻³·K⁻¹ dengan dimensi [M][L][T]⁻³[θ]⁻¹."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#1": {
+  "jawab": 1,
+  "pembahasan": "'Persen' berarti per seratus: 1% = 1/100."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#2": {
+  "jawab": [
+   0,
+   1,
+   3
+  ],
+  "pembahasan": "50% = 1/2 = 0,50; 25% = 1/4 = 0,25; 10% = 1/10 = 0,10 (sama). 1% = 1/100 = 0,01, bukan 0,10."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#3": {
+  "jawab": 2,
+  "pembahasan": "15% = 10% + 5%, dan 5% adalah setengah dari 10%. Jadi hitung 10% dulu, lalu tambahkan setengahnya."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#4": {
+  "jawab": [
+   1,
+   2,
+   3
+  ],
+  "pembahasan": "Diskon bertingkat 50% + 20% tidak sama dengan 70%, karena 20% dihitung dari sisa harga setelah diskon pertama. Mencari 90% sama dengan 100% dikurangi 10%. Nilai 0,32 sama dengan 32%."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#6": {
+  "jawab": 1,
+  "pembahasan": "10% dari 4.200 = 420; 5% = 210; jadi 15% = 420 + 210 = 630 jiwa."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#7": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Diskon pertama 50% × 600.000 = 300.000. Sisa harga 300.000. Diskon kedua 20% × 300.000 = 60.000 (dihitung dari sisa, bukan harga awal). Total bayar = 300.000 - 60.000 = Rp240.000."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#9": {
+  "jawab": [
+   0,
+   2,
+   3
+  ],
+  "pembahasan": "Alfa: 40% × 1.200.000 = 480.000, harga akhir 720.000. Beta: 70% × 1.200.000 = 840.000, lalu 85% × 840.000 = 714.000. Total diskon Beta setara 40,5%, bukan 45%. Karena 714.000 < 720.000, Beta lebih menguntungkan."
+ },
+ "1lK1MMVtnUii8TMrbdP30W7IFvik6w0lw#10": {
+  "jawab": 2,
+  "pembahasan": "1.500.000 adalah 0,60 dari total penduduk usia produktif, jadi total = 1.500.000 : 0,6 = 2.500.000. Subsidi untuk 10% = 250.000 jiwa."
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#1": {
+  "jawab": 0,
+  "pembahasan": "Pertanyaan 'Do you have a pencil?' dijawab dengan 'Yes, I do.'"
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#2": {
+  "jawab": 1,
+  "pembahasan": "Subjek orang ketiga tunggal (Budi) memakai 'has': Budi has a new bag."
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#3": {
+  "jawab": 1,
+  "pembahasan": "'Kucing' dalam bahasa Inggris adalah cat, jadi: Do you have a cat?"
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#4": {
+  "jawab": 1,
+  "pembahasan": "Ayu adalah perempuan, jadi kata gantinya She: She has a book."
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#5": {
+  "jawab": 1,
+  "pembahasan": "Edo tidak memiliki bola merah, jadi jawabannya 'No, I don't.'"
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#6": {
+  "jawab": 1,
+  "pembahasan": "'Dia (laki-laki)' adalah He, dan kata kerjanya has: He has a kite."
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#7": {
+  "jawab": 0,
+  "pembahasan": "Tono laki-laki dan 'eraser' diawali huruf vokal, jadi: He has an eraser."
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#8": {
+  "jawab": 2,
+  "pembahasan": "Budi menjawab 'Yes, I do. I have a ruler.', jadi gurunya bertanya: Do you have a ruler, Budi?"
+ },
+ "1U7UbtXM7idR1HfjSVMePaMUHYYZsYF1A#10": {
+  "jawab": 1,
+  "pembahasan": "Siti hanya punya boneka (doll), bukan mobil mainan (toy car). Jadi jawabannya 'No, I don't.'"
  }
 }

@@ -273,6 +273,19 @@ async function buildClassInfoMap(
   return map
 }
 
+/** Membaca SEMUA baris sebuah kueri, per 1.000 (batas PostgREST). `ambil` harus berurutan stabil. */
+async function semuaBaris<T>(
+  ambil: (dari: number, sampai: number) => PromiseLike<{ data: unknown[] | null }>,
+): Promise<T[]> {
+  const hasil: T[] = []
+  for (let dari = 0; ; dari += 1000) {
+    const { data } = await ambil(dari, dari + 999)
+    hasil.push(...((data ?? []) as T[]))
+    if (!data || data.length < 1000) break
+  }
+  return hasil
+}
+
 export default async function MateriLatihanSoalPage() {
   const admin = createAdminClient()
 
@@ -336,16 +349,15 @@ export default async function MateriLatihanSoalPage() {
       .from('sessions')
       .select('id, class_id, subject_id, custom_theme, topic, selected_cp_ids, cp_urls, custom_learning_outcomes, tutor:profiles!tutor_id(full_name, nickname)')
       .not('cp_urls', 'eq', '{}') as unknown as Promise<{ data: SessionCpUrlRow[] | null }>,
-    admin
-      .from('question_curriculum_tags')
-      .select('group_id, question_bank_item_id') as unknown as Promise<{
-        data: { group_id: string; question_bank_item_id: string }[] | null
-      }>,
-    // Hanya `id` dan `explanation`: cukup untuk menghitung berapa soal yang
-    // sudah punya pembahasan, tanpa menyeret satu pun teks pertanyaan.
-    admin.from('question_bank_items').select('id, explanation') as unknown as Promise<{
-      data: { id: string; explanation: string | null }[] | null
-    }>,
+    // PostgREST memotong setiap jawaban di 1.000 baris. Tag soal sudah melewatinya
+    // (1.202 baris per 29 Okt 2026), jadi dibaca per halaman — tanpa itu jumlah soal
+    // per topik di kolom Bank Soal berkurang diam-diam (mis. 8 padahal 10).
+    semuaBaris<{ group_id: string; question_bank_item_id: string }>(
+      (dari, sampai) => admin.from('question_curriculum_tags').select('group_id, question_bank_item_id').order('question_bank_item_id').range(dari, sampai),
+    ).then(data => ({ data })),
+    // Dihitung sesudah tagnya diketahui: hanya butir yang bertag topik yang perlu
+    // dilihat pembahasannya, bukan seluruh bank (hampir 6.000 butir).
+    Promise.resolve({ data: null as { id: string; explanation: string | null }[] | null }),
     admin
       .from('curriculum_resource_duplications')
       .select('drive_file_id, copy_link, pdf_path') as unknown as Promise<{
@@ -375,8 +387,14 @@ export default async function MateriLatihanSoalPage() {
 
   // Pembahasan kosong dan pembahasan berisi spasi sama saja bagi murid yang
   // menjawab salah.
+  const idBertag = [...new Set((bankTagRows ?? []).map(t => t.question_bank_item_id))]
+  const itemBertag: { id: string; explanation: string | null }[] = [...(bankItemRows ?? [])]
+  for (let i = 0; i < idBertag.length; i += 200) {
+    const { data } = await admin.from('question_bank_items').select('id, explanation').in('id', idBertag.slice(i, i + 200))
+    itemBertag.push(...((data ?? []) as { id: string; explanation: string | null }[]))
+  }
   const adaPembahasan = new Set(
-    (bankItemRows ?? []).filter((i) => (i.explanation ?? '').trim() !== '').map((i) => i.id),
+    itemBertag.filter((i) => (i.explanation ?? '').trim() !== '').map((i) => i.id),
   )
 
   const tutorResources: TutorResourceRow[] = [

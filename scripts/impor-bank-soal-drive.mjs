@@ -182,7 +182,7 @@ function bacaDocx(jalurBerkas) {
 const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
 const AWAL_BUTIR = /^\s*(\d{1,2})\s*[.)]\s*\(\s*Level\s*C?\s*(\d)[^)]*\)\s*(.*)$/i
 const HURUF = /^\s*([A-E])\s*[.)]\s+(.+)$/
-const PETUNJUK_BANYAK = /pilih(?:lah)?\s+(?:lebih dari satu|semua|beberapa|dua|tiga|\d+)|lebih dari satu|dua atau lebih|banyak jawaban|jawaban(?:nya)?\s+(?:benar\s+)?(?:bisa|boleh|dapat)\b/i
+const PETUNJUK_BANYAK = /pilih(?:lah)?\s+(?:lebih dari satu|semua|beberapa|dua|tiga|\d+)|lebih dari satu|dua atau lebih|banyak jawaban|jawaban(?:nya)?\s+(?:benar\s+)?(?:bisa|boleh|dapat)\b|(?:select|choose|pick|mark)\s+(?:all|more than one|one or more|two|three|\d+)|more than one (?:correct )?(?:answer|option)|one or more (?:correct )?(?:answer|option)|all (?:the )?correct (?:answer|option)/i
 
 function uraikanSoal(blok) {
   const butir = []
@@ -611,7 +611,8 @@ function dariJawabanBuatan(s, jw) {
   if (new Set(opsi).size !== opsi.length) return 'pilihan kembar'
   const banyak = Array.isArray(jw.jawab)
   if (banyak && idx.length < 2) return 'kunci buatan multi hanya satu'
-  let prompt = s.prompt
+  // Instruksi templat berkas ("...tandai dengan centang (√) atau X!") tidak berlaku di layar digital.
+  let prompt = s.prompt.replace(/^\s*Select more than one correct answer by marking them with a check \(√\) or an X!\s*/im, '').replace(/\s*Berilah tanda centang \(√\) pada [^.!?\n]*[.!?]?/i, m => /pernyataan|jawaban|persamaan/i.test(m) ? '' : m).trim()
   // Soal yang punya lebih dari satu kunci harus memberi tahu murid.
   if (banyak && !PETUNJUK_BANYAK.test(prompt)) prompt = `${prompt}\n(Pilih lebih dari satu jawaban yang benar)`
   return { prompt, weight: 1, explanation: penjelasan, bloom: s.bloom, type: banyak ? 'mcq_multi' : 'mcq_single',
