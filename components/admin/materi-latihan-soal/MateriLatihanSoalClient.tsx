@@ -52,6 +52,7 @@ type TutorResourceRow = {
   classSemester: number | null
   jumlahSoal?: number
   jumlahPembahasan?: number
+  cpIds?: string[]
 }
 
 interface Props {
@@ -59,6 +60,8 @@ interface Props {
   subjects: { id: string; name: string; curriculum: string[]; level: string[] }[]
   resources: Resource[]
   tutorResources: TutorResourceRow[]
+  /** Label CP per id CP, dihitung dari kurikulum saat ini. */
+  cpInfo: Record<string, { nomor: string; teks: string; topicKey: string }>
   /** Satu entri per berkas sumber yang sudah disalin ke Drive TERA. */
   duplications: { driveFileId: string; copyLink: string | null }[]
   /** Alamat Sora, dipakai tabel untuk menandai tautan mana yang miliknya. */
@@ -84,7 +87,7 @@ function extractDriveFileId(url: string): string | null {
   }
 }
 
-export default function MateriLatihanSoalClient({ topics, subjects, resources, tutorResources, duplications, soraUrl, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalClient({ topics, subjects, resources, tutorResources, cpInfo, duplications, soraUrl, createResourceAction, deleteResourceAction }: Props) {
   const [curriculumFilter, setCurriculumFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [semesterFilter, setSemesterFilter] = useState<number | ''>('')
@@ -147,7 +150,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
         ...tautanUntuk(r.href),
         source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
-        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan,
+        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan, cpIds: r.cpIds,
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a
@@ -314,6 +317,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
 
       <MateriLatihanSoalTable
         rows={filteredRows}
+        cpInfo={cpInfo}
         soraUrl={soraUrl}
         allTopics={topics}
         allSubjects={allSubjectsWithTopics}

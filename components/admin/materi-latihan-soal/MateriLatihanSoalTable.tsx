@@ -89,9 +89,15 @@ export type DisplayRow = {
   /** Hanya pada baris `bank_soal`. */
   jumlahSoal?: number
   jumlahPembahasan?: number
+  /** CP yang dipilih sesi tempat item ini ditempelkan; disaring ke topik barisnya saat ditampilkan. */
+  cpIds?: string[]
 }
 
+/** Label satu CP: nomor menurut kurikulum, teksnya, dan topik pemiliknya. */
+type InfoCp = { nomor: string; teks: string; topicKey: string }
+
 interface Props {
+  cpInfo: Record<string, InfoCp>
   rows: DisplayRow[]
   /** Alamat Sora; tanpa ini tautan Sora tidak bisa dibedakan dari web lain. */
   soraUrl: string | null
@@ -466,13 +472,22 @@ function kunciTautan(href: string): string {
 }
 
 function tanpaDuplikat(baris: DisplayRow[]): DisplayRow[] {
-  const lihat = new Set<string>()
-  return baris.filter(r => {
+  const pertama = new Map<string, DisplayRow>()
+  const hasil: DisplayRow[] = []
+  for (const r of baris) {
     const k = kunciTautan(r.href)
-    if (lihat.has(k)) return false
-    lihat.add(k)
-    return true
-  })
+    const ada = pertama.get(k)
+    if (ada) {
+      // Baris pendamping yang dibuang tetap menyumbang CP-nya: dua sesi yang
+      // memakai form yang sama bisa mengajarkan CP berbeda.
+      ada.cpIds = [...new Set([...(ada.cpIds ?? []), ...(r.cpIds ?? [])])]
+      continue
+    }
+    const salinan = { ...r, cpIds: [...(r.cpIds ?? [])] }
+    pertama.set(k, salinan)
+    hasil.push(salinan)
+  }
+  return hasil
 }
 
 function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): TopicGroup[] {
@@ -509,11 +524,14 @@ function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): T
   // membuatnya tidak pernah dikerjakan.
   for (const g of groups.values()) {
     if (g.lampiran.length === 0 || g.materi.length === 0) continue
-    const berkas = new Set(g.materi.map(m => extractDriveFileId(m.href)).filter(Boolean))
-    const judul = new Set(g.materi.map(m => bakuJudul(m.title)))
     g.lampiran = g.lampiran.filter(l => {
       const f = extractDriveFileId(l.href)
-      return !(f && berkas.has(f)) && !judul.has(bakuJudul(l.title))
+      const sama = g.materi.find(m => (f && extractDriveFileId(m.href) === f) || bakuJudul(m.title) === bakuJudul(l.title))
+      if (!sama) return true
+      // Lampiran yang terwakili materi katalog meninggalkan CP-nya di materi itu:
+      // dari lampiranlah kita tahu CP mana yang diajarkan dengan materi tersebut.
+      sama.cpIds = [...new Set([...(sama.cpIds ?? []), ...(l.cpIds ?? [])])]
+      return false
     })
   }
 
@@ -625,7 +643,28 @@ function SortableHeader({ label, sortKey, activeKey, dir, onSort, first }: {
   )
 }
 
-function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraUrl: string | null; onDelete: (id: string) => void }) {
+/** Nomor "1.1.8" -> urutan angka, untuk mengurutkan CP dan meringkas rentang. */
+const urutNomor = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
+
+/**
+ * Label CP sebuah item: "CP 1.1.8 · Bilangan berpangkat bulat, bentuk akar…".
+ * Bila lebih dari satu CP: "CP 1.1.5, 1.1.6 · Rasio (skala, …) +1". Teksnya dipotong
+ * (isi lengkap di tooltip). Hanya CP milik topik barisnya yang ditampilkan.
+ */
+function labelCp(cpIds: string[] | undefined, cpInfo: Record<string, InfoCp>, topicKey: string) {
+  const info = [...new Set(cpIds ?? [])]
+    .map(id => cpInfo[id])
+    .filter((x): x is InfoCp => !!x && x.topicKey === topicKey)
+    .sort((a, b) => urutNomor(a.nomor, b.nomor))
+  if (info.length === 0) return null
+  return {
+    ringkas: `CP ${info.map(i => i.nomor).join(', ')}`,
+    teks: info[0].teks + (info.length > 1 ? ` +${info.length - 1}` : ''),
+    lengkap: info.map(i => `CP ${i.nomor}: ${i.teks}`).join('\n'),
+  }
+}
+
+function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: DisplayRow[]; soraUrl: string | null; onDelete: (id: string) => void; cpInfo: Record<string, InfoCp>; topicKey: string }) {
   if (items.length === 0) return <span className="text-gray-300">—</span>
   return (
     <ul className="space-y-1">
@@ -688,6 +727,18 @@ function ResourceCell({ items, soraUrl, onDelete }: { items: DisplayRow[]; soraU
               )
             )}
           </a>
+          {(() => {
+            const cp = r.kind === 'bank_soal' ? null : labelCp(r.cpIds, cpInfo, topicKey)
+            return cp ? (
+              <span
+                title={cp.lengkap}
+                className="min-w-0 max-w-[16rem] truncate rounded bg-slate-100 px-1.5 py-px text-[10px] leading-4 text-slate-600"
+              >
+                <span className="font-medium">{cp.ringkas}</span>
+                <span className="text-slate-400"> · {cp.teks}</span>
+              </span>
+            ) : null
+          })()}
           {r.hrefAsli && (
             <a
               href={r.hrefAsli}
@@ -757,7 +808,7 @@ function KodeTopik({ kode }: { kode: string }) {
   )
 }
 
-export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
+export default function MateriLatihanSoalTable({ rows, cpInfo, soraUrl, allTopics, allSubjects, createResourceAction, deleteResourceAction }: Props) {
   const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
   const [saringKelengkapan, setSaringKelengkapan] = useState<'' | 'belum' | Kelengkapan>('')
@@ -957,16 +1008,16 @@ export default function MateriLatihanSoalTable({ rows, soraUrl, allTopics, allSu
                   </td>
                   <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{g.tutorLabel}</td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={[...g.materi, ...g.lampiran]} soraUrl={soraUrl} onDelete={handleDelete} />
+                    <ResourceCell items={[...g.materi, ...g.lampiran]} soraUrl={soraUrl} onDelete={handleDelete} cpInfo={cpInfo} topicKey={g.topicKey} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.asesmen} soraUrl={soraUrl} onDelete={handleDelete} />
+                    <ResourceCell items={g.asesmen} soraUrl={soraUrl} onDelete={handleDelete} cpInfo={cpInfo} topicKey={g.topicKey} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.latihanSoal} soraUrl={soraUrl} onDelete={handleDelete} />
+                    <ResourceCell items={g.latihanSoal} soraUrl={soraUrl} onDelete={handleDelete} cpInfo={cpInfo} topicKey={g.topicKey} />
                   </td>
                   <td className="px-4 py-2.5 max-w-xs">
-                    <ResourceCell items={g.bankSoal} soraUrl={soraUrl} onDelete={handleDelete} />
+                    <ResourceCell items={g.bankSoal} soraUrl={soraUrl} onDelete={handleDelete} cpInfo={cpInfo} topicKey={g.topicKey} />
                   </td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <span className={`text-xs font-medium ${KELENGKAPAN_WARNA[kelengkapan(g)]}`}>

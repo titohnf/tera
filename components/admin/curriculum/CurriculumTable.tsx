@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import CurriculumForm from './CurriculumForm'
+import { nomorKurikulum } from '@/lib/curriculum-numbering'
 
 type Topic = {
   id: string
@@ -19,6 +20,7 @@ type Topic = {
   topic: string | null
   learning_outcomes: string | null
   sort_order: number
+  created_at?: string | null
   subjects: { name: string } | null
 }
 
@@ -179,6 +181,8 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
     startTransition(async () => { await deleteTopicAction(ctx) })
   }
 
+  // Nomor tema.topik.CP dari fungsi bersama dengan tabel Materi dan Latihan Soal.
+  const nomor = nomorKurikulum(topics.map(t => ({ ...t, subjectName: t.subjects?.name ?? 'Lainnya' })))
   const grouped = groupBySubjectThenTheme(topics)
 
   return (
@@ -247,7 +251,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
               {Array.from(byTheme.entries()).map(([theme, items], themeIdx) => {
                 const themeKey = `${subjectName}__${theme}`
                 const isCollapsed = openThemeKey !== themeKey
-                const themeNum = themeIdx + 1
+                const themeNum = nomor.get(items[0].id)?.tema ?? themeIdx + 1
                 const themeCtx: ThemeCtx = {
                   curriculum: items[0].curriculum,
                   subject_id: items[0].subject_id,
@@ -370,7 +374,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                               )}
                               <tr key={`topic-${topic}`} className="group/topic border-t border-slate-200 bg-slate-50/60">
                                 <td className="px-4 py-2.5 text-sm text-gray-400 text-center tabular-nums w-14 border-r border-slate-200 border-b border-b-slate-200">
-                                  {themeNum}.{topicIdx + 1}
+                                  {themeNum}.{nomor.get(rows[0].id)?.topik ?? topicIdx + 1}
                                 </td>
                                 <td className="px-4 py-2.5 text-sm font-medium text-gray-800 border-b border-slate-200 relative" colSpan={2}>
                                   {topic}
@@ -399,7 +403,7 @@ export default function CurriculumTable({ topics, subjects, curriculumSubjects, 
                               {rows.filter(item => item.learning_outcomes !== null).map((item, idx) => (
                                 <tr key={item.id} className={`group hover:bg-slate-50/60 transition-colors border-b border-slate-100`}>
                                   <td className="px-4 py-2.5 text-sm text-gray-400 text-center align-top tabular-nums w-14 border-r border-slate-100">
-                                    {themeNum}.{topicIdx + 1}.{idx + 1}
+                                    {themeNum}.{nomor.get(item.id)?.topik ?? topicIdx + 1}.{nomor.get(item.id)?.cp ?? idx + 1}
                                   </td>
                                   <td className="px-4 py-2.5 text-sm text-gray-700 leading-relaxed align-top relative" colSpan={2}>
                                     {item.learning_outcomes ?? <span className="text-gray-300">—</span>}

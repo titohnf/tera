@@ -8,11 +8,14 @@ export default async function CurriculumPage() {
   const [{ data: topics }, { data: subjects }] = await Promise.all([
     admin
       .from('curriculum_topics')
-      .select('id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
+      .select('id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, created_at, subjects(name)')
       .order('subject_id')
       .order('grade_level')
       .order('semester')
-      .order('sort_order') as unknown as Promise<{
+      .order('sort_order')
+      // Pemutus seri yang sama dengan `nomorKurikulum`: urutan baris yang tampil dan nomornya tidak boleh berbeda.
+      .order('created_at')
+      .order('id') as unknown as Promise<{
         data: {
           id: string
           curriculum: string
@@ -23,6 +26,7 @@ export default async function CurriculumPage() {
           topic: string | null
           learning_outcomes: string | null
           sort_order: number
+          created_at: string | null
           subjects: { name: string } | null
         }[] | null
       }>,

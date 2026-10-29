@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { createCurriculumResource, deleteCurriculumResource } from '@/lib/actions/admin/curriculum-resources'
 import { extractDriveFileId } from '@/lib/curriculum-resource-links'
 import MateriLatihanSoalClient from '@/components/admin/materi-latihan-soal/MateriLatihanSoalClient'
+import { nomorKurikulum, formatNomor } from '@/lib/curriculum-numbering'
 import StatusMateriPanel from '@/components/admin/materi-latihan-soal/StatusMateriPanel'
 import SinkronSoalPanel, { type RingkasanSoal } from '@/components/admin/materi-latihan-soal/SinkronSoalPanel'
 
@@ -36,6 +37,7 @@ type MaterialSourceRow = {
     curriculum_topic_id: string | null
     custom_theme: string | null
     topic: string | null
+    selected_cp_ids: string[] | null
     tutor: TutorRef
   } | null
 }
@@ -73,6 +75,11 @@ export type TutorResourceRow = {
   customTheme: string | null
   topicText: string | null
   tutorName: string | null
+  /**
+   * CP yang dipilih sesi tempat item ini ditempelkan (`sessions.selected_cp_ids`).
+   * Tabel menampilkan labelnya, disaring ke CP milik topik barisnya.
+   */
+  cpIds?: string[]
   /** Hanya pada baris `bank_soal`: bahan kolom kelengkapan. */
   jumlahSoal?: number
   jumlahPembahasan?: number
@@ -112,6 +119,7 @@ function toTutorResources(
         customTheme: r.sessions!.custom_theme,
         topicText: r.sessions!.topic,
         tutorName: shortTutorName(r.sessions!.tutor),
+        cpIds: r.sessions!.selected_cp_ids ?? [],
         classGradeLevel: classInfo?.gradeLevel ?? null,
         classSemester: classInfo?.semester ?? null,
       }
@@ -149,6 +157,7 @@ function toLatihanSoalResources(
         customTheme: isCustom ? s.custom_theme : null,
         topicText: isCustom ? s.topic : null,
         tutorName: shortTutorName(s.tutor),
+        cpIds: s.selected_cp_ids ?? [],
         classGradeLevel: classInfo?.gradeLevel ?? null,
         classSemester: classInfo?.semester ?? null,
       })
@@ -296,7 +305,7 @@ export default async function MateriLatihanSoalPage() {
   const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: bankItemRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
-      .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, subjects(name)')
+      .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, created_at, subjects(name)')
       .order('subject_id')
       .order('grade_level')
       .order('semester')
@@ -339,11 +348,11 @@ export default async function MateriLatihanSoalPage() {
       }>,
     admin
       .from('materials')
-      .select('id, title, link_url, file_path, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
+      .select('id, title, link_url, file_path, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, selected_cp_ids, tutor:profiles!tutor_id(full_name, nickname))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('assessments')
-      .select('id, title, link_url, quiz_id, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, tutor:profiles!tutor_id(full_name, nickname))')
+      .select('id, title, link_url, quiz_id, session_id, created_at, sessions(class_id, subject_id, curriculum_topic_id, custom_theme, topic, selected_cp_ids, tutor:profiles!tutor_id(full_name, nickname))')
       .order('created_at', { ascending: false }) as unknown as Promise<{ data: MaterialSourceRow[] | null }>,
     admin
       .from('sessions')
@@ -456,6 +465,29 @@ export default async function MateriLatihanSoalPage() {
     }
   }
 
+  // Label CP per item: nomor "tema.topik.CP" dan teksnya DIHITUNG dari kurikulum saat
+  // ini (fungsi yang sama dengan menu Kurikulum), tidak disimpan di mana pun —
+  // jadi kalau kurikulum diubah, tabel ini ikut berubah.
+  const nomorCp = nomorKurikulum(
+    (topics ?? []).map(t => ({
+      id: t.id, curriculum: t.curriculum, grade_level: t.grade_level, semester: t.semester,
+      theme: t.theme, topic: t.topic, learning_outcomes: t.learning_outcomes, sort_order: t.sort_order,
+      created_at: (t as { created_at?: string | null }).created_at ?? null,
+      subjectName: (t.subjects as { name?: string } | null)?.name ?? 'Lainnya',
+    })),
+  )
+  const cpInfo: Record<string, { nomor: string; teks: string; topicKey: string }> = {}
+  for (const t of topics ?? []) {
+    if (t.learning_outcomes === null || !t.learning_outcomes.trim() || !t.topic) continue
+    const n = nomorCp.get(t.id)
+    if (!n) continue
+    cpInfo[t.id] = {
+      nomor: formatNomor(n),
+      teks: t.learning_outcomes.trim(),
+      topicKey: `${t.subject_id}__${t.grade_level}__${t.semester}__${t.theme}__${t.topic}`,
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -472,6 +504,7 @@ export default async function MateriLatihanSoalPage() {
         subjects={(subjects ?? []).map(s => ({ ...s, curriculum: s.curriculum ?? [], level: s.level ?? [] }))}
         resources={resources ?? []}
         tutorResources={tutorResources}
+        cpInfo={cpInfo}
         duplications={(duplicationRows ?? []).map(r => ({ driveFileId: r.drive_file_id, copyLink: r.copy_link }))}
         soraUrl={soraUrl}
         createResourceAction={createCurriculumResource}
