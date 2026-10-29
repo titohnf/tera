@@ -165,7 +165,7 @@ export function namaDasar(nama: string): string {
   return nama.replace(/^\d+\.\s*/, '').trim()
 }
 
-export type CocokForm = { grup: GrupTopik; cara: 'kode' | 'peta' | 'nama' }
+export type CocokForm = { grup: GrupTopik; cara: 'kode' | 'peta' | 'nama' | 'tautan' }
 
 /**
  * Topik sebuah form dari NAMANYA, dengan urutan yang sama seperti materi:
@@ -225,6 +225,78 @@ function mapelDariJalur(jalur: string): string | null {
   return kandidat && !/asesmen|bank soal|materi/i.test(kandidat) ? kandidat : null
 }
 
+/** Id terbit sebuah form: `/forms/d/e/<id>/viewform` (yang ditempel tutor dan yang dikembalikan Forms API). */
+export const idTerbit = (u: string | null | undefined): string | null =>
+  /\/forms\/d\/e\/([\w-]+)/.exec(u ?? '')?.[1] ?? null
+
+/** Tautan pendek (forms.gle) diikuti sampai ke tautan terbitnya; null bila gagal. */
+async function selesaikanTautan(u: string): Promise<string | null> {
+  const langsung = idTerbit(u)
+  if (langsung) return langsung
+  if (!/forms\.gle|goo\.gl\/forms/.test(u)) return null
+  try {
+    let url = u
+    for (let i = 0; i < 4; i++) {
+      const r = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(8000) })
+      const lokasi = r.headers.get('location')
+      if (!lokasi) break
+      url = new URL(lokasi, url).href
+      const id = idTerbit(url)
+      if (id) return id
+    }
+  } catch {
+    // tautan mati atau jaringan: diperlakukan sebagai tidak diketahui
+  }
+  return null
+}
+
+/**
+ * Topik form dari sesi tempat tutor memakainya: tautan di asesmen sesi ->
+ * id terbit form -> `selected_cp_ids` sesi -> grup topik. Hanya form yang
+ * dipakai di sesi-sesi dengan SATU topik yang sama yang dipetakan; kalau sesi-
+ * sesinya menyebut topik berbeda, form itu dibiarkan (tidak ditebak).
+ */
+async function petakanLewatSesi(db: Db, grupById: Map<string, GrupTopik>): Promise<Map<string, GrupTopik>> {
+  const semua = async <T,>(tabel: string, kolom: string, saring?: (q: any) => any): Promise<T[]> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const hasil: T[] = []
+    for (let d = 0; ; d += 1000) {
+      let q = db.from(tabel).select(kolom)
+      if (saring) q = saring(q)
+      const { data } = await q.order('id').range(d, d + 999)
+      hasil.push(...((data ?? []) as T[]))
+      if (!data || data.length < 1000) break
+    }
+    return hasil
+  }
+  const [asesmen, sesi, cp] = await Promise.all([
+    semua<{ link_url: string; session_id: string }>('assessments', 'id, link_url, session_id', q => q.not('link_url', 'is', null)),
+    semua<{ id: string; selected_cp_ids: string[] | null }>('sessions', 'id, selected_cp_ids'),
+    semua<{ id: string; group_id: string | null }>('curriculum_topics', 'id, group_id'),
+  ])
+  const grupDariCp = new Map(cp.map(c => [c.id, c.group_id]))
+  const grupSesi = new Map(sesi.map(x => [x.id, new Set((x.selected_cp_ids ?? []).map(c => grupDariCp.get(c)).filter((g): g is string => !!g))]))
+
+  const tautan = [...new Set(asesmen.map(a => a.link_url).filter(u => /forms\.gle|goo\.gl\/forms|docs\.google\.com\/forms/.test(u)))]
+  const selesai = new Map<string, string | null>()
+  await paralel(tautan, 8, async u => { selesai.set(u, await selesaikanTautan(u)) })
+
+  const perTerbit = new Map<string, Set<string>>()
+  for (const a of asesmen) {
+    const id = selesai.get(a.link_url)
+    if (!id) continue
+    const gs = perTerbit.get(id) ?? new Set<string>()
+    for (const g of grupSesi.get(a.session_id) ?? []) gs.add(g)
+    perTerbit.set(id, gs)
+  }
+  const hasil = new Map<string, GrupTopik>()
+  for (const [id, gs] of perTerbit) {
+    if (gs.size !== 1) continue
+    const g = grupById.get([...gs][0])
+    if (g && g.grade_level !== 'Semua Kelas') hasil.set(id, g)
+  }
+  return hasil
+}
+
 // ─────────────────────────────────────────────── Drive
 
 export type FormDrive = { id: string; name: string; jalur: string; modifiedTime: string | null }
@@ -282,6 +354,7 @@ export type BarisSinkron = {
   modified_time: string | null
   group_id: string | null
   cara_cocok: string | null
+  terbit_id: string | null
   quiz_id: string | null
   butir_ids: string[]
   jumlah_butir: number
@@ -322,20 +395,36 @@ export async function sinkronkanSoalDigital(opsi: {
     .select('id, curriculum, subject_id, grade_level, semester, theme, topic, subjects(name)')
   if (eGrup) throw new Error(`Gagal membaca grup topik: ${eGrup.message}`)
   const indeks = bangunIndeks((grupData ?? []) as GrupTopik[], [])
+  const grupById = new Map(((grupData ?? []) as GrupTopik[]).map(g => [g.id, g]))
   const petaNama = new Map(peta.map(p => [norm(namaDasar(p.nama)), p.kode.toLowerCase()]))
 
   const berkas = await ambilFormDrive(drive)
   const { data: baris } = await db.from('sinkron_soal_drive').select('*')
   const ada = new Map(((baris ?? []) as BarisSinkron[]).map(b => [b.file_id, b]))
 
+  // Topik lewat sesi hanya dihitung bila ada form yang membutuhkannya: form
+  // baru yang tak cocok lewat nama, atau yang sudah tercatat tanpa topik.
+  const butuhTautan = berkas.some(f => {
+    const b = ada.get(f.id)
+    return (!b || b.status === 'tanpa_topik') && !cocokkanForm(f.name, indeks, petaNama, f.jalur)
+  })
+  const lewatSesi = butuhTautan ? await petakanLewatSesi(db, grupById) : new Map<string, GrupTopik>()
+  const topikForm = (f: FormDrive, terbit: string | null): CocokForm | null => {
+    const nama = cocokkanForm(f.name, indeks, petaNama, f.jalur)
+    if (nama) return nama
+    const g = terbit ? lewatSesi.get(terbit) : undefined
+    return g ? { grup: g, cara: 'tautan' } : null
+  }
+
   // Yang perlu diproses: form baru, form yang berubah, yang sebelumnya galat,
-  // dan yang tadinya tanpa topik tapi kini topiknya bisa dipastikan.
+  // dan yang tadinya tanpa topik tapi kini topiknya bisa dipastikan (atau yang
+  // id terbitnya belum dikenal, supaya sekali dibaca ia bisa dicocokkan).
   const antri = berkas.filter(f => {
     const b = ada.get(f.id)
     if (!b) return true
     if (b.status === 'galat') return true
     if (b.modified_time && f.modifiedTime && new Date(b.modified_time).getTime() !== new Date(f.modifiedTime).getTime()) return true
-    if (b.status === 'tanpa_topik' && cocokkanForm(f.name, indeks, petaNama, f.jalur)) return true
+    if (b.status === 'tanpa_topik' && (!b.terbit_id || topikForm(f, b.terbit_id))) return true
     return false
   })
   const giliran = antri.slice(0, batas)
@@ -356,7 +445,7 @@ export async function sinkronkanSoalDigital(opsi: {
     if (!tulis) return
     await db.from('sinkron_soal_drive').upsert({
       file_id: f.id, nama: namaDasar(f.name), jalur: f.jalur, modified_time: f.modifiedTime,
-      group_id: null, cara_cocok: null, quiz_id: null, butir_ids: [], jumlah_butir: 0, catatan: null,
+      group_id: null, cara_cocok: null, terbit_id: ada.get(f.id)?.terbit_id ?? null, quiz_id: null, butir_ids: [], jumlah_butir: 0, catatan: null,
       ...b, diperiksa_at: new Date().toISOString(),
     })
   }
@@ -364,20 +453,21 @@ export async function sinkronkanSoalDigital(opsi: {
   await paralel(giliran, 3, async f => {
     const nama = namaDasar(f.name)
     const lama = ada.get(f.id) ?? null
-    const cocok = cocokkanForm(f.name, indeks, petaNama, f.jalur)
     try {
       const { data: form } = await forms.forms.get({ formId: f.id })
+      const terbit = idTerbit(form.responderUri)
+      const cocok = topikForm(f, terbit)
       const u = uraikanForm(form)
       if (u.gambar || u.soal.length === 0 || u.catatan.length > 0) {
         const alasan = u.gambar ? 'memuat gambar/video' : u.catatan.join(' | ') || 'tidak ada butir bernilai'
         hasil.dilewati.push({ nama, alasan })
-        await catat(f, { status: 'dilewati', catatan: alasan })
+        await catat(f, { status: 'dilewati', catatan: alasan, terbit_id: terbit })
         return
       }
       const salah = await periksaKunci(db, u.soal)
       if (salah) {
         hasil.galat.push({ nama, alasan: salah })
-        await catat(f, { status: 'galat', catatan: salah })
+        await catat(f, { status: 'galat', catatan: salah, terbit_id: terbit })
         return
       }
 
@@ -403,7 +493,7 @@ export async function sinkronkanSoalDigital(opsi: {
         if (!aman) {
           const alasan = 'form berubah di Drive, tetapi hasil lamanya sudah diaktifkan/dipakai — tinjau manual'
           hasil.perluTinjauan.push({ nama, alasan })
-          await catat(f, { status: 'perlu_tinjauan', catatan: alasan, group_id: lama.group_id, cara_cocok: lama.cara_cocok, quiz_id: quizId, butir_ids: butirLama, jumlah_butir: lama.jumlah_butir })
+          await catat(f, { status: 'perlu_tinjauan', catatan: alasan, terbit_id: terbit, group_id: lama.group_id, cara_cocok: lama.cara_cocok, quiz_id: quizId, butir_ids: butirLama, jumlah_butir: lama.jumlah_butir })
           return
         }
         if (tulis) {
@@ -462,10 +552,10 @@ export async function sinkronkanSoalDigital(opsi: {
       else hasil.dibuat++
       if (!cocok) hasil.tanpaTopik.push({ nama, jalur: f.jalur.replace(/^\//, '') })
       await catat(f, {
-        status: cocok ? 'selesai' : 'tanpa_topik',
+        status: cocok ? 'selesai' : 'tanpa_topik', terbit_id: terbit,
         group_id: cocok?.grup.id ?? null, cara_cocok: cocok?.cara ?? null,
         quiz_id: quizId, butir_ids: butirIds, jumlah_butir: u.soal.length,
-        catatan: cocok ? null : 'topik belum bisa dipastikan dari nama form — tambahkan ke lib/soal-pemetaan.json atau beri kode [t-xxxxxx] pada nama form',
+        catatan: cocok ? null : 'topik belum bisa dipastikan: nama form tidak cocok dan form belum dipakai di sesi — tambahkan ke lib/soal-pemetaan.json atau beri kode [t-xxxxxx] pada nama form',
       })
     } catch (e) {
       const alasan = e instanceof Error ? e.message : 'galat tak dikenal'
