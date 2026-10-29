@@ -443,6 +443,8 @@ export async function sinkronkanSoalDigital(opsi: {
             baru.map(s => ({
               created_by: penulis, type: s.type, prompt: s.prompt, options: s.options, correct_answer: s.correct_answer,
               weight: 1, explanation: s.pembahasan, status_verifikasi: 'draf', sumber_pembuatan: 'manual',
+              // Satu form = satu paket di Belajar (migrasi 203).
+              paket_kunci: `form:${f.id}`,
             })),
           ).select('id')
           if (eButir || !masuk) throw new Error(`butir bank soal gagal ditulis: ${eButir?.message}`)

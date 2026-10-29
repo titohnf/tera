@@ -34,6 +34,8 @@ import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
 
 const TULIS = process.argv.includes('--tulis')
+// Mengisi `paket_kunci` ("doc:<id berkas soal>") pada butir yang SUDAH ada, dicocokkan lewat kalimat soal.
+const ISI_KUNCI = process.argv.includes('--isi-paket-kunci')
 const arg = nama => {
   const i = process.argv.indexOf(nama)
   return i > 0 ? process.argv[i + 1] : null
@@ -665,7 +667,7 @@ for (const p of unik.values()) {
   ringkas.butirSiap += siap.length
   ringkas.butirLewat += lewat.length
   console.log(`${siap.length ? 'SIAP    ' : 'KOSONG  '} ${nama.replace(/^\//, '')}: ${siap.length}/${soal.length} butir${lewat.length ? ` | dilewati: ${lewat.join(' ; ').slice(0, 300)}` : ''}`)
-  hasilSemua.push({ groupId, nama, siap })
+  hasilSemua.push({ groupId, nama, siap, paketKunci: `doc:${p.soalId}` })
 }
 
 if (BERKAS_KERJA) {
@@ -673,6 +675,24 @@ if (BERKAS_KERJA) {
   console.log(`\n${kerja.length} butir kerja ditulis ke ${BERKAS_KERJA}`)
 }
 console.log(`\n${ringkas.pasangan} pasangan diperiksa (${ringkas.pasanganLewat} dilewati utuh); ${ringkas.butirSiap} butir siap, ${ringkas.butirLewat} butir dilewati.`)
+if (ISI_KUNCI) {
+  // Tidak menulis butir baru: hanya menempelkan penanda paket pada butir yang sudah ada.
+  let terisi = 0, tanpaPasangan = 0
+  for (const h of hasilSemua) {
+    const { data: tag } = await db.from('question_curriculum_tags').select('question_bank_items(id, prompt, paket_kunci)').eq('group_id', h.groupId)
+    const ada = ((tag ?? []).map(t => t.question_bank_items).filter(Boolean))
+    for (const b of h.siap) {
+      const cocok = ada.find(x => norm(x.prompt) === norm(b.prompt) && !x.paket_kunci)
+      if (!cocok) { tanpaPasangan++; continue }
+      cocok.paket_kunci = h.paketKunci
+      const { error } = await db.from('question_bank_items').update({ paket_kunci: h.paketKunci }).eq('id', cocok.id)
+      if (error) { console.error(`GAGAL    ${h.nama}: ${error.message}`); process.exit(1) }
+      terisi++
+    }
+  }
+  console.log(`\n${terisi} butir diberi paket_kunci doc:*; ${tanpaPasangan} butir hasil uraian tidak punya pasangan di bank (sudah ada penandanya atau bukan hasil impor).`)
+  process.exit(0)
+}
 if (!TULIS) {
   console.log('Belum ditulis. Tambahkan --tulis untuk memasukkan yang SIAP sebagai butir draf.')
   process.exit(0)
@@ -691,6 +711,7 @@ for (const h of hasilSemua) {
     baru.map(b => ({
       created_by: penulis, type: b.type, prompt: b.prompt, options: b.options, correct_answer: b.correct_answer,
       weight: b.weight, explanation: b.explanation, bloom_level: b.bloom, status_verifikasi: 'draf', sumber_pembuatan: 'manual',
+      paket_kunci: h.paketKunci,
     })),
   ).select('id')
   if (error || !dimasukkan) { console.error(`GAGAL    ${h.nama}: ${error?.message}`); continue }

@@ -35,6 +35,20 @@ const TANPA_KODE = ''
 /** Soal, materi, dan kemajuan sebuah mapel dalam satu lingkup jenjang. */
 export interface HitunganMapel {
   question_count: number
+  /**
+   * Banyaknya PAKET aktif di mapel ini. Satu paket = satu sumber soal (satu
+   * asesmen Google Form atau satu bank soal tutor, migrasi 203), jadi inilah
+   * satuan yang dikenal anak dan tutor; `question_count` tetap dibawa karena
+   * cincin kemajuan memakainya.
+   */
+  paket_count: number
+  /**
+   * Banyaknya TOPIK kurikulum mapel ini — daftar yang sama dengan yang terbuka
+   * begitu mapelnya diketuk. Paket dan materi idealnya minimal sebanyak ini
+   * (tiap topik punya paket dan materi); selisihnya memperlihatkan topik yang
+   * isinya belum lengkap.
+   */
+  topik_count: number
   /** Bahan baca. Bisa nol, dan itu disebutkan. */
   materi_count: number
   /** Materi yang berupa video (YouTube). Disebut terpisah, bukan dijumlahkan. */
@@ -415,6 +429,8 @@ export async function mapelLatihan(
     { data: kelompokKelas },
     { data: mapelKelas, error: galatKelas },
     { data: mapelSemua, error: galatSemua },
+    { data: paketPerTopik },
+    { data: semuaGrup },
   ] = await Promise.all([
     supabase.rpc('practice_subjects', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
     supabase
@@ -439,6 +455,10 @@ export async function mapelLatihan(
         })
       : Promise.resolve({ data: null, error: null }),
     supabase.rpc('practice_progress', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
+    // Paket per topik (203) dan SEMUA topik kurikulum: dua hal yang berbeda.
+    // Topik tanpa paket tetap dihitung — justru itu yang ingin dilihat tutor.
+    supabase.rpc('practice_paket_per_topik', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
+    supabase.from('curriculum_topic_groups').select('subject_id, grade_level').neq('grade_level', SEMUA_KELAS).limit(5000),
   ])
 
   const kelasIni = new Set(
@@ -466,6 +486,8 @@ export async function mapelLatihan(
     subject_id: subjectId,
     subject_name: nama,
     question_count: questionCount,
+    paket_count: 0,
+    topik_count: 0,
     materi_count: 0,
     video_count: 0,
     answered_count: galatSemua ? null : (progresSemua.get(subjectId)?.answered ?? 0),
@@ -473,6 +495,8 @@ export async function mapelLatihan(
     kelas: pakaiKelas
       ? {
           question_count: progresKelas.get(subjectId)?.total ?? 0,
+          paket_count: 0,
+          topik_count: 0,
           materi_count: 0,
           video_count: 0,
           answered_count: progresKelas.get(subjectId)?.answered ?? 0,
@@ -499,6 +523,21 @@ export async function mapelLatihan(
       if (video) ada.kelas.video_count++
       else ada.kelas.materi_count++
     }
+  }
+
+  // Paket dan topik. Hanya mapel yang SUDAH ditawarkan (punya soal atau materi)
+  // yang ikut dihitung; mapel yang cuma punya topik kosong tidak dimunculkan.
+  for (const r of (paketPerTopik as { subject_id: string; grade_level: string; paket: number | string }[] | null) ?? []) {
+    const ada = gabungan.get(r.subject_id)
+    if (!ada || r.grade_level === SEMUA_KELAS) continue
+    ada.paket_count += Number(r.paket)
+    if (ada.kelas && jenjang.includes(r.grade_level)) ada.kelas.paket_count += Number(r.paket)
+  }
+  for (const g of (semuaGrup as { subject_id: string; grade_level: string }[] | null) ?? []) {
+    const ada = gabungan.get(g.subject_id)
+    if (!ada) continue
+    ada.topik_count++
+    if (ada.kelas && jenjang.includes(g.grade_level)) ada.kelas.topik_count++
   }
 
   return [...gabungan.values()].sort((a, b) => a.subject_name.localeCompare(b.subject_name, 'id'))

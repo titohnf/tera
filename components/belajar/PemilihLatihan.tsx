@@ -429,10 +429,12 @@ export default function PemilihLatihan({
           ? 'Membuka…'
           : (
             <>
-              {dikerjakan == null
-                ? `${angka.question_count} soal`
-                : `${dikerjakan}/${angka.question_count} soal dikerjakan`}
+              {/* Paket, materi, dan topik — idealnya minimal sama banyak: tiap
+                  topik punya paket dan materi. Kemajuan soal tetap tergambar di
+                  cincin ikonnya, jadi tidak perlu diulang sebagai pecahan. */}
+              {`${angka.paket_count} paket`}
               {` · ${angka.materi_count} materi`}
+              {` · ${angka.topik_count} topik`}
               {angka.video_count > 0 && ` · ${angka.video_count} video`}
             </>
           )}
