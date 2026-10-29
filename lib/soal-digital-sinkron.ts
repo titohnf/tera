@@ -65,6 +65,8 @@ export type SoalForm = {
 }
 
 const tanpaNomor = (t: string) => t.replace(/^\s*(?:Question\s*)?\d+[.:]\s*(?:\(Level[^)]*\))?\s*/i, '').trim()
+/** Teks soal: judul butir tanpa nomor; kalau judulnya cuma penanda ('1. (Level C1 - Mengingat)'), teksnya ada di deskripsi. */
+const teksSoal = (it: forms_v1.Schema$Item) => tanpaNomor(it.title ?? '') || (it.description ?? '').trim()
 const tanpaHuruf = (t: string) => t.replace(/^\s*[A-Za-z][.)]\s+/, '').trim()
 
 /** Semua pilihan berawalan "A. ", "B. " ... berurutan? Maka awalan itu dibuang. */
@@ -107,7 +109,7 @@ export function uraikanForm(form: forms_v1.Schema$Form): { soal: SoalForm[]; cat
       if (new Set(pilihan).size !== pilihan.length) { catatan.push(`${label}: teks pilihan kembar`); return }
       const bobot = Number(q.grading.pointValue)
       if (!(bobot > 0)) { catatan.push(`${label}: bobot ${q.grading.pointValue}`); return }
-      const prompt = tanpaNomor(it.title ?? '')
+      const prompt = teksSoal(it)
       const dasar = { prompt, weight: bobot, pembahasan: umpanBalik(q.grading) }
       if (cq.type === 'RADIO' || cq.type === 'DROP_DOWN') {
         if (benar.length !== 1) { catatan.push(`${label}: pilihan ganda dengan ${benar.length} kunci`); return }
@@ -130,7 +132,7 @@ export function uraikanForm(form: forms_v1.Schema$Form): { soal: SoalForm[]; cat
       if (jawab.some(v => !kolom.includes(v))) { catatan.push(`${label}: kunci grid di luar kolom`); return }
       soal.push({
         type: 'statement_grid',
-        prompt: tanpaNomor(it.title ?? ''),
+        prompt: teksSoal(it),
         options: { statements: bukaHuruf(pernyataan), answer_labels: kolom },
         correct_answer: { answers: jawab.map(v => v === kolom[0]), grading_mode: 'proportional' },
         weight: bobot,
@@ -501,6 +503,21 @@ export async function sinkronkanSoalDigital(opsi: {
         if (aman && butirLama.length) {
           const { data: sisaButir } = await db.from('question_bank_items').select('id, status_verifikasi').in('id', butirLama)
           if ((sisaButir ?? []).some((x: { status_verifikasi: string }) => x.status_verifikasi !== 'draf')) aman = false
+        }
+        // Form yang cuma "tersentuh" (waktu ubah Drive bergeser tanpa isi berubah) tidak perlu
+        // ditinjau: isinya dibandingkan dengan butir yang sudah ada, sama persis -> cukup catat waktunya.
+        if (!aman && butirLama.length) {
+          const { data: ada } = await db.from('question_bank_items').select('prompt, options, correct_answer').in('id', butirLama)
+          const lamaMap = new Map(((ada ?? []) as { prompt: string; options: unknown; correct_answer: unknown }[]).map(x => [norm(x.prompt), x]))
+          const identik = lamaMap.size === u.soal.length && u.soal.every(sl => {
+            const x = lamaMap.get(norm(sl.prompt))
+            return !!x && JSON.stringify(x.options) === JSON.stringify(sl.options) && JSON.stringify(x.correct_answer) === JSON.stringify(sl.correct_answer)
+          })
+          if (identik) {
+            hasil.diperbarui++
+            await catat(f, { status: 'selesai', terbit_id: terbit, group_id: lama.group_id, cara_cocok: lama.cara_cocok, quiz_id: quizId, butir_ids: butirLama, jumlah_butir: lama.jumlah_butir })
+            return
+          }
         }
         if (!aman) {
           const alasan = 'form berubah di Drive, tetapi hasil lamanya sudah diaktifkan/dipakai — tinjau manual'
