@@ -36,6 +36,9 @@ import { createClient } from '@supabase/supabase-js'
 const TULIS = process.argv.includes('--tulis')
 // Mengisi `paket_kunci` ("doc:<id berkas soal>") pada butir yang SUDAH ada, dicocokkan lewat kalimat soal.
 const ISI_KUNCI = process.argv.includes('--isi-paket-kunci')
+// Sumber lain: latihan soal TANPA file pembahasan dan asesmen berupa berkas Drive (bukan form).
+// Tidak ada kunci di dokumen, jadi semua butir menunggu kunci buatan (`--kerja` lalu `--jawaban`).
+const TANPA_PEMBAHASAN = process.argv.includes('--tanpa-pembahasan')
 const arg = nama => {
   const i = process.argv.indexOf(nama)
   return i > 0 ? process.argv[i + 1] : null
@@ -530,7 +533,7 @@ const saudaraDocx = pdf => {
 
 const sesi = []
 for (let d = 0; ; d += 1000) {
-  const { data } = await db.from('sessions').select('id, cp_urls, cp_pembahasan_urls').order('id').range(d, d + 999)
+  const { data } = await db.from('sessions').select('id, cp_urls, cp_pembahasan_urls, selected_cp_ids').order('id').range(d, d + 999)
   sesi.push(...data)
   if (data.length < 1000) break
 }
@@ -550,6 +553,37 @@ for (let d = 0; ; d += 1000) {
   const { data } = await db.from('curriculum_topics').select('id, group_id').order('id').range(d, d + 999)
   for (const c of data) cpKeGrup.set(c.id, c.group_id)
   if (data.length < 1000) break
+}
+
+if (TANPA_PEMBAHASAN) {
+  unik.clear()
+  // 1. Latihan soal yang tutor tautkan tanpa pembahasan (bukan topik custom).
+  for (const x of sesi) {
+    for (const [k, u] of Object.entries(x.cp_urls ?? {})) {
+      if ((x.cp_pembahasan_urls ?? {})[k] || k.startsWith('custom')) continue
+      const sid = idDari(u)
+      if (sid && !unik.has(sid)) unik.set(sid, { kunciTopik: k, soalId: sid, pembId: null })
+    }
+  }
+  // 2. Asesmen berupa berkas Drive (bukan form). Topiknya dari sesi tempat
+  // dipakai, dan hanya bila semua sesinya menyebut SATU topik yang sama.
+  const asesmen = []
+  for (let d = 0; ; d += 1000) {
+    const { data } = await db.from('assessments').select('link_url, session_id').not('link_url', 'is', null).order('id').range(d, d + 999)
+    asesmen.push(...data)
+    if (data.length < 1000) break
+  }
+  const grupSesi = new Map(sesi.map(x => [x.id, new Set((x.selected_cp_ids ?? []).map(c => cpKeGrup.get(c)).filter(Boolean))]))
+  const perBerkas = new Map()
+  for (const a of asesmen) {
+    if (/forms/.test(a.link_url) || !/drive\.google|docs\.google\.com\/(document|presentation|spreadsheets)/.test(a.link_url)) continue
+    const id = idDari(a.link_url)
+    if (!id) continue
+    const gs = perBerkas.get(id) ?? new Set()
+    for (const g of grupSesi.get(a.session_id) ?? []) gs.add(g)
+    perBerkas.set(id, gs)
+  }
+  for (const [id, gs] of perBerkas) if (gs.size === 1 && !unik.has(id)) unik.set(id, { kunciTopik: [...gs][0], soalId: id, pembId: null })
 }
 
 /**
@@ -595,26 +629,38 @@ for (const p of unik.values()) {
   if (JALUR && !nama.includes(JALUR)) continue
   ringkas.pasangan++
   if (!groupId) { console.log(`LEWAT    ${nama}: kunci topik "${p.kunciTopik.slice(0, 12)}" bukan topik kurikulum`); ringkas.pasanganLewat++; continue }
-  const soalDocx = asal?.mimeType === DOCX ? asal : asal?.name.toLowerCase().endsWith('.pdf') ? saudaraDocx(asal) : null
+  let soalDocx = asal?.mimeType === DOCX || asal?.mimeType === GDOC ? asal : asal?.name.toLowerCase().endsWith('.pdf') ? saudaraDocx(asal) : null
+  // Berkas di luar folder bimbel: tanyakan tipenya langsung (galat = belum dibagikan ke akun layanan).
+  if (!asal && TANPA_PEMBAHASAN) {
+    try {
+      const m = (await drive.files.get({ fileId: p.soalId, fields: 'id, name, mimeType', supportsAllDrives: true })).data
+      if (m.mimeType === DOCX || m.mimeType === GDOC) soalDocx = { id: m.id, name: m.name, mimeType: m.mimeType, jalur: m.name }
+    } catch { /* tak terjangkau */ }
+  }
   // Pembahasan sering disimpan tutor di luar folder bimbel, jadi tipenya
   // ditanyakan langsung (galat = belum dibagikan ke service account).
-  let pemb = perId.get(p.pembId)
-  if (!pemb) {
-    try {
-      pemb = { id: p.pembId, ...(await drive.files.get({ fileId: p.pembId, fields: 'mimeType', supportsAllDrives: true })).data }
-    } catch {
-      pemb = { id: p.pembId, mimeType: null }
+  let pemb = null
+  if (p.pembId) {
+    pemb = perId.get(p.pembId)
+    if (!pemb) {
+      try {
+        pemb = { id: p.pembId, ...(await drive.files.get({ fileId: p.pembId, fields: 'mimeType', supportsAllDrives: true })).data }
+      } catch {
+        pemb = { id: p.pembId, mimeType: null }
+      }
     }
   }
-  if (!soalDocx || soalDocx.mimeType !== DOCX) { console.log(`LEWAT    ${nama}: tidak ada saudara .docx untuk soal`); ringkas.pasanganLewat++; continue }
-  if (pemb.mimeType !== DOCX && pemb.mimeType !== GDOC) { console.log(`LEWAT    ${nama}: pembahasan bukan docx/GDoc (${pemb.mimeType ?? 'tak terjangkau'})`); ringkas.pasanganLewat++; continue }
+  if (!soalDocx || (soalDocx.mimeType !== DOCX && soalDocx.mimeType !== GDOC)) { console.log(`LEWAT    ${nama}: tidak ada saudara .docx untuk soal`); ringkas.pasanganLewat++; continue }
+  if (pemb && pemb.mimeType !== DOCX && pemb.mimeType !== GDOC) { console.log(`LEWAT    ${nama}: pembahasan bukan docx/GDoc (${pemb.mimeType ?? 'tak terjangkau'})`); ringkas.pasanganLewat++; continue }
 
   let bSoal, bPemb
   try {
-    await unduh(soalDocx.id, DOCX, join(TMP, 's.docx'))
-    await unduh(pemb.id, pemb.mimeType, join(TMP, 'p.docx'))
+    await unduh(soalDocx.id, soalDocx.mimeType, join(TMP, 's.docx'))
     bSoal = bacaDocx(join(TMP, 's.docx'))
-    bPemb = bacaDocx(join(TMP, 'p.docx'))
+    if (pemb) {
+      await unduh(pemb.id, pemb.mimeType, join(TMP, 'p.docx'))
+      bPemb = bacaDocx(join(TMP, 'p.docx'))
+    } else bPemb = []
   } catch (e) {
     console.log(`LEWAT    ${nama}: ${e.message.slice(0, 80)}`); ringkas.pasanganLewat++; continue
   }
