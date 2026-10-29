@@ -1,6 +1,182 @@
 [
-  { "nama": "Asesmen_TKA_9 SMP_Bentuk Aljabar Dasar", "kode": "t-e8901f", "topik": "Matematika Kelas 9 — Bentuk Aljabar" },
-  { "nama": "Asesmen_TKA_9 SMP_Pola Bilangan & Barisan Aritmetika", "kode": "t-8d6df2", "topik": "Matematika Kelas 9 — Pola Bilangan & Barisan" },
-  { "nama": "Asesmen_TKA_9 SMP_Persamaan Linear Satu Variabel (PLSV)", "kode": "t-513510", "topik": "Matematika Kelas 9 — Persamaan dan Pertidaksamaan Linier" },
-  { "nama": "Asesmen_TKA_9 SMP_Matematika_Pertidaksamaan Linear Satu Variabel (PtLSV)", "kode": "t-513510", "topik": "Matematika Kelas 9 — Persamaan dan Pertidaksamaan Linier" }
+  {
+    "nama": "Asesmen_TKA_9 SMP_Bentuk Aljabar Dasar",
+    "kode": "t-e8901f",
+    "topik": "Matematika Kelas 9 — Bentuk Aljabar"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_Pola Bilangan & Barisan Aritmetika",
+    "kode": "t-8d6df2",
+    "topik": "Matematika Kelas 9 — Pola Bilangan & Barisan"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_Persamaan Linear Satu Variabel (PLSV)",
+    "kode": "t-513510",
+    "topik": "Matematika Kelas 9 — Persamaan dan Pertidaksamaan Linier"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_Matematika_Pertidaksamaan Linear Satu Variabel (PtLSV)",
+    "kode": "t-513510",
+    "topik": "Matematika Kelas 9 — Persamaan dan Pertidaksamaan Linier"
+  },
+  {
+    "nama": "Asesmen_TKA_12_Perbandingan Trigonometri",
+    "kode": "t-556241",
+    "topik": "Matematika — Kelas 12 — Geometri dan Pengukuran — Perbandingan Trigonometri"
+  },
+  {
+    "nama": "Asesmen_TKA_12_Peluang",
+    "kode": "t-9e4081",
+    "topik": "Matematika — Kelas 12 — Data dan Peluang — Peluang"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_Review & Tes Formatif Fase 1",
+    "kode": "t-0f5fad",
+    "topik": "Matematika — Kelas 9 — Asesmen & Diagnostik — Review & Tes Formatif Numerasi"
+  },
+  {
+    "nama": "Asesmen_11 SMA_Matematika_Operasi Penjumlahan dan Pengurangan Fungsi serta Grafik Fungsi",
+    "kode": "t-1dceed",
+    "topik": "Matematika — Kelas 11 — Fungsi Invers dan Komposisi — Operasi Aljabar Fungsi"
+  },
+  {
+    "nama": "Asesmen_11 SMA_Ekonomi_Simulasi ASTS",
+    "kode": "t-8e3ba4",
+    "topik": "Ekonomi — Kelas 11 — Persiapan ATS — Simulasi Asesmen Tengah Semester (ATS)"
+  },
+  {
+    "nama": "Asesmen_Fondasi Berhitung_Perkalian & Pembagian Pecahan",
+    "kode": "t-788240",
+    "topik": "Matematika — Semua Kelas — Atas: Pecahan — Perkalian & Pembagian Pecahan"
+  },
+  {
+    "nama": "Asesmen_Fondasi Berhitung_Penjumlahan & Pengurangan Pecahan",
+    "kode": "t-8cd828",
+    "topik": "Matematika — Semua Kelas — Atas: Pecahan — Penjumlahan & Pengurangan Pecahan"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_B.Indonesia_Review Gabungan Topik Fase 1",
+    "kode": "t-d328c8",
+    "topik": "Bahasa Indonesia — Kelas 9 — Asesmen & Diagnostik — Review & Tes Formatif Literasi"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Menyusun Kembali Informasi dari Teks dalam Bentuk Ikhtisar/Bagan (Teks Fiksi)",
+    "kode": "t-cce01b",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Tekstual — Menyusun kembali informasi dari teks dalam bentuk ikhtisar/bagan"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Menjelaskan Makna Ungkapan/Idiom Dalam Teks (Dasar)",
+    "kode": "t-e15f25",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Inferensial — Menjelaskan makna ungkapan yang digunakan dalam teks"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Mengidentifikasi Informasi Tersurat dalam Teks (Teks Fiksi)",
+    "kode": "t-b41bd5",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Tekstual — Mengidentifikasi informasi tersurat dalam teks"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Mengidentifikasi Informasi Tersurat dalam Teks (Teks Informasi)",
+    "kode": "t-b41bd5",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Tekstual — Mengidentifikasi informasi tersurat dalam teks"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Mengidentifikasi objek berdasarkan kosakata dalam teks fiksi/nonfiksi",
+    "kode": "t-ff836a",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Tekstual — Mengidentifikasi objek berdasarkan kosakata yang digunakan dalam teks fiksi atau nonfiksi"
+  },
+  {
+    "nama": "Asesmen_11 SMA_Review Teori Klasik Neoklasik Historis, Pertumbuhan dan Pembangunan Ekonomi",
+    "kode": "t-7109d7",
+    "topik": "Ekonomi — Kelas 11 — Dinamika Ekonomi & Tantangannya — Pertumbuhan Ekonomi"
+  },
+  {
+    "nama": "Science Grade 4: Different Habitats — Where Can Insects Survive?",
+    "kode": "t-a45048",
+    "topik": "Science — Kelas 4 — Different Habitats — Where Can Mosquitoes Survive? & Review"
+  },
+  {
+    "nama": "Assesment_Math(Cambridge)_Grade4_Introducing Negative Numbers",
+    "kode": "t-d21c72",
+    "topik": "Math — Kelas 4 — Chapter 2 — Introducing Negative Numbers"
+  },
+  {
+    "nama": "Asesmen_Fondasi Berhitung_Perkalian Dasar (1-2 Angka) dan Perkalian Kompleks (Bersusun)",
+    "kode": "t-3d3830",
+    "topik": "Matematika — Semua Kelas — Menengah: Perkalian — Perkalian Dasar (1-2 Angka)"
+  },
+  {
+    "nama": "Asesmen_5_Matematika_Operasi Hitung Pecahan & Pengenalan Desimal (1)",
+    "kode": "t-86bd63",
+    "topik": "Matematika — Kelas 5 — Bilangan — Operasi Hitung Pecahan & Pengenalan Desimal"
+  },
+  {
+    "nama": "Asesmen_5 SD_IPAS_Peta dan Jenis Peta",
+    "kode": "t-6fcb06",
+    "topik": "IPAS — Kelas 5 — Kondisi Geografis — Komponen Peta, Jenis Peta & Evaluasi Tema Kondisi Geografis"
+  },
+  {
+    "nama": "Asesmen_8 SMP_Matematika_Pertidaksamaan Linear Satu Variabel (PtLSV)",
+    "kode": "t-578539",
+    "topik": "Matematika — Kelas 8 — Persamaan dan Pertidaksamaan Linear Satu Variabel — Menemukan Konsep Pertidaksamaan Linear Satu Variabel"
+  },
+  {
+    "nama": "Asesmen_8 SMP_Matematika_Teorema Pythagoras",
+    "kode": "t-3231a9",
+    "topik": "Matematika — Kelas 8 — Teorema Pythagoras — Pengertian Teorema Pythagoras"
+  },
+  {
+    "nama": "Asesmen_5 SD_B.Inggris_Past Tense Verbs (Regular Verbs)",
+    "kode": "t-e82d9d",
+    "topik": "Bahasa Inggris — Kelas 5 — Past Tense Verbs — Regular Verbs"
+  },
+  {
+    "nama": "Asesmen_5 SD_B.Inggris_Negative Imperatives",
+    "kode": "t-5fb177",
+    "topik": "Bahasa Inggris — Kelas 5 — Imperative Sentences (Kalimat Larangan) — Negative Imperatives"
+  },
+  {
+    "nama": "Asesmen_5 SD_B.Inggris_Adjectives",
+    "kode": "t-a913b4",
+    "topik": "Bahasa Inggris — Kelas 5 — Adjectives (Kata Sifat) — Describing Objects"
+  },
+  {
+    "nama": "Assesment_5 SD_B.Inggris_Prepositions for Direction & Place",
+    "kode": "t-454d05",
+    "topik": "Bahasa Inggris — Kelas 5 — Directions & Public Places (Petunjuk Arah & Tempat Umum) — Prepositions for Direction & Place"
+  },
+  {
+    "nama": "Asesmen_5 SD_B.Inggris_Countable and Uncountable Nouns",
+    "kode": "t-155223",
+    "topik": "Bahasa Inggris — Kelas 5 — Nouns (Kata Benda) — Countable and Uncountable Nouns"
+  },
+  {
+    "nama": "Asesmen_TKA_9 SMP_B.Indonesia_Review & Tes Formatif Fase 1",
+    "kode": "t-d328c8",
+    "topik": "Bahasa Indonesia — Kelas 9 — Asesmen & Diagnostik — Review & Tes Formatif Literasi"
+  },
+  {
+    "nama": "Asesmen_11 SMA_Matematika_Pinjaman dan Investasi dengan Bunga Majemuk",
+    "kode": "t-9c8fa6",
+    "topik": "Matematika — Kelas 11 — Matematika Keuangan — Konsep Bunga Majemuk pada Investasi"
+  },
+  {
+    "nama": "Asesmen_TKA_6 SD_Bahasa Indonesia_Menyusun Kembali Informasi dari Teks dalam Bentuk Ikhtisar/Bagan (Teks Informasi)",
+    "kode": "t-cce01b",
+    "topik": "Bahasa Indonesia — Kelas 6 — Pemahaman Tekstual — Menyusun kembali informasi dari teks dalam bentuk ikhtisar/bagan"
+  },
+  {
+    "nama": "Asesmen_Fondasi Berhitung_Hierarki Operasi Hitung Dasar (Tanpa Kurung)",
+    "kode": "t-860925",
+    "topik": "Matematika — Semua Kelas — Menengah: Operasi Campuran — Hierarki Operasi Hitung Dasar (Tanpa Kurung)"
+  },
+  {
+    "nama": "Asesmen_Fondasi Berhitung_Pembagian Kompleks (Porogapit)",
+    "kode": "t-2cae57",
+    "topik": "Matematika — Semua Kelas — Menengah: Pembagian — Pembagian Kompleks (Porogapit)"
+  },
+  {
+    "nama": "Asesmen_5 SD_Matematika_Evaluasi Tema Bilangan",
+    "kode": "t-414423",
+    "topik": "Matematika — Kelas 5 — Evaluasi Bilangan — Asesmen Tema Bilangan"
+  }
 ]
