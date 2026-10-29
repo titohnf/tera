@@ -433,7 +433,9 @@ export async function sinkronkanSoalDigital(opsi: {
     if (!b) return true
     if (b.status === 'galat') return true
     if (b.modified_time && f.modifiedTime && new Date(b.modified_time).getTime() !== new Date(f.modifiedTime).getTime()) return true
-    if (b.status === 'tanpa_topik' && (!b.terbit_id || topikForm(f, b.terbit_id))) return true
+    // Form yang belum dikenal id terbitnya dibaca sekali: id itu jembatan ke CP-nya (dan ke topiknya).
+    if (!b.terbit_id) return true
+    if (b.status === 'tanpa_topik' && topikForm(f, b.terbit_id)) return true
     return false
   })
   const giliran = antri.slice(0, batas)
