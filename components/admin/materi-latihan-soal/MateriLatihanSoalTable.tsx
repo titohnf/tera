@@ -448,6 +448,33 @@ function bakuJudul(t: string): string {
   return t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 }
 
+/**
+ * Tautan yang sama dalam satu topik cukup tampil sekali.
+ *
+ * Tabel ini mencatat tiap tautan yang ditempelkan tutor di sebuah sesi, jadi
+ * satu form yang dipakai di empat sesi muncul empat kali — padahal yang ingin
+ * dibaca adalah "topik ini punya asesmen apa saja". Dua tautan dianggap sama
+ * kalau berkas Drive-nya sama, atau (untuk Google Form/Docs) alamatnya sama
+ * tanpa parameter pelacak seperti `?usp=sf_link`. Tautan lain dibandingkan apa
+ * adanya: parameter di tautan YouTube, misalnya, menentukan videonya.
+ */
+function kunciTautan(href: string): string {
+  const berkas = extractDriveFileId(href)
+  if (berkas) return `drive:${berkas}`
+  const bersih = href.trim().replace(/\/+$/, '').toLowerCase()
+  return /^https?:\/\/(docs|drive|forms)\.google\.com\//.test(bersih) ? bersih.replace(/[?#].*$/, '') : bersih
+}
+
+function tanpaDuplikat(baris: DisplayRow[]): DisplayRow[] {
+  const lihat = new Set<string>()
+  return baris.filter(r => {
+    const k = kunciTautan(r.href)
+    if (lihat.has(k)) return false
+    lihat.add(k)
+    return true
+  })
+}
+
 function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): TopicGroup[] {
   const groups = new Map<string, TopicGroup>()
   const penyumbang = new Map<string, Set<string>>()
@@ -488,6 +515,12 @@ function groupByTopic(rows: DisplayRow[], urutanByKunci: Map<string, number>): T
       const f = extractDriveFileId(l.href)
       return !(f && berkas.has(f)) && !judul.has(bakuJudul(l.title))
     })
+  }
+
+  for (const g of groups.values()) {
+    g.asesmen = tanpaDuplikat(g.asesmen)
+    g.latihanSoal = tanpaDuplikat(g.latihanSoal)
+    g.lampiran = tanpaDuplikat(g.lampiran)
   }
 
   for (const [key, g] of groups) {
