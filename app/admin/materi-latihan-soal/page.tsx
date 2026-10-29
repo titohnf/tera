@@ -451,9 +451,20 @@ export default async function MateriLatihanSoalPage() {
 
   // Asesmen (Google Form) dan latihan soal (dokumen) yang sudah didigitalkan jadi paket
   // soal aktif ditandai bisa dikerjakan di /belajar.
+  // Tautan pendek (forms.gle) diikuti satu lompatan ke id terbitnya; hasilnya di-cache sehari.
+  const idDariPendek = new Map<string, string | null>()
+  const pendek = [...new Set(tutorResources.filter(r => r.kind === 'asesmen' && /forms\.gle\//.test(r.href)).map(r => r.href))]
+  await Promise.all(pendek.map(async u => {
+    try {
+      const res = await fetch(u, { redirect: 'manual', next: { revalidate: 86400 }, signal: AbortSignal.timeout(5000) })
+      idDariPendek.set(u, idTerbit(res.headers.get('location')))
+    } catch {
+      idDariPendek.set(u, null)
+    }
+  }))
   for (const r of tutorResources) {
     if (r.kind === 'asesmen') {
-      const id = idTerbit(r.href)
+      const id = idTerbit(r.href) ?? idDariPendek.get(r.href) ?? null
       if (id && formAktif.has(id)) r.terjangkau = true
     } else if (r.kind === 'latihan_soal') {
       const f = extractDriveFileId(r.href)
