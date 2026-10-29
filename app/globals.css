@@ -182,3 +182,21 @@ select {
     animation-duration: 1ms;
   }
 }
+
+/* Rangka pemuatan (shimmer): pita cahaya tipis yang menyapu bentuk kosong selagi halaman
+   portal keluarga dihitung di server. `background-size` dua kali lebar dan digeser,
+   jadi cukup satu elemen tanpa pseudo-elemen. Dasarnya warna abu yang sama dengan
+   rangka lama (`bg-slate-200`), supaya yang bergerak hanya kilaunya. */
+@keyframes shimmer-geser {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.shimmer {
+  background-color: #e2e8f0;
+  background-image: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.65) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shimmer-geser 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; }
+}

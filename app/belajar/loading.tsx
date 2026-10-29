@@ -16,10 +16,10 @@ export default function Memuat() {
       <span className="sr-only">Memuat daftar mapel…</span>
 
       <div className="flex items-center gap-3 pb-1">
-        <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-slate-200" />
+        <div className="h-11 w-11 shrink-0 shimmer rounded-full" />
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
-          <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
+          <div className="h-5 w-40 shimmer rounded" />
+          <div className="h-4 w-28 shimmer rounded" />
         </div>
       </div>
 
@@ -28,10 +28,10 @@ export default function Memuat() {
       <div className="space-y-2 pt-4">
         {[0, 1, 2].map(i => (
           <div key={i} className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-kartu">
-            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-10 w-10 shrink-0 shimmer rounded-full" />
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-              <div className="h-3 w-24 animate-pulse rounded bg-slate-100" />
+              <div className="h-4 w-32 shimmer rounded" />
+              <div className="h-3 w-24 shimmer rounded" />
             </div>
           </div>
         ))}
