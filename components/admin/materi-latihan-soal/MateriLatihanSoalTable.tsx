@@ -91,6 +91,8 @@ export type DisplayRow = {
   jumlahPembahasan?: number
   /** CP yang dipilih sesi tempat item ini ditempelkan; disaring ke topik barisnya saat ditampilkan. */
   cpIds?: string[]
+  /** Asal paket (nama form Drive), hanya pada baris bank_soal; untuk tooltip. */
+  namaSumber?: string
 }
 
 /** Label satu CP: nomor menurut kurikulum, teksnya, dan topik pemiliknya. */
@@ -647,9 +649,27 @@ function SortableHeader({ label, sortKey, activeKey, dir, onSort, first }: {
 const urutNomor = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
 
 /**
- * Label CP sebuah item: "CP 1.1.8 · Bilangan berpangkat bulat, bentuk akar…".
- * Bila lebih dari satu CP: "CP 1.1.5, 1.1.6 · Rasio (skala, …) +1". Teksnya dipotong
- * (isi lengkap di tooltip). Hanya CP milik topik barisnya yang ditampilkan.
+ * Nomor-nomor CP ditulis ringkas: yang berurutan jadi rentang ("1.1.5–7"), sisanya
+ * dipisah koma ("1.1.5–7, 1.1.9"). Nomornya sudah berurutan masuk.
+ */
+function ringkasNomor(nomor: string[]): string {
+  const bagian = nomor.map(n => {
+    const i = n.lastIndexOf('.')
+    return { awalan: n.slice(0, i + 1), no: Number(n.slice(i + 1)) }
+  })
+  const hasil: string[] = []
+  for (let i = 0; i < bagian.length; ) {
+    let j = i
+    while (j + 1 < bagian.length && bagian[j + 1].awalan === bagian[i].awalan && bagian[j + 1].no === bagian[j].no + 1) j++
+    hasil.push(j > i ? `${bagian[i].awalan}${bagian[i].no}–${bagian[j].no}` : `${bagian[i].awalan}${bagian[i].no}`)
+    i = j + 1
+  }
+  return hasil.join(', ')
+}
+
+/**
+ * CP sebuah item, hanya yang milik topik barisnya, berurutan menurut nomor kurikulum.
+ * `ringkas` ("1.1.5–7") yang jadi teks tautan; `lengkap` muncul di tooltip.
  */
 function labelCp(cpIds: string[] | undefined, cpInfo: Record<string, InfoCp>, topicKey: string) {
   const info = [...new Set(cpIds ?? [])]
@@ -658,17 +678,26 @@ function labelCp(cpIds: string[] | undefined, cpInfo: Record<string, InfoCp>, to
     .sort((a, b) => urutNomor(a.nomor, b.nomor))
   if (info.length === 0) return null
   return {
-    ringkas: `CP ${info.map(i => i.nomor).join(', ')}`,
-    teks: info[0].teks + (info.length > 1 ? ` +${info.length - 1}` : ''),
+    pertama: info[0].nomor,
+    ringkas: ringkasNomor(info.map(i => i.nomor)),
     lengkap: info.map(i => `CP ${i.nomor}: ${i.teks}`).join('\n'),
   }
 }
 
 function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: DisplayRow[]; soraUrl: string | null; onDelete: (id: string) => void; cpInfo: Record<string, InfoCp>; topicKey: string }) {
   if (items.length === 0) return <span className="text-gray-300">—</span>
+  // Berurutan menurut CP supaya materi, asesmen, latihan soal, dan bank soal satu topik bisa
+  // dibandingkan sekilas: CP yang sama berada di posisi yang sama di tiap kolom. Item tanpa
+  // CP di bawah; di dalam CP yang sama urutan semula dipertahankan.
+  const urut = [...items].sort((a, b) => {
+    const ca = labelCp(a.cpIds, cpInfo, topicKey)?.pertama
+    const cb = labelCp(b.cpIds, cpInfo, topicKey)?.pertama
+    if (ca && cb) return urutNomor(ca, cb)
+    return ca ? -1 : cb ? 1 : 0
+  })
   return (
     <ul className="space-y-1">
-      {items.map((r) => {
+      {urut.map((r) => {
         // Masked label instead of the (often long) real title — "Materi"
         // when it's the only one for this topic/tutor, "Materi 1"/"Materi 2"
         // when there are several. Full title still available on hover.
@@ -680,7 +709,7 @@ function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: D
         // menomori keduanya dalam satu deret menghasilkan "Lampiran sesi 2"
         // untuk lampiran pertama, yang membuatnya terbaca seperti bagian dari
         // hitungan materi. Justru pemisahan itu yang sedang ditegakkan.
-        const sejenis = items.filter(x => x.kind === r.kind)
+        const sejenis = urut.filter(x => x.kind === r.kind)
         const nomor = sejenis.indexOf(r) + 1
         const label =
           r.kind === 'bank_soal'
@@ -689,6 +718,10 @@ function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: D
               ? `${RESOURCE_LABEL[r.kind]} ${nomor}`
               : RESOURCE_LABEL[r.kind]
         const jenis = JENIS_TAUTAN_GAYA[jenisTautan(r.href, soraUrl)]
+        // Bila CP-nya diketahui, teks tautan HANYA nomor CP (besar); judul dan teks CP
+        // pindah ke tooltip. Tanpa CP, label lama ("Materi 1", "12 soal · …") dipertahankan.
+        const cp = labelCp(r.cpIds, cpInfo, topicKey)
+        const tooltip = [r.title, r.namaSumber ? `Sumber: ${r.namaSumber}` : null, cp?.lengkap].filter(Boolean).join('\n')
         return (
         <li key={r.id} className="group flex items-center gap-1.5">
           <span
@@ -701,10 +734,10 @@ function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: D
             href={r.href}
             target="_blank"
             rel="noopener noreferrer"
-            title={r.title}
-            className="flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0"
+            title={tooltip}
+            className={`flex items-center gap-1.5 text-blue-700 hover:underline truncate min-w-0 ${cp ? 'text-sm font-semibold tabular-nums' : ''}`}
           >
-            <span className="truncate">{label}</span>
+            <span className="truncate">{cp ? cp.ringkas : label}</span>
             {/* Centang = BISA DIBUKA ANAK, bukan lagi "sudah disalin ke Drive".
                 Yang lama membaca `copy_link` — penanda penyalinan Juli, dari masa
                 ketika materi masih tersebar di Drive tutor dan salinan di folder
@@ -727,18 +760,6 @@ function ResourceCell({ items, soraUrl, onDelete, cpInfo, topicKey }: { items: D
               )
             )}
           </a>
-          {(() => {
-            const cp = r.kind === 'bank_soal' ? null : labelCp(r.cpIds, cpInfo, topicKey)
-            return cp ? (
-              <span
-                title={cp.lengkap}
-                className="min-w-0 max-w-[16rem] truncate rounded bg-slate-100 px-1.5 py-px text-[10px] leading-4 text-slate-600"
-              >
-                <span className="font-medium">{cp.ringkas}</span>
-                <span className="text-slate-400"> · {cp.teks}</span>
-              </span>
-            ) : null
-          })()}
           {r.hrefAsli && (
             <a
               href={r.hrefAsli}

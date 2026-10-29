@@ -256,7 +256,10 @@ async function selesaikanTautan(u: string): Promise<string | null> {
  * dipakai di sesi-sesi dengan SATU topik yang sama yang dipetakan; kalau sesi-
  * sesinya menyebut topik berbeda, form itu dibiarkan (tidak ditebak).
  */
-async function petakanLewatSesi(db: Db, grupById: Map<string, GrupTopik>): Promise<Map<string, GrupTopik>> {
+async function petakanLewatSesi(
+  db: Db,
+  grupById: Map<string, GrupTopik>,
+): Promise<{ grup: Map<string, GrupTopik>; cp: Map<string, Set<string>> }> {
   const semua = async <T,>(tabel: string, kolom: string, saring?: (q: any) => any): Promise<T[]> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const hasil: T[] = []
     for (let d = 0; ; d += 1000) {
@@ -275,18 +278,23 @@ async function petakanLewatSesi(db: Db, grupById: Map<string, GrupTopik>): Promi
   ])
   const grupDariCp = new Map(cp.map(c => [c.id, c.group_id]))
   const grupSesi = new Map(sesi.map(x => [x.id, new Set((x.selected_cp_ids ?? []).map(c => grupDariCp.get(c)).filter((g): g is string => !!g))]))
+  const cpSesi = new Map(sesi.map(x => [x.id, x.selected_cp_ids ?? []]))
 
   const tautan = [...new Set(asesmen.map(a => a.link_url).filter(u => /forms\.gle|goo\.gl\/forms|docs\.google\.com\/forms/.test(u)))]
   const selesai = new Map<string, string | null>()
   await paralel(tautan, 8, async u => { selesai.set(u, await selesaikanTautan(u)) })
 
   const perTerbit = new Map<string, Set<string>>()
+  const cpPerTerbit = new Map<string, Set<string>>()
   for (const a of asesmen) {
     const id = selesai.get(a.link_url)
     if (!id) continue
     const gs = perTerbit.get(id) ?? new Set<string>()
     for (const g of grupSesi.get(a.session_id) ?? []) gs.add(g)
     perTerbit.set(id, gs)
+    const cs = cpPerTerbit.get(id) ?? new Set<string>()
+    for (const c of cpSesi.get(a.session_id) ?? []) cs.add(c)
+    cpPerTerbit.set(id, cs)
   }
   const hasil = new Map<string, GrupTopik>()
   for (const [id, gs] of perTerbit) {
@@ -294,7 +302,7 @@ async function petakanLewatSesi(db: Db, grupById: Map<string, GrupTopik>): Promi
     const g = grupById.get([...gs][0])
     if (g && g.grade_level !== 'Semua Kelas') hasil.set(id, g)
   }
-  return hasil
+  return { grup: hasil, cp: cpPerTerbit }
 }
 
 // ─────────────────────────────────────────────── Drive
@@ -355,6 +363,7 @@ export type BarisSinkron = {
   group_id: string | null
   cara_cocok: string | null
   terbit_id: string | null
+  cp_ids: string[]
   quiz_id: string | null
   butir_ids: string[]
   jumlah_butir: number
@@ -404,11 +413,11 @@ export async function sinkronkanSoalDigital(opsi: {
 
   // Topik lewat sesi hanya dihitung bila ada form yang membutuhkannya: form
   // baru yang tak cocok lewat nama, atau yang sudah tercatat tanpa topik.
-  const butuhTautan = berkas.some(f => {
-    const b = ada.get(f.id)
-    return (!b || b.status === 'tanpa_topik') && !cocokkanForm(f.name, indeks, petaNama, f.jalur)
-  })
-  const lewatSesi = butuhTautan ? await petakanLewatSesi(db, grupById) : new Map<string, GrupTopik>()
+  // Dihitung SELALU (bukan hanya bila ada form tanpa topik): CP tiap form dipakai tabel
+  // admin dan berubah kapan pun tutor memakai form itu di sesi baru.
+  const sesiPeta = await petakanLewatSesi(db, grupById)
+  const lewatSesi = sesiPeta.grup
+  const cpForm = (terbit: string | null | undefined) => (terbit ? [...(sesiPeta.cp.get(terbit) ?? [])].sort() : null)
   const topikForm = (f: FormDrive, terbit: string | null): CocokForm | null => {
     const nama = cocokkanForm(f.name, indeks, petaNama, f.jalur)
     if (nama) return nama
@@ -447,6 +456,7 @@ export async function sinkronkanSoalDigital(opsi: {
       file_id: f.id, nama: namaDasar(f.name), jalur: f.jalur, modified_time: f.modifiedTime,
       group_id: null, cara_cocok: null, terbit_id: ada.get(f.id)?.terbit_id ?? null, quiz_id: null, butir_ids: [], jumlah_butir: 0, catatan: null,
       ...b, diperiksa_at: new Date().toISOString(),
+      cp_ids: cpForm(b.terbit_id ?? ada.get(f.id)?.terbit_id) ?? ada.get(f.id)?.cp_ids ?? [],
     })
   }
 
@@ -567,6 +577,19 @@ export async function sinkronkanSoalDigital(opsi: {
       await catat(f, { status: 'galat', catatan: alasan.slice(0, 500) })
     }
   })
+
+  // Form yang tidak ikut diproses hari ini tetap disegarkan CP-nya: tutor bisa memakai form
+  // lama itu di sesi baru kapan saja, dan nomor CP-nya tampil di tabel admin.
+  if (tulis) {
+    const diproses = new Set(giliran.map(f => f.id))
+    for (const b of ada.values()) {
+      if (diproses.has(b.file_id) || !b.terbit_id) continue
+      const baru = cpForm(b.terbit_id) ?? []
+      if (baru.join() !== [...(b.cp_ids ?? [])].sort().join()) {
+        await db.from('sinkron_soal_drive').update({ cp_ids: baru }).eq('file_id', b.file_id)
+      }
+    }
+  }
 
   // Daftar kerja lengkap (termasuk yang diproses putaran lalu): form tanpa topik di buku catatan.
   if (tulis) {

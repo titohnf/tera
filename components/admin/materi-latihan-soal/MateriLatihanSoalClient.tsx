@@ -53,6 +53,7 @@ type TutorResourceRow = {
   jumlahSoal?: number
   jumlahPembahasan?: number
   cpIds?: string[]
+  namaSumber?: string
 }
 
 interface Props {
@@ -150,7 +151,7 @@ export default function MateriLatihanSoalClient({ topics, subjects, resources, t
         theme: t.theme, topic: t.topic, topicSource: 'kurikulum', kind: r.kind, title: r.title,
         ...tautanUntuk(r.href),
         source: r.source ?? 'tutor', tutorName: r.tutorName, sessionId: r.sessionId,
-        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan, cpIds: r.cpIds,
+        jumlahSoal: r.jumlahSoal, jumlahPembahasan: r.jumlahPembahasan, cpIds: r.cpIds, namaSumber: r.namaSumber,
       })
     } else if (r.topicText) {
       // Free-typed topic with no formal curriculum link — either a

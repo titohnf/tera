@@ -80,6 +80,8 @@ export type TutorResourceRow = {
    * Tabel menampilkan labelnya, disaring ke CP milik topik barisnya.
    */
   cpIds?: string[]
+  /** Hanya pada baris `bank_soal`: asal paketnya (nama form Drive), untuk tooltip. */
+  namaSumber?: string
   /** Hanya pada baris `bank_soal`: bahan kolom kelengkapan. */
   jumlahSoal?: number
   jumlahPembahasan?: number
@@ -186,39 +188,47 @@ function toLatihanSoalResources(
  */
 function toBankSoalResources(
   tags: { group_id: string; question_bank_item_id: string }[],
-  adaPembahasan: Set<string>,
+  butir: Map<string, { adaPembahasan: boolean; kunci: string | null }>,
   topicByGroupId: Map<string, { topic: string; representativeCpId: string }>,
   soraUrl: string | null,
+  /** CP dan nama sumber tiap paket (kunci `form:<id>` / `doc:<id>`), bila diketahui. */
+  sumberPaket: Map<string, { cpIds: string[]; nama: string | null }>,
 ): TutorResourceRow[] {
   if (!soraUrl) return []
 
-  const jumlah = new Map<string, number>()
-  const berpembahasan = new Map<string, number>()
+  // Satu baris per PAKET (satu sumber soal), bukan per topik: dengan begitu tiap paket
+  // bisa menunjuk CP-nya, dan paket-paket satu topik bisa dibandingkan dengan
+  // materi, asesmen, dan latihan soal yang berlabel CP sama.
+  const perPaket = new Map<string, { groupId: string; kunci: string | null; n: number; p: number }>()
   for (const t of tags) {
     if (!t.group_id) continue
-    jumlah.set(t.group_id, (jumlah.get(t.group_id) ?? 0) + 1)
-    if (adaPembahasan.has(t.question_bank_item_id)) {
-      berpembahasan.set(t.group_id, (berpembahasan.get(t.group_id) ?? 0) + 1)
-    }
+    const info = butir.get(t.question_bank_item_id)
+    const kunci = info?.kunci ?? null
+    const k = `${t.group_id}__${kunci ?? 'bebas'}`
+    const e = perPaket.get(k) ?? { groupId: t.group_id, kunci, n: 0, p: 0 }
+    e.n++
+    if (info?.adaPembahasan) e.p++
+    perPaket.set(k, e)
   }
 
   const out: TutorResourceRow[] = []
-  for (const [groupId, n] of jumlah) {
-    const p = berpembahasan.get(groupId) ?? 0
-    const group = topicByGroupId.get(groupId)
+  for (const [k, e] of perPaket) {
+    const group = topicByGroupId.get(e.groupId)
     // Topik yang tidak punya baris kurikulum tidak punya tempat duduk di tabel
     // ini. Soalnya tetap ada di Sora — yang hilang cuma barisnya di sini.
     if (!group) continue
+    const sumber = e.kunci ? sumberPaket.get(e.kunci) : undefined
     out.push({
-      id: `bank__${groupId}`,
+      id: `bank__${k}`,
       kind: 'bank_soal',
       source: 'sora',
-      // Judul yang benar-benar tampil di selnya (lihat `ResourceCell`), bukan
-      // sekadar tooltip: di tabel kelengkapan, angkanyalah isinya.
-      title: `${n} soal · ${p} pembahasan`,
-      jumlahSoal: n,
-      jumlahPembahasan: p,
-      href: `${soraUrl}/dashboard/bank/${groupId}`,
+      // Dipakai sebagai tooltip dan sebagai teks cadangan bila CP-nya tidak diketahui.
+      title: `${e.n} soal · ${e.p} pembahasan`,
+      jumlahSoal: e.n,
+      jumlahPembahasan: e.p,
+      cpIds: sumber?.cpIds ?? [],
+      namaSumber: sumber?.nama ?? undefined,
+      href: `${soraUrl}/dashboard/bank/${e.groupId}`,
       // Baris ini milik topik, bukan milik sesi mana pun.
       sessionId: '',
       subjectId: '',
@@ -302,7 +312,7 @@ export default async function MateriLatihanSoalPage() {
   // Bank Soal memang tidak dibuat.
   const soraUrl = process.env.NEXT_PUBLIC_SORA_URL?.replace(/\/$/, '') ?? null
 
-  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: bankItemRows }, { data: duplicationRows }] = await Promise.all([
+  const [{ data: topics }, { data: subjects }, { data: resources }, { data: materialRows }, { data: assessmentRows }, { data: sessionCpUrlRows }, { data: bankTagRows }, { data: duplicationRows }] = await Promise.all([
     admin
       .from('curriculum_topics')
       .select('id, group_id, curriculum, subject_id, grade_level, semester, theme, topic, learning_outcomes, sort_order, created_at, subjects(name)')
@@ -364,9 +374,6 @@ export default async function MateriLatihanSoalPage() {
     semuaBaris<{ group_id: string; question_bank_item_id: string }>(
       (dari, sampai) => admin.from('question_curriculum_tags').select('group_id, question_bank_item_id').order('question_bank_item_id').range(dari, sampai),
     ).then(data => ({ data })),
-    // Dihitung sesudah tagnya diketahui: hanya butir yang bertag topik yang perlu
-    // dilihat pembahasannya, bukan seluruh bank (hampir 6.000 butir).
-    Promise.resolve({ data: null as { id: string; explanation: string | null }[] | null }),
     admin
       .from('curriculum_resource_duplications')
       .select('drive_file_id, copy_link, pdf_path') as unknown as Promise<{
@@ -397,21 +404,38 @@ export default async function MateriLatihanSoalPage() {
   // Pembahasan kosong dan pembahasan berisi spasi sama saja bagi murid yang
   // menjawab salah.
   const idBertag = [...new Set((bankTagRows ?? []).map(t => t.question_bank_item_id))]
-  const itemBertag: { id: string; explanation: string | null }[] = [...(bankItemRows ?? [])]
+  const butirInfo = new Map<string, { adaPembahasan: boolean; kunci: string | null }>()
   for (let i = 0; i < idBertag.length; i += 200) {
-    const { data } = await admin.from('question_bank_items').select('id, explanation').in('id', idBertag.slice(i, i + 200))
-    itemBertag.push(...((data ?? []) as { id: string; explanation: string | null }[]))
+    const { data } = await admin.from('question_bank_items').select('id, explanation, paket_kunci').in('id', idBertag.slice(i, i + 200))
+    for (const x of (data ?? []) as { id: string; explanation: string | null; paket_kunci: string | null }[]) {
+      butirInfo.set(x.id, { adaPembahasan: (x.explanation ?? '').trim() !== '', kunci: x.paket_kunci })
+    }
   }
-  const adaPembahasan = new Set(
-    itemBertag.filter((i) => (i.explanation ?? '').trim() !== '').map((i) => i.id),
-  )
+
+  // CP tiap paket. Paket dari FORM: dihitung sinkron harian dari sesi tempat form dipakai
+  // (kolom `cp_ids`, migrasi 205; tabelnya bisa belum ada/lengkap, jadi galat dilewati).
+  // Paket dari DOKUMEN: dari sesi yang menautkan berkas soal itu sebagai latihan soal.
+  const sumberPaket = new Map<string, { cpIds: string[]; nama: string | null }>()
+  const { data: catatanForm } = await admin.from('sinkron_soal_drive').select('file_id, nama, cp_ids')
+  for (const f of (catatanForm ?? []) as { file_id: string; nama: string; cp_ids: string[] | null }[]) {
+    sumberPaket.set(`form:${f.file_id}`, { cpIds: f.cp_ids ?? [], nama: f.nama })
+  }
+  for (const sesi of sessionCpUrlRows ?? []) {
+    for (const url of Object.values(sesi.cp_urls ?? {})) {
+      const berkas = extractDriveFileId(url ?? '')
+      if (!berkas) continue
+      const k = `doc:${berkas}`
+      const ada = sumberPaket.get(k) ?? { cpIds: [], nama: null }
+      sumberPaket.set(k, { cpIds: [...new Set([...ada.cpIds, ...(sesi.selected_cp_ids ?? [])])], nama: ada.nama })
+    }
+  }
 
   const tutorResources: TutorResourceRow[] = [
     // Lampiran jurnal, bukan materi kurikulum — lihat `DisplayKind` di tabelnya.
     ...toTutorResources(materialRows ?? [], 'lampiran', classInfoById, soraUrl),
     ...toTutorResources(assessmentRows ?? [], 'asesmen', classInfoById, soraUrl),
     ...toLatihanSoalResources(sessionCpUrlRows ?? [], topicByGroupId, classInfoById),
-    ...toBankSoalResources(bankTagRows ?? [], adaPembahasan, topicByGroupId, soraUrl),
+    ...toBankSoalResources(bankTagRows ?? [], butirInfo, topicByGroupId, soraUrl, sumberPaket),
   ]
 
   // Berapa materi yang benar-benar terbaca di dalam halaman. Dihitung dari
