@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUser } from '@/lib/supabase/get-user'
@@ -26,25 +27,28 @@ export interface Anak {
  * menahan — bukan sekadar hiasan yang dilewati service key. Kalau ada policy
  * yang keliru, halamannya kosong dan itu ketahuan; dengan service key, kekeliruan
  * yang sama justru membocorkan data dan tidak terlihat sama sekali.
+ *
+ * Di-`cache()` per permintaan: layout keluarga, layout anak, dan halamannya
+ * semua memanggilnya (lewat `anakOrRedirect` untuk yang terakhir), dan tanpa
+ * ini ketiganya mengulang kueri profil dan daftar anak yang sama.
  */
-export async function keluargaContext() {
+export const keluargaContext = cache(async () => {
   const user = await getUser()
   if (!user) redirect('/login')
 
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, role')
-    .eq('id', user.id)
-    .single()
+  // Sebarisan tidak ada gunanya: daftar anak tidak bergantung pada hasil
+  // profil, dan yang bukan `parent` dilempar sebelum daftarnya dipakai.
+  const [{ data: profile }, { data: links }] = await Promise.all([
+    supabase.from('profiles').select('full_name, role').eq('id', user.id).single(),
+    supabase
+      .from('family_students')
+      .select('student_id, profiles!family_students_student_id_fkey(id, full_name, nickname, avatar_url)')
+      .order('student_id'),
+  ])
 
   if (profile?.role !== 'parent') redirect('/unauthorized')
-
-  const { data: links } = await supabase
-    .from('family_students')
-    .select('student_id, profiles!family_students_student_id_fkey(id, full_name, nickname, avatar_url)')
-    .order('student_id')
 
   const anak = ((links ?? []) as unknown as {
     profiles: {
@@ -65,7 +69,7 @@ export async function keluargaContext() {
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
   return { user, namaKeluarga: profile.full_name as string, anak }
-}
+})
 
 /**
  * Memastikan `studentId` di URL benar-benar anak keluarga ini.
