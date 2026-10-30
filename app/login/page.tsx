@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { tautanWaAdmin } from '@/lib/kontak'
 
 /**
  * Tujuan yang aman untuk dituju setelah masuk.
@@ -92,6 +93,25 @@ export default function LoginPage() {
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
+
+        {/* Tidak ada reset password mandiri: siapa pun yang tahu sebuah email bisa
+            mengembalikan password pemiliknya. Yang lupa menghubungi admin, yang
+            mereset dari panel admin. Emailnya ikut terisi di pesan bila sudah diketik. */}
+        <p className="mt-5 text-center text-sm text-gray-500">
+          Lupa password?{' '}
+          <a
+            href={tautanWaAdmin(
+              email.trim()
+                ? `Halo admin Bimbel Tera, saya lupa password akun saya. Email saya: ${email.trim()}`
+                : 'Halo admin Bimbel Tera, saya lupa password akun saya.'
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Hubungi admin
+          </a>
+        </p>
       </div>
     </div>
   )

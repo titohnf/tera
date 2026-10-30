@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
+import { NOMOR_WA_ADMIN } from '@/lib/kontak'
 
 type SaveTopicAction = (
   sessionId: string,
@@ -348,7 +349,7 @@ export default function SessionTopicEditor({
                   <a href="/admin/curriculum" className="text-blue-600 hover:underline">Kelola kurikulum</a>
                 </>
               : <>Belum ada topik kurikulum untuk mata pelajaran / kelas ini. Hubungi admin untuk menambahkannya via{' '}
-                  <a href="https://wa.me/+6281315502949" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">WhatsApp</a>
+                  <a href={`https://wa.me/${NOMOR_WA_ADMIN}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">WhatsApp</a>
                 </>
           }
         </p>
