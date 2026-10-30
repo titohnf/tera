@@ -17,6 +17,7 @@ import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import { adalahEmailTeknis } from '@/lib/akun-keluarga'
 import { siapkanWaAkses } from '@/lib/whatsapp-akses'
 import TombolWaAkses from '@/components/admin/siswa/TombolWaAkses'
+import PenanggungJawabSelect from '@/components/admin/siswa/PenanggungJawabSelect'
 import { ringkasPembayaran } from '@/lib/tagihan'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
@@ -553,6 +554,22 @@ export default async function SiswaDetailPage({
     laporan: laporan.length,
   }
 
+  // Admin ikut dalam pilihan: di bimbel sekecil ini, yang memegang eskalasi
+  // belum tentu berperan `tutor` di sistem.
+  const [{ data: learnerRow }, { data: calonPenanggungJawab }] = await Promise.all([
+    admin
+      .from('learners')
+      .select('tutor_penanggung_jawab_id')
+      .eq('profile_id', studentId)
+      .maybeSingle(),
+    admin
+      .from('profiles')
+      .select('id, full_name')
+      .in('role', ['tutor', 'admin'])
+      .eq('is_active', true)
+      .order('full_name'),
+  ])
+
   return (
     <div className="space-y-5">
       {/* Breadcrumb */}
@@ -717,6 +734,15 @@ export default async function SiswaDetailPage({
             studentId={studentId}
             classHref={id => `/admin/classes/${id}`}
             emailLogin={emailLogin}
+          />
+
+          <PenanggungJawabSelect
+            studentId={studentId}
+            nilaiAwal={(learnerRow?.tutor_penanggung_jawab_id as string | null) ?? null}
+            tutor={(calonPenanggungJawab ?? []).map(t => ({
+              id: t.id as string,
+              full_name: t.full_name as string,
+            }))}
           />
 
           {/* Aksi */}

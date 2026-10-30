@@ -30,7 +30,7 @@ export type LanggananRow = {
 /**
  * Kelola langganan SORA/GAMA.
  *
- * Bentuknya meniru `PracticeAccessManager` — dua daftar berdampingan dan satu
+ * Bentuknya meniru bekas menu Latihan Mandiri (sudah dihapus) — dua daftar berdampingan dan satu
  * borang tambah di bawah — karena pekerjaannya memang sama: melihat siapa yang
  * sudah punya akses, siapa yang menunggu, lalu memberi atau mencabut.
  *

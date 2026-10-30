@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 /**
  * Aksi admin untuk langganan SORA/GAMA.
  *
- * Dicetak dari `lib/actions/admin/practice-access.ts` — pola yang sudah
+ * Dicetak dari aksi akses latihan lama (sudah dihapus) — pola yang sudah
  * menjawab persoalan yang sama, yaitu memberi dan mencabut akses. Termasuk
  * kebiasaan yang di tempat lain akan disebut duplikasi: `verifyAdmin()` disalin
  * seperti di ~20 berkas lain di direktori ini. Menyatukannya adalah perubahan
