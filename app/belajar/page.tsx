@@ -61,7 +61,7 @@ export default async function BelajarBeranda({
   // panjang daripada yang tadi ditinggalkan.
   //
   // Ditelusuri di sini, bukan di browser: `curriculum_topic_groups` dibaca
-  // lewat client sesi, jadi RLS tetap yang memutuskan (076 untuk keluarga, 126
+  // lewat client sesi, jadi RLS tetap yang memutuskan (076 untuk keluarga, 207
   // untuk pelanggan). Topik yang tidak berhak dibaca pulang kosong, dan
   // halamannya cuma terbuka seperti biasa — bukan gagal.
   let awal: { subjectId: string; groupId?: string; kelas?: boolean } | null = null
