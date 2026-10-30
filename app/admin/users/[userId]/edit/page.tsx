@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import EditUserForm from '@/components/admin/users/EditUserForm'
 import PasswordResetButton from '@/components/admin/users/PasswordResetButton'
-import { adalahEmailTeknis } from '@/lib/akun-keluarga'
 import { siapkanWaAkses } from '@/lib/whatsapp-akses'
 import TombolWaAkses from '@/components/admin/siswa/TombolWaAkses'
 import TutorSubjectPicker from '@/components/tutor/profile/TutorSubjectPicker'
@@ -72,29 +71,14 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
       <div className="max-w-xl space-y-5">
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6">
           <h1 className="text-sm font-semibold text-gray-700 mb-4">Edit Data Pengguna</h1>
-          {/* Email login, hanya dibaca. Untuk siswa, login ada di akun orang tua yang
-              tertaut — profil siswa sendiri tidak bisa masuk dan emailnya teknis. */}
-          <div className="mb-5 rounded-lg bg-slate-50 px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Email login</p>
-            {user.role === 'student' ? (
-              keluarga.length > 0 ? (
-                keluarga.map(k => (
-                  <p key={k.id} className="mt-1 text-sm text-gray-900 break-all">
-                    {k.email} <span className="text-xs text-gray-400">· akun orang tua {k.full_name}</span>
-                  </p>
-                ))
-              ) : user.email && !adalahEmailTeknis(user.email as string) ? (
-                <p className="mt-1 text-sm text-gray-900 break-all">
-                  {user.email as string}
-                  <span className="block text-xs text-amber-600">Belum tertaut ke akun orang tua — belum bisa masuk portal</span>
-                </p>
-              ) : (
-                <p className="mt-1 text-sm text-gray-400">Belum ada</p>
-              )
-            ) : (
+          {/* Email login dibaca saja, dan hanya untuk yang punya login sendiri (bukan
+              siswa): login siswa ada di akun orang tua, yang tampil di kartu Password. */}
+          {user.role !== 'student' && (
+            <div className="mb-5 rounded-lg bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Email login</p>
               <p className="mt-1 text-sm text-gray-900 break-all">{(user.email as string) || '—'}</p>
-            )}
-          </div>
+            </div>
+          )}
           <EditUserForm
             userId={userId}
             hideRole={user.role === 'student'}
