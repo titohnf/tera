@@ -494,7 +494,7 @@ export default async function HasilSesi({
               <p className="text-xs text-gray-400">
                 {petaPaket.topikId} · {namaPaket(petaPaket)}
               </p>
-              <p className="text-xs text-gray-400">{paketIni.total} soal</p>
+              <p className="text-xs text-gray-400">{paketIni.total} Soal</p>
             </div>
             <div className="shrink-0 text-right">
               <p className="text-sm font-semibold text-gray-900">{persen}%</p>
@@ -518,7 +518,7 @@ export default async function HasilSesi({
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900">{baris.topic}</p>
                   {baris.theme && <p className="text-xs text-gray-400">{baris.theme}</p>}
-                  <p className="text-xs text-gray-400">{baris.answered} soal</p>
+                  <p className="text-xs text-gray-400">{baris.answered} Soal</p>
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-semibold text-gray-900">{p}%</p>

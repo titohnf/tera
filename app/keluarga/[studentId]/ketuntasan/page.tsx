@@ -109,7 +109,7 @@ export default async function KetuntasanMateriPage({
               `HeaderKeluarga` sudah mencetak "Ketuntasan Materi" di puncak
               layar, dan judul yang sama dua kali dalam satu layar cuma memakan
               baris. Yang tersisa cuma cacahnya. */}
-          <p className="px-1 text-right text-xs text-gray-400">{baris.length} topik</p>
+          <p className="px-1 text-right text-xs text-gray-400">{baris.length} Topik</p>
           <p className="px-1 text-xs leading-relaxed text-gray-400">
             Peta kompetensi Matematika: paket latihan bertingkat yang mengukur
             penguasaan per topik, sebatas yang diminta dari tiap topik. Paket

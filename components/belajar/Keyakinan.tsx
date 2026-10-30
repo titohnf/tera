@@ -43,8 +43,8 @@ export default function Keyakinan({
   const terkunci = Math.max(0, tuntas - sempurna)
   const kalimat =
     terkunci > 0
-      ? `${tuntas} dari ${total} paket tuntas, ${terkunci} di antaranya terkunci`
-      : `${tuntas} dari ${total} paket tuntas`
+      ? `${tuntas} dari ${total} Paket Soal tuntas, ${terkunci} di antaranya terkunci`
+      : `${tuntas} dari ${total} Paket Soal tuntas`
 
   // Kalau paketnya lebih banyak daripada titik yang muat, titiknya jadi
   // proporsi — bukan cacah. Yang dibaca sekilas tetap benar ("kira-kira

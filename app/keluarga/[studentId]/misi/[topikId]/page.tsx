@@ -135,7 +135,7 @@ export default async function TopikMisiPage({
               ))}
             </span>
             <span className="text-xs text-gray-500">
-              {lolos} dari {wajib.length} paket wajib tuntas
+              {lolos} dari {wajib.length} Paket Soal wajib tuntas
             </span>
           </div>
         )}

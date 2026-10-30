@@ -120,6 +120,12 @@ export interface TopikLatihan {
   paket_total: number
   paket_tuntas: number
   paket_sempurna: number
+  /**
+   * Kurikulum pemilik topik ("Kurikulum Merdeka", "TKA", ...). Satu mapel dan satu
+   * jenjang bisa memuat dua kurikulum sekaligus dengan tema yang sama-sama bernama
+   * "Bilangan"; tanpa ini layar mengelompokkan keduanya jadi satu.
+   */
+  kurikulum?: string | null
 }
 
 /** Bentuk mentah dari `practice_topics()`, sebelum kemajuannya ditempelkan. */
@@ -735,18 +741,21 @@ export async function topikLatihan(
 
   const { data: urutan } = await supabase
     .from('curriculum_topics')
-    .select('group_id, sort_order')
+    .select('group_id, sort_order, curriculum')
     .in('group_id', topik.map(t => t.group_id))
 
   // Satu topik adalah SEKUMPULAN baris CP yang berbagi kunci yang sama (lihat
   // 060), jadi urutannya diambil dari baris paling awal — itu tempat topiknya
   // muncul pertama kali di kurikulum.
   const paling = new Map<string, number>()
-  for (const r of (urutan as { group_id: string | null; sort_order: number | null }[] | null) ?? []) {
+  const kurikulumDari = new Map<string, string>()
+  for (const r of (urutan as { group_id: string | null; sort_order: number | null; curriculum: string | null }[] | null) ?? []) {
+    if (r.group_id && r.curriculum) kurikulumDari.set(r.group_id, r.curriculum)
     if (!r.group_id || r.sort_order == null) continue
     const ada = paling.get(r.group_id)
     if (ada == null || r.sort_order < ada) paling.set(r.group_id, r.sort_order)
   }
+  for (const t of topik) t.kurikulum = kurikulumDari.get(t.group_id) ?? null
   if (paling.size === 0) return topik
 
   // Jenjang dan semester tetap kunci utama: `sort_order` berulang dari nol di

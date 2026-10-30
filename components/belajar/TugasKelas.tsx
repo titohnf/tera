@@ -56,7 +56,7 @@ export default function TugasKelas({
                 {NAMA_JENIS[t.jenis]}
                 {t.namaKelas ? ` · ${t.namaKelas}` : ''} ·{' '}
                 {new Date(t.jadwal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ·{' '}
-                {t.jumlahSoal} soal
+                {t.jumlahSoal} Soal
               </p>
               {!t.selesai && !t.bisaDikerjakan && t.alasan && (
                 <p className="mt-0.5 text-xs text-amber-700">{t.alasan}</p>

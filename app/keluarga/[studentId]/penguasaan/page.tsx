@@ -259,7 +259,7 @@ export default async function PenguasaanPage({
             <div key={rows[0].subjectId ?? 'lain'} className="space-y-2">
               <div className="flex items-baseline justify-between gap-3 px-1">
                 <p className="font-semibold tracking-tight text-gray-900">{rows[0].mapel}</p>
-                <p className="shrink-0 text-xs text-gray-400">{rows.length} topik</p>
+                <p className="shrink-0 text-xs text-gray-400">{rows.length} Topik</p>
               </div>
 
               <ul className="space-y-3">

@@ -389,7 +389,7 @@ function Baris({
             apa pun yang dikerjakan anak hari itu — sebab itu mereka di sini, dan
             baris di bawah judul cuma memuat yang memang berubah. */}
         <span className="min-w-0 truncate text-xs text-gray-400">
-          {namaTema(t.elemen)} · {t.jumlahPaket} paket
+          {namaTema(t.elemen)} · {t.jumlahPaket} Paket Soal
         </span>
 
         {/* Statusnya di UJUNG KANAN, bukan menempel pada judul. Tempatnya jadi

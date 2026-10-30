@@ -64,7 +64,7 @@ export interface BarisPenguasaan {
 function kalimatSorotan(s: SorotanBaris): { teks: string; terisi: number; dari: number } {
   if (s.jenis === 'ketuntasan') {
     return {
-      teks: `Tuntas ${s.tuntas} dari ${s.total} paket`,
+      teks: `Tuntas ${s.tuntas} dari ${s.total} Paket Soal`,
       terisi: s.tuntas,
       dari: s.total,
     }

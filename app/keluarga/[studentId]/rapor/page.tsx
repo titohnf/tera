@@ -255,7 +255,7 @@ function BarisMandiri({ m }: { m: RangkumanMandiri }) {
       <p className="text-sm font-semibold tracking-tight text-gray-900">{m.mapel}</p>
       <p className="text-xs text-gray-400">
         Topik selesai {m.topik > 0 ? Math.round((m.selesai / m.topik) * 100) : 0}% · {m.selesai}/
-        {m.topik} topik
+        {m.topik} Topik
       </p>
       {m.rataRata != null && (
         <BilahRapor nama="Skor" nilai={m.rataRata} teks={String(m.rataRata)} />

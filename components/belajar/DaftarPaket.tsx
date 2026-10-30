@@ -405,7 +405,7 @@ export default function DaftarPaket({
                   >
                     {p.judul}
                   </span>
-                  <span className="text-xs text-gray-400">{p.total} soal</span>
+                  <span className="text-xs text-gray-400">{p.total} Soal</span>
                 </span>
                 <span
                   className={`mt-0.5 block text-sm ${bisa ? 'text-gray-500' : 'text-gray-400'}`}
