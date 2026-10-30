@@ -128,7 +128,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
           )}
           {user.role === 'student' && (
             <div className="space-y-4">
-              {wa && <TombolWaAkses href={wa.href} alasan={wa.alasan} />}
+              {wa && <TombolWaAkses studentId={userId} href={wa.href} alasan={wa.alasan} terkirimPada={wa.terkirimPada} />}
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Akun orang tua</p>
               {keluarga.length === 0 ? (
                 <p className="text-sm text-gray-500">Belum ada akun orang tua yang tertaut ke siswa ini, jadi belum ada yang bisa masuk ke portal.</p>

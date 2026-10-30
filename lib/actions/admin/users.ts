@@ -213,6 +213,23 @@ export async function resetPasswordKeDefault(userId: string): Promise<ActionStat
   return null
 }
 
+/**
+ * Menandai bahwa akses portal sudah dikirim ke orang tua siswa ini. Dipanggil
+ * saat tombol WhatsApp diklik; sesudahnya tombol itu tidak ditampilkan lagi.
+ */
+export async function tandaiAksesDikirim(studentId: string): Promise<ActionState> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+  const { error } = await ctx.admin
+    .from('profiles')
+    .update({ akses_dikirim_at: new Date().toISOString() })
+    .eq('id', studentId)
+    .eq('role', 'student')
+  if (error) return { error: 'Belum bisa menandai terkirim' }
+  revalidatePath(`/admin/siswa/${studentId}`)
+  return null
+}
+
 export async function setStudentIsActive(userId: string, isActive: boolean): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }

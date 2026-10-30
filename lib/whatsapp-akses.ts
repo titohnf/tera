@@ -12,10 +12,10 @@ import { nomorWhatsApp, pesanAksesPortal, tautanWhatsApp } from '@/lib/pesan-kel
 export async function siapkanWaAkses(
   admin: SupabaseClient,
   studentId: string
-): Promise<{ href: string | null; alasan: string | null }> {
+): Promise<{ href: string | null; alasan: string | null; terkirimPada: string | null }> {
   const { data: siswa } = await admin
     .from('profiles')
-    .select('full_name, nickname, parent_name, parent_phone')
+    .select('full_name, nickname, parent_name, parent_phone, akses_dikirim_at')
     .eq('id', studentId)
     .maybeSingle()
   const { data: tautan } = await admin.from('family_students').select('family_id').eq('student_id', studentId)
@@ -28,9 +28,10 @@ export async function siapkanWaAkses(
   const nomor = nomorWhatsApp(siswa?.parent_phone || akunLogin?.phone)
   const passwordDefault = process.env.PASSWORD_DEFAULT_RESET
 
-  if (!akunLogin) return { href: null, alasan: 'Belum ada akun login keluarga untuk siswa ini' }
-  if (!nomor) return { href: null, alasan: 'Nomor orang tua belum diisi' }
-  if (!passwordDefault) return { href: null, alasan: 'Password default belum diatur di server' }
+  const terkirimPada = (siswa?.akses_dikirim_at as string | null) ?? null
+  if (!akunLogin) return { href: null, alasan: 'Belum ada akun login keluarga untuk siswa ini', terkirimPada }
+  if (!nomor) return { href: null, alasan: 'Nomor orang tua belum diisi', terkirimPada }
+  if (!passwordDefault) return { href: null, alasan: 'Password default belum diatur di server', terkirimPada }
 
   return {
     href: tautanWhatsApp(
@@ -43,5 +44,6 @@ export async function siapkanWaAkses(
       })
     ),
     alasan: null,
+    terkirimPada,
   }
 }

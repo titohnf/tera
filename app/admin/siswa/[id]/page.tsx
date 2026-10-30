@@ -723,7 +723,7 @@ export default async function SiswaDetailPage({
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Aksi</h2>
             <div className="space-y-2">
-              <TombolWaAkses href={wa.href} alasan={wa.alasan} />
+              <TombolWaAkses studentId={studentId} href={wa.href} alasan={wa.alasan} terkirimPada={wa.terkirimPada} />
               <Link
                 href={`/admin/invoices/new?student_id=${studentId}`}
                 className="flex items-center justify-center w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
