@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import EditUserForm from '@/components/admin/users/EditUserForm'
+import PasswordResetButton from '@/components/admin/users/PasswordResetButton'
 import TutorSubjectPicker from '@/components/tutor/profile/TutorSubjectPicker'
 import TutorAvailabilityPicker from '@/components/tutor/profile/TutorAvailabilityPicker'
 import { adminUpdateTutorSubjects, adminUpdateTutorAvailability } from '@/lib/actions/admin/users'
@@ -31,6 +32,18 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
     subjects = subjectsData ?? []
     selectedRows = (tutorSubjects ?? []).map(ts => ({ subject_id: ts.subject_id, level: ts.level ?? '' }))
     availability = availabilityData ?? []
+  }
+
+  // Akun orang tua yang tertaut ke siswa ini (`family_students`). Dua kueri, bukan
+  // embed: kunci asingnya mengarah ke `profiles` dari dua kolom sekaligus.
+  let keluarga: { id: string; full_name: string; email: string | null }[] = []
+  if (user.role === 'student') {
+    const { data: tautan } = await admin.from('family_students').select('family_id').eq('student_id', userId)
+    const ids = (tautan ?? []).map(t => t.family_id as string)
+    if (ids.length > 0) {
+      const { data: akun } = await admin.from('profiles').select('id, full_name, email').in('id', ids).order('full_name')
+      keluarga = (akun ?? []) as typeof keluarga
+    }
   }
 
   const ROLE_BREADCRUMB: Record<string, { label: string; href: string }> = {
@@ -70,6 +83,35 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
               avatar_url: (user as any).avatar_url ?? null,
             }}
           />
+        </div>
+
+        {/* Password: dikembalikan ke default awal oleh admin. Orang tua yang lupa
+            password dicari lewat anaknya di sini, karena tidak ada daftar akun
+            orang tua di menu admin. */}
+        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700">Password</h2>
+          <div>
+            <p className="text-sm text-gray-900 mb-2">
+              Akun {user.role === 'student' ? 'siswa' : 'ini'}: {user.full_name}
+            </p>
+            <PasswordResetButton userId={userId} nama={user.full_name} />
+          </div>
+          {user.role === 'student' && (
+            <div className="border-t border-slate-100 pt-4 space-y-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Akun orang tua</p>
+              {keluarga.length === 0 ? (
+                <p className="text-sm text-gray-500">Belum ada akun orang tua yang tertaut ke siswa ini.</p>
+              ) : (
+                keluarga.map(k => (
+                  <div key={k.id}>
+                    <p className="text-sm text-gray-900">{k.full_name}</p>
+                    {k.email && <p className="text-xs text-gray-400 mb-2">{k.email}</p>}
+                    <PasswordResetButton userId={k.id} nama={k.full_name} />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {user.role === 'tutor' && (

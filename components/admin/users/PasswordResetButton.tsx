@@ -8,7 +8,7 @@ import { resetPasswordKeDefault } from '@/lib/actions/admin/users'
  * Dua ketukan (tombol, lalu konfirmasi) karena tindakannya langsung mengganti
  * password pemilik akun.
  */
-export default function PasswordResetButton({ userId }: { userId: string }) {
+export default function PasswordResetButton({ userId, nama }: { userId: string; nama?: string }) {
   const [langkah, setLangkah] = useState<'diam' | 'konfirmasi' | 'selesai'>('diam')
   const [galat, setGalat] = useState('')
   const [memproses, mulai] = useTransition()
@@ -30,7 +30,7 @@ export default function PasswordResetButton({ userId }: { userId: string }) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
         <p className="text-sm text-amber-900">
-          Password akun ini akan dikembalikan ke password default awal. Lanjutkan?
+          Password {nama ? `akun ${nama}` : 'akun ini'} akan dikembalikan ke password default awal. Lanjutkan?
         </p>
         <div className="mt-2.5 flex gap-2">
           <button
