@@ -430,7 +430,7 @@ export async function mapelLatihan(
 ): Promise<MapelLatihan[]> {
   const supabase = await createClient()
   const [
-    { data: bersoal },
+    { data: namaMapel },
     { data: materi },
     { data: kelompokKelas },
     { data: mapelKelas, error: galatKelas },
@@ -438,7 +438,12 @@ export async function mapelLatihan(
     { data: paketPerTopik },
     { data: semuaGrup },
   ] = await Promise.all([
-    supabase.rpc('practice_subjects', { p_access_code: TANPA_KODE, p_learner_id: learnerId }),
+    // Nama mapel saja. Daftar mapel BERSOAL dihitung dari `practice_progress` di bawah,
+    // bukan dari `practice_subjects()`: fungsi itu memanggil `practice_actor()` dan
+    // `practice_only_public()` untuk tiap baris bank soal sehingga memakan ±3,4 detik,
+    // sedangkan `practice_progress` sudah memakai pola CTE dan selesai dalam ±0,6 detik
+    // dengan kolom `total` yang sama (soal berbeda per mapel yang boleh ditemui).
+    supabase.from('subjects').select('id, name'),
     supabase
       .from('curriculum_resources')
       .select('subject_id, grade_level, link_url, subjects(name)')
@@ -510,7 +515,21 @@ export async function mapelLatihan(
       : null,
   })
 
-  for (const m of (bersoal as { subject_id: string; subject_name: string; question_count: number }[] | null) ?? []) {
+  // Mapel yang punya soal. Kalau `practice_progress` gagal, jatuh kembali ke
+  // `practice_subjects()` yang lambat tapi independen — daftar mapel yang kosong
+  // karena satu kuerinya gagal lebih buruk daripada daftar yang datang terlambat.
+  let bersoal: { subject_id: string; subject_name: string; question_count: number }[]
+  if (galatSemua) {
+    const { data } = await supabase.rpc('practice_subjects', { p_access_code: TANPA_KODE, p_learner_id: learnerId })
+    bersoal = (data as typeof bersoal | null) ?? []
+  } else {
+    const nama = new Map(((namaMapel as { id: string; name: string }[] | null) ?? []).map(r => [r.id, r.name]))
+    bersoal = [...progresSemua.entries()]
+      .filter(([id, v]) => v.total > 0 && nama.has(id))
+      .map(([id, v]) => ({ subject_id: id, subject_name: nama.get(id)!, question_count: v.total }))
+      .sort((a, b) => a.subject_name.localeCompare(b.subject_name))
+  }
+  for (const m of bersoal) {
     gabungan.set(m.subject_id, baru(m.subject_id, m.subject_name, m.question_count))
   }
   for (const r of (materi as Materi[] | null) ?? []) {

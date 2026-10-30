@@ -32,13 +32,38 @@ import type { MateriTopik } from '@/lib/belajar/sematan'
 export async function materiTopik(groupIds: string[]): Promise<MateriTopik[]> {
   if (groupIds.length === 0) return []
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('curriculum_resources')
-    .select('id, group_id, title, link_url')
-    .eq('kind', 'materi')
-    .not('readable_at', 'is', null)
-    .in('group_id', groupIds)
-    .order('title')
+  return ubahMateri(
+    await supabase
+      .from('curriculum_resources')
+      .select('id, group_id, title, link_url')
+      .eq('kind', 'materi')
+      .not('readable_at', 'is', null)
+      .in('group_id', groupIds)
+      .order('title')
+  )
+}
+
+/**
+ * Materi SELURUH sebuah mapel, dengan ukuran dan bentuk yang sama dengan
+ * `materiTopik()`. Dipakai saat daftar topik mapelnya baru diminta bersamaan:
+ * kueri ini tidak perlu menunggu id topiknya, jadi ia berjalan berdampingan
+ * dengan pembacaan topik, bukan sesudahnya. Pemanggil menyaring ke topik yang
+ * ditampilkan.
+ */
+export async function materiMapel(subjectId: string): Promise<MateriTopik[]> {
+  const supabase = await createClient()
+  return ubahMateri(
+    await supabase
+      .from('curriculum_resources')
+      .select('id, group_id, title, link_url')
+      .eq('kind', 'materi')
+      .not('readable_at', 'is', null)
+      .eq('subject_id', subjectId)
+      .order('title')
+  )
+}
+
+function ubahMateri({ data }: { data: unknown }): MateriTopik[] {
   // Tautannya TIDAK dipakai di sini, dan itu disengaja: yang dibuka anak selalu
   // `/api/materi/[id]`, yang memeriksa haknya lebih dulu lalu memutuskan sendiri
   // dari mana byte-nya diambil. Halaman ini tidak perlu tahu berkasnya sedang

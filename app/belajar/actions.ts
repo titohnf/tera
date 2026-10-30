@@ -5,7 +5,7 @@ import { belajarContext } from '@/lib/belajar/konteks'
 import { allowedCurriculumGradeLevels } from '@/lib/curriculum-grade'
 import { SEMUA_KELAS } from '@/lib/curriculum-config'
 import { createClient } from '@/lib/supabase/server'
-import { materiTopik } from '@/lib/belajar/materi'
+import { materiMapel } from '@/lib/belajar/materi'
 import type { MateriTopik } from '@/lib/belajar/sematan'
 import {
   bukaPaket,
@@ -72,23 +72,33 @@ export async function muatTopik(
   // penilaiannya — menilai adalah pekerjaan halaman Penguasaan, dan mengambil
   // rubrik untuk sesuatu yang tidak ditampilkan cuma satu perjalanan yang
   // dibayar tanpa ditagih siapa pun.
-  const topik = await topikLatihan(learnerId, subjectId)
-
-  // Penerjemah yang sama dengan halaman sesi tutor dan admin: kelas si anak,
-  // ditambah pengecualian per mapel kalau ada (migrasi 105 — mis. siswa kelas 8
-  // yang IPA-nya dari kurikulum Kelas 7). Sifatnya MENAMBAH: elemen pertama
-  // selalu kelas aslinya, dan itu yang dipakai layar membedakan "kelas kamu"
-  // dari kurikulum tambahan. Null berarti kelasnya tidak diketahui — daftar
-  // kosong, dan tidak ada yang disorot.
-  const jenjang = await allowedCurriculumGradeLevels(await createClient(), {
-    sessionGrade: kelas,
-    subjectId,
-    studentIds: studentId ? [studentId] : [],
-  })
+  // Tiga pembacaan yang tidak saling menunggu dijalankan bersamaan: topik beserta
+  // kemajuannya, jenjang, dan materi satu mapel. Dulu ketiganya berurutan dan
+  // anak yang mengetuk sebuah mapel membayar tiga perjalanan ke database.
+  const supabase = await createClient()
+  const [topik, jenjang, materiSemua] = await Promise.all([
+    topikLatihan(learnerId, subjectId),
+    // Penerjemah yang sama dengan halaman sesi tutor dan admin: kelas si anak,
+    // ditambah pengecualian per mapel kalau ada (migrasi 105 — mis. siswa kelas 8
+    // yang IPA-nya dari kurikulum Kelas 7). Sifatnya MENAMBAH: elemen pertama
+    // selalu kelas aslinya, dan itu yang dipakai layar membedakan "kelas kamu"
+    // dari kurikulum tambahan. Null berarti kelasnya tidak diketahui — daftar
+    // kosong, dan tidak ada yang disorot.
+    allowedCurriculumGradeLevels(supabase, {
+      sessionGrade: kelas,
+      subjectId,
+      studentIds: studentId ? [studentId] : [],
+    }),
+    materiMapel(subjectId),
+  ])
+  // Hanya materi topik yang memang ditampilkan: sama dengan yang dulu dibaca
+  // lewat daftar id topik.
+  const idTopik = new Set(topik.map((t) => t.group_id))
+  const materi = materiSemua.filter((m) => idTopik.has(m.group_id))
 
   return {
     topik,
-    materi: await materiTopik(topik.map((t) => t.group_id)),
+    materi,
     // `Semua Kelas` (Fondasi Berhitung) milik dropdown tutor; di sini ia bukan
     // kelas siapa pun dan topiknya sudah disembunyikan di `topikLatihan`.
     jenjang: (jenjang ?? []).filter((j) => j !== SEMUA_KELAS),

@@ -18,6 +18,8 @@ import Link from 'next/link'
  */
 
 const HARI = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+// Nama utuh, untuk tampilan portal keluarga yang tidak memotong hari.
+const HARI_PENUH = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
 
 function rupiah(n: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -72,6 +74,7 @@ export default function SiswaSidebar({
   tampilkanId = true,
   classHref,
   tampilkanPembayaran = true,
+  satuBaris = false,
 }: {
   kelasAktif: SidebarKelas[]
   totalSesi: number
@@ -94,6 +97,12 @@ export default function SiswaSidebar({
    * tempat adalah resep untuk selisih. Admin tetap melihatnya.
    */
   tampilkanPembayaran?: boolean
+  /**
+   * Jadwal satu baris per kelas, berlabel "Jadwal": hari dan jam di kiri, mapel
+   * di sudut kanan. Dipakai portal keluarga yang ruangnya sempit; admin tetap
+   * dengan susunan bertumpuk.
+   */
+  satuBaris?: boolean
 }) {
   const masaBergabung = (() => {
     if (!bergabung) return '—'
@@ -119,22 +128,43 @@ export default function SiswaSidebar({
                     mapel mana. Memasangkan menurut urutan menampilkan
                     pasangan yang bisa saja terbalik.
                   */}
-                  <div className="mt-2 space-y-0.5">
-                    {cls.schedule_days.length === 0 ? (
-                      <p className="text-sm text-gray-500">—</p>
-                    ) : (
-                      cls.schedule_days.map((hari, i) => (
-                        <p key={i} className="text-sm text-gray-500">
-                          {HARI[hari]}
-                          {cls.schedule_time && `, ${cls.schedule_time.slice(0, 5)}`}
+                  {satuBaris ? (
+                    <>
+                      <p className="mt-2 text-xs font-medium text-gray-400">Jadwal</p>
+                      <div className="mt-0.5 flex items-baseline justify-between gap-3 text-sm">
+                        <p className="min-w-0 text-gray-500">
+                          {cls.schedule_days.length === 0
+                            ? '—'
+                            : cls.schedule_days.map(h => HARI_PENUH[h]).join(', ') +
+                              (cls.schedule_time ? ` · ${cls.schedule_time.slice(0, 5)}` : '')}
                         </p>
-                      ))
-                    )}
-                  </div>
-                  {cls.subject_names.length > 0 && (
-                    <p className="mt-1.5 text-sm font-medium text-gray-700">
-                      {cls.subject_names.join(' · ')}
-                    </p>
+                        {cls.subject_names.length > 0 && (
+                          <p className="shrink-0 text-right font-medium text-gray-700">
+                            {cls.subject_names.join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mt-2 space-y-0.5">
+                        {cls.schedule_days.length === 0 ? (
+                          <p className="text-sm text-gray-500">—</p>
+                        ) : (
+                          cls.schedule_days.map((hari, i) => (
+                            <p key={i} className="text-sm text-gray-500">
+                              {HARI[hari]}
+                              {cls.schedule_time && `, ${cls.schedule_time.slice(0, 5)}`}
+                            </p>
+                          ))
+                        )}
+                      </div>
+                      {cls.subject_names.length > 0 && (
+                        <p className="mt-1.5 text-sm font-medium text-gray-700">
+                          {cls.subject_names.join(' · ')}
+                        </p>
+                      )}
+                    </>
                   )}
                 </>
               )
