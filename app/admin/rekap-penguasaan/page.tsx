@@ -57,8 +57,7 @@ export default async function LatihanMandiriAdminPage({
     <div className="max-w-2xl">
       <h1 className="text-xl font-semibold text-gray-900">Latihan Mandiri</h1>
       <p className="text-sm text-gray-500 mt-1">
-        Penguasaan per topik dari soal yang dikerjakan siswa di menu Belajar, sama seperti yang
-        dilihat orang tua. Hasil Misi ada di Ketuntasan Materi.
+        Penguasaan per topik dari soal di menu Belajar, sama seperti yang dilihat orang tua.
       </p>
 
       <div className="mt-4 mb-6">

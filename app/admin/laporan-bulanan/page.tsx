@@ -1,6 +1,8 @@
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import TabelProgresKelas from '@/components/admin/laporan-bulanan/TabelProgresKelas'
 import StudentSelect from '@/components/admin/laporan-bulanan/StudentSelect'
-import MonthSelect from '@/components/admin/attendance/MonthSelect'
+import PemilihPeriode from '@/components/admin/laporan-bulanan/PemilihPeriode'
 import ReportNotesForm from '@/components/admin/laporan-bulanan/ReportNotesForm'
 import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import LaporanBulananView from '@/components/laporan/LaporanBulananView'
@@ -8,11 +10,14 @@ import LaporanBulananView from '@/components/laporan/LaporanBulananView'
 export default async function LaporanBulananPage({
   searchParams,
 }: {
-  searchParams: Promise<{ student_id?: string; month?: string }>
+  searchParams: Promise<{ student_id?: string; month?: string; periode?: string }>
 }) {
-  const { student_id, month } = await searchParams
+  const { student_id, month, periode } = await searchParams
   const now = new Date()
   const selectedMonth = month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+  // "Semua waktu" hanya untuk tabel; laporan satu siswa selalu per bulan.
+  const semuaWaktu = !student_id && periode === 'semua'
 
   const monthOptions = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -25,10 +30,10 @@ export default async function LaporanBulananPage({
   const admin = createAdminClient()
   const { data: students } = await admin
     .from('profiles')
-    .select('id, full_name')
+    .select('id, full_name, grade')
     .eq('role', 'student')
     .eq('is_active', true)
-    .order('full_name') as unknown as { data: { id: string; full_name: string | null }[] | null }
+    .order('full_name') as unknown as { data: { id: string; full_name: string | null; grade: string | null }[] | null }
 
   const studentOptions = (students ?? []).map(s => ({ value: s.id, label: s.full_name ?? '(tanpa nama)' }))
 
@@ -40,8 +45,7 @@ export default async function LaporanBulananPage({
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Progres Kelas</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Kehadiran, materi per sesi, nilai asesmen, dan catatan tutor seorang siswa per bulan.
-            Catatan Tambahan yang diisi di sini ikut tampil di laporan orang tua.
+            Kehadiran, nilai, dan catatan per bulan, sama seperti yang dilihat orang tua.
           </p>
         </div>
         {report && (
@@ -59,13 +63,19 @@ export default async function LaporanBulananPage({
 
       <div className="flex gap-3 mb-6 flex-wrap">
         <StudentSelect options={studentOptions} value={student_id ?? ''} />
-        <MonthSelect options={monthOptions} value={selectedMonth} />
+        <PemilihPeriode options={monthOptions} month={selectedMonth} semua={semuaWaktu} />
+        {student_id && (
+          <Link
+            href={`/admin/laporan-bulanan?month=${selectedMonth}`}
+            className="self-center text-sm font-medium text-blue-600 hover:underline"
+          >
+            ← Semua siswa
+          </Link>
+        )}
       </div>
 
       {!student_id ? (
-        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center">
-          <p className="text-sm text-gray-500">Pilih siswa di atas untuk membuat laporan bulanan.</p>
-        </div>
+        <TabelProgresKelas students={students ?? []} month={selectedMonth} semuaWaktu={semuaWaktu} />
       ) : !report ? (
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center">
           <p className="text-sm text-gray-500">Siswa tidak ditemukan.</p>

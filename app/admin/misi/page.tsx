@@ -51,7 +51,7 @@ export default async function MisiAdminPage({
     <div className="max-w-2xl">
       <h1 className="text-xl font-semibold text-gray-900">Ketuntasan Materi</h1>
       <p className="text-sm text-gray-500 mt-1">
-        Ketuntasan paket latihan Matematika siswa di menu Misi, sama seperti yang dilihat orang tua.
+        Ketuntasan paket latihan Matematika di menu Misi, sama seperti yang dilihat orang tua.
       </p>
 
       <div className="mt-4 mb-6">
