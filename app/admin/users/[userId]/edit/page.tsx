@@ -4,6 +4,8 @@ import Link from 'next/link'
 import EditUserForm from '@/components/admin/users/EditUserForm'
 import PasswordResetButton from '@/components/admin/users/PasswordResetButton'
 import { adalahEmailTeknis } from '@/lib/akun-keluarga'
+import { siapkanWaAkses } from '@/lib/whatsapp-akses'
+import TombolWaAkses from '@/components/admin/siswa/TombolWaAkses'
 import TutorSubjectPicker from '@/components/tutor/profile/TutorSubjectPicker'
 import TutorAvailabilityPicker from '@/components/tutor/profile/TutorAvailabilityPicker'
 import { adminUpdateTutorSubjects, adminUpdateTutorAvailability } from '@/lib/actions/admin/users'
@@ -46,6 +48,8 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
       keluarga = (akun ?? []) as typeof keluarga
     }
   }
+
+  const wa = user.role === 'student' ? await siapkanWaAkses(admin, userId) : null
 
   const ROLE_BREADCRUMB: Record<string, { label: string; href: string }> = {
     tutor:   { label: 'Tutor',      href: '/admin/tutor' },
@@ -124,6 +128,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
           )}
           {user.role === 'student' && (
             <div className="space-y-4">
+              {wa && <TombolWaAkses href={wa.href} alasan={wa.alasan} />}
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Akun orang tua</p>
               {keluarga.length === 0 ? (
                 <p className="text-sm text-gray-500">Belum ada akun orang tua yang tertaut ke siswa ini, jadi belum ada yang bisa masuk ke portal.</p>
