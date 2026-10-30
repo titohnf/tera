@@ -51,7 +51,7 @@ export default async function MisiAdminPage({
     <div className="max-w-2xl">
       <h1 className="text-xl font-semibold text-gray-900">Ketuntasan Materi</h1>
       <p className="text-sm text-gray-500 mt-1">
-        Peta kompetensi seorang siswa, sama persis dengan yang dilihat orang tuanya di menu Laporan (kartu Ketuntasan Materi).
+        Ketuntasan paket latihan Matematika siswa di menu Misi, sama seperti yang dilihat orang tua.
       </p>
 
       <div className="mt-4 mb-6">

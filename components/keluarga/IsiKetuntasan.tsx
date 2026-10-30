@@ -57,7 +57,7 @@ export default async function IsiKetuntasan({
   const misi = learnerId ? await kemajuanTopikPeta(learnerId) : []
   const misiDikerjakan = (misi ?? []).filter(k => k.answered > 0)
 
-  const baris = misiDikerjakan
+  const baris: BarisMisi[] = misiDikerjakan
     .map(k => ({
       kunci: k.topikId,
       nama: k.nama,
@@ -85,6 +85,42 @@ export default async function IsiKetuntasan({
     )
 
   return (
+    <TampilanKetuntasan
+      baris={baris}
+      gagal={misi === null}
+      studentId={studentId}
+      rincian={rincian}
+    />
+  )
+}
+
+/** Satu baris topik peta kompetensi yang sudah siap digambar. */
+export type BarisMisi = {
+  kunci: string
+  nama: string
+  elemen: string
+  keterangan: string
+  sorotan: { jenis: 'ketuntasan'; tuntas: number; total: number }
+}
+
+/**
+ * Tampilan murni dari daftar ketuntasan: tidak membaca apa pun dari database.
+ * Dipisah supaya rupanya bisa dilihat tanpa data sungguhan.
+ */
+export function TampilanKetuntasan({
+  baris,
+  gagal,
+  studentId,
+  rincian,
+}: {
+  baris: BarisMisi[]
+  /** Kueri ketuntasannya gagal — beda dengan "belum ada yang dikerjakan". */
+  gagal: boolean
+  studentId: string
+  rincian: boolean
+}) {
+
+  return (
     <div className="space-y-6">
 
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
@@ -93,7 +129,7 @@ export default async function IsiKetuntasan({
         dituntaskan.{rincian && ' Ketuk sebuah topik untuk melihat rinciannya.'}
       </p>
 
-      {misi === null ? (
+      {gagal ? (
         <p className="rounded-xl bg-white p-6 text-sm leading-relaxed text-gray-500 shadow-kartu">
           Ketuntasannya belum bisa dibaca sekarang. Coba buka lagi sebentar lagi.
         </p>

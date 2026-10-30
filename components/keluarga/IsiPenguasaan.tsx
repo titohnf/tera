@@ -109,7 +109,7 @@ export default async function IsiPenguasaan({
     ),
   )
 
-  const baris = dikerjakan
+  const baris: BarisTopik[] = dikerjakan
     .map(k => {
       const t = topik.get(k.group_id)
       // Penyebutnya SELURUH soal topik, bukan yang sudah dijawab saja, dan
@@ -152,6 +152,49 @@ export default async function IsiPenguasaan({
         a.nama.localeCompare(b.nama, 'id'),
     )
 
+  return (
+    <TampilanPenguasaan
+      baris={baris}
+      gagal={kemajuan === null}
+      studentId={studentId}
+      rincian={rincian}
+    />
+  )
+}
+
+/** Satu baris topik yang sudah siap digambar. */
+export type BarisTopik = {
+  kunci: string
+  subjectId: string | null
+  mapel: string
+  nama: string
+  keterangan: string | null
+  pitaKunci: string | null
+  tuntas: boolean
+  sorotan: { jenis: 'penguasaan'; persen: number | null; label: string | null }
+}
+
+/**
+ * Tampilan murni dari daftar penguasaan: tidak membaca apa pun dari database.
+ *
+ * Dipisah dari `IsiPenguasaan` supaya rupanya bisa dilihat tanpa data sungguhan
+ * (halaman pratinjau menyuapinya baris contoh), dan supaya pengambilan data
+ * serta penggambarannya tidak bercampur dalam satu fungsi sepanjang dua ratus
+ * baris.
+ */
+export function TampilanPenguasaan({
+  baris,
+  gagal,
+  studentId,
+  rincian,
+}: {
+  baris: BarisTopik[]
+  /** Kueri kemajuannya gagal — beda dengan "belum ada yang dikerjakan". */
+  gagal: boolean
+  studentId: string
+  rincian: boolean
+}) {
+
   // Dikelompokkan per MAPEL, dan mapelnya sendiri diurut menurut topik
   // terlemahnya. Dua hal sekaligus: struktur (orang tua membaca rapor per
   // mapel, bukan sebagai satu daftar panjang lintas pelajaran) tanpa kehilangan
@@ -192,7 +235,7 @@ export default async function IsiPenguasaan({
         {rincian && ' Ketuk sebuah topik untuk melihat rinciannya.'}
       </p>
 
-      {kemajuan === null ? (
+      {gagal ? (
         // Kuerinya gagal. TIDAK dibungkus jadi "belum ada latihan": kalimat itu
         // menuduh anaknya belum mengerjakan apa-apa untuk sesuatu yang salah di
         // sisi kita.
