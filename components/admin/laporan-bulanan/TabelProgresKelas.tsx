@@ -23,10 +23,13 @@ export default async function TabelProgresKelas({
   students,
   month,
   semuaWaktu,
+  pemilihPeriode,
 }: {
   students: { id: string; full_name: string | null; grade: string | null }[]
   month: string
   semuaWaktu: boolean
+  /** Pemilih periode; ditampilkan satu baris dengan kolom pencarian. */
+  pemilihPeriode: React.ReactNode
 }) {
   const periode = semuaWaktu
     ? {}
@@ -48,7 +51,10 @@ export default async function TabelProgresKelas({
     return {
       id: s.id,
       nama: s.full_name ?? '(tanpa nama)',
-      kelas: s.grade,
+      // Kolom `profiles.grade` bertipe angka di database walau tipenya di kode
+      // tertulis teks. Dijadikan teks di sini, supaya cocok dengan nilai pilihan
+      // filter kelas (nilai <option> selalu teks).
+      kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
       pct: r.pct,
       hadir: r.hadir,
       sesi: r.sesi,
@@ -59,8 +65,11 @@ export default async function TabelProgresKelas({
 
   if (baris.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center">
-        <p className="text-sm text-gray-500">Belum ada siswa aktif.</p>
+      <div className="space-y-3">
+        {pemilihPeriode}
+        <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center">
+          <p className="text-sm text-gray-500">Belum ada siswa aktif.</p>
+        </div>
       </div>
     )
   }
@@ -74,5 +83,5 @@ export default async function TabelProgresKelas({
     (a, b) => jumlahSiswa.get(b)! - jumlahSiswa.get(a)! || a.localeCompare(b, 'id'),
   )
 
-  return <TabelSiswaUrut baris={baris} mapel={mapel} />
+  return <TabelSiswaUrut baris={baris} mapel={mapel} pemilihPeriode={pemilihPeriode} />
 }

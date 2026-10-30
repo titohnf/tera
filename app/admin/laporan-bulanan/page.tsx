@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import TabelProgresKelas from '@/components/admin/laporan-bulanan/TabelProgresKelas'
-import StudentSelect from '@/components/admin/laporan-bulanan/StudentSelect'
 import PemilihPeriode from '@/components/admin/laporan-bulanan/PemilihPeriode'
 import ReportNotesForm from '@/components/admin/laporan-bulanan/ReportNotesForm'
 import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
@@ -35,8 +34,6 @@ export default async function LaporanBulananPage({
     .eq('is_active', true)
     .order('full_name') as unknown as { data: { id: string; full_name: string | null; grade: string | null }[] | null }
 
-  const studentOptions = (students ?? []).map(s => ({ value: s.id, label: s.full_name ?? '(tanpa nama)' }))
-
   const report = student_id ? await getLaporanBulananData(student_id, selectedMonth) : null
 
   return (
@@ -61,21 +58,27 @@ export default async function LaporanBulananPage({
         )}
       </div>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
-        <StudentSelect options={studentOptions} value={student_id ?? ''} />
-        <PemilihPeriode options={monthOptions} month={selectedMonth} semua={semuaWaktu} />
-        {student_id && (
+      {student_id && (
+        <div className="flex gap-3 mb-6 flex-wrap">
+          <PemilihPeriode options={monthOptions} month={selectedMonth} semua={false} />
           <Link
             href={`/admin/laporan-bulanan?month=${selectedMonth}`}
             className="self-center text-sm font-medium text-blue-600 hover:underline"
           >
             ← Semua siswa
           </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {!student_id ? (
-        <TabelProgresKelas students={students ?? []} month={selectedMonth} semuaWaktu={semuaWaktu} />
+        // Di tampilan tabel, pemilih periode dititipkan ke tabel supaya satu
+        // baris dengan kolom pencarian.
+        <TabelProgresKelas
+          students={students ?? []}
+          month={selectedMonth}
+          semuaWaktu={semuaWaktu}
+          pemilihPeriode={<PemilihPeriode options={monthOptions} month={selectedMonth} semua={semuaWaktu} />}
+        />
       ) : !report ? (
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-10 text-center">
           <p className="text-sm text-gray-500">Siswa tidak ditemukan.</p>
