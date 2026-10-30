@@ -101,34 +101,51 @@ function kalimatSorotan(s: SorotanBaris): { teks: string; terisi: number; dari: 
 export default function KartuPenguasaan({
   b,
   studentId,
+  rincian = true,
 }: {
   b: BarisPenguasaan
   studentId: string
+  /**
+   * Kartu menaut ke halaman rincian di portal keluarga. Dimatikan di panel
+   * admin, yang tidak bisa membuka rute itu: kartunya jadi kotak biasa tanpa
+   * panah.
+   */
+  rincian?: boolean
 }) {
   const { teks, terisi, dari } = kalimatSorotan(b.sorotan)
-  return (
-    <li>
-      {/* Seluruh kartunya tautan, bukan cuma namanya: sasaran
-          sentuh setinggi kartunya sendiri adalah satu-satunya
-          ukuran yang masuk akal di ponsel. */}
-      <Link
-        href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
-        className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
-      >
-        <div className="flex items-start gap-3">
-          {b.elemen && <IkonTema elemen={b.elemen} size={36} />}
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold tracking-tight text-gray-900">{b.nama}</p>
-            {b.keterangan && <p className="mt-0.5 text-xs text-gray-400">{b.keterangan}</p>}
-          </div>
+  const isi = (
+    <>
+      <div className="flex items-start gap-3">
+        {b.elemen && <IkonTema elemen={b.elemen} size={36} />}
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold tracking-tight text-gray-900">{b.nama}</p>
+          {b.keterangan && <p className="mt-0.5 text-xs text-gray-400">{b.keterangan}</p>}
+        </div>
+        {rincian && (
           <span className="shrink-0 text-gray-300" aria-hidden>
             ›
           </span>
-        </div>
+        )}
+      </div>
 
-        <p className="mt-3 text-sm font-medium tabular-nums text-gray-600">{teks}</p>
-        <BilahKemajuan terisi={terisi} dari={dari} label={teks} className="mt-2" />
-      </Link>
+      <p className="mt-3 text-sm font-medium tabular-nums text-gray-600">{teks}</p>
+      <BilahKemajuan terisi={terisi} dari={dari} label={teks} className="mt-2" />
+    </>
+  )
+  return (
+    <li>
+      {rincian ? (
+        // Seluruh kartunya tautan, bukan cuma namanya: sasaran sentuh setinggi
+        // kartunya sendiri adalah satu-satunya ukuran yang masuk akal di ponsel.
+        <Link
+          href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
+          className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
+        >
+          {isi}
+        </Link>
+      ) : (
+        <div className="rounded-xl bg-white p-4 shadow-kartu">{isi}</div>
+      )}
     </li>
   )
 }

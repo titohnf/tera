@@ -38,7 +38,7 @@ export default async function LaporanBulananPage({
     <div>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Laporan Bulanan Siswa</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Progres Kelas</h1>
           <p className="text-sm text-gray-500 mt-1">Rekap pembelajaran siswa per bulan: kehadiran, materi, nilai, dan catatan tutor.</p>
         </div>
         {report && (
