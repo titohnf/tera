@@ -36,7 +36,8 @@ export default async function TutorRekapPenguasaanPage({
     <div className="p-6 max-w-full mx-auto">
       <h1 className="text-2xl font-semibold text-gray-900">Rekap Penguasaan</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Penguasaan per topik dari latihan mandiri murid di kelas yang kamu ajar.
+        Penguasaan per topik dari soal yang dikerjakan murid di menu Belajar, untuk kelas yang kamu
+        ajar. Hasil Misi tidak termasuk.
       </p>
 
       <div className="mt-4">

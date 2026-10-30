@@ -29,7 +29,7 @@ export type RecapStudent = {
 export type MasteryRecap = {
   topics: RecapTopic[]
   students: RecapStudent[]
-  /** Murid kelas ini yang belum punya kode latihan sama sekali. */
+  /** Murid kelas ini yang belum punya baris `learners`, yaitu belum pernah membuka menu Belajar. */
   withoutAccess: string[]
 }
 

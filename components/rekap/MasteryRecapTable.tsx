@@ -3,7 +3,7 @@ import type { MasteryRecap } from '@/lib/reports/mastery-recap'
 /**
  * Matriks murid × topik: satu layar untuk melihat kelas menguasai apa dan
  * tersendat di mana. Ini pengganti rekap "Db Nilai" yang dulu diketik manual di
- * spreadsheet — angkanya datang sendiri dari latihan mandiri.
+ * spreadsheet — angkanya datang sendiri dari soal yang dikerjakan di menu Belajar.
  *
  * Sengaja tidak memakai skala warna: labelnya berasal dari rubrik yang ditentukan
  * per mapel, jadi jumlah tingkatannya tidak diketahui di muka. Warna dipetakan
@@ -21,10 +21,10 @@ export default function MasteryRecapTable({ recap }: { recap: MasteryRecap }) {
   if (recap.topics.length === 0) {
     return (
       <div className="rounded border border-slate-200 bg-white p-6 text-sm text-gray-500">
-        <p>Belum ada murid kelas ini yang mengerjakan latihan mandiri.</p>
+        <p>Belum ada murid kelas ini yang mengerjakan soal di menu Belajar.</p>
         {recap.withoutAccess.length > 0 && (
           <p className="mt-2 text-amber-700">
-            {recap.withoutAccess.length} murid belum punya kode latihan:{' '}
+            {recap.withoutAccess.length} murid belum pernah membuka menu Belajar:{' '}
             {recap.withoutAccess.join(', ')}
           </p>
         )}
@@ -36,7 +36,7 @@ export default function MasteryRecapTable({ recap }: { recap: MasteryRecap }) {
     <div className="space-y-3">
       {recap.withoutAccess.length > 0 && (
         <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Belum punya kode latihan: {recap.withoutAccess.join(', ')}
+          Belum pernah membuka menu Belajar: {recap.withoutAccess.join(', ')}
         </p>
       )}
 
@@ -77,7 +77,7 @@ export default function MasteryRecapTable({ recap }: { recap: MasteryRecap }) {
       </div>
 
       <p className="text-xs text-gray-400">
-        Angka dihitung dari seluruh riwayat latihan mandiri, bukan sesi terakhir saja. Soal yang
+        Angka dihitung dari seluruh riwayat soal di menu Belajar, bukan sesi terakhir saja. Soal yang
         ditandai dua topik dihitung di keduanya.
       </p>
     </div>
