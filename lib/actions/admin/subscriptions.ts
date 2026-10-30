@@ -107,7 +107,7 @@ export async function activateSubscription(
  * webhook pembayaran. Baris lama ditutup lebih dulu supaya indeks unik parsial
  * tidak menolak yang baru.
  *
- * Mulainya dari `ends_at` lama kalau masih di depan: memperpanjang lebih awal
+ * Berakhirnya dihitung dari `ends_at` lama kalau masih di depan: memperpanjang lebih awal
  * tidak boleh memotong sisa hari yang sudah dibayar.
  */
 export async function extendSubscription(id: string, bulan: number): Promise<ActionState> {
@@ -138,7 +138,11 @@ export async function extendSubscription(id: string, bulan: number): Promise<Act
     profile_id: lama.profile_id,
     product: lama.product,
     status: 'active',
-    starts_at: mulai.toISOString(),
+    // Mulai sekarang, bukan dari `mulai`: baris lama baru saja ditutup, jadi
+    // kalau baris baru menunggu `ends_at` lama, `has_product` menolak akses
+    // selama sisa hari itu. Hari yang sudah dibayar tetap utuh — hanya
+    // `ends_at`-nya yang dihitung dari ujung masa lama.
+    starts_at: sekarang.toISOString(),
     ends_at: tambahBulan(mulai, bulan),
     method: lama.method,
     amount: lama.amount,
