@@ -15,6 +15,7 @@ import SiswaTabs from '@/components/siswa/SiswaTabs'
 import TagihanList, { type PembayaranRow } from '@/components/siswa/TagihanList'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
 import { adalahEmailTeknis } from '@/lib/akun-keluarga'
+import { nomorWhatsApp, pesanAksesPortal, tautanWhatsApp } from '@/lib/pesan-keluarga'
 import { ringkasPembayaran } from '@/lib/tagihan'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
@@ -187,14 +188,41 @@ export default async function SiswaDetailPage({
   const { data: tautanKeluarga } = await admin.from('family_students').select('family_id').eq('student_id', studentId)
   const idKeluarga = (tautanKeluarga ?? []).map(t => t.family_id as string)
   const { data: akunKeluarga } = idKeluarga.length
-    ? await admin.from('profiles').select('id, email').in('id', idKeluarga)
-    : { data: [] as { id: string; email: string | null }[] }
+    ? await admin.from('profiles').select('id, full_name, email, phone').in('id', idKeluarga)
+    : { data: [] as { id: string; full_name: string | null; email: string | null; phone: string | null }[] }
   const emailLogin: { email: string; catatan?: string }[] = (akunKeluarga ?? [])
     .filter(a => a.email)
     .map(a => ({ email: a.email as string }))
   if (emailLogin.length === 0 && profile.email && !adalahEmailTeknis(profile.email)) {
     emailLogin.push({ email: profile.email, catatan: 'Belum tertaut ke akun orang tua — belum bisa masuk portal' })
   }
+
+  // Tombol WhatsApp: mengirim alamat, email login, dan password default ke orang
+  // tua. Disiapkan di server karena passwordnya dibaca dari lingkungan; halaman
+  // ini hanya bisa dibuka admin. Bila salah satu bahan kurang, tombolnya mati dan
+  // menyebutkan alasannya.
+  const akunLogin = (akunKeluarga ?? []).find(a => a.email)
+  const nomorOrtu = nomorWhatsApp(profile.parent_phone || akunLogin?.phone)
+  const passwordDefault = process.env.PASSWORD_DEFAULT_RESET
+  const waAlasanMati = !akunLogin
+    ? 'Belum ada akun login keluarga untuk siswa ini'
+    : !nomorOrtu
+      ? 'Nomor orang tua belum diisi'
+      : !passwordDefault
+        ? 'Password default belum diatur di server'
+        : null
+  const waHref =
+    !waAlasanMati && akunLogin && nomorOrtu && passwordDefault
+      ? tautanWhatsApp(
+          nomorOrtu,
+          pesanAksesPortal({
+            namaAnak: profile.nickname || profile.full_name || 'putra/putri Bapak/Ibu',
+            namaOrtu: profile.parent_name || akunLogin.full_name,
+            email: akunLogin.email as string,
+            password: passwordDefault,
+          })
+        )
+      : null
 
   type RawEnroll = {
     is_active: boolean
@@ -718,6 +746,28 @@ export default async function SiswaDetailPage({
           <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Aksi</h2>
             <div className="space-y-2">
+              {waHref ? (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-full px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  Kirim Akses ke WhatsApp Orang Tua
+                </a>
+              ) : (
+                <div>
+                  <span className="flex items-center justify-center w-full px-4 py-2.5 bg-slate-100 text-gray-400 text-sm font-medium rounded-lg cursor-not-allowed">
+                    Kirim Akses ke WhatsApp Orang Tua
+                  </span>
+                  <p className="text-xs text-gray-400 mt-1">{waAlasanMati}</p>
+                </div>
+              )}
+              {waHref && (
+                <p className="text-xs text-gray-400 -mt-1">
+                  Berisi password default. Pastikan akun sudah direset ke default sebelum dikirim.
+                </p>
+              )}
               <Link
                 href={`/admin/invoices/new?student_id=${studentId}`}
                 className="flex items-center justify-center w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
