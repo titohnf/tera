@@ -136,19 +136,34 @@ export async function updateUser(userId: string, prevState: ActionState, formDat
   redirect(`/admin/users/${userId}`)
 }
 
-export async function sendPasswordResetEmail(userId: string): Promise<ActionState> {
+/**
+ * Mengembalikan password sebuah akun ke password default awal.
+ *
+ * Nilai defaultnya dibaca dari variabel lingkungan `PASSWORD_DEFAULT_RESET`,
+ * bukan ditulis di kode dan tidak pernah dikirim ke browser. Variabel itu harus
+ * diisi di setiap tempat aplikasi berjalan (Vercel, Netlify, dan `.env.local`).
+ *
+ * Hanya admin yang bisa memicunya. Sengaja TIDAK ada jalur untuk pengguna dari
+ * halaman login: siapa pun yang tahu email seseorang akan bisa mengembalikan
+ * password orang itu ke default yang diketahui lalu masuk ke akunnya.
+ *
+ * Menggantikan `sendPasswordResetEmail`, yang menampilkan "Link terkirim"
+ * padahal `generateLink` hanya membuat tautan dan tidak mengirim email apa pun.
+ */
+export async function resetPasswordKeDefault(userId: string): Promise<ActionState> {
   const ctx = await verifyAdmin()
   if (!ctx) return { error: 'Tidak diizinkan' }
 
-  const { data: profile } = await ctx.admin.from('profiles').select('email').eq('id', userId).single()
-  if (!profile) return { error: 'Pengguna tidak ditemukan' }
+  const passwordDefault = process.env.PASSWORD_DEFAULT_RESET
+  if (!passwordDefault || passwordDefault.length < 6) {
+    return { error: 'Password default belum diatur di server (PASSWORD_DEFAULT_RESET, minimal 6 karakter).' }
+  }
 
-  const { error } = await ctx.admin.auth.admin.generateLink({
-    type: 'recovery',
-    email: profile.email,
-  })
+  const { data: profil } = await ctx.admin.from('profiles').select('id').eq('id', userId).maybeSingle()
+  if (!profil) return { error: 'Pengguna tidak ditemukan' }
 
-  if (error) return { error: error.message }
+  const { error } = await ctx.admin.auth.admin.updateUserById(userId, { password: passwordDefault })
+  if (error) return { error: 'Password belum bisa direset. Coba lagi.' }
   return null
 }
 
