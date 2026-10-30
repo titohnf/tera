@@ -90,17 +90,19 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
             orang tua di menu admin. */}
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-6 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700">Password</h2>
-          <div>
-            <p className="text-sm text-gray-900 mb-2">
-              Akun {user.role === 'student' ? 'siswa' : 'ini'}: {user.full_name}
-            </p>
-            <PasswordResetButton userId={userId} nama={user.full_name} />
-          </div>
+          {/* Profil siswa tidak bisa login (hanya akun orang tua yang bisa), jadi
+              reset password-nya tidak berarti apa-apa dan tombolnya tidak ditampilkan. */}
+          {user.role !== 'student' && (
+            <div>
+              <p className="text-sm text-gray-900 mb-2">Akun ini: {user.full_name}</p>
+              <PasswordResetButton userId={userId} nama={user.full_name} />
+            </div>
+          )}
           {user.role === 'student' && (
-            <div className="border-t border-slate-100 pt-4 space-y-4">
+            <div className="space-y-4">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Akun orang tua</p>
               {keluarga.length === 0 ? (
-                <p className="text-sm text-gray-500">Belum ada akun orang tua yang tertaut ke siswa ini.</p>
+                <p className="text-sm text-gray-500">Belum ada akun orang tua yang tertaut ke siswa ini, jadi belum ada yang bisa masuk ke portal.</p>
               ) : (
                 keluarga.map(k => (
                   <div key={k.id}>

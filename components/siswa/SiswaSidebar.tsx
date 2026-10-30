@@ -75,6 +75,7 @@ export default function SiswaSidebar({
   classHref,
   tampilkanPembayaran = true,
   satuBaris = false,
+  emailLogin,
 }: {
   kelasAktif: SidebarKelas[]
   totalSesi: number
@@ -103,6 +104,11 @@ export default function SiswaSidebar({
    * dengan susunan bertumpuk.
    */
   satuBaris?: boolean
+  /**
+   * Email yang dipakai untuk login ke portal, beserta catatan bila ada. Diisi
+   * admin: login keluarga ada di akun orang tua, bukan di profil siswa.
+   */
+  emailLogin?: { email: string; catatan?: string }[]
 }) {
   const masaBergabung = (() => {
     if (!bergabung) return '—'
@@ -218,6 +224,21 @@ export default function SiswaSidebar({
 
       <Bagian judul="Akun">
         <div className="space-y-2">
+          {emailLogin && (
+            <div className="pb-1">
+              <p className="text-sm text-gray-500">Email login</p>
+              {emailLogin.length === 0 ? (
+                <p className="text-sm text-gray-400">—</p>
+              ) : (
+                emailLogin.map(e => (
+                  <p key={e.email} className="text-sm font-medium text-gray-800 break-all">
+                    {e.email}
+                    {e.catatan && <span className="block text-xs font-normal text-amber-600">{e.catatan}</span>}
+                  </p>
+                ))
+              )}
+            </div>
+          )}
           <Baris label="Bergabung">
             {bergabung
               ? new Date(bergabung).toLocaleDateString('id-ID', {

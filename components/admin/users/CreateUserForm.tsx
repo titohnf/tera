@@ -24,7 +24,16 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function CreateUserForm({ initialRole = 'student' }: { initialRole?: string }) {
+export type AkunOrangTua = { id: string; nama: string; email: string; anak: string[] }
+
+export default function CreateUserForm({
+  initialRole = 'student',
+  orangTua = [],
+}: {
+  initialRole?: string
+  /** Akun keluarga yang sudah ada, untuk menautkan kakak-adik tanpa membuat akun baru. */
+  orangTua?: AkunOrangTua[]
+}) {
   const [state, formAction, pending] = useActionState(createUser, null)
   const [role] = useState(initialRole)
   const [level, setLevel] = useState('')
@@ -33,6 +42,9 @@ export default function CreateUserForm({ initialRole = 'student' }: { initialRol
   const [name, setName] = useState('')
   const [password, setPassword] = useState(() => generatePassword())
   const [copied, setCopied] = useState(false)
+  const [familyId, setFamilyId] = useState('')
+  // Siswa yang ditautkan ke akun keluarga yang sudah ada tidak butuh email/password baru.
+  const tautkan = role === 'student' && familyId !== ''
   const fileRef = useRef<HTMLInputElement>(null)
 
   function handleNameChange(val: string) {
@@ -191,20 +203,47 @@ export default function CreateUserForm({ initialRole = 'student' }: { initialRol
                 />
               </div>
             </div>
+            {orangTua.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Tautkan ke akun orang tua yang sudah ada
+                </label>
+                <select
+                  name="family_id"
+                  value={familyId}
+                  onChange={e => setFamilyId(e.target.value)}
+                  className="w-full px-3 py-2.5 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Tidak — buat akun orang tua baru</option>
+                  {orangTua.map(o => (
+                    <option key={o.id} value={o.id}>
+                      {o.nama} · {o.email}{o.anak.length > 0 ? ` (anak: ${o.anak.join(', ')})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Untuk kakak-adik: pakai akun orang tua yang sama, tanpa email dan password baru.</p>
+              </div>
+            )}
           </div>
         </>
       )}
 
       {/* ── Akun ────────────────────────────────────────────────────── */}
+      {!tautkan && (
       <div className="space-y-4 border-t border-slate-200 pt-4 -mt-4">
-        <SectionLabel>Akun</SectionLabel>
+        <SectionLabel>{role === 'student' ? 'Akun Login Keluarga' : 'Akun'}</SectionLabel>
+        {role === 'student' && (
+          <p className="text-xs text-gray-500 -mt-2">
+            Email dan password ini dipakai orang tua untuk masuk ke portal keluarga. Siswa sendiri tidak punya login.
+          </p>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Email <span className="text-red-500">*</span>
+            {role === 'student' ? 'Email Login Keluarga' : 'Email'} <span className="text-red-500">*</span>
           </label>
           <input
-            name="email" type="email" required placeholder="contoh@email.com"
+            name="email" type="email" required={!tautkan} placeholder="contoh@email.com"
             className="w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -226,7 +265,7 @@ export default function CreateUserForm({ initialRole = 'student' }: { initialRol
             <input
               name="password"
               type="text"
-              required
+              required={!tautkan}
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="w-full px-3 py-2.5 pr-10 border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -251,6 +290,7 @@ export default function CreateUserForm({ initialRole = 'student' }: { initialRol
           <p className="text-xs text-gray-400 mt-1">Bagikan password ini ke pengguna. Dapat diubah setelah login.</p>
         </div>
       </div>
+      )}
 
       <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 -mt-4">
         <button

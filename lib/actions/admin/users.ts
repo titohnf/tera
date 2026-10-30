@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { dayToIso } from '@/lib/enrollment'
 import { todayWib } from '@/lib/daily-message'
+import { buatAkunKeluarga, emailTeknisSiswa } from '@/lib/akun-keluarga'
 
 export type ActionState = { error: string } | null
 
@@ -37,20 +38,65 @@ export async function createUser(prevState: ActionState, formData: FormData): Pr
   const avatarFile = formData.get('avatar') as File | null
 
   if (!fullName) return { error: 'Nama lengkap wajib diisi' }
-  if (!email) return { error: 'Email wajib diisi' }
-  if (!password || password.length < 6) return { error: 'Password minimal 6 karakter' }
   if (!['admin', 'tutor', 'student', 'parent', 'mandiri'].includes(role)) return { error: 'Role tidak valid' }
 
-  const { data: authData, error: authError } = await ctx.admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: fullName, role },
-  })
+  // Siswa: email dan password dari form adalah LOGIN KELUARGA, bukan login siswa.
+  // Sejak migrasi 076 hanya akun `parent` yang bisa masuk ke portal; profil siswa
+  // cuma catatan (role `student` diarahkan ke "Akses Tidak Diizinkan"). Jadi untuk
+  // siswa dibuat dua hal: profil siswa (email teknis, tanpa login) dan akun
+  // keluarga yang tertaut lewat `family_students` — atau, bila `family_id` diisi
+  // (kakak-adik), siswa langsung ditautkan ke akun keluarga yang sudah ada.
+  const familyIdDipilih = role === 'student' ? ((formData.get('family_id') as string) || null) : null
+  if (role === 'student') {
+    if (!familyIdDipilih) {
+      if (!email) return { error: 'Email login keluarga wajib diisi' }
+      if (!password || password.length < 6) return { error: 'Password minimal 6 karakter' }
+    } else {
+      const { data: ortu } = await ctx.admin.from('profiles').select('id, role').eq('id', familyIdDipilih).maybeSingle()
+      if (!ortu || ortu.role !== 'parent') return { error: 'Akun orang tua yang dipilih tidak valid' }
+    }
+  } else {
+    if (!email) return { error: 'Email wajib diisi' }
+    if (!password || password.length < 6) return { error: 'Password minimal 6 karakter' }
+  }
+
+  const { data: authData, error: authError } = await ctx.admin.auth.admin.createUser(
+    role === 'student'
+      ? {
+          email: emailTeknisSiswa(),
+          password: crypto.randomUUID(),
+          email_confirm: true,
+          user_metadata: { full_name: fullName, role },
+        }
+      : { email, password, email_confirm: true, user_metadata: { full_name: fullName, role } }
+  )
 
   if (authError) return { error: authError.message }
 
   const userId = authData.user.id
+
+  if (role === 'student') {
+    let familyId = familyIdDipilih
+    if (!familyId) {
+      const hasil = await buatAkunKeluarga(ctx.admin, {
+        email,
+        password,
+        nama: parentName || `Keluarga ${fullName}`,
+        phone: parentPhone,
+      })
+      if ('error' in hasil) {
+        // Siswanya dibatalkan juga: setengah jadi berarti siswa tanpa login.
+        await ctx.admin.auth.admin.deleteUser(userId).catch(() => undefined)
+        return { error: hasil.error }
+      }
+      familyId = hasil.id
+    }
+    const { error: galatTaut } = await ctx.admin.from('family_students').insert({ family_id: familyId, student_id: userId })
+    if (galatTaut) {
+      await ctx.admin.auth.admin.deleteUser(userId).catch(() => undefined)
+      return { error: 'Siswa belum bisa ditautkan ke akun orang tua. Coba lagi.' }
+    }
+  }
   const extra: Record<string, string | number | null> = { role, updated_at: new Date().toISOString() }
   if (phone) extra.phone = phone
   if (nickname) extra.nickname = nickname

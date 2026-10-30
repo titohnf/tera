@@ -14,6 +14,7 @@ import JadwalTable from '@/components/siswa/JadwalTable'
 import SiswaTabs from '@/components/siswa/SiswaTabs'
 import TagihanList, { type PembayaranRow } from '@/components/siswa/TagihanList'
 import SiswaSidebar from '@/components/siswa/SiswaSidebar'
+import { adalahEmailTeknis } from '@/lib/akun-keluarga'
 import { ringkasPembayaran } from '@/lib/tagihan'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
@@ -179,6 +180,21 @@ export default async function SiswaDetailPage({
   const profile = student
   const studentId = profile.id
   const urlSlug = toSlug(profile.full_name ?? '') || studentId
+
+  // Email login: milik akun keluarga yang tertaut. Profil siswa tidak bisa login,
+  // jadi emailnya sendiri hanya ditampilkan bila siswa BELUM tertaut (dengan
+  // catatan), supaya admin tahu kenapa orang tuanya belum bisa masuk.
+  const { data: tautanKeluarga } = await admin.from('family_students').select('family_id').eq('student_id', studentId)
+  const idKeluarga = (tautanKeluarga ?? []).map(t => t.family_id as string)
+  const { data: akunKeluarga } = idKeluarga.length
+    ? await admin.from('profiles').select('id, email').in('id', idKeluarga)
+    : { data: [] as { id: string; email: string | null }[] }
+  const emailLogin: { email: string; catatan?: string }[] = (akunKeluarga ?? [])
+    .filter(a => a.email)
+    .map(a => ({ email: a.email as string }))
+  if (emailLogin.length === 0 && profile.email && !adalahEmailTeknis(profile.email)) {
+    emailLogin.push({ email: profile.email, catatan: 'Belum tertaut ke akun orang tua — belum bisa masuk portal' })
+  }
 
   type RawEnroll = {
     is_active: boolean
@@ -695,6 +711,7 @@ export default async function SiswaDetailPage({
             bergabung={profile.created_at}
             studentId={studentId}
             classHref={id => `/admin/classes/${id}`}
+            emailLogin={emailLogin}
           />
 
           {/* Aksi */}
