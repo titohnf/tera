@@ -9,6 +9,7 @@ import { MetricGridSkeleton } from '@/components/dashboard/MetricSkeleton'
 import OverviewChart, { type OverviewMetricDef, type OverviewSeries, type OverviewSeriesConfig } from '@/components/admin/dashboard/OverviewChart'
 import SessionCalendar from '@/components/sessions/SessionCalendar'
 import { getTutorGroupsForDate, buildDailyMessageText, buildWhatsappShareUrl, formatDateLabel, todayWib } from '@/lib/daily-message'
+import { hariTerlambat, tanggalBayarTerakhir } from '@/lib/tagihan'
 import { outstandingAmount, OUTSTANDING_SELECT, type InvoiceWithPayments } from '@/lib/finance/laba-rugi'
 
 type RecentSession = {
@@ -104,7 +105,7 @@ export default async function AdminDashboard({
     { count: totalEverEnrolled },
     { data: invoicesPaidPeriod },
     { data: invoicesPendingRaw },
-    { data: oldestPendingInvoice },
+    { data: invoicesBerjalan },
     { data: assessmentResultsRaw },
     { data: tutorSessionsInPeriod },
     { count: assessmentCount },
@@ -138,7 +139,9 @@ export default async function AdminDashboard({
     admin.from('class_students').select('*', { count: 'exact', head: true }),
     admin.from('invoices').select('total_due').eq('status', 'paid').gte('issued_at', fromISO).lte('issued_at', toISO),
     admin.from('invoices').select(`${OUTSTANDING_SELECT}, student_id`).neq('status', 'paid') as unknown as Promise<{ data: (InvoiceWithPayments & { student_id: string })[] | null }>,
-    admin.from('invoices').select('issued_at').neq('status', 'paid').order('issued_at', { ascending: true }).limit(1),
+    // Yang sudah terbit dan belum lunas saja (draft dan dibatalkan bukan tagihan),
+    // lengkap dengan cicilannya supaya keterlambatan bisa dinilai per invoice.
+    admin.from('invoices').select('status, due_date, invoice_payments(paid_at)').in('status', ['sent', 'partially_paid']) as unknown as Promise<{ data: { status: string; due_date: string | null; invoice_payments: { paid_at: string }[] | null }[] | null }>,
     admin.from('assessment_results').select('score, assessments!inner(max_score, sessions!inner(scheduled_at))').not('score', 'is', null) as unknown as Promise<{ data: AssessmentResultWithDate[] | null }>,
     admin.from('sessions').select('tutor_id').eq('status', 'completed').gte('scheduled_at', fromISO).lte('scheduled_at', toISO).not('tutor_id', 'is', null),
     admin.from('assessments').select('*', { count: 'exact', head: true }),
@@ -229,8 +232,15 @@ export default async function AdminDashboard({
     ? Math.round(resultsFlat.filter(r => (r.score / r.assessments!.max_score) * 100 >= 75).length / resultsFlat.length * 100)
     : null
 
-  const overdueInvoiceDays = oldestPendingInvoice?.[0]?.issued_at
-    ? Math.floor((now.getTime() - new Date(oldestPendingInvoice[0].issued_at).getTime()) / 86_400_000) : 0
+  // Aturan yang sama dengan lencana "Terlambat" di halaman tagihan: angsuran
+  // yang masih mengalir tidak dihitung, dan hitungannya dari jatuh tempo —
+  // bukan dari tanggal terbit, yang membuat invoice semesteran yang dicicil
+  // terbaca "berbulan-bulan belum dibayar".
+  const hariIniWib = todayWib()
+  const overdueInvoiceDays = (invoicesBerjalan ?? []).reduce(
+    (maks, inv) => Math.max(maks, hariTerlambat(inv.status, inv.due_date, hariIniWib, tanggalBayarTerakhir(inv.invoice_payments ?? []))),
+    0,
+  )
 
   const activeStudentSet = new Set((allActiveStudents ?? []).map(s => s.student_id))
   const studentsInSessionSet = new Set(attendances.map(a => a.student_id))

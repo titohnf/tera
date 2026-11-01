@@ -111,11 +111,27 @@ export function tagihanTerlambat(
   /** Tanggal pembayaran TERAKHIR yang tercatat, kalau ada. */
   bayarTerakhir?: string | null,
 ): boolean {
-  if (sudahSelesai(status)) return false
+  return hariTerlambat(status, dueDate, hariIni, bayarTerakhir) > 0
+}
+
+/**
+ * Berapa hari sebuah tagihan sudah terlambat, atau 0 kalau belum. Ukurannya
+ * sama dengan `tagihanTerlambat` (keduanya satu aturan): tagihan tanpa
+ * pembayaran dihitung sejak jatuh tempo, angsuran sejak LEWAT batas diam
+ * `MACET_HARI` setelah pembayaran terakhir — jadi angsuran yang diam 45 hari
+ * terlambat 15 hari, bukan 45.
+ */
+export function hariTerlambat(
+  status: string,
+  dueDate: string | null,
+  hariIni: string,
+  bayarTerakhir?: string | null,
+): number {
+  if (sudahSelesai(status)) return 0
   if (status === 'partially_paid') {
-    return !!bayarTerakhir && selisihHari(bayarTerakhir, hariIni) > MACET_HARI
+    return bayarTerakhir ? Math.max(0, selisihHari(bayarTerakhir, hariIni) - MACET_HARI) : 0
   }
-  return !!dueDate && dueDate < hariIni
+  return dueDate ? Math.max(0, selisihHari(dueDate, hariIni)) : 0
 }
 
 /**
@@ -186,4 +202,34 @@ export function ringkasPembayaran(
     belumBayar += total - terbayar
   }
   return { sudahBayar, belumBayar }
+}
+
+/**
+ * Bahan untuk aturan "kondisi kritis" keuangan (KK-01 dan KK-02) seorang murid.
+ *
+ * Hanya tagihan yang benar-benar terlambat menurut `hariTerlambat` yang
+ * dihitung, dan tunggakannya adalah SISA setelah cicilan — bukan nilai kotor.
+ * Dua hal yang dulu membuat murid yang rutin mencicil ditandai kritis: jatuh
+ * tempo invoice semesteran dipakai sebagai ukuran padahal ia dicicil bulanan,
+ * dan sisa bulan yang belum waktunya dibayar ikut dihitung "menumpuk".
+ *
+ * Dipakai bersama oleh halaman detail siswa dan daftar siswa kritis, supaya
+ * keduanya tidak menilai murid yang sama dengan angka berbeda.
+ */
+export function ringkasKeterlambatan(
+  invoices: { id: string; total_due: number | string; status: string; due_date: string | null }[],
+  pembayaran: { invoice_id: string; amount: number | string; paid_at: string }[],
+  hariIni: string,
+): { maxOverdueDays: number; totalOutstanding: number } {
+  let maxOverdueDays = 0
+  let totalOutstanding = 0
+  for (const inv of invoices) {
+    const bayar = pembayaran.filter(p => p.invoice_id === inv.id)
+    const hari = hariTerlambat(inv.status, inv.due_date, hariIni, tanggalBayarTerakhir(bayar))
+    if (hari <= 0) continue
+    maxOverdueDays = Math.max(maxOverdueDays, hari)
+    const sisa = ringkasPembayaran([inv], bayar).belumBayar
+    totalOutstanding += sisa
+  }
+  return { maxOverdueDays, totalOutstanding }
 }

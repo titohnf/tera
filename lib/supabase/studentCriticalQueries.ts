@@ -1,5 +1,7 @@
 import { createAdminClient } from './server-admin'
 import type { StudentCriticalInput } from '../studentCritical'
+import { ringkasKeterlambatan } from '../tagihan'
+import { todayWib } from '../daily-message'
 
 export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInput[]> {
   const admin = createAdminClient()
@@ -15,6 +17,7 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
     allSessionsRes,
     upcomingSessionsRes,
     invoicesRes,
+    paymentsRes,
     scoresRes,
   ] = await Promise.all([
     admin
@@ -67,10 +70,18 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
       .gte('scheduled_at', now.toISOString())
       .order('scheduled_at', { ascending: true }),
 
+    // Status tagihan yang tersimpan hanya draft, sent, partially_paid, paid,
+    // dan cancelled — `unpaid`/`overdue` tidak pernah ada, jadi filter lama
+    // membuat aturan keuangan tidak pernah aktif. Yang belum lunas dan sudah
+    // terbit: sent dan partially_paid.
     admin
       .from('invoices')
-      .select('student_id, due_date, total_due, status')
-      .in('status', ['unpaid', 'overdue']),
+      .select('id, student_id, due_date, total_due, status')
+      .in('status', ['sent', 'partially_paid']),
+
+    admin
+      .from('invoice_payments')
+      .select('invoice_id, amount, paid_at'),
 
     admin
       .from('assessments')
@@ -86,6 +97,8 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
   const allSessions = allSessionsRes.data ?? []
   const upcomingSessions = upcomingSessionsRes.data ?? []
   const invoices = invoicesRes.data ?? []
+  const payments = paymentsRes.data ?? []
+  const hariIni = todayWib()
   const scores = scoresRes.data ?? []
 
   // Build lookup maps
@@ -132,6 +145,14 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
     if (!nextSessionByClass.has(s.class_id)) {
       nextSessionByClass.set(s.class_id, new Date(s.scheduled_at))
     }
+  }
+
+  // invoice → pembayaran
+  const paymentsByInvoice = new Map<string, typeof payments>()
+  for (const p of payments) {
+    const existing = paymentsByInvoice.get(p.invoice_id) ?? []
+    existing.push(p)
+    paymentsByInvoice.set(p.invoice_id, existing)
   }
 
   // student → invoices
@@ -208,18 +229,11 @@ export async function fetchCriticalEvaluationData(): Promise<StudentCriticalInpu
 
     // Invoice data
     const studentInvoices = invoicesByStudent.get(student.id) ?? []
-    let maxOverdueDays = 0
-    let totalOutstanding = 0
-    for (const inv of studentInvoices) {
-      totalOutstanding += inv.total_due ?? 0
-      if (inv.due_date) {
-        const dueDate = new Date(inv.due_date)
-        if (dueDate < now) {
-          const days = daysBetween(dueDate, now)
-          if (days > maxOverdueDays) maxOverdueDays = days
-        }
-      }
-    }
+    const { maxOverdueDays, totalOutstanding } = ringkasKeterlambatan(
+      studentInvoices,
+      studentInvoices.flatMap(inv => paymentsByInvoice.get(inv.id) ?? []),
+      hariIni,
+    )
 
     // Scores
     const studentScores = scoresByStudent.get(student.id) ?? []

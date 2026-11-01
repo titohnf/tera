@@ -18,7 +18,7 @@ import { adalahEmailTeknis } from '@/lib/akun-keluarga'
 import { siapkanWaAkses } from '@/lib/whatsapp-akses'
 import TombolWaAkses from '@/components/admin/siswa/TombolWaAkses'
 import PenanggungJawabSelect from '@/components/admin/siswa/PenanggungJawabSelect'
-import { ringkasPembayaran } from '@/lib/tagihan'
+import { ringkasKeterlambatan, ringkasPembayaran } from '@/lib/tagihan'
 import RiwayatKelas from '@/components/siswa/RiwayatKelas'
 import PerformaTabs, { type SubjectStats } from '@/components/admin/siswa/PerformaTabs'
 
@@ -442,7 +442,6 @@ export default async function SiswaDetailPage({
   const completedSessions = sessions.filter(s => s.status === 'completed')
   const hadirCount = completedSessions.filter(s => { const st = attendanceMap.get(s.id); return st === 'present' || st === 'late' }).length
   const hadirPct = completedSessions.length > 0 ? Math.round((hadirCount / completedSessions.length) * 100) : null
-  const overdueInvoices = invoices.filter(inv => inv.status !== 'paid' && inv.due_date && inv.due_date < today)
   const { sudahBayar: paidTotal, belumBayar: unpaidTotal } = ringkasPembayaran(invoices, pembayaran)
 
   const now2 = new Date()
@@ -515,10 +514,10 @@ export default async function SiswaDetailPage({
     daysSinceEnrollment: daysBetween(enrolledAt, now2),
     nextScheduledSessionDate,
     tutorIsActive,
-    maxOverdueDays: overdueInvoices.length > 0 ? Math.max(...overdueInvoices.map(inv => daysBetween(new Date(inv.due_date!), now2))) : 0,
-    // Nilai kotor, sama dengan studentCriticalQueries — kartu ini dan daftar
+    // Fungsi yang sama dipakai studentCriticalQueries — kartu ini dan daftar
     // siswa kritis tidak boleh menilai murid yang sama dengan angka berbeda.
-    totalOutstanding: invoices.filter(inv => inv.status !== 'paid' && inv.status !== 'cancelled').reduce((s, i) => s + i.total_due, 0),
+    // Angsuran yang masih mengalir tidak dihitung terlambat.
+    ...ringkasKeterlambatan(invoices, pembayaran, today),
     monthlyBaseRate: 500_000,
   }
 
