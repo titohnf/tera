@@ -336,7 +336,7 @@ export default async function FinancePage({
         <div className="bg-white rounded-xl shadow ring-1 ring-gray-900/5 p-8 text-center text-sm text-gray-500 mb-8">
           {isAllTime
             ? 'Belum ada slip gaji yang sudah dikirim atau dibayar.'
-            : 'Belum ada slip gaji yang jatuh tempo dibayar bulan ini.'}
+            : 'Belum ada slip gaji yang sudah dikirim atau dibayar untuk bulan kerja ini.'}
           <div className="mt-2">
             <Link href="/admin/payslips" className="text-xs text-blue-600 hover:underline">
               Buat slip gaji →
@@ -446,9 +446,9 @@ export default async function FinancePage({
 
       <p className="mt-6 text-xs text-gray-400 leading-relaxed">
         Pemasukan dihitung dari pembayaran invoice yang tercatat di periode ini — termasuk cicilan
-        dan pelunasan tunggakan bulan sebelumnya. Gaji tutor dihitung dari slip gaji yang tanggal
-        gajiannya jatuh di periode ini, bukan bulan kerjanya, dan hanya slip yang sudah dikirim
-        atau dibayar — slip draft belum dihitung.
+        dan pelunasan tunggakan bulan sebelumnya. Gaji tutor dihitung dari slip gaji menurut bulan
+        kerjanya, bukan tanggal gajiannya, dan hanya slip yang sudah dikirim atau dibayar —
+        slip draft belum dihitung.
       </p>
     </div>
   )

@@ -14,9 +14,10 @@ import { sudahDibayar } from '@/lib/payslip-bayar'
  *     `issued_at` — cara lama — salah di kedua kasus itu: cicilan hilang sama
  *     sekali sampai lunas, lalu muncul utuh di bulan invoice diterbitkan.
  *
- *   - Gaji tutor diambil dari `payslips` menurut `pay_date` (tanggal gajian),
- *     bukan menurut `month` (bulan kerja). Slip Mei yang dibayar 1 Juni adalah
- *     uang keluar bulan Juni.
+ *   - Gaji tutor diambil dari `payslips` menurut `month` (bulan kerja), bukan
+ *     menurut `pay_date` (tanggal gajian). Gaji sesi Mei yang dibayar 1 Juni
+ *     tetap tampil di Mei, jadi laba Mei sudah memuat biaya tutornya dan tidak
+ *     bergantung kapan gaji dicairkan.
  *
  * Konsekuensinya laba bulan ini bisa berubah kalau ada orang tua yang membayar
  * tunggakan bulan lalu; itu memang perilaku yang benar untuk basis kas dan
@@ -169,7 +170,7 @@ type PaymentRow = {
 }
 type PayslipRow = {
   grand_total: number
-  pay_date: string
+  month: string
   status: string
   paid_at: string | null
   tutor_name: string
@@ -178,7 +179,14 @@ type PayslipRow = {
 type ExpenseRow = OperationalExpense
 
 /** Rentang waktu untuk query; `null` berarti seluruh riwayat. */
-type Bounds = { startIso: string; endIso: string; startDate: string; endDate: string } | null
+type Bounds = {
+  startIso: string
+  endIso: string
+  startDate: string
+  endDate: string
+  firstMonth: string
+  lastMonth: string
+} | null
 
 function boundsForMonths(months: string[]): Bounds {
   const sorted = [...months].sort()
@@ -189,6 +197,8 @@ function boundsForMonths(months: string[]): Bounds {
     endIso: monthRangeUtc(latest).endIso,
     startDate: monthRangeDate(earliest).start,
     endDate: monthRangeDate(latest).end,
+    firstMonth: earliest,
+    lastMonth: latest,
   }
 }
 
@@ -210,7 +220,7 @@ async function fetchFinanceRows(admin: SupabaseClient, bounds: Bounds) {
     .limit(5000)
   let payslipQuery = admin
     .from('payslips')
-    .select('grand_total, pay_date, status, paid_at, tutor_name, total_sessions')
+    .select('grand_total, month, status, paid_at, tutor_name, total_sessions')
     .in('status', ['sent', 'paid'])
     .limit(5000)
   let expenseQuery = admin
@@ -221,7 +231,7 @@ async function fetchFinanceRows(admin: SupabaseClient, bounds: Bounds) {
 
   if (bounds) {
     paymentQuery = paymentQuery.gte('paid_at', bounds.startIso).lt('paid_at', bounds.endIso)
-    payslipQuery = payslipQuery.gte('pay_date', bounds.startDate).lt('pay_date', bounds.endDate)
+    payslipQuery = payslipQuery.gte('month', bounds.firstMonth).lte('month', bounds.lastMonth)
     expenseQuery = expenseQuery.gte('incurred_on', bounds.startDate).lt('incurred_on', bounds.endDate)
   }
 
@@ -256,7 +266,7 @@ export async function getMonthlyTotals(
   }
 
   for (const ps of payslips ?? []) {
-    const t = byMonth.get(ps.pay_date.slice(0, 7))
+    const t = byMonth.get(ps.month)
     if (!t) continue
     const amount = Number(ps.grand_total) || 0
     t.payroll += amount
@@ -510,7 +520,7 @@ export async function getActivityMonths(
   const { payments, payslips, expenses } = await fetchFinanceRows(admin, null)
   const months = new Set<string>()
   for (const p of payments) months.add(monthOfTimestamp(p.paid_at))
-  for (const ps of payslips) months.add(ps.pay_date.slice(0, 7))
+  for (const ps of payslips) months.add(ps.month)
   for (const e of expenses) months.add(e.incurred_on.slice(0, 7))
   return [...months].sort().reverse().slice(0, max)
 }
