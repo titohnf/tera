@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generateFirstInvoice, generateMonthlyInvoiceForStudent } from '@/lib/actions/admin/invoices'
+import { createInvoiceTambahan, generateFirstInvoice, generateMonthlyInvoiceForStudent } from '@/lib/actions/admin/invoices'
 
 // Only classes with no invoice yet — per-class billing is meant to be a
 // single invoice document (see "Kirim Pengingat" for ongoing installment
@@ -36,6 +36,11 @@ function currentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
+function hariIni(): string {
+  const now = new Date()
+  return `${currentMonth()}-${String(now.getDate()).padStart(2, '0')}`
+}
+
 // Single "Buat Invoice" entry point. The billing model (semester lump-sum
 // vs. monthly) is derived from the class itself — private classes bill
 // monthly, everything else bills per semester — so the admin only ever
@@ -47,6 +52,11 @@ export default function CreateInvoiceButton({ studentId, generatableClasses, mon
   const [selected, setSelected] = useState<Option | null>(null)
   const [month, setMonth] = useState(currentMonth())
   const [error, setError] = useState('')
+  // Mode "sesi tambahan": invoice terpisah untuk sesi ekstra di luar paket bulanan.
+  const [tambahan, setTambahan] = useState(false)
+  const [sesi, setSesi] = useState(1)
+  const [tanggal, setTanggal] = useState(hariIni())
+  const [sudahDibayar, setSudahDibayar] = useState(true)
 
   const options: Option[] = [
     ...generatableClasses.map(gc => ({ kind: 'persemester' as const, ...gc })),
@@ -57,6 +67,10 @@ export default function CreateInvoiceButton({ studentId, generatableClasses, mon
     setSelected(null)
     setMonth(currentMonth())
     setError('')
+    setTambahan(false)
+    setSesi(1)
+    setTanggal(hariIni())
+    setSudahDibayar(true)
   }
 
   function handleOpen() {
@@ -94,6 +108,25 @@ export default function CreateInvoiceButton({ studentId, generatableClasses, mon
     startTransition(async () => {
       const sid = selected.studentId ?? studentId ?? ''
       const res = await generateMonthlyInvoiceForStudent(sid, selected.classId, month)
+      if (res && 'error' in res) { setError(res.error ?? 'Gagal'); return }
+      handleClose()
+      router.refresh()
+    })
+  }
+
+  function handleGenerateTambahan() {
+    if (!selected || selected.kind !== 'bulanan') return
+    setError('')
+    startTransition(async () => {
+      const sid = selected.studentId ?? studentId ?? ''
+      const res = await createInvoiceTambahan({
+        studentId: sid,
+        classId: selected.classId,
+        month,
+        sessions: sesi,
+        tanggal,
+        sudahDibayar,
+      })
       if (res && 'error' in res) { setError(res.error ?? 'Gagal'); return }
       handleClose()
       router.refresh()
@@ -168,26 +201,88 @@ export default function CreateInvoiceButton({ studentId, generatableClasses, mon
                   <span>Kelas: <span className="font-medium text-gray-600">{selected.className}</span></span>
                 </div>
 
+                <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl text-sm">
+                  {[
+                    { nilai: false, label: 'Tagihan bulanan' },
+                    { nilai: true, label: 'Sesi tambahan' },
+                  ].map(m => (
+                    <button
+                      key={m.label}
+                      type="button"
+                      onClick={() => setTambahan(m.nilai)}
+                      className={`py-1.5 rounded-lg font-medium transition-colors ${tambahan === m.nilai ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Bulan Tagihan</label>
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{tambahan ? 'Bulan Sesi' : 'Bulan Tagihan'}</label>
                   <input
                     type="month"
                     value={month}
                     onChange={e => setMonth(e.target.value)}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                   />
-                  <p className="text-xs text-gray-400">Jumlah pertemuan dihitung otomatis dari sesi terjadwal di bulan ini.</p>
+                  {!tambahan && (
+                    <p className="text-xs text-gray-400">Jumlah pertemuan dihitung otomatis dari sesi terjadwal di bulan ini.</p>
+                  )}
                 </div>
+
+                {tambahan && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jumlah Sesi</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={20}
+                          value={sesi}
+                          onChange={e => setSesi(Math.max(1, Number(e.target.value) || 1))}
+                          className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tanggal</label>
+                        <input
+                          type="date"
+                          value={tanggal}
+                          onChange={e => setTanggal(e.target.value)}
+                          className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        />
+                      </div>
+                    </div>
+                    <label className="flex items-start gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={sudahDibayar}
+                        onChange={e => setSudahDibayar(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Sudah dibayar lunas pada tanggal ini
+                        <span className="block text-xs text-gray-400">
+                          Pembayaran dicatat sekaligus, jadi kuitansinya langsung bisa dikirim.
+                        </span>
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-400">
+                      Tarif per pertemuan mengikuti tarif kelas. Invoice bulanan yang sudah ada tidak diubah.
+                    </p>
+                  </>
+                )}
 
                 {error && <p className="text-xs text-red-600">{error}</p>}
 
                 <div className="flex gap-2 pt-1">
                   <button
-                    onClick={handleGenerateMonthly}
+                    onClick={tambahan ? handleGenerateTambahan : handleGenerateMonthly}
                     disabled={isPending}
                     className="flex-1 py-2.5 text-sm font-medium text-white bg-gray-800 rounded-xl hover:bg-gray-900 disabled:opacity-60 transition-colors"
                   >
-                    {isPending ? 'Membuat...' : 'Buat Invoice'}
+                    {isPending ? 'Membuat...' : tambahan ? 'Buat Invoice Tambahan' : 'Buat Invoice'}
                   </button>
                   <button
                     onClick={handleClose}

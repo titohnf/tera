@@ -97,6 +97,10 @@ const LineItemSchema = z.object({
   // "YYYY-MM" — set on monthly-billed private-class invoices so the pertemuan
   // count is scoped to that month instead of the whole class enrollment.
   period: z.string().optional(),
+  // Sesi di luar paket bulanan (mis. siswa minta sesi ekstra) yang ditagih
+  // lewat invoice tambahan. Penanda ini menjaga invoicenya tidak ditimpa sync
+  // draft dan tidak dianggap sebagai tagihan bulanan reguler.
+  tambahan: z.boolean().optional(),
 })
 
 const InvoiceSchema = z.object({
@@ -463,6 +467,7 @@ type SyncableLineItem = {
   is_deduction: boolean
   unit?: 'bulan' | 'pertemuan'
   period?: string
+  tambahan?: boolean
 }
 
 const lineSubtotal = (item: { months: number; amount: number }) =>
@@ -540,7 +545,10 @@ export async function syncPrivateClassDraftInvoices(
     let changed = false
     const updatedItems: SyncableLineItem[] = []
     for (const item of items) {
-      if (item.is_deduction || item.unit !== 'pertemuan') {
+      // Baris tambahan adalah jumlah sesi ekstra yang diketik admin, bukan
+      // hitungan jadwal — dihitung ulang dari kalender ia akan berubah jadi
+      // total sesi sebulan penuh.
+      if (item.is_deduction || item.unit !== 'pertemuan' || item.tambahan) {
         updatedItems.push(item)
         continue
       }
@@ -574,16 +582,18 @@ export async function generateMonthlyInvoiceForStudent(studentId: string, classI
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'Bulan tidak valid' }
   const [issuedAt, nextMonthStr] = monthRange(month)
 
-  const { data: existing } = await ctx.admin
+  // Invoice tambahan (sesi ekstra) tidak menghitung sebagai invoice bulanan:
+  // siswa yang minta sesi tambahan sebelum tagihan reguler terbit tetap harus
+  // bisa ditagih bulanannya.
+  const { data: existingRows } = await ctx.admin
     .from('invoices')
-    .select('id')
+    .select('id, line_items')
     .eq('student_id', studentId)
     .eq('class_id', classId)
     .gte('issued_at', issuedAt)
-    .lt('issued_at', nextMonthStr)
-    .limit(1)
-    .maybeSingle()
-  if (existing) return { error: 'Invoice untuk bulan ini sudah ada' }
+    .lt('issued_at', nextMonthStr) as unknown as { data: { id: string; line_items: SyncableLineItem[] | null }[] | null }
+  const adaBulanan = (existingRows ?? []).some(inv => !(inv.line_items ?? []).some(i => i.tambahan))
+  if (adaBulanan) return { error: 'Invoice untuk bulan ini sudah ada' }
 
   const [{ data: student }, { data: cls }, enrollment] = await Promise.all([
     ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
@@ -650,6 +660,100 @@ export async function generateMonthlyInvoiceForStudent(studentId: string, classI
     .single()
 
   if (error) return { error: error.message }
+  revalidatePath('/admin/invoices')
+  return { id: inserted.id }
+}
+
+/**
+ * Invoice untuk sesi tambahan di luar paket bulanan — mis. siswa meminta satu
+ * sesi ekstra. Berdiri sendiri, jadi invoice bulanan yang sudah terkirim atau
+ * lunas tidak berubah angkanya; dokumennya terpisah dan kuitansinya otomatis
+ * menyebut sesi tambahan itu.
+ *
+ * Dibuat langsung berstatus terkirim (bukan draft) karena jumlah sesinya
+ * sudah pasti. Kalau `sudahDibayar`, pembayaran penuh dicatat sekaligus pada
+ * `tanggal` sehingga invoice langsung lunas.
+ */
+export async function createInvoiceTambahan(input: {
+  studentId: string
+  classId: string
+  month: string
+  sessions: number
+  tanggal: string
+  sudahDibayar: boolean
+}) {
+  const ctx = await verifyAdmin()
+  if (!ctx) return { error: 'Tidak diizinkan' }
+
+  const { studentId, classId, month, sessions, tanggal, sudahDibayar } = input
+  if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'Bulan tidak valid' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) return { error: 'Tanggal tidak valid' }
+  if (!Number.isInteger(sessions) || sessions < 1 || sessions > 20) {
+    return { error: 'Jumlah sesi harus 1–20' }
+  }
+
+  const [{ data: student }, { data: cls }] = await Promise.all([
+    ctx.admin.from('profiles').select('full_name, parent_name').eq('id', studentId).single(),
+    ctx.admin.from('classes').select('level, class_type, jenis').eq('id', classId).single(),
+  ])
+  if (!student) return { error: 'Siswa tidak ditemukan' }
+  if (!cls) return { error: 'Kelas tidak ditemukan' }
+  const clsData = cls as { level: string | null; class_type: string | null; jenis: string | null }
+  if (clsData.class_type !== 'private') return { error: 'Sesi tambahan hanya berlaku untuk kelas privat' }
+
+  const billingJenis = clsData.jenis === 'reguler' ? 'Reguler' : clsData.jenis === 'fokus' ? 'Fokus' : null
+  const { data: rates } = billingJenis ? await ctx.admin
+    .from('billing_rates')
+    .select('amount, billing_rate_periods!inner(is_active)')
+    .eq('class_type', clsData.class_type)
+    .eq('jenjang', clsData.level)
+    .eq('jenis', billingJenis)
+    .eq('billing_rate_periods.is_active', true)
+    .limit(1) as unknown as { data: { amount: number }[] | null } : { data: [] }
+  const amount = rates?.[0] ? Number(rates[0].amount) : 0
+  if (amount <= 0) return { error: 'Tarif per pertemuan kelas ini belum diatur' }
+
+  const monthLabel = new Date(`${month}-01T00:00:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+  const studentData = student as { full_name: string; parent_name: string | null }
+  const totalDue = sessions * amount
+
+  const { data: inserted, error } = await ctx.admin
+    .from('invoices')
+    .insert({
+      invoice_number: await generateInvoiceNumber(ctx.admin),
+      class_id: classId,
+      student_id: studentId,
+      student_name: studentData.full_name,
+      parent_name: studentData.parent_name ?? '',
+      line_items: [{
+        description: `Sesi tambahan${clsData.level ? ` ${clsData.level}` : ''} — ${monthLabel}`,
+        months: sessions,
+        amount,
+        is_deduction: false,
+        unit: 'pertemuan',
+        period: month,
+        tambahan: true,
+      }],
+      total_due: totalDue,
+      payment_method: 'Transfer Bank',
+      bank_account: 'BSI - 7296753275 a.n. Suci Purnama Sari',
+      due_date: addDays(tanggal, 7),
+      issued_at: tanggal,
+      status: 'sent',
+      created_by: ctx.user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+  if (error) return { error: error.message }
+
+  if (sudahDibayar) {
+    const paid = await recordPayment(inserted.id, totalDue, `${tanggal}T00:00:00+07:00`)
+    if ('error' in paid) {
+      return { error: `Invoice dibuat, tetapi pembayaran gagal dicatat: ${paid.error}` }
+    }
+  }
+
   revalidatePath('/admin/invoices')
   return { id: inserted.id }
 }

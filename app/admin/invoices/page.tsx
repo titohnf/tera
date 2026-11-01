@@ -16,7 +16,7 @@ type EnrollmentRow = {
   classes: { name: string; class_type: string | null; semester: number | null; academic_year: string | null } | null
 }
 
-type LineItem = { unit?: string; months?: number; period?: string; is_deduction?: boolean; koreksi_sesi?: boolean }
+type LineItem = { unit?: string; months?: number; period?: string; is_deduction?: boolean; koreksi_sesi?: boolean; tambahan?: boolean }
 
 type InvoiceRow = {
   id: string
@@ -78,7 +78,14 @@ function formatRupiah(n: number) {
 // against an older invoice's total — a class can now have several
 // genuinely independent invoices (e.g. one per month), so an older
 // invoice's total is no longer a meaningful "canonical class price".
-function computeStatus(invoices: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim' {
+//
+// Invoice tambahan (sesi ekstra) tidak ikut menentukan status ini selama
+// masih ada invoice reguler: tambahan yang lunas tidak boleh membuat siswa
+// yang tagihan bulanannya belum dibayar terbaca "Lunas". Uangnya tetap
+// masuk ke Nilai Invoice / Dibayar / Belum Dibayar.
+function computeStatus(semua: InvoiceRow[]): 'lunas' | 'angsuran' | 'menunggu' | 'belum_terkirim' {
+  const reguler = semua.filter(inv => !(inv.line_items ?? []).some(i => i.tambahan))
+  const invoices = reguler.length > 0 ? reguler : semua
   if (invoices.length === 0) return 'belum_terkirim'
   const latestInv = invoices[0]
   if (latestInv.status === 'draft') return 'belum_terkirim'
