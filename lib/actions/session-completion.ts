@@ -77,7 +77,7 @@ export type CompletionCheck = {
   gradedCount: number
   /** Jumlah nilai yang wajib terisi = jumlah asesmen × siswa yang hadir/telat */
   gradesRequired: number
-  /** Topik yang latihan soalnya lengkap (link soal + pembahasan). Pembahasan asesmen opsional, tidak dihitung. */
+  /** Topik yang latihan soalnya lengkap (link soal + pembahasan yang berbeda dari soalnya). Pembahasan asesmen opsional, tidak dihitung. */
   pembahasanCount: number
   /** Berapa yang seharusnya ada: satu per topik sesi. */
   pembahasanRequired: number
@@ -184,7 +184,10 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
 
   const pembahasanRequired = kunciTopik.size
   const pembahasanCount = [...kunciTopik]
-    .filter(key => adaTautan(cpUrls[key]) && adaTautan(cpPembahasanUrls[key])).length
+    .filter(key => adaTautan(cpUrls[key]) && adaTautan(cpPembahasanUrls[key])
+      // Link yang sama persis dengan soalnya berarti tutor menempelkan soal ke
+      // kolom pembahasan — bukan pembahasan.
+      && cpUrls[key].trim() !== cpPembahasanUrls[key].trim()).length
 
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
   const hasPembahasan = pembahasanCount >= pembahasanRequired
