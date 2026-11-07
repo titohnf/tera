@@ -131,6 +131,28 @@ export async function rangkumanLaporan(
 }
 
 /**
+ * Bagian Progres Kelas saja (rata-rata semester + nilai per bulan), tanpa
+ * Latihan Mandiri dan Ketuntasan. Dipakai admin di laporan bulanan satu siswa:
+ * `sekarang` di sini bulan yang sedang dibuka, jadi semester dan grafiknya
+ * berhenti di bulan itu, bukan di bulan berjalan.
+ */
+export async function rangkumanProgresKelas(
+  studentId: string,
+  sekarang: { tahun: number; bulan: number },
+): Promise<Pick<RangkumanLaporan, 'kelas' | 'bulanLabel' | 'semesterLabel'>> {
+  const s = semesterBerjalan(sekarang)
+  const [kelas, jenjang] = await Promise.all([
+    rangkumanKelas(studentId, s.bulan),
+    jenjangSiswa(studentId),
+  ])
+  return {
+    kelas,
+    bulanLabel: s.bulan.map(namaBulanPendek),
+    semesterLabel: [jenjang, s.label].filter(Boolean).join(' '),
+  }
+}
+
+/**
  * "kelas 7", atau jenjang teksnya kalau kelasnya tidak berangka, atau kosong.
  *
  * Kosong bukan galat: sebagian murid tercatat tanpa kelas, dan kalimat yang

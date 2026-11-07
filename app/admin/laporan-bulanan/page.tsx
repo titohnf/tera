@@ -5,6 +5,8 @@ import PemilihPeriode from '@/components/admin/laporan-bulanan/PemilihPeriode'
 import ReportNotesForm from '@/components/admin/laporan-bulanan/ReportNotesForm'
 import { getLaporanBulananData } from '@/lib/reports/laporan-bulanan'
 import LaporanBulananView from '@/components/laporan/LaporanBulananView'
+import KartuNilaiSemester from '@/components/admin/laporan-bulanan/KartuNilaiSemester'
+import { rangkumanProgresKelas } from '@/lib/reports/ringkasan-laporan'
 
 export default async function LaporanBulananPage({
   searchParams,
@@ -34,13 +36,33 @@ export default async function LaporanBulananPage({
     .eq('is_active', true)
     .order('full_name') as unknown as { data: { id: string; full_name: string | null; grade: string | null }[] | null }
 
-  const report = student_id ? await getLaporanBulananData(student_id, selectedMonth) : null
+  const [selYear, selMon] = selectedMonth.split('-').map(Number)
+  const [report, nilai] = student_id
+    ? await Promise.all([
+        getLaporanBulananData(student_id, selectedMonth),
+        rangkumanProgresKelas(student_id, { tahun: selYear, bulan: selMon }),
+      ])
+    : [null, null]
 
   return (
     <div>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Progres Kelas</h1>
+          <div className="flex items-center gap-1.5">
+            {student_id && (
+              <Link
+                href={`/admin/laporan-bulanan?month=${selectedMonth}`}
+                aria-label="Kembali ke semua siswa"
+                title="Semua siswa"
+                className="-ml-1.5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+            )}
+            <h1 className="text-xl font-semibold text-gray-900">Progres Kelas</h1>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             Kehadiran, nilai, dan catatan per bulan, sama seperti yang dilihat orang tua.
           </p>
@@ -61,12 +83,6 @@ export default async function LaporanBulananPage({
       {student_id && (
         <div className="flex gap-3 mb-6 flex-wrap">
           <PemilihPeriode options={monthOptions} month={selectedMonth} semua={false} />
-          <Link
-            href={`/admin/laporan-bulanan?month=${selectedMonth}`}
-            className="self-center text-sm font-medium text-blue-600 hover:underline"
-          >
-            ← Semua siswa
-          </Link>
         </div>
       )}
 
@@ -84,6 +100,14 @@ export default async function LaporanBulananPage({
           <p className="text-sm text-gray-500">Siswa tidak ditemukan.</p>
         </div>
       ) : (
+        <>
+        {nilai && (
+          <KartuNilaiSemester
+            kelas={nilai.kelas}
+            bulan={nilai.bulanLabel}
+            semesterLabel={nilai.semesterLabel}
+          />
+        )}
         <LaporanBulananView
           report={report}
           profileHref={`/admin/siswa/${report.student.id}`}
@@ -95,6 +119,7 @@ export default async function LaporanBulananPage({
             />
           }
         />
+        </>
       )}
     </div>
   )
