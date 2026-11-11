@@ -231,12 +231,19 @@ export default async function InvoicesPage({
 
   // Baris yang ikut saat filter bulan aktif: yang punya invoice bulan itu, plus
   // keanggotaan yang masih berjalan dan memang mencakup bulan itu — supaya yang
-  // BELUM ditagih bulan ini tetap kelihatan, bukan hanya yang sudah.
+  // BELUM ditagih bulan ini tetap kelihatan, bukan hanya yang sudah. Mantan
+  // siswa ikut bila ia masih punya sesi di bulan itu.
   const monthEnrollments = bulanFilter
     ? relevantEnrollments.filter(e => {
         const invs = invoiceMap.get(`${e.student_id}__${e.class_id}`) ?? []
         if (invs.some(inv => invoiceCoverageMonths(inv).includes(bulanFilter))) return true
-        return e.is_active && coversMonth(e, bulanFilter)
+        if (e.is_active) return coversMonth(e, bulanFilter)
+        // Mantan siswa yang masih punya pertemuan di bulan ini (mis. keluar
+        // setelah sesi pertama bulan itu) tetap perlu ditagih, jadi harus
+        // kelihatan selama belum ada invoice bulannya.
+        return (sessionsByClass.get(e.class_id) ?? []).some(at =>
+          at.slice(0, 7) === bulanFilter && coversSession(e, at),
+        )
       })
     : relevantEnrollments
 

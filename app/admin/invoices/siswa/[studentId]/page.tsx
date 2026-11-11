@@ -142,11 +142,13 @@ export default async function StudentInvoiceDetailPage({
     invoices.filter(inv => inv.line_items.some(i => i.period)).map(inv => inv.class_id).filter((id): id is string => !!id)
   )
 
-  // Private classes the student is currently enrolled in bill monthly;
-  // everything else (group/reguler classes) bills lump-sum per semester.
-  // The billing model is derived from class_type, not chosen by the admin.
+  // Private classes bill monthly; everything else (group/reguler classes)
+  // bills lump-sum per semester. The billing model is derived from class_type,
+  // not chosen by the admin. Keanggotaan yang sudah berakhir ikut dihitung:
+  // siswa yang keluar di tengah bulan masih harus bisa ditagih untuk sesi
+  // yang sempat ia ikuti (action-nya memotong sesuai masa keanggotaan).
   const privateClassIds = new Set(
-    enrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
+    allEnrollments.filter(e => e.classes?.class_type === 'private').map(e => e.class_id)
   )
 
   // Invoice Persemester — only non-private classes with no invoice yet.
