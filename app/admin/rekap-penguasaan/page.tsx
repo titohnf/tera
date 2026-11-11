@@ -184,7 +184,7 @@ export default async function LatihanMandiriAdminPage({
           <IsiPenguasaan
             studentId={student_id}
             learnerId={learnerId as string | null}
-            rincian={{ dasar: `/admin/rekap-penguasaan/${student_id}`, sufiks: '?dari=mandiri' }}
+            rincian={{ dasar: `/admin/rekap-penguasaan/${student_id}` }}
           />
         </>
       ) : (

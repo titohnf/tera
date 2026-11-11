@@ -272,7 +272,7 @@ export default async function RincianMisi({
             {adaPengayaan && (
               <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
                 Paket bertanda <span className="font-medium">Pengayaan</span> tidak
-                diminta dari anak Anda — ia melampaui cakupan topik ini, dan
+                diminta dari {admin ? 'siswa' : 'anak Anda'} — ia melampaui cakupan topik ini, dan
                 melewatinya tidak membuat topiknya kurang tuntas.
               </p>
             )}

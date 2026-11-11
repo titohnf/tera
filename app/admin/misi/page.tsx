@@ -25,9 +25,8 @@ export const metadata = { title: 'Ketuntasan Materi' }
  * siswa, angkanya dari fungsi yang sama dengan halaman rapor keluarga —
  * `ringkasanLatihanSemua`); klik baris membuka rincian siswa itu.
  *
- * Kartu topik menaut ke rincian di `/admin/rekap-penguasaan/[studentId]/[kunci]`
- * (`?dari=misi` supaya panah kembali jatuh di menu ini), yang merender komponen
- * rincian portal keluarga untuk admin.
+ * Kartu topik menaut ke rincian di `/admin/misi/[studentId]/[kunci]`, yang
+ * merender komponen rincian portal keluarga untuk admin.
  */
 export default async function MisiAdminPage({
   searchParams,
@@ -155,7 +154,7 @@ export default async function MisiAdminPage({
           <IsiKetuntasan
             studentId={student_id}
             learnerId={learnerId as string | null}
-            rincian={{ dasar: `/admin/rekap-penguasaan/${student_id}`, sufiks: '?dari=misi' }}
+            rincian={{ dasar: `/admin/misi/${student_id}` }}
           />
         </>
       ) : (

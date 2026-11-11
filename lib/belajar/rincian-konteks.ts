@@ -34,16 +34,25 @@ export async function learnerRincian(k: KonteksRincian): Promise<string | null> 
   return (data as { id: string } | null)?.id ?? null
 }
 
+/**
+ * Dasar alamat rincian di panel admin. Tiap menu punya rutenya sendiri
+ * (`/admin/rekap-penguasaan/…` untuk Latihan Mandiri, `/admin/misi/…` untuk
+ * Ketuntasan Materi) supaya menu samping menyala di menu asal.
+ */
+export function dasarRincianAdmin(dari: 'mandiri' | 'misi', studentId: string): string {
+  return `/admin/${dari === 'misi' ? 'misi' : 'rekap-penguasaan'}/${studentId}`
+}
+
 /** Alamat rincian satu topik (`kunci` = id grup atau kode topik peta). */
 export function alamatRincian(k: KonteksRincian, kunci: string): string {
   return k.admin
-    ? `/admin/rekap-penguasaan/${k.studentId}/${kunci}?dari=${k.admin.dari}`
+    ? `${dasarRincianAdmin(k.admin.dari, k.studentId)}/${kunci}`
     : `/keluarga/${k.studentId}/penguasaan/${kunci}`
 }
 
 /** Alamat peninjauan satu soal dalam sebuah sesi. */
 export function alamatSoal(k: KonteksRincian, kunci: string, sesiId: string, itemId: string): string {
   return k.admin
-    ? `/admin/rekap-penguasaan/${k.studentId}/${kunci}/soal?sesi=${sesiId}&item=${itemId}&dari=${k.admin.dari}`
+    ? `${dasarRincianAdmin(k.admin.dari, k.studentId)}/${kunci}/soal?sesi=${sesiId}&item=${itemId}`
     : `/keluarga/${k.studentId}/penguasaan/${kunci}/soal?sesi=${sesiId}&item=${itemId}`
 }
