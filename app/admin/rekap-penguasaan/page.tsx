@@ -86,7 +86,7 @@ export default async function LatihanMandiriAdminPage({
       {
         kunci: 'terakhir',
         label: 'Terakhir',
-        lengkap: 'Terakhir membuka sesi latihan atau Misi; yang paling lama tidak berlatih di atas bila diurutkan naik',
+        lengkap: 'Terakhir menjawab soal di menu Belajar (Misi tidak dihitung); diurutkan naik, yang paling lama tidak berlatih di atas',
       },
       { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik yang pernah dikerjakan' },
       { kunci: 'selesai', label: 'Selesai', lengkap: 'Topik yang seluruh soalnya sudah dikerjakan' },
@@ -101,12 +101,12 @@ export default async function LatihanMandiriAdminPage({
       const r = ringkasan.get(s.id)
       const m = r?.mandiri ?? null
       const sel: BarisLatihan['sel'] = {}
-      const hari = r?.terakhir ? selisihHari(r.terakhir) : null
-      if (r?.terakhir && hari !== null) {
-        const w = waktuRelatif(r.terakhir)
+      const hari = r?.terakhirLatihan ? selisihHari(r.terakhirLatihan) : null
+      if (r?.terakhirLatihan && hari !== null) {
+        const w = waktuRelatif(r.terakhirLatihan)
         sel.terakhir = {
           teks: w.teks,
-          nilai: new Date(r.terakhir).getTime(),
+          nilai: new Date(r.terakhirLatihan).getTime(),
           judul: w.lengkap,
           nada: nadaTerakhir(hari),
         }

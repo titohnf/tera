@@ -64,10 +64,15 @@ export default async function MisiAdminPage({
     {
       kunci: 'terakhir',
       label: 'Terakhir',
-      lengkap: 'Terakhir membuka sesi latihan atau Misi; yang paling lama tidak berlatih di atas bila diurutkan naik',
+      lengkap: 'Terakhir menjawab soal Misi (paket peta, pengecekan ulang, pemanasan); diurutkan naik, yang paling lama tidak mengerjakan di atas',
     },
     { kunci: 'level', label: 'Level', lengkap: 'Jenjang kelas tertinggi yang seluruh topiknya tuntas' },
     { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik peta kompetensi yang pernah dikerjakan' },
+    {
+      kunci: 'soal',
+      label: 'Soal',
+      lengkap: 'Soal paket latihan peta yang sudah dijawab, dan persennya dari seluruh soal peta',
+    },
     { kunci: 'tuntas', label: 'Tuntas', lengkap: 'Topik yang paket latihannya tuntas, dari seluruh topik peta' },
   ]
   if (!student_id) {
@@ -76,12 +81,12 @@ export default async function MisiAdminPage({
       const r = ringkasan.get(s.id)
       const k = r?.ketuntasan ?? null
       const sel: BarisLatihan['sel'] = {}
-      const hari = r?.terakhir ? selisihHari(r.terakhir) : null
-      if (r?.terakhir && hari !== null) {
-        const w = waktuRelatif(r.terakhir)
+      const hari = r?.terakhirMisi ? selisihHari(r.terakhirMisi) : null
+      if (r?.terakhirMisi && hari !== null) {
+        const w = waktuRelatif(r.terakhirMisi)
         sel.terakhir = {
           teks: w.teks,
-          nilai: new Date(r.terakhir).getTime(),
+          nilai: new Date(r.terakhirMisi).getTime(),
           judul: w.lengkap,
           nada: nadaTerakhir(hari),
         }
@@ -93,6 +98,17 @@ export default async function MisiAdminPage({
           sel.level = { teks: `Kelas ${k.levelKelas}`, nilai: Number(k.levelKelas) }
         }
         sel.dikerjakan = { teks: `${k.dikerjakan} topik`, nilai: k.dikerjakan }
+        if (k.soalDikerjakan > 0) {
+          // Satu desimal di bawah 10%: dua puluh soal dari tiga ribu itu 0,7%,
+          // bukan "1%" — pembulatan ke bilangan bulat menghapus kemajuan awal.
+          const persen = k.soalTotal > 0 ? (k.soalDikerjakan / k.soalTotal) * 100 : 0
+          const teksPersen = (persen < 10 ? persen.toFixed(1) : String(Math.round(persen))).replace('.', ',')
+          sel.soal = {
+            teks: `${k.soalDikerjakan} soal · ${teksPersen}%`,
+            nilai: k.soalDikerjakan,
+            judul: `${k.soalDikerjakan} dari ${k.soalTotal} soal paket latihan peta dijawab; ${k.soalBenar} benar penuh`,
+          }
+        }
         sel.tuntas = { teks: `${k.tuntas}/${k.topik}`, nilai: k.tuntas }
       }
       return {
@@ -163,6 +179,7 @@ export default async function MisiAdminPage({
             baris={baris}
             kolom={kolom}
             hrefDasar="/admin/misi"
+            kegiatan="mengerjakan Misi"
             kataKosong="Level = kelas tertinggi yang seluruh topiknya tuntas. Klik baris untuk melihat rincian per topik."
           />
         </div>

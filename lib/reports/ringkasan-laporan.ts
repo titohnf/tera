@@ -90,6 +90,16 @@ export interface RangkumanKetuntasan {
   tuntas: number
   topik: number
   /**
+   * Cakupan SOAL seluruh peta: berapa butir paket latihan (dalam cakupan Bloom
+   * tiap topik) yang sudah dijawab, berapa di antaranya benar penuh, dan dari
+   * berapa butir seluruhnya. Ditambahkan karena `tuntas` kasar — sebuah topik
+   * baru dihitung setelah SELURUH paketnya lolos, jadi kemajuan di tengah jalan
+   * tidak terlihat di angka itu sama sekali.
+   */
+  soalDikerjakan: number
+  soalBenar: number
+  soalTotal: number
+  /**
    * Ketuntasan per jenjang, dari yang terendah. Inilah yang membuat kalimat
    * "berada di level kelas X" bisa DIPERIKSA alih-alih dipercaya: pembacanya
    * melihat sendiri jenjang mana yang penuh dan mana yang baru separuh.
@@ -516,6 +526,9 @@ export function ketuntasanPeta(
     dikerjakan: peta.filter(k => k.answered > 0).length,
     tuntas: peta.filter(tuntas).length,
     topik: peta.length,
+    soalDikerjakan: peta.reduce((n, k) => n + k.answered, 0),
+    soalBenar: peta.reduce((n, k) => n + k.correct, 0),
+    soalTotal: peta.reduce((n, k) => n + k.total, 0),
     // Dari kelas terendah ke tertinggi — arah orang membaca tangga kelas, dan
     // arah anaknya menaikinya.
     jenjang: [...perJenjang.entries()]

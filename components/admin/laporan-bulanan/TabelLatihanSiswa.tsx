@@ -64,12 +64,15 @@ export default function TabelLatihanSiswa({
   kolom,
   hrefDasar,
   kataKosong,
+  kegiatan = 'berlatih',
 }: {
   baris: BarisLatihan[]
   kolom: KolomLatihan[]
   /** Alamat halaman ini; `?student_id=` ditambahkan untuk rincian. */
   hrefDasar: string
   kataKosong: string
+  /** Kata kerja untuk ringkasan aktivitas: "berlatih" (menu Belajar) atau "mengerjakan Misi". */
+  kegiatan?: string
 }) {
   const router = useRouter()
   // Semua keadaan tabel ikut tertulis di alamat halaman, supaya tombol kembali
@@ -187,9 +190,9 @@ export default function TabelLatihanSiswa({
       <div className="flex flex-wrap items-center gap-2">
         {(
           [
-            { kunci: 'aktif', label: `Berlatih ≤ ${HARI_AKTIF} hari`, nada: 'hijau' },
-            { kunci: 'diam', label: `Tidak berlatih > ${HARI_DIAM} hari`, nada: 'kuning' },
-            { kunci: 'belum', label: 'Belum pernah berlatih', nada: 'merah' },
+            { kunci: 'aktif', label: `Aktif ≤ ${HARI_AKTIF} hari`, nada: 'hijau' },
+            { kunci: 'diam', label: `Tidak ${kegiatan} > ${HARI_DIAM} hari`, nada: 'kuning' },
+            { kunci: 'belum', label: `Belum pernah ${kegiatan}`, nada: 'merah' },
           ] as const
         ).map(c => {
           const dipilih = aktivitas === c.kunci

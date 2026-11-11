@@ -38,8 +38,10 @@ export type RingkasanLatihanSiswa = {
   /** Null kalau pembacaannya gagal — beda dengan "belum mengerjakan apa pun". */
   mandiri: { mapel: RangkumanMandiri[]; dikerjakan: number; selesai: number } | null
   ketuntasan: RangkumanKetuntasan | null
-  /** Sesi latihan atau Misi terakhir (ISO); null kalau belum pernah berlatih. */
-  terakhir: string | null
+  /** Jawaban terakhir di menu Belajar, ISO; null kalau belum pernah menjawab. */
+  terakhirLatihan: string | null
+  /** Jawaban terakhir di Misi (paket peta, pengecekan ulang, pemanasan), ISO; null kalau belum pernah menjawab. */
+  terakhirMisi: string | null
   gagal: boolean
 }
 
@@ -63,7 +65,8 @@ async function denganBatas<T, R>(items: T[], batas: number, kerja: (x: T) => Pro
 type Mentah = {
   mentah: KemajuanTopik[] | null
   peta: KemajuanTopikPeta[] | null
-  terakhir: string | null
+  terakhirLatihan: string | null
+  terakhirMisi: string | null
 }
 
 /** Jalur massal. Null kalau salah satu RPC gagal (mis. migrasi 209 belum jalan). */
@@ -71,20 +74,20 @@ async function ambilMassal(learnerIds: string[]): Promise<Map<string, Mentah> | 
   const supabase = await createClient()
   const per = new Map<string, Mentah>()
   const ambil = (id: string) => {
-    const ada = per.get(id) ?? { mentah: [], peta: [], terakhir: null }
+    const ada = per.get(id) ?? { mentah: [], peta: [], terakhirLatihan: null, terakhirMisi: null }
     per.set(id, ada)
     return ada
   }
 
   type BarisJson = { learner_id: string; baris: unknown }
-  type BarisTerakhir = { learner_id: string; terakhir: string | null }
+  type BarisTerakhir = { learner_id: string; terakhir_latihan: string | null; terakhir_misi: string | null }
 
   for (let i = 0; i < learnerIds.length; i += POTONGAN) {
     const ids = learnerIds.slice(i, i + POTONGAN)
     const [a, b, c] = await Promise.all([
       supabase.rpc('kemajuan_latihan_banyak', { p_learner_ids: ids }),
       supabase.rpc('kemajuan_peta_banyak', { p_learner_ids: ids }),
-      supabase.rpc('terakhir_berlatih_banyak', { p_learner_ids: ids }),
+      supabase.rpc('terakhir_per_jenis_banyak', { p_learner_ids: ids }),
     ])
     if (a.error || b.error || c.error) {
       // Objek galat Supabase tidak ikut terserialisasi oleh console (tercetak
@@ -93,7 +96,7 @@ async function ambilMassal(learnerIds: string[]): Promise<Map<string, Mentah> | 
         e ? `${nama}: [${e.code ?? '?'}] ${e.message}${e.details ? ` — ${e.details}` : ''}${e.hint ? ` (${e.hint})` : ''}` : null
       console.error(
         '[laporan] jalur massal gagal, memakai jalur per siswa:',
-        [rinci('kemajuan_latihan_banyak', a.error), rinci('kemajuan_peta_banyak', b.error), rinci('terakhir_berlatih_banyak', c.error)]
+        [rinci('kemajuan_latihan_banyak', a.error), rinci('kemajuan_peta_banyak', b.error), rinci('terakhir_per_jenis_banyak', c.error)]
           .filter(Boolean)
           .join(' | '),
       )
@@ -101,7 +104,11 @@ async function ambilMassal(learnerIds: string[]): Promise<Map<string, Mentah> | 
     }
     for (const r of (a.data as BarisJson[] | null) ?? []) ambil(r.learner_id).mentah = bacaKemajuanTopik(r.baris)
     for (const r of (b.data as BarisJson[] | null) ?? []) ambil(r.learner_id).peta = bacaKemajuanPeta(r.baris)
-    for (const r of (c.data as BarisTerakhir[] | null) ?? []) ambil(r.learner_id).terakhir = r.terakhir
+    for (const r of (c.data as BarisTerakhir[] | null) ?? []) {
+      const d = ambil(r.learner_id)
+      d.terakhirLatihan = r.terakhir_latihan
+      d.terakhirMisi = r.terakhir_misi
+    }
   }
   return per
 }
@@ -114,29 +121,60 @@ async function ambilPerSiswa(learnerIds: string[]): Promise<Map<string, Mentah>>
   // Baris `learners` ada untuk siswa yang cuma pernah membuka menu Belajar,
   // jadi punya baris belum berarti pernah berlatih. Satu pemeriksaan murah di
   // `practice_sessions` membuang mereka sebelum RPC-nya dijalankan.
-  const terakhirDari = new Map<string, string>()
+  // Sesi Misi = paket peta, pengecekan ulang, atau pemanasan; selebihnya latihan
+  // (penggolongan yang sama dengan `terakhir_per_jenis_banyak`, migrasi 210).
+  // Yang dihitung JAWABAN terakhir, bukan sesi yang dibuka: sesi kosong tidak
+  // boleh membuat siswa tampil baru berlatih.
+  const latihanDari = new Map<string, string>()
+  const misiDari = new Map<string, string>()
   const HALAMAN = 1000
+  type Sesi = {
+    id: string
+    learner_id: string
+    paket_topik_id: string | null
+    probe_topik_id: string | null
+    probe_pemanasan: boolean | null
+  }
+  type Jawab = { learner_id: string; session_id: string; answered_at: string }
   for (let i = 0; i < learnerIds.length; i += 100) {
     const potong = learnerIds.slice(i, i + 100)
+    const misiSesi = new Map<string, boolean>()
     for (let dari = 0; ; dari += HALAMAN) {
       const { data } = await admin
         .from('practice_sessions')
-        .select('learner_id, started_at')
+        .select('id, learner_id, paket_topik_id, probe_topik_id, probe_pemanasan')
         .in('learner_id', potong)
         .range(dari, dari + HALAMAN - 1)
-      const rows = (data as { learner_id: string; started_at: string }[] | null) ?? []
+      const rows = (data as Sesi[] | null) ?? []
+      for (const r of rows) misiSesi.set(r.id, !!(r.paket_topik_id || r.probe_topik_id || r.probe_pemanasan))
+      if (rows.length < HALAMAN) break
+    }
+    for (let dari = 0; ; dari += HALAMAN) {
+      const { data } = await admin
+        .from('practice_answers')
+        .select('learner_id, session_id, answered_at')
+        .in('learner_id', potong)
+        .order('answered_at', { ascending: false })
+        .range(dari, dari + HALAMAN - 1)
+      const rows = (data as Jawab[] | null) ?? []
       for (const r of rows) {
-        const lama = terakhirDari.get(r.learner_id)
-        if (!lama || r.started_at > lama) terakhirDari.set(r.learner_id, r.started_at)
+        const peta = misiSesi.get(r.session_id) ? misiDari : latihanDari
+        const lama = peta.get(r.learner_id)
+        if (!lama || r.answered_at > lama) peta.set(r.learner_id, r.answered_at)
       }
       if (rows.length < HALAMAN) break
     }
   }
 
-  const ada = learnerIds.filter(id => terakhirDari.has(id))
+  const ada = learnerIds.filter(id => latihanDari.has(id) || misiDari.has(id))
   await denganBatas(ada, PARALEL, async learnerId => {
     const [mentah, peta] = await Promise.all([kemajuanTopik(learnerId), kemajuanTopikPeta(learnerId)])
-    per.set(learnerId, { mentah, peta, terakhir: terakhirDari.get(learnerId) ?? null })
+    per.set(learnerId, {
+      mentah,
+      peta,
+      terakhirLatihan: latihanDari.get(learnerId) ?? null,
+      terakhirMisi: misiDari.get(learnerId) ?? null,
+    })
   })
   return per
 }
@@ -149,7 +187,8 @@ export async function ringkasanLatihanSemua(
   const kosong: RingkasanLatihanSiswa = {
     mandiri: { mapel: [], dikerjakan: 0, selesai: 0 },
     ketuntasan: null,
-    terakhir: null,
+    terakhirLatihan: null,
+    terakhirMisi: null,
     gagal: false,
   }
   for (const id of studentIds) out.set(id, kosong)
@@ -187,7 +226,8 @@ export async function ringkasanLatihanSemua(
               selesai: mapel.reduce((n, m) => n + m.selesai, 0),
             },
       ketuntasan: d.peta === null ? null : ketuntasanPeta(d.peta),
-      terakhir: d.terakhir,
+      terakhirLatihan: d.terakhirLatihan,
+      terakhirMisi: d.terakhirMisi,
       gagal: d.mentah === null || d.peta === null,
     })
   }
