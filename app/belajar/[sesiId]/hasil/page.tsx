@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { alamatMisi } from '@/lib/belajar/alamat-misi'
 import { redirect } from 'next/navigation'
 import {
   labelPenguasaan,
@@ -272,13 +273,13 @@ export default async function HasilSesi({
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
-        : (petaPaket || probe) && pemilik.profileId
+        : petaPaket || probe
           // Probe retest ikut pulang ke Misi meski ia bukan paket: kartu
           // jatuh temponya berdiri di beranda itu, dan tidak ada satu pun
           // permukaan lain yang menyebut retest. Memulangkannya ke pemilih
           // mapel berarti mendaratkan anak sejauh mungkin dari satu-satunya
           // layar yang tahu apa yang barusan ia kerjakan.
-          ? `/keluarga/${pemilik.profileId}/misi`
+          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId)
           : kembali
 
   // Langkah berikutnya topik ini, kalau sesi tadi memang paket peta.
@@ -299,7 +300,7 @@ export default async function HasilSesi({
     bolehLanjut && langkah
       ? {
           topikId: langkah.topikId,
-          anak: pemilik.profileId ?? null,
+          anak: pemilik.milikSendiri ? null : (pemilik.profileId ?? null),
           label:
             langkah.jenis === 'ujian'
               ? 'Lanjut ke Ujian Topik'
@@ -314,7 +315,7 @@ export default async function HasilSesi({
           // tambahan untuk sesuatu yang tidak bisa dibatalkan.
           alamatTopik:
             langkah.jenis === 'ujian' && pemilik.profileId
-              ? `/keluarga/${pemilik.profileId}/misi/${langkah.topikId}`
+              ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId)
               : null,
         }
       : null

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { alamatMisi } from '@/lib/belajar/alamat-misi'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
 import { probeSesi } from '@/lib/belajar/retest'
@@ -67,8 +68,8 @@ export default async function SesiLatihan({
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
-        : (petaPaket || probe) && pemilik.profileId
-          ? `/keluarga/${pemilik.profileId}/misi`
+        : petaPaket || probe
+          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId)
           : kembali
 
   return (

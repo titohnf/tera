@@ -398,8 +398,26 @@ async function rangkumanLatihan(studentId: string): Promise<{
   }
 }
 
-async function mandiriPerMapel(
+/**
+ * Nama mapel tiap grup topik. Dibaca sekali oleh pemanggil yang merangkum BANYAK
+ * anak (tabel admin), supaya `mandiriPerMapel` tidak membaca ulang seluruh grup
+ * untuk tiap anak.
+ */
+export async function petaMapelGrup(): Promise<Map<string, string>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('curriculum_topic_groups')
+    .select('id, subject_id, subjects(name)')
+
+  type GrupRow = { id: string; subject_id: string | null; subjects: { name: string } | null }
+  return new Map(
+    ((data as GrupRow[] | null) ?? []).map(g => [g.id, g.subjects?.name ?? 'Tanpa mapel']),
+  )
+}
+
+export async function mandiriPerMapel(
   kemajuan: KemajuanTopik[],
+  grupDiberi?: Map<string, string>,
 ): Promise<RangkumanMandiri[]> {
   if (kemajuan.length === 0) return []
 
@@ -408,15 +426,7 @@ async function mandiriPerMapel(
   // Di sana yang dibutuhkan cuma NAMA beberapa topik; di sini yang dibutuhkan
   // PENYEBUT tiap mapel, dan penyebut tidak bisa dihitung dari sebagian.
   // Dua kolom untuk beberapa ratus baris, sekali per kunjungan halaman rapor.
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('curriculum_topic_groups')
-    .select('id, subject_id, subjects(name)')
-
-  type GrupRow = { id: string; subject_id: string | null; subjects: { name: string } | null }
-  const grup = new Map(
-    ((data as GrupRow[] | null) ?? []).map(g => [g.id, g.subjects?.name ?? 'Tanpa mapel']),
-  )
+  const grup = grupDiberi ?? (await petaMapelGrup())
 
   const per = new Map<string, { selesai: number; topik: number; total: number; jumlah: number }>()
   for (const k of kemajuan) {
@@ -450,7 +460,7 @@ async function mandiriPerMapel(
     .sort((a, b) => b.selesai - a.selesai || a.mapel.localeCompare(b.mapel, 'id'))
 }
 
-function ketuntasanPeta(
+export function ketuntasanPeta(
   peta: KemajuanTopikPeta[],
 ): RangkumanKetuntasan | null {
   if (peta.length === 0) return null

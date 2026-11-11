@@ -1,6 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import Link from 'next/link'
 import StudentSelect from '@/components/admin/laporan-bulanan/StudentSelect'
+import TabelLatihanSiswa, {
+  type BarisLatihan,
+  type KolomLatihan,
+} from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiPenguasaan from '@/components/keluarga/IsiPenguasaan'
+import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
 
 export const metadata = { title: 'Latihan Mandiri' }
 
@@ -17,6 +23,10 @@ export const metadata = { title: 'Latihan Mandiri' }
  * yang dipakai portal keluarga, jadi bisa menampilkan angka berbeda untuk anak
  * yang sama. Matriks itu tetap ada di halaman tutor (`/tutor/rekap-penguasaan`).
  *
+ * Tanpa siswa terpilih, halaman ini tabel semua siswa aktif (satu baris per
+ * siswa, angkanya dari fungsi yang sama dengan halaman rapor keluarga —
+ * `ringkasanLatihanSemua`); klik baris membuka rincian siswa itu.
+ *
  * Hasil Misi tidak termasuk; itu ada di menu Ketuntasan Materi. Tautan rincian
  * per topik dimatikan (`rincian={false}`): rutenya milik portal keluarga dan
  * tertutup bagi admin.
@@ -31,15 +41,73 @@ export default async function LatihanMandiriAdminPage({
 
   const { data: students } = await admin
     .from('profiles')
-    .select('id, full_name')
-    .eq('role', 'student')
+    .select('id, full_name, grade, role')
+    .in('role', ['student', 'mandiri'])
     .eq('is_active', true)
     .order('full_name')
 
-  const options = (students ?? []).map(s => ({
-    value: s.id as string,
-    label: (s.full_name as string | null) ?? '(tanpa nama)',
+  const daftarSiswa = (students ?? []) as unknown as {
+    id: string
+    full_name: string | null
+    grade: string | number | null
+    role: string
+  }[]
+  // Pelanggan langganan (role `mandiri`) ikut didaftar: mereka berlatih dan
+  // mengerjakan Misi seperti murid bimbel, tapi bukan siswa — diberi penanda.
+  const namaDari = (s: { full_name: string | null; role: string }) =>
+    `${s.full_name ?? '(tanpa nama)'}${s.role === 'mandiri' ? ' (langganan)' : ''}`
+  const options = daftarSiswa.map(s => ({
+    value: s.id,
+    label: namaDari(s),
   }))
+
+  // Tabel hanya dibangun di tampilan semua siswa; rincian satu siswa tidak
+  // perlu membayar ringkasan seluruh siswa.
+  let tabel: { baris: BarisLatihan[]; kolom: KolomLatihan[] } | null = null
+  if (!student_id) {
+    const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id))
+
+    // Mapel yang paling banyak siswanya berlatih di depan; yang seri urut abjad.
+    const jumlahSiswa = new Map<string, number>()
+    for (const r of ringkasan.values()) {
+      for (const m of r.mandiri?.mapel ?? []) {
+        if (m.rataRata !== null) jumlahSiswa.set(m.mapel, (jumlahSiswa.get(m.mapel) ?? 0) + 1)
+      }
+    }
+    const mapel = [...jumlahSiswa.keys()].sort(
+      (a, b) => jumlahSiswa.get(b)! - jumlahSiswa.get(a)! || a.localeCompare(b, 'id'),
+    )
+
+    const kolom: KolomLatihan[] = [
+      { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik yang pernah dikerjakan' },
+      { kunci: 'selesai', label: 'Selesai', lengkap: 'Topik yang seluruh soalnya sudah dikerjakan' },
+      ...mapel.map(m => ({
+        kunci: `mapel:${m}`,
+        label: m,
+        lengkap: `Rata-rata penguasaan topik ${m} yang pernah dikerjakan`,
+      })),
+    ]
+
+    const baris: BarisLatihan[] = daftarSiswa.map(s => {
+      const m = ringkasan.get(s.id)?.mandiri ?? null
+      const sel: BarisLatihan['sel'] = {}
+      if (m && m.dikerjakan > 0) {
+        sel.dikerjakan = { teks: `${m.dikerjakan} topik`, nilai: m.dikerjakan }
+        sel.selesai = { teks: `${m.selesai} topik`, nilai: m.selesai }
+        for (const x of m.mapel) {
+          if (x.rataRata !== null) sel[`mapel:${x.mapel}`] = { teks: `${x.rataRata}%`, nilai: x.rataRata }
+        }
+      }
+      return {
+        id: s.id,
+        nama: s.full_name ?? '(tanpa nama)',
+        jenis: s.role === 'mandiri' ? ('langganan' as const) : ('bimbel' as const),
+        kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
+        sel,
+      }
+    })
+    tabel = { baris, kolom }
+  }
 
   // Hanya membaca, tidak melahirkan baris `learners` untuk siswa yang belum
   // pernah berlatih — sama seperti `learnerAnak()` di portal keluarga.
@@ -54,22 +122,42 @@ export default async function LatihanMandiriAdminPage({
     : null
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-xl font-semibold text-gray-900">Latihan Mandiri</h1>
+    <div className={student_id ? 'max-w-2xl' : undefined}>
+      <div className="flex items-center gap-1.5">
+        {student_id && (
+          <Link
+            href="/admin/rekap-penguasaan"
+            aria-label="Kembali ke semua siswa"
+            title="Semua siswa"
+            className="-ml-1.5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+        )}
+        <h1 className="text-xl font-semibold text-gray-900">Latihan Mandiri</h1>
+      </div>
       <p className="text-sm text-gray-500 mt-1">
         Penguasaan per topik dari soal di menu Belajar, sama seperti yang dilihat orang tua.
       </p>
 
-      <div className="mt-4 mb-6">
-        <StudentSelect options={options} value={student_id ?? ''} />
-      </div>
-
       {student_id ? (
-        <IsiPenguasaan studentId={student_id} learnerId={learnerId as string | null} rincian={false} />
+        <>
+          <div className="mt-4 mb-6">
+            <StudentSelect options={options} value={student_id} />
+          </div>
+          <IsiPenguasaan studentId={student_id} learnerId={learnerId as string | null} rincian={false} />
+        </>
       ) : (
-        <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-kartu">
-          Pilih siswa untuk melihat penguasaannya.
-        </p>
+        <div className="mt-4">
+          <TabelLatihanSiswa
+            baris={tabel!.baris}
+            kolom={tabel!.kolom}
+            hrefDasar="/admin/rekap-penguasaan"
+            kataKosong="Penguasaan = rata-rata topik yang pernah dikerjakan. Klik baris untuk melihat rincian per topik."
+          />
+        </div>
       )}
     </div>
   )

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { alamatMisi } from '@/lib/belajar/alamat-misi'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { dasarBagiKelas, kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
@@ -356,7 +357,7 @@ function Baris({
   // lagi — sekarang tertulis langsung di barisnya.
   const langsung = langkah != null && langkah.paketId != null && !langkah.terkunci
 
-  const alamat = anak ? `/keluarga/${anak}/misi/${t.id}` : null
+  const alamat = alamatMisi(anak, t.id)
 
   const ringkas = ringkasKartu(t, langkah, paket, hariIni)
 

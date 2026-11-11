@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getUserCepat } from '@/lib/supabase/get-user'
 import { adalahVideo } from './sematan'
 import { ALL_GRADES, SEMUA_KELAS } from '@/lib/curriculum-config'
 import type { OpsiSoal, SoalLatihan, TipeSoal } from './tipe-soal'
@@ -215,6 +216,12 @@ export interface PemilikSesi {
   nama: string
   /** Profil pelajarnya: id anak untuk jalur keluarga, id sendiri untuk pelanggan. */
   profileId: string | null
+  /**
+   * Pelajarnya pemanggil sendiri (pelanggan langganan), bukan anak dari akun
+   * keluarga. Menentukan alamat Misi mana yang jadi jalan pulang: lihat
+   * `alamatMisi()`, yang menerima `anak` kosong untuk pelanggan.
+   */
+  milikSendiri: boolean
 }
 
 /**
@@ -232,7 +239,13 @@ export async function pemilikSesi(sesiId: string): Promise<PemilikSesi | null> {
   })
   const baris = (data as { learner_id: string; learner_name: string; profile_id: string | null }[] | null)?.[0]
   if (!baris) return null
-  return { learnerId: baris.learner_id, nama: baris.learner_name, profileId: baris.profile_id }
+  const user = await getUserCepat()
+  return {
+    learnerId: baris.learner_id,
+    nama: baris.learner_name,
+    profileId: baris.profile_id,
+    milikSendiri: baris.profile_id != null && baris.profile_id === user?.id,
+  }
 }
 
 export interface SesiTertunda {
