@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import Link from 'next/link'
+import TautanLaporanSiswa from '@/components/admin/laporan-bulanan/TautanLaporanSiswa'
 import StudentSelect from '@/components/admin/laporan-bulanan/StudentSelect'
 import TabelLatihanSiswa, {
   type BarisLatihan,
@@ -7,7 +8,8 @@ import TabelLatihanSiswa, {
 } from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiKetuntasan from '@/components/keluarga/IsiKetuntasan'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
-import { waktuRelatif } from '@/lib/waktu-relatif'
+import { selisihHari, waktuRelatif } from '@/lib/waktu-relatif'
+import { nadaTerakhir } from '@/lib/reports/nada-sel'
 
 export const metadata = { title: 'Ketuntasan Materi' }
 
@@ -75,9 +77,17 @@ export default async function MisiAdminPage({
       const r = ringkasan.get(s.id)
       const k = r?.ketuntasan ?? null
       const sel: BarisLatihan['sel'] = {}
-      if (r?.terakhir) {
+      const hari = r?.terakhir ? selisihHari(r.terakhir) : null
+      if (r?.terakhir && hari !== null) {
         const w = waktuRelatif(r.terakhir)
-        sel.terakhir = { teks: w.teks, nilai: new Date(r.terakhir).getTime(), judul: w.lengkap }
+        sel.terakhir = {
+          teks: w.teks,
+          nilai: new Date(r.terakhir).getTime(),
+          judul: w.lengkap,
+          nada: nadaTerakhir(hari),
+        }
+      } else {
+        sel.terakhir = { teks: 'Belum pernah', nilai: null, nada: 'merah' }
       }
       if (k && k.dikerjakan > 0) {
         if (k.levelKelas !== null) {
@@ -90,6 +100,7 @@ export default async function MisiAdminPage({
         id: s.id,
         nama: s.full_name ?? '(tanpa nama)',
         jenis: s.role === 'mandiri' ? ('langganan' as const) : ('bimbel' as const),
+        hari,
         kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
         sel,
       }
@@ -131,7 +142,14 @@ export default async function MisiAdminPage({
 
       {student_id ? (
         <>
-          <div className="mt-4 mb-6">
+          <div className="mt-4">
+            <TautanLaporanSiswa
+              studentId={student_id}
+              aktif="misi"
+              bimbel={daftarSiswa.find(x => x.id === student_id)?.role !== 'mandiri'}
+            />
+          </div>
+          <div className="mt-3 mb-6">
             <StudentSelect options={options} value={student_id} />
           </div>
           <IsiKetuntasan

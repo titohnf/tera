@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useParamUrl } from '@/components/admin/laporan-bulanan/useParamUrl'
 
 export type BarisSiswa = {
   id: string
@@ -64,11 +65,11 @@ export default function TabelSiswaUrut({
   pemilihPeriode: React.ReactNode
 }) {
   const router = useRouter()
-  const [kunci, setKunci] = useState<Kunci>('pct')
-  const [arah, setArah] = useState<Arah>('asc')
-  const [cari, setCari] = useState('')
+  const [kunci, setKunci] = useParamUrl<Kunci>('urut', 'pct')
+  const [arah, setArah] = useParamUrl<Arah>('arah', 'asc')
+  const [cari, setCari] = useParamUrl<string>('cari', '')
   // '' = semua kelas; KOSONG = siswa yang kelasnya belum diisi.
-  const [kelasDipilih, setKelasDipilih] = useState('')
+  const [kelasDipilih, setKelasDipilih] = useParamUrl<string>('kelas', '')
 
   // Hanya kelas yang memang dimiliki siswa di tabel ini, urut numerik.
   const { opsiKelas, adaTanpaKelas } = useMemo(() => {

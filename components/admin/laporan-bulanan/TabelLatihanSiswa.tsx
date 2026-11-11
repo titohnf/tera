@@ -2,9 +2,33 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useParamUrl } from '@/components/admin/laporan-bulanan/useParamUrl'
 
 export type KolomLatihan = { kunci: string; label: string; lengkap?: string }
+
+/** Warna sel; angka mentahnya tetap terbaca, warna hanya menandai. */
+export type Nada = 'hijau' | 'biru' | 'kuning' | 'merah'
+
+const GAYA_NADA: Record<Nada, string> = {
+  hijau: 'bg-green-50 text-green-800',
+  biru: 'bg-blue-50 text-blue-800',
+  kuning: 'bg-amber-50 text-amber-800',
+  merah: 'bg-red-50 text-red-800',
+}
+
+/** Berlatih dalam ≤ 7 hari dianggap aktif; > 14 hari dianggap diam. */
+const HARI_AKTIF = 7
+const HARI_DIAM = 14
+
+type Aktivitas = '' | 'aktif' | 'diam' | 'belum'
+
+function aktivitasDari(hari: number | null): Exclude<Aktivitas, ''> | null {
+  if (hari === null) return 'belum'
+  if (hari <= HARI_AKTIF) return 'aktif'
+  if (hari > HARI_DIAM) return 'diam'
+  return null
+}
 
 export type BarisLatihan = {
   id: string
@@ -13,8 +37,10 @@ export type BarisLatihan = {
   kelas: string | null
   /** Siswa bimbel (akun keluarga) atau pelanggan langganan (role `mandiri`). */
   jenis: 'bimbel' | 'langganan'
+  /** Hari sejak sesi latihan/Misi terakhir (hari kalender WIB); null = belum pernah berlatih. */
+  hari: number | null
   /** Per kolom: teks yang digambar dan angka untuk mengurutkan (null = kosong). */
-  sel: Record<string, { teks: string; nilai: number | null; judul?: string }>
+  sel: Record<string, { teks: string; nilai: number | null; judul?: string; nada?: Nada }>
 }
 
 const SEL = 'border-b border-r border-slate-200 px-4 py-3 last:border-r-0'
@@ -46,12 +72,15 @@ export default function TabelLatihanSiswa({
   kataKosong: string
 }) {
   const router = useRouter()
-  const [kunci, setKunci] = useState<string>('nama')
-  const [arah, setArah] = useState<Arah>('asc')
-  const [cari, setCari] = useState('')
-  const [kelasDipilih, setKelasDipilih] = useState('')
+  // Semua keadaan tabel ikut tertulis di alamat halaman, supaya tombol kembali
+  // dari halaman rincian mengembalikan urutan dan saringan yang sama.
+  const [kunci, setKunci] = useParamUrl<string>('urut', 'nama')
+  const [arah, setArah] = useParamUrl<Arah>('arah', 'asc')
+  const [cari, setCari] = useParamUrl<string>('cari', '')
+  const [kelasDipilih, setKelasDipilih] = useParamUrl<string>('kelas', '')
   // '' = semua jenis.
-  const [jenisDipilih, setJenisDipilih] = useState<'' | 'bimbel' | 'langganan'>('')
+  const [jenisDipilih, setJenisDipilih] = useParamUrl<'' | 'bimbel' | 'langganan'>('jenis', '')
+  const [aktivitas, setAktivitas] = useParamUrl<Aktivitas>('aktivitas', '')
 
   const { opsiKelas, adaTanpaKelas } = useMemo(() => {
     const unik = [...new Set(baris.map(b => b.kelas).filter((k): k is string => k !== null))]
@@ -83,14 +112,17 @@ export default function TabelLatihanSiswa({
     }
     const tanda = arah === 'asc' ? 1 : -1
     const kata = cari.trim().toLowerCase()
-    const tersaring = baris.filter(
+    const tersaringTanpaAktivitas = baris.filter(
       b =>
         (!kata || b.nama.toLowerCase().includes(kata)) &&
         (jenisDipilih === '' || b.jenis === jenisDipilih) &&
         (kelasDipilih === '' ||
           (kelasDipilih === KOSONG ? b.kelas === null : b.kelas === kelasDipilih)),
     )
-    return [...tersaring].sort((a, b) => {
+    const tersaring = tersaringTanpaAktivitas.filter(
+      b => aktivitas === '' || aktivitasDari(b.hari) === aktivitas,
+    )
+    const urut = [...tersaring].sort((a, b) => {
       const x = nilaiDari(a)
       const y = nilaiDari(b)
       if (x === null && y === null) return a.nama.localeCompare(b.nama, 'id')
@@ -102,7 +134,16 @@ export default function TabelLatihanSiswa({
           : String(x).localeCompare(String(y), 'id')
       return banding * tanda || a.nama.localeCompare(b.nama, 'id')
     })
-  }, [baris, kunci, arah, cari, kelasDipilih, jenisDipilih])
+    // Hitungan ringkasan memakai saringan LAIN (nama, jenis, kelas) tapi tidak
+    // saringan aktivitas sendiri: yang ditanyakan "dari yang tampil, berapa yang
+    // diam", dan itu tidak boleh berubah sesudah ringkasannya diklik.
+    const hitung = { aktif: 0, diam: 0, belum: 0 }
+    for (const b of tersaringTanpaAktivitas) {
+      const a = aktivitasDari(b.hari)
+      if (a) hitung[a] += 1
+    }
+    return { urut, hitung, jumlahTanpaAktivitas: tersaringTanpaAktivitas.length }
+  }, [baris, kunci, arah, cari, kelasDipilih, jenisDipilih, aktivitas])
 
   function judul(k: string, label: string, lengkap?: string) {
     const aktif = k === kunci
@@ -129,6 +170,8 @@ export default function TabelLatihanSiswa({
     )
   }
 
+  const { urut: terurutBaris, hitung } = terurut
+
   if (baris.length === 0) {
     return (
       <div className="rounded-xl bg-white p-10 text-center shadow ring-1 ring-gray-900/5">
@@ -139,6 +182,36 @@ export default function TabelLatihanSiswa({
 
   return (
     <div className="space-y-3">
+      {/* Ringkasan aktivitas, SEKALIGUS saringannya: mengklik sebuah angka
+          menyaring tabel ke siswa itu, mengklik lagi melepasnya. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(
+          [
+            { kunci: 'aktif', label: `Berlatih ≤ ${HARI_AKTIF} hari`, nada: 'hijau' },
+            { kunci: 'diam', label: `Tidak berlatih > ${HARI_DIAM} hari`, nada: 'kuning' },
+            { kunci: 'belum', label: 'Belum pernah berlatih', nada: 'merah' },
+          ] as const
+        ).map(c => {
+          const dipilih = aktivitas === c.kunci
+          return (
+            <button
+              key={c.kunci}
+              type="button"
+              aria-pressed={dipilih}
+              onClick={() => setAktivitas(dipilih ? '' : c.kunci)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ${
+                dipilih
+                  ? `${GAYA_NADA[c.nada]} border-current font-semibold`
+                  : 'border-slate-200 bg-white text-gray-600 hover:bg-slate-50'
+              }`}
+            >
+              {c.label}
+              <span className="font-semibold tabular-nums">{hitung[c.kunci]}</span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <select
           aria-label="Filter jenis siswa"
@@ -166,9 +239,9 @@ export default function TabelLatihanSiswa({
         </select>
         <div className="ml-auto flex items-center gap-3">
           <p className="shrink-0 text-xs text-gray-400">
-            {terurut.length === baris.length
+            {terurutBaris.length === baris.length
               ? `${baris.length} siswa`
-              : `${terurut.length} dari ${baris.length} siswa`}
+              : `${terurutBaris.length} dari ${baris.length} siswa`}
           </p>
           <input
             type="search"
@@ -195,14 +268,14 @@ export default function TabelLatihanSiswa({
             </tr>
           </thead>
           <tbody>
-            {terurut.length === 0 && (
+            {terurutBaris.length === 0 && (
               <tr>
                 <td colSpan={4 + kolom.length} className="px-4 py-10 text-center text-sm text-gray-400">
                   Tidak ada siswa yang cocok dengan saringan ini.
                 </td>
               </tr>
             )}
-            {terurut.map((b, i) => {
+            {terurutBaris.map((b, i) => {
               const zebra = i % 2 === 1 ? 'bg-slate-50' : 'bg-white'
               const href = `${hrefDasar}?student_id=${b.id}`
               return (
@@ -241,7 +314,14 @@ export default function TabelLatihanSiswa({
                     return (
                       <td key={k.kunci} className={`${SEL} tabular-nums`}>
                         {s && s.teks !== '' ? (
-                          <span title={s.judul} className="whitespace-nowrap font-medium text-gray-900">
+                          <span
+                            title={s.judul}
+                            className={
+                              s.nada
+                                ? `whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium ${GAYA_NADA[s.nada]}`
+                                : 'whitespace-nowrap font-medium text-gray-900'
+                            }
+                          >
                             {s.teks}
                           </span>
                         ) : (

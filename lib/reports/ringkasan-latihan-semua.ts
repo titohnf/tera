@@ -87,7 +87,16 @@ async function ambilMassal(learnerIds: string[]): Promise<Map<string, Mentah> | 
       supabase.rpc('terakhir_berlatih_banyak', { p_learner_ids: ids }),
     ])
     if (a.error || b.error || c.error) {
-      console.error('[laporan] jalur massal gagal, memakai jalur per siswa:', a.error ?? b.error ?? c.error)
+      // Objek galat Supabase tidak ikut terserialisasi oleh console (tercetak
+      // `{}`), jadi kolomnya ditulis satu per satu.
+      const rinci = (nama: string, e: { message: string; code?: string; details?: string; hint?: string } | null) =>
+        e ? `${nama}: [${e.code ?? '?'}] ${e.message}${e.details ? ` — ${e.details}` : ''}${e.hint ? ` (${e.hint})` : ''}` : null
+      console.error(
+        '[laporan] jalur massal gagal, memakai jalur per siswa:',
+        [rinci('kemajuan_latihan_banyak', a.error), rinci('kemajuan_peta_banyak', b.error), rinci('terakhir_berlatih_banyak', c.error)]
+          .filter(Boolean)
+          .join(' | '),
+      )
       return null
     }
     for (const r of (a.data as BarisJson[] | null) ?? []) ambil(r.learner_id).mentah = bacaKemajuanTopik(r.baris)

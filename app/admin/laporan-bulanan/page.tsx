@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import TautanLaporanSiswa from '@/components/admin/laporan-bulanan/TautanLaporanSiswa'
 import TabelProgresKelas from '@/components/admin/laporan-bulanan/TabelProgresKelas'
 import PemilihPeriode from '@/components/admin/laporan-bulanan/PemilihPeriode'
 import ReportNotesForm from '@/components/admin/laporan-bulanan/ReportNotesForm'
@@ -79,6 +80,12 @@ export default async function LaporanBulananPage({
           </a>
         )}
       </div>
+
+      {student_id && (
+        <div className="mb-3">
+          <TautanLaporanSiswa studentId={student_id} aktif="kelas" bimbel bulan={selectedMonth} />
+        </div>
+      )}
 
       {student_id && (
         <div className="flex gap-3 mb-6 flex-wrap">

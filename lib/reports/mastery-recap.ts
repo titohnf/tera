@@ -113,7 +113,10 @@ export async function getMasteryRecap(
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('kemajuan_latihan_banyak', { p_learner_ids: learnerIds })
   if (error) {
-    console.error('[rekap] kemajuan_latihan_banyak gagal, memakai hitungan lama:', error)
+    console.error(
+      '[rekap] kemajuan_latihan_banyak gagal, memakai hitungan lama:',
+      `[${error.code}] ${error.message}${error.details ? ` — ${error.details}` : ''}`,
+    )
     return getMasteryRecapLama(classId, subjectId)
   }
 

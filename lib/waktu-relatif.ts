@@ -14,6 +14,11 @@ function hariWib(d: Date): number {
   return Math.floor(Date.UTC(y, m - 1, t) / 86_400_000)
 }
 
+/** Selisih hari kalender WIB antara `iso` dan `sekarang`; 0 = hari ini. */
+export function selisihHari(iso: string, sekarang: Date = new Date()): number {
+  return Math.max(0, hariWib(sekarang) - hariWib(new Date(iso)))
+}
+
 export function waktuRelatif(iso: string, sekarang: Date = new Date()): { teks: string; lengkap: string } {
   const d = new Date(iso)
   const selisih = hariWib(sekarang) - hariWib(d)
