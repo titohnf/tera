@@ -7,6 +7,8 @@ import TabelLatihanSiswa, {
   type KolomLatihan,
 } from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiKetuntasan from '@/components/keluarga/IsiKetuntasan'
+import KartuKesetaraan from '@/components/admin/laporan-bulanan/KartuKesetaraan'
+import { kesetaraanLengkap } from '@/lib/reports/kesetaraan-kelas'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
 import { selisihHari, waktuRelatif } from '@/lib/waktu-relatif'
 import { nadaTerakhir } from '@/lib/reports/nada-sel'
@@ -66,7 +68,12 @@ export default async function MisiAdminPage({
       label: 'Terakhir',
       lengkap: 'Terakhir menjawab soal Misi (paket peta, pengecekan ulang, pemanasan); diurutkan naik, yang paling lama tidak mengerjakan di atas',
     },
-    { kunci: 'level', label: 'Level', lengkap: 'Jenjang kelas tertinggi yang seluruh topiknya tuntas' },
+    {
+      kunci: 'setara',
+      label: 'Setara',
+      lengkap:
+        'Kemampuan setara kelas berapa: seluruh topik dari kelas 1 sampai kelas itu tuntas (kumulatif). Dalam kurung: selisih dengan kelas siswa sekarang',
+    },
     { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik peta kompetensi yang pernah dikerjakan' },
     {
       kunci: 'soal',
@@ -76,7 +83,7 @@ export default async function MisiAdminPage({
     { kunci: 'tuntas', label: 'Tuntas', lengkap: 'Topik yang paket latihannya tuntas, dari seluruh topik peta' },
   ]
   if (!student_id) {
-    const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id))
+    const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id), { kesetaraan: true })
     baris = daftarSiswa.map(s => {
       const r = ringkasan.get(s.id)
       const k = r?.ketuntasan ?? null
@@ -94,8 +101,21 @@ export default async function MisiAdminPage({
         sel.terakhir = { teks: 'Belum pernah', nilai: null, nada: 'merah' }
       }
       if (k && k.dikerjakan > 0) {
-        if (k.levelKelas !== null) {
-          sel.level = { teks: `Kelas ${k.levelKelas}`, nilai: Number(k.levelKelas) }
+        const ks = r?.kesetaraan ?? null
+        if (ks && ks.setara !== null) {
+          const selisih = ks.terdaftar !== null ? ks.setara - ks.terdaftar : null
+          sel.setara = {
+            teks: `Kelas ${ks.setara}${selisih !== null ? ` (${selisih > 0 ? '+' : selisih < 0 ? '−' : '±'}${Math.abs(selisih)})` : ''}`,
+            nilai: ks.setara,
+            judul: `Seluruh topik dari kelas 1 sampai kelas ${ks.setara} tuntas${ks.terdaftar !== null ? `; kelas siswa ${ks.terdaftar}` : ''}`,
+            nada: selisih === null ? undefined : selisih >= 0 ? 'hijau' : selisih >= -2 ? 'kuning' : 'merah',
+          }
+        } else if (ks) {
+          sel.setara = {
+            teks: 'Belum',
+            nilai: null,
+            judul: `Belum ada kelas yang seluruh topiknya (mulai kelas 1) tuntas; ${ks.tuntas} dari ${ks.total} topik tuntas`,
+          }
         }
         sel.dikerjakan = { teks: `${k.dikerjakan} topik`, nilai: k.dikerjakan }
         if (k.soalDikerjakan > 0) {
@@ -167,6 +187,14 @@ export default async function MisiAdminPage({
           <div className="mt-3 mb-6">
             <StudentSelect options={options} value={student_id} />
           </div>
+          {learnerId && (
+            <div className="mb-4">
+              {await (async () => {
+                const { ks, tangga } = await kesetaraanLengkap(learnerId as string)
+                return <KartuKesetaraan ks={ks} tangga={tangga} />
+              })()}
+            </div>
+          )}
           <IsiKetuntasan
             studentId={student_id}
             learnerId={learnerId as string | null}
@@ -180,7 +208,7 @@ export default async function MisiAdminPage({
             kolom={kolom}
             hrefDasar="/admin/misi"
             kegiatan="mengerjakan Misi"
-            kataKosong="Level = kelas tertinggi yang seluruh topiknya tuntas. Klik baris untuk melihat rincian per topik."
+            kataKosong="Setara = seluruh topik dari kelas 1 sampai kelas itu tuntas (kumulatif); angka dalam kurung adalah selisih dengan kelas siswa. Klik baris untuk melihat rincian per topik."
           />
         </div>
       )}

@@ -6,6 +6,7 @@ import {
   kemajuanTopikPeta,
   type KemajuanTopikPeta,
 } from '@/lib/belajar/topik-rapor'
+import { kesetaraanBanyak, type Kesetaraan } from '@/lib/reports/kesetaraan-kelas'
 import {
   ketuntasanPeta,
   mandiriPerMapel,
@@ -38,6 +39,8 @@ export type RingkasanLatihanSiswa = {
   /** Null kalau pembacaannya gagal — beda dengan "belum mengerjakan apa pun". */
   mandiri: { mapel: RangkumanMandiri[]; dikerjakan: number; selesai: number } | null
   ketuntasan: RangkumanKetuntasan | null
+  /** "Kelas X, setara kelas Y" (migrasi 181); hanya diisi bila diminta. Null = belum dibaca atau gagal dibaca. */
+  kesetaraan: Kesetaraan | null
   /** Jawaban terakhir di menu Belajar, ISO; null kalau belum pernah menjawab. */
   terakhirLatihan: string | null
   /** Jawaban terakhir di Misi (paket peta, pengecekan ulang, pemanasan), ISO; null kalau belum pernah menjawab. */
@@ -181,12 +184,14 @@ async function ambilPerSiswa(learnerIds: string[]): Promise<Map<string, Mentah>>
 
 export async function ringkasanLatihanSemua(
   studentIds: string[],
+  opsi: { kesetaraan?: boolean } = {},
 ): Promise<Map<string, RingkasanLatihanSiswa>> {
   const admin = createAdminClient()
   const out = new Map<string, RingkasanLatihanSiswa>()
   const kosong: RingkasanLatihanSiswa = {
     mandiri: { mapel: [], dikerjakan: 0, selesai: 0 },
     ketuntasan: null,
+    kesetaraan: null,
     terakhirLatihan: null,
     terakhirMisi: null,
     gagal: false,
@@ -211,6 +216,10 @@ export async function ringkasanLatihanSemua(
   const [massal, grup] = await Promise.all([ambilMassal(learnerIds), petaMapelGrup()])
   const data = massal ?? (await ambilPerSiswa(learnerIds))
 
+  // Hanya pelajar yang pernah menjawab: yang lain tidak punya topik tuntas, jadi
+  // tidak ada klaim yang bisa dibuat dan menghitungnya cuma membuang waktu.
+  const kesetaraan = opsi.kesetaraan ? await kesetaraanBanyak([...data.keys()]) : null
+
   for (const [studentId, learnerId] of learnerDari) {
     const d = data.get(learnerId)
     // Tidak ada baris sama sekali = belum pernah berlatih.
@@ -225,7 +234,15 @@ export async function ringkasanLatihanSemua(
               dikerjakan: d.mentah.filter(k => k.answered > 0).length,
               selesai: mapel.reduce((n, m) => n + m.selesai, 0),
             },
-      ketuntasan: d.peta === null ? null : ketuntasanPeta(d.peta),
+      ketuntasan: (() => {
+        if (d.peta === null) return null
+        const k = ketuntasanPeta(d.peta)
+        if (k === null) return null
+        const ks = kesetaraan?.get(learnerId) ?? null
+        // Cacah topik tuntas ikut dari sumber yang sama dengan klaim kesetaraan.
+        return ks ? { ...k, tuntas: ks.tuntas, topik: ks.total } : k
+      })(),
+      kesetaraan: kesetaraan?.get(learnerId) ?? null,
       terakhirLatihan: d.terakhirLatihan,
       terakhirMisi: d.terakhirMisi,
       gagal: d.mentah === null || d.peta === null,

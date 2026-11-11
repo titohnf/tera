@@ -5,6 +5,7 @@ import { monthRange } from '@/lib/reports/laporan-bulanan'
 import { learnerAnak, kemajuanTopik, type KemajuanTopik } from '@/lib/belajar/sesi'
 import { kemajuanTopikPeta, type KemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import { persenDari } from '@/lib/belajar/penilaian'
+import { kesetaraanLengkap, type AnakTangga, type Kesetaraan } from '@/lib/reports/kesetaraan-kelas'
 
 /**
  * Rangkuman ketiga laporan seorang anak — isi halaman `/rapor`.
@@ -73,6 +74,16 @@ export interface RangkumanMandiri {
 /** Rangkuman Ketuntasan Materi. Hari ini peta kompetensi cuma Matematika. */
 export interface RangkumanKetuntasan {
   mapel: string
+  /**
+   * Dari mana `levelKelas`, `tuntas`, `topik`, dan `jenjang` berasal.
+   * `resmi`: `rapor_kesetaraan()` dan `rapor_cakupan_kelas()` (migrasi 181/212) —
+   * kumulatif dari kelas 1, memakai `kelas_kuasai`. `lama`: hitungan di
+   * `ketuntasanPeta()`, jenjang tertinggi yang penuh, TIDAK kumulatif. Yang
+   * kedua hanya cadangan selama data resminya tidak terbaca.
+   */
+  aturan: 'resmi' | 'lama'
+  /** Kelas siswa terdaftar; hanya terisi bila `aturan` = `resmi`. */
+  kelasTerdaftar: number | null
   /**
    * Jenjang TERTINGGI yang seluruh topiknya sudah tuntas, apa adanya dari
    * `topik.jenjang_kelas` (bisa rentang seperti "7-8"). Null berarti belum ada
@@ -400,11 +411,49 @@ async function rangkumanLatihan(studentId: string): Promise<{
   const learnerId = await learnerAnak(studentId)
   if (!learnerId) return { mandiri: [], ketuntasan: null }
 
-  const [mandiri, peta] = await Promise.all([kemajuanTopik(learnerId), kemajuanTopikPeta(learnerId)])
+  const [mandiri, peta, { ks, tangga }] = await Promise.all([
+    kemajuanTopik(learnerId),
+    kemajuanTopikPeta(learnerId),
+    kesetaraanLengkap(learnerId),
+  ])
 
   return {
     mandiri: mandiri === null ? null : await mandiriPerMapel(mandiri),
-    ketuntasan: peta === null ? null : ketuntasanPeta(peta),
+    ketuntasan: (() => {
+      if (peta === null) return null
+      const k = ketuntasanPeta(peta)
+      return k === null ? null : terapkanKesetaraan(k, ks, tangga)
+    })(),
+  }
+}
+
+/**
+ * Mengganti level kelas dan tangga di rangkuman dengan aturan RESMI database
+ * ("kelas X, kemampuan setara kelas Y", migrasi 181/212), supaya rapor keluarga
+ * dan panel admin menyebut angka yang sama.
+ *
+ * Diterapkan HANYA bila klaim dan tangganya sama-sama terbaca: tangga dari satu
+ * aturan dengan level dari aturan lain menghasilkan kartu yang tidak bisa
+ * diperiksa pembacanya. Kalau salah satunya tidak ada, rangkuman lama dipakai
+ * utuh dan `aturan` tetap `lama`.
+ *
+ * `dikerjakan` tetap dari hitungan topik peta: itu cacah topik yang disentuh,
+ * bukan bagian dari klaim.
+ */
+export function terapkanKesetaraan(
+  k: RangkumanKetuntasan,
+  ks: Kesetaraan | null,
+  tangga: AnakTangga[] | null,
+): RangkumanKetuntasan {
+  if (!ks || !tangga || tangga.length === 0) return k
+  return {
+    ...k,
+    aturan: 'resmi',
+    kelasTerdaftar: ks.terdaftar,
+    levelKelas: ks.setara === null ? null : String(ks.setara),
+    tuntas: ks.tuntas,
+    topik: ks.total,
+    jenjang: tangga.map(a => ({ label: String(a.kelas), tuntas: a.tuntas, topik: a.total })),
   }
 }
 
@@ -522,6 +571,8 @@ export function ketuntasanPeta(
     // Peta kompetensi hari ini cuma Matematika; namanya dipinjam dari kurikulum
     // lewat `subjectId`, dan kalau tidak ada pemetaannya kita tidak mengarang.
     mapel: 'Matematika',
+    aturan: 'lama',
+    kelasTerdaftar: null,
     levelKelas: penuh[0] ? String(penuh[0][0]) : null,
     dikerjakan: peta.filter(k => k.answered > 0).length,
     tuntas: peta.filter(tuntas).length,

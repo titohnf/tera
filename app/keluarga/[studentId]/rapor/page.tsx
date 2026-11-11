@@ -270,14 +270,27 @@ function BarisKetuntasan({ k }: { k: RangkumanKetuntasan }) {
       <p className="text-sm leading-relaxed text-gray-600">
         {k.levelKelas ? (
           <>
-            Kemampuan {k.mapel} siswa saat ini berada di{' '}
-            <span className="font-semibold text-gray-900">level kelas {k.levelKelas}</span>.
+            Kemampuan {k.mapel} siswa saat ini{' '}
+            {k.aturan === 'resmi' ? (
+              <>
+                setara <span className="font-semibold text-gray-900">kelas {k.levelKelas}</span>
+                {k.kelasTerdaftar !== null && <> (siswa di kelas {k.kelasTerdaftar})</>}.
+              </>
+            ) : (
+              <>
+                berada di <span className="font-semibold text-gray-900">level kelas {k.levelKelas}</span>.
+              </>
+            )}
           </>
         ) : (
           // Belum ada satu jenjang pun yang penuh. Dikatakan begitu, bukan
           // dibulatkan ke bawah jadi "level kelas 7" yang belum dimiliki
           // anaknya — kalimat inilah yang akan dikutip orang tua.
-          <>Belum ada jenjang yang seluruh topiknya tuntas.</>
+          <>
+            {k.aturan === 'resmi'
+              ? 'Belum ada kelas yang seluruh topiknya, mulai dari kelas 1, sudah tuntas.'
+              : 'Belum ada jenjang yang seluruh topiknya tuntas.'}
+          </>
         )}
       </p>
       {/* Tangga jenjang, dari kelas terendah ke atas. Ia yang membuat kalimat
@@ -302,11 +315,17 @@ function BarisKetuntasan({ k }: { k: RangkumanKetuntasan }) {
       {/* Penyebut baris-baris di atas berjumlah persis sebanyak topiknya, jadi
           tidak ada selisih yang perlu dibela. Yang tetap disebut cuma aturan
           penempatannya: tanpa itu, orang tua yang tahu anaknya mengerjakan
-          topik "kelas 7-8" akan mencarinya di baris kelas 7 dan tidak
-          menemukannya. */}
+          topik yang membentang beberapa kelas akan mencarinya di baris yang
+          salah dan tidak menemukannya.
+
+          Dua aturan, dua kalimat: `resmi` (kumulatif dari kelas 1, migrasi
+          181/212, sama dengan panel admin) dan `lama` (cadangan bila data
+          resminya tidak terbaca). Lihat `terapkanKesetaraan`. */}
       <p className="pt-1 text-xs text-gray-400">
-        {k.tuntas} dari {k.topik} topik tuntas. Topik yang membentang dua kelas
-        dihitung di kelas atasnya.
+        {k.tuntas} dari {k.topik} topik tuntas.{' '}
+        {k.aturan === 'resmi'
+          ? 'Setara kelas tertentu berarti seluruh topik dari kelas 1 sampai kelas itu tuntas; tiap topik dihitung di kelas tempat ia seharusnya dikuasai.'
+          : 'Topik yang membentang dua kelas dihitung di kelas atasnya.'}
       </p>
     </>
   )
