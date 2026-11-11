@@ -669,6 +669,16 @@ export async function kemajuanTopik(
     console.error('[belajar] gagal membaca kemajuan topik:', error)
     return null
   }
+  return bacaKemajuanTopik(data)
+}
+
+/**
+ * Memetakan baris mentah `practice_topic_progress()` ke `KemajuanTopik`. Dipisah
+ * supaya hasil panggilan massal (`kemajuan_latihan_banyak`, migrasi 209) dibaca
+ * dengan kode yang SAMA dengan panggilan per pelajar — dua pemeta berarti dua
+ * tempat yang bisa menyimpang soal arti sebuah kolom.
+ */
+export function bacaKemajuanTopik(data: unknown): KemajuanTopik[] {
   type Baris = {
     group_id: string
     answered: number

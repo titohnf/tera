@@ -98,6 +98,12 @@ function kalimatSorotan(s: SorotanBaris): { teks: string; terisi: number; dari: 
  * pembaca adalah nama topiknya; "Aljabar · Kelas 7" cuma menjawab "yang mana",
  * dan pertanyaan itu datang kedua.
  */
+/**
+ * Tujuan tautan rincian di luar portal keluarga (panel admin):
+ * `${dasar}/${kunci}${sufiks}`. Tanpa ini, tautannya ke rute keluarga.
+ */
+export type TujuanRincian = { dasar: string; sufiks?: string }
+
 export default function KartuPenguasaan({
   b,
   studentId,
@@ -110,7 +116,7 @@ export default function KartuPenguasaan({
    * admin, yang tidak bisa membuka rute itu: kartunya jadi kotak biasa tanpa
    * panah.
    */
-  rincian?: boolean
+  rincian?: boolean | TujuanRincian
 }) {
   const { teks, terisi, dari } = kalimatSorotan(b.sorotan)
   const isi = (
@@ -138,7 +144,11 @@ export default function KartuPenguasaan({
         // Seluruh kartunya tautan, bukan cuma namanya: sasaran sentuh setinggi
         // kartunya sendiri adalah satu-satunya ukuran yang masuk akal di ponsel.
         <Link
-          href={`/keluarga/${studentId}/penguasaan/${b.kunci}`}
+          href={
+            typeof rincian === 'object'
+              ? `${rincian.dasar}/${b.kunci}${rincian.sufiks ?? ''}`
+              : `/keluarga/${studentId}/penguasaan/${b.kunci}`
+          }
           className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
         >
           {isi}

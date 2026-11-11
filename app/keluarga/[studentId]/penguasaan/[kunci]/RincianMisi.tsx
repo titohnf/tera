@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
+import { rubrikMapel } from '@/lib/belajar/sesi'
+import { alamatSoal, learnerRincian, type KonteksRincian } from '@/lib/belajar/rincian-konteks'
 import { keadaanPaketTopik } from '@/lib/belajar/topik-peta'
 import { isiPaketTopikSemua, kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import { namaPaket } from '@/lib/belajar/nama-paket'
@@ -49,11 +50,15 @@ import BilahJawaban, {
 export default async function RincianMisi({
   studentId,
   topikId,
+  admin,
 }: {
   studentId: string
   topikId: string
+  /** Dibuka dari panel admin: lihat `lib/belajar/rincian-konteks.ts`. */
+  admin?: KonteksRincian['admin']
 }) {
-  const learnerId = await learnerAnak(studentId)
+  const konteks: KonteksRincian = { studentId, admin }
+  const learnerId = await learnerRincian(konteks)
 
   const [kemajuan, paket, isi] = await Promise.all([
     learnerId ? kemajuanTopikPeta(learnerId) : Promise.resolve([]),
@@ -170,7 +175,7 @@ export default async function RincianMisi({
           // lebih penting daripada di jalur grup — kunci yang terbuka di sini
           // mencemari sebuah pengukuran, bukan cuma satu putaran latihan.
           tautan: t
-            ? `/keluarga/${studentId}/penguasaan/${topikId}/soal?sesi=${t.sesiId}&item=${itemId}`
+            ? alamatSoal(konteks, topikId, t.sesiId, itemId)
             : null,
         }
       }),
@@ -324,12 +329,14 @@ export default async function RincianMisi({
 
       {/* Ke Misi, BUKAN ke `/belajar?topik=`. Yang terakhir berkunci grup
           kurikulum dan tidak bisa menampilkan topik ini sama sekali. */}
-      <Link
-        href={`/keluarga/${studentId}/misi`}
-        className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
-      >
-        Buka di Misi
-      </Link>
+      {!admin && (
+        <Link
+          href={`/keluarga/${studentId}/misi`}
+          className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
+          Buka di Misi
+        </Link>
+      )}
     </div>
   )
 }

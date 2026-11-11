@@ -77,8 +77,10 @@ export default function MasteryRecapTable({ recap }: { recap: MasteryRecap }) {
       </div>
 
       <p className="text-xs text-gray-400">
-        Angka dihitung dari seluruh riwayat soal di menu Belajar, bukan sesi terakhir saja. Soal yang
-        ditandai dua topik dihitung di keduanya.
+        Penguasaan tiap topik dari jawaban terakhir per soal, atas seluruh soal topik — soal yang belum
+        dikerjakan belum dihitung dikuasai. Angkanya sama dengan yang dilihat admin dan orang tua.
+        Keseluruhan = rata-rata topik yang pernah dikerjakan. Soal yang ditandai dua topik dihitung di
+        keduanya.
       </p>
     </div>
   )

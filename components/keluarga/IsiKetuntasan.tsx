@@ -1,6 +1,6 @@
 import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
 import { namaTema } from '@/lib/belajar/tema-topik'
-import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
+import KartuPenguasaan, { type TujuanRincian } from '@/components/keluarga/KartuPenguasaan'
 
 /** Bagian paket yang tuntas, 0–1. Topik tanpa paket dikirim ke ujung daftar. */
 function rasioTuntas({ tuntas, total }: { tuntas: number; total: number }) {
@@ -52,7 +52,7 @@ export default async function IsiKetuntasan({
   studentId: string
   /** Null kalau siswa belum pernah punya baris `learners`. */
   learnerId: string | null
-  rincian?: boolean
+  rincian?: boolean | TujuanRincian
 }) {
   const misi = learnerId ? await kemajuanTopikPeta(learnerId) : []
   const misiDikerjakan = (misi ?? []).filter(k => k.answered > 0)
@@ -117,7 +117,7 @@ export function TampilanKetuntasan({
   /** Kueri ketuntasannya gagal — beda dengan "belum ada yang dikerjakan". */
   gagal: boolean
   studentId: string
-  rincian: boolean
+  rincian: boolean | TujuanRincian
 }) {
 
   return (

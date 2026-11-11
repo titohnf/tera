@@ -6,7 +6,7 @@ import {
   type PitaPenguasaan,
 } from '@/lib/belajar/penguasaan'
 import { persenDari } from '@/lib/belajar/penilaian'
-import KartuPenguasaan from '@/components/keluarga/KartuPenguasaan'
+import KartuPenguasaan, { type TujuanRincian } from '@/components/keluarga/KartuPenguasaan'
 
 /**
  * Penguasaan per topik untuk satu anak.
@@ -70,7 +70,7 @@ export default async function IsiPenguasaan({
   studentId: string
   /** Null kalau siswa belum pernah punya baris `learners`. */
   learnerId: string | null
-  rincian?: boolean
+  rincian?: boolean | TujuanRincian
 }) {
   const kemajuan = learnerId ? await kemajuanTopik(learnerId) : []
 
@@ -192,7 +192,7 @@ export function TampilanPenguasaan({
   /** Kueri kemajuannya gagal — beda dengan "belum ada yang dikerjakan". */
   gagal: boolean
   studentId: string
-  rincian: boolean
+  rincian: boolean | TujuanRincian
 }) {
 
   // Dikelompokkan per MAPEL, dan mapelnya sendiri diurut menurut topik

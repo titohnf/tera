@@ -14,7 +14,7 @@ export type BarisLatihan = {
   /** Siswa bimbel (akun keluarga) atau pelanggan langganan (role `mandiri`). */
   jenis: 'bimbel' | 'langganan'
   /** Per kolom: teks yang digambar dan angka untuk mengurutkan (null = kosong). */
-  sel: Record<string, { teks: string; nilai: number | null }>
+  sel: Record<string, { teks: string; nilai: number | null; judul?: string }>
 }
 
 const SEL = 'border-b border-r border-slate-200 px-4 py-3 last:border-r-0'
@@ -241,7 +241,9 @@ export default function TabelLatihanSiswa({
                     return (
                       <td key={k.kunci} className={`${SEL} tabular-nums`}>
                         {s && s.teks !== '' ? (
-                          <span className="whitespace-nowrap font-medium text-gray-900">{s.teks}</span>
+                          <span title={s.judul} className="whitespace-nowrap font-medium text-gray-900">
+                            {s.teks}
+                          </span>
                         ) : (
                           <span className="text-gray-300">—</span>
                         )}

@@ -7,6 +7,7 @@ import TabelLatihanSiswa, {
 } from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiPenguasaan from '@/components/keluarga/IsiPenguasaan'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
+import { waktuRelatif } from '@/lib/waktu-relatif'
 
 export const metadata = { title: 'Latihan Mandiri' }
 
@@ -18,18 +19,19 @@ export const metadata = { title: 'Latihan Mandiri' }
  * Angkanya dari `practice_topic_progress()`, yang gerbangnya `practice_actor()`.
  * Admin baru lolos sejak migrasi 208; sebelum itu daftarnya selalu kosong.
  *
+ * Kartu topik menaut ke rincian di `/admin/rekap-penguasaan/[studentId]/[kunci]`,
+ * yang merender komponen rincian portal keluarga untuk admin.
+ *
  * Tidak ada tampilan per kelas di sini. Matriks siswa × topik untuk satu kelas
- * menghitung angkanya sendiri dari `practice_answers`, terpisah dari fungsi
- * yang dipakai portal keluarga, jadi bisa menampilkan angka berbeda untuk anak
- * yang sama. Matriks itu tetap ada di halaman tutor (`/tutor/rekap-penguasaan`).
+ * ada di halaman tutor (`/tutor/rekap-penguasaan`); sejak migrasi 209 ia
+ * memakai fungsi yang sama dengan halaman ini, jadi angkanya tidak lagi berbeda
+ * untuk anak yang sama.
  *
  * Tanpa siswa terpilih, halaman ini tabel semua siswa aktif (satu baris per
  * siswa, angkanya dari fungsi yang sama dengan halaman rapor keluarga —
  * `ringkasanLatihanSemua`); klik baris membuka rincian siswa itu.
  *
- * Hasil Misi tidak termasuk; itu ada di menu Ketuntasan Materi. Tautan rincian
- * per topik dimatikan (`rincian={false}`): rutenya milik portal keluarga dan
- * tertutup bagi admin.
+ * Hasil Misi tidak termasuk; itu ada di menu Ketuntasan Materi.
  */
 export default async function LatihanMandiriAdminPage({
   searchParams,
@@ -79,6 +81,11 @@ export default async function LatihanMandiriAdminPage({
     )
 
     const kolom: KolomLatihan[] = [
+      {
+        kunci: 'terakhir',
+        label: 'Terakhir',
+        lengkap: 'Terakhir membuka sesi latihan atau Misi; yang paling lama tidak berlatih di atas bila diurutkan naik',
+      },
       { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik yang pernah dikerjakan' },
       { kunci: 'selesai', label: 'Selesai', lengkap: 'Topik yang seluruh soalnya sudah dikerjakan' },
       ...mapel.map(m => ({
@@ -89,8 +96,13 @@ export default async function LatihanMandiriAdminPage({
     ]
 
     const baris: BarisLatihan[] = daftarSiswa.map(s => {
-      const m = ringkasan.get(s.id)?.mandiri ?? null
+      const r = ringkasan.get(s.id)
+      const m = r?.mandiri ?? null
       const sel: BarisLatihan['sel'] = {}
+      if (r?.terakhir) {
+        const w = waktuRelatif(r.terakhir)
+        sel.terakhir = { teks: w.teks, nilai: new Date(r.terakhir).getTime(), judul: w.lengkap }
+      }
       if (m && m.dikerjakan > 0) {
         sel.dikerjakan = { teks: `${m.dikerjakan} topik`, nilai: m.dikerjakan }
         sel.selesai = { teks: `${m.selesai} topik`, nilai: m.selesai }
@@ -147,7 +159,11 @@ export default async function LatihanMandiriAdminPage({
           <div className="mt-4 mb-6">
             <StudentSelect options={options} value={student_id} />
           </div>
-          <IsiPenguasaan studentId={student_id} learnerId={learnerId as string | null} rincian={false} />
+          <IsiPenguasaan
+            studentId={student_id}
+            learnerId={learnerId as string | null}
+            rincian={{ dasar: `/admin/rekap-penguasaan/${student_id}`, sufiks: '?dari=mandiri' }}
+          />
         </>
       ) : (
         <div className="mt-4">

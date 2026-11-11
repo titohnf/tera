@@ -1,6 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { kemajuanTopik } from '@/lib/belajar/sesi'
-import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
+import { createClient } from '@/lib/supabase/server'
+import { bacaKemajuanTopik, kemajuanTopik, type KemajuanTopik } from '@/lib/belajar/sesi'
+import {
+  bacaKemajuanPeta,
+  kemajuanTopikPeta,
+  type KemajuanTopikPeta,
+} from '@/lib/belajar/topik-rapor'
 import {
   ketuntasanPeta,
   mandiriPerMapel,
@@ -14,23 +19,32 @@ import {
  * bahan tabel di menu admin.
  *
  * Tidak ada aturan baru di sini. Tiap siswa dihitung lewat fungsi yang sama
- * dengan halaman rapor keluarga (`kemajuanTopik` + `mandiriPerMapel`,
- * `kemajuanTopikPeta` + `ketuntasanPeta`), jadi angka di tabel tidak bisa
- * berbeda dengan angka di halaman rincian atau yang dibaca orang tua.
+ * dengan halaman rapor keluarga (`mandiriPerMapel`, `ketuntasanPeta`) atas baris
+ * dari fungsi database yang sama (`practice_topic_progress`, `topik_kemajuan`),
+ * jadi angka di tabel tidak bisa berbeda dengan angka di halaman rincian atau
+ * yang dibaca orang tua.
  *
- * Ongkosnya: dua panggilan RPC per siswa yang punya baris `learners`. Dibatasi
- * paralelnya supaya tidak menyerbu database, dan siswa yang belum pernah
- * berlatih tidak memanggil apa pun.
+ * DUA JALUR mengambil barisnya:
+ *
+ * - **Massal** (migrasi 209): tiga panggilan RPC untuk seluruh siswa. Fungsi
+ *   database menjalankan fungsi per-pelajar yang sama di dalam satu pernyataan
+ *   SQL, jadi yang dipangkas hanya perjalanan jaringannya.
+ * - **Per siswa**: dua RPC per siswa, dibatasi paralelnya. Dipakai HANYA kalau
+ *   jalur massal gagal — yaitu selama migrasi 209 belum dijalankan — supaya
+ *   halaman tidak kosong di antara deploy dan migrasi.
  */
 
 export type RingkasanLatihanSiswa = {
   /** Null kalau pembacaannya gagal — beda dengan "belum mengerjakan apa pun". */
   mandiri: { mapel: RangkumanMandiri[]; dikerjakan: number; selesai: number } | null
   ketuntasan: RangkumanKetuntasan | null
+  /** Sesi latihan atau Misi terakhir (ISO); null kalau belum pernah berlatih. */
+  terakhir: string | null
   gagal: boolean
 }
 
 const PARALEL = 8
+const POTONGAN = 200
 
 async function denganBatas<T, R>(items: T[], batas: number, kerja: (x: T) => Promise<R>): Promise<R[]> {
   const hasil: R[] = new Array(items.length)
@@ -46,12 +60,89 @@ async function denganBatas<T, R>(items: T[], batas: number, kerja: (x: T) => Pro
   return hasil
 }
 
+type Mentah = {
+  mentah: KemajuanTopik[] | null
+  peta: KemajuanTopikPeta[] | null
+  terakhir: string | null
+}
+
+/** Jalur massal. Null kalau salah satu RPC gagal (mis. migrasi 209 belum jalan). */
+async function ambilMassal(learnerIds: string[]): Promise<Map<string, Mentah> | null> {
+  const supabase = await createClient()
+  const per = new Map<string, Mentah>()
+  const ambil = (id: string) => {
+    const ada = per.get(id) ?? { mentah: [], peta: [], terakhir: null }
+    per.set(id, ada)
+    return ada
+  }
+
+  type BarisJson = { learner_id: string; baris: unknown }
+  type BarisTerakhir = { learner_id: string; terakhir: string | null }
+
+  for (let i = 0; i < learnerIds.length; i += POTONGAN) {
+    const ids = learnerIds.slice(i, i + POTONGAN)
+    const [a, b, c] = await Promise.all([
+      supabase.rpc('kemajuan_latihan_banyak', { p_learner_ids: ids }),
+      supabase.rpc('kemajuan_peta_banyak', { p_learner_ids: ids }),
+      supabase.rpc('terakhir_berlatih_banyak', { p_learner_ids: ids }),
+    ])
+    if (a.error || b.error || c.error) {
+      console.error('[laporan] jalur massal gagal, memakai jalur per siswa:', a.error ?? b.error ?? c.error)
+      return null
+    }
+    for (const r of (a.data as BarisJson[] | null) ?? []) ambil(r.learner_id).mentah = bacaKemajuanTopik(r.baris)
+    for (const r of (b.data as BarisJson[] | null) ?? []) ambil(r.learner_id).peta = bacaKemajuanPeta(r.baris)
+    for (const r of (c.data as BarisTerakhir[] | null) ?? []) ambil(r.learner_id).terakhir = r.terakhir
+  }
+  return per
+}
+
+/** Jalur lama: dua RPC per siswa yang pernah berlatih. */
+async function ambilPerSiswa(learnerIds: string[]): Promise<Map<string, Mentah>> {
+  const admin = createAdminClient()
+  const per = new Map<string, Mentah>()
+
+  // Baris `learners` ada untuk siswa yang cuma pernah membuka menu Belajar,
+  // jadi punya baris belum berarti pernah berlatih. Satu pemeriksaan murah di
+  // `practice_sessions` membuang mereka sebelum RPC-nya dijalankan.
+  const terakhirDari = new Map<string, string>()
+  const HALAMAN = 1000
+  for (let i = 0; i < learnerIds.length; i += 100) {
+    const potong = learnerIds.slice(i, i + 100)
+    for (let dari = 0; ; dari += HALAMAN) {
+      const { data } = await admin
+        .from('practice_sessions')
+        .select('learner_id, started_at')
+        .in('learner_id', potong)
+        .range(dari, dari + HALAMAN - 1)
+      const rows = (data as { learner_id: string; started_at: string }[] | null) ?? []
+      for (const r of rows) {
+        const lama = terakhirDari.get(r.learner_id)
+        if (!lama || r.started_at > lama) terakhirDari.set(r.learner_id, r.started_at)
+      }
+      if (rows.length < HALAMAN) break
+    }
+  }
+
+  const ada = learnerIds.filter(id => terakhirDari.has(id))
+  await denganBatas(ada, PARALEL, async learnerId => {
+    const [mentah, peta] = await Promise.all([kemajuanTopik(learnerId), kemajuanTopikPeta(learnerId)])
+    per.set(learnerId, { mentah, peta, terakhir: terakhirDari.get(learnerId) ?? null })
+  })
+  return per
+}
+
 export async function ringkasanLatihanSemua(
   studentIds: string[],
 ): Promise<Map<string, RingkasanLatihanSiswa>> {
   const admin = createAdminClient()
   const out = new Map<string, RingkasanLatihanSiswa>()
-  const kosong: RingkasanLatihanSiswa = { mandiri: { mapel: [], dikerjakan: 0, selesai: 0 }, ketuntasan: null, gagal: false }
+  const kosong: RingkasanLatihanSiswa = {
+    mandiri: { mapel: [], dikerjakan: 0, selesai: 0 },
+    ketuntasan: null,
+    terakhir: null,
+    gagal: false,
+  }
   for (const id of studentIds) out.set(id, kosong)
   if (studentIds.length === 0) return out
 
@@ -66,53 +157,31 @@ export async function ringkasanLatihanSemua(
       learnerDari.set(l.profile_id, l.id)
     }
   }
-
-  // Baris `learners` ada untuk siswa yang cuma pernah membuka menu Belajar,
-  // jadi punya baris belum berarti pernah berlatih. Satu pemeriksaan murah di
-  // `practice_sessions` (jauh lebih sedikit barisnya daripada jawaban) membuang
-  // mereka sebelum dua RPC per siswa dijalankan — itulah yang mahal.
   const learnerIds = [...learnerDari.values()]
-  const pernahBerlatih = new Set<string>()
-  const HALAMAN = 1000
-  for (let i = 0; i < learnerIds.length; i += 100) {
-    const potong = learnerIds.slice(i, i + 100)
-    for (let dari = 0; ; dari += HALAMAN) {
-      const { data } = await admin
-        .from('practice_sessions')
-        .select('learner_id')
-        .in('learner_id', potong)
-        .range(dari, dari + HALAMAN - 1)
-      const rows = (data as { learner_id: string }[] | null) ?? []
-      for (const r of rows) pernahBerlatih.add(r.learner_id)
-      if (rows.length < HALAMAN) break
-    }
-  }
+  if (learnerIds.length === 0) return out
 
-  const ada = studentIds.filter(id => {
-    const l = learnerDari.get(id)
-    return l !== undefined && pernahBerlatih.has(l)
-  })
-  if (ada.length === 0) return out
+  const [massal, grup] = await Promise.all([ambilMassal(learnerIds), petaMapelGrup()])
+  const data = massal ?? (await ambilPerSiswa(learnerIds))
 
-  const grup = await petaMapelGrup()
-
-  await denganBatas(ada, PARALEL, async studentId => {
-    const learnerId = learnerDari.get(studentId)!
-    const [mentah, peta] = await Promise.all([kemajuanTopik(learnerId), kemajuanTopikPeta(learnerId)])
-    const mapel = mentah === null ? null : await mandiriPerMapel(mentah, grup)
+  for (const [studentId, learnerId] of learnerDari) {
+    const d = data.get(learnerId)
+    // Tidak ada baris sama sekali = belum pernah berlatih.
+    if (!d) continue
+    const mapel = d.mentah === null ? null : await mandiriPerMapel(d.mentah, grup)
     out.set(studentId, {
       mandiri:
-        mentah === null || mapel === null
+        d.mentah === null || mapel === null
           ? null
           : {
               mapel,
-              dikerjakan: mentah.filter(k => k.answered > 0).length,
+              dikerjakan: d.mentah.filter(k => k.answered > 0).length,
               selesai: mapel.reduce((n, m) => n + m.selesai, 0),
             },
-      ketuntasan: peta === null ? null : ketuntasanPeta(peta),
-      gagal: mentah === null || peta === null,
+      ketuntasan: d.peta === null ? null : ketuntasanPeta(d.peta),
+      terakhir: d.terakhir,
+      gagal: d.mentah === null || d.peta === null,
     })
-  })
+  }
 
   return out
 }

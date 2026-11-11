@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { isiPaket, keadaanPaket, kemajuanTopik, learnerAnak, rubrikMapel } from '@/lib/belajar/sesi'
+import { isiPaket, keadaanPaket, kemajuanTopik, rubrikMapel } from '@/lib/belajar/sesi'
+import { alamatRincian, alamatSoal, learnerRincian, type KonteksRincian } from '@/lib/belajar/rincian-konteks'
 import { labelPenguasaan } from '@/lib/belajar/penguasaan'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { SOAL_PER_PAKET } from '@/lib/belajar/aturan'
@@ -42,10 +43,14 @@ import BilahJawaban, {
 export default async function RincianGrup({
   studentId,
   groupId,
+  admin,
 }: {
   studentId: string
   groupId: string
+  /** Dibuka dari panel admin: lihat `lib/belajar/rincian-konteks.ts`. */
+  admin?: KonteksRincian['admin']
 }) {
+  const konteks: KonteksRincian = { studentId, admin }
   const supabase = await createClient()
 
   const { data: topikRow } = await supabase
@@ -82,7 +87,7 @@ export default async function RincianGrup({
       r => r.topik?.aktif,
     )?.topik_id ?? null
 
-  const learnerId = await learnerAnak(studentId)
+  const learnerId = await learnerRincian(konteks)
   const [kemajuan, rubrik, paketTopik, isi] = await Promise.all([
     learnerId ? kemajuanTopik(learnerId, topik.subject_id ?? undefined) : Promise.resolve([]),
     topik.subject_id ? rubrikMapel(topik.subject_id) : Promise.resolve(null),
@@ -244,7 +249,7 @@ export default async function RincianGrup({
             // di paket dan di putaran, dan alamat yang artinya bergantung pada
             // konteks adalah alamat yang cepat atau lambat salah membuka.
             tautan: t
-              ? `/keluarga/${studentId}/penguasaan/${groupId}/soal?sesi=${t.sesiId}&item=${itemId}`
+              ? alamatSoal(konteks, groupId, t.sesiId, itemId)
               : null,
           }
         })
@@ -520,7 +525,7 @@ export default async function RincianGrup({
         // peta tidak pernah sampai ke sini — mereka tidak punya baris
         // `topik_grup` sama sekali.
         <Link
-          href={`/keluarga/${studentId}/penguasaan/${topikPeta}`}
+          href={alamatRincian(konteks, topikPeta)}
           className="block rounded-xl bg-white p-4 text-sm shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
         >
           <span className="font-medium text-gray-900">Topik ini juga diukur di Misi</span>
@@ -531,12 +536,14 @@ export default async function RincianGrup({
         </Link>
       )}
 
-      <Link
-        href={`/belajar?anak=${studentId}&topik=${groupId}`}
-        className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
-      >
-        Buka Topik Ini di Latihan
-      </Link>
+      {!admin && (
+        <Link
+          href={`/belajar?anak=${studentId}&topik=${groupId}`}
+          className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
+          Buka Topik Ini di Latihan
+        </Link>
+      )}
     </div>
   )
 }

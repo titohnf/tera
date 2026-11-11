@@ -7,6 +7,7 @@ import TabelLatihanSiswa, {
 } from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiKetuntasan from '@/components/keluarga/IsiKetuntasan'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
+import { waktuRelatif } from '@/lib/waktu-relatif'
 
 export const metadata = { title: 'Ketuntasan Materi' }
 
@@ -22,8 +23,9 @@ export const metadata = { title: 'Ketuntasan Materi' }
  * siswa, angkanya dari fungsi yang sama dengan halaman rapor keluarga —
  * `ringkasanLatihanSemua`); klik baris membuka rincian siswa itu.
  *
- * Tautan rincian per topik dimatikan (`rincian={false}`): rutenya milik portal
- * keluarga dan tertutup bagi admin.
+ * Kartu topik menaut ke rincian di `/admin/rekap-penguasaan/[studentId]/[kunci]`
+ * (`?dari=misi` supaya panah kembali jatuh di menu ini), yang merender komponen
+ * rincian portal keluarga untuk admin.
  */
 export default async function MisiAdminPage({
   searchParams,
@@ -58,6 +60,11 @@ export default async function MisiAdminPage({
   // Tabel hanya dibangun di tampilan semua siswa.
   let baris: BarisLatihan[] = []
   const kolom: KolomLatihan[] = [
+    {
+      kunci: 'terakhir',
+      label: 'Terakhir',
+      lengkap: 'Terakhir membuka sesi latihan atau Misi; yang paling lama tidak berlatih di atas bila diurutkan naik',
+    },
     { kunci: 'level', label: 'Level', lengkap: 'Jenjang kelas tertinggi yang seluruh topiknya tuntas' },
     { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik peta kompetensi yang pernah dikerjakan' },
     { kunci: 'tuntas', label: 'Tuntas', lengkap: 'Topik yang paket latihannya tuntas, dari seluruh topik peta' },
@@ -65,8 +72,13 @@ export default async function MisiAdminPage({
   if (!student_id) {
     const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id))
     baris = daftarSiswa.map(s => {
-      const k = ringkasan.get(s.id)?.ketuntasan ?? null
+      const r = ringkasan.get(s.id)
+      const k = r?.ketuntasan ?? null
       const sel: BarisLatihan['sel'] = {}
+      if (r?.terakhir) {
+        const w = waktuRelatif(r.terakhir)
+        sel.terakhir = { teks: w.teks, nilai: new Date(r.terakhir).getTime(), judul: w.lengkap }
+      }
       if (k && k.dikerjakan > 0) {
         if (k.levelKelas !== null) {
           sel.level = { teks: `Kelas ${k.levelKelas}`, nilai: Number(k.levelKelas) }
@@ -122,7 +134,11 @@ export default async function MisiAdminPage({
           <div className="mt-4 mb-6">
             <StudentSelect options={options} value={student_id} />
           </div>
-          <IsiKetuntasan studentId={student_id} learnerId={learnerId as string | null} rincian={false} />
+          <IsiKetuntasan
+            studentId={student_id}
+            learnerId={learnerId as string | null}
+            rincian={{ dasar: `/admin/rekap-penguasaan/${student_id}`, sufiks: '?dari=misi' }}
+          />
         </>
       ) : (
         <div className="mt-4">

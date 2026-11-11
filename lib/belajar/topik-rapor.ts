@@ -110,6 +110,15 @@ export async function kemajuanTopikPeta(
     console.error('[belajar] gagal membaca kemajuan topik peta:', error)
     return null
   }
+  return bacaKemajuanPeta(data)
+}
+
+/**
+ * Memetakan baris mentah `topik_kemajuan()` ke `KemajuanTopikPeta`. Diekspor
+ * untuk hasil panggilan massal (`kemajuan_peta_banyak`, migrasi 209), supaya
+ * pembacanya tetap satu.
+ */
+export function bacaKemajuanPeta(data: unknown): KemajuanTopikPeta[] {
   type Baris = {
     topik_id: string
     nama: string | null
