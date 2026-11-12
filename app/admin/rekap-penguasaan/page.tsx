@@ -8,6 +8,7 @@ import TabelLatihanSiswa, {
 } from '@/components/admin/laporan-bulanan/TabelLatihanSiswa'
 import IsiPenguasaan from '@/components/keluarga/IsiPenguasaan'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
+import { jenisSiswaBanyak } from '@/lib/reports/jenis-siswa'
 import { selisihHari, waktuRelatif } from '@/lib/waktu-relatif'
 import { nadaPersen, nadaTerakhir } from '@/lib/reports/nada-sel'
 
@@ -69,6 +70,7 @@ export default async function LatihanMandiriAdminPage({
   // perlu membayar ringkasan seluruh siswa.
   let tabel: { baris: BarisLatihan[]; kolom: KolomLatihan[] } | null = null
   if (!student_id) {
+    const jenisSiswa = await jenisSiswaBanyak(daftarSiswa.map(s => s.id))
     const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id))
 
     // Mapel yang paling banyak siswanya berlatih di depan; yang seri urut abjad.
@@ -127,7 +129,7 @@ export default async function LatihanMandiriAdminPage({
       return {
         id: s.id,
         nama: s.full_name ?? '(tanpa nama)',
-        jenis: s.role === 'mandiri' ? ('langganan' as const) : ('bimbel' as const),
+        jenis: s.role === 'mandiri' ? ('langganan' as const) : (jenisSiswa.get(s.id) ?? 'bimbel'),
         hari,
         kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
         sel,

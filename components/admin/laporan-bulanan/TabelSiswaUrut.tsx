@@ -10,6 +10,8 @@ export type BarisSiswa = {
   nama: string
   /** Kelas siswa di sekolah (mis. "9"), bukan nama kelas bimbel; null kalau belum diisi. */
   kelas: string | null
+  /** Siswa bimbel atau siswa kelas yayasan (yang tidak ditagih); lihat `lib/reports/jenis-siswa.ts`. */
+  jenis: 'bimbel' | 'yayasan'
   /** Persen kehadiran bulan itu; null kalau tidak ada sesi. */
   pct: number | null
   hadir: number
@@ -40,7 +42,10 @@ const SEL = 'border-b border-r border-slate-200 px-4 py-3 last:border-r-0'
 /** Nilai pilihan filter kelas untuk siswa yang kelasnya belum diisi. */
 const KOSONG = '__kosong__'
 
-type Kunci = 'nama' | 'kelas' | 'pct' | `mapel:${string}`
+type Kunci = 'nama' | 'kelas' | 'jenis' | 'pct' | `mapel:${string}`
+
+const NAMA_JENIS = { bimbel: 'Bimbel', yayasan: 'Yayasan' } as const
+const GAYA_JENIS = { bimbel: 'bg-blue-50 text-blue-700', yayasan: 'bg-purple-50 text-purple-700' } as const
 type Arah = 'asc' | 'desc'
 
 /**
@@ -70,6 +75,8 @@ export default function TabelSiswaUrut({
   const [cari, setCari] = useParamUrl<string>('cari', '')
   // '' = semua kelas; KOSONG = siswa yang kelasnya belum diisi.
   const [kelasDipilih, setKelasDipilih] = useParamUrl<string>('kelas', '')
+  // '' = semua jenis.
+  const [jenisDipilih, setJenisDipilih] = useParamUrl<'' | 'bimbel' | 'yayasan'>('jenis', '')
 
   // Hanya kelas yang memang dimiliki siswa di tabel ini, urut numerik.
   const { opsiKelas, adaTanpaKelas } = useMemo(() => {
@@ -98,6 +105,7 @@ export default function TabelSiswaUrut({
         const n = Number(b.kelas)
         return b.kelas === null ? null : Number.isNaN(n) ? b.kelas : n
       }
+      if (kunci === 'jenis') return NAMA_JENIS[b.jenis]
       if (kunci === 'pct') return b.pct
       return b.nilai[kunci.slice('mapel:'.length)] ?? null
     }
@@ -106,6 +114,7 @@ export default function TabelSiswaUrut({
     const tersaring = baris.filter(
       b =>
         (!kata || b.nama.toLowerCase().includes(kata)) &&
+        (jenisDipilih === '' || b.jenis === jenisDipilih) &&
         (kelasDipilih === '' ||
           (kelasDipilih === KOSONG ? b.kelas === null : b.kelas === kelasDipilih)),
     )
@@ -121,7 +130,7 @@ export default function TabelSiswaUrut({
           : String(x).localeCompare(String(y), 'id')
       return banding * tanda || a.nama.localeCompare(b.nama, 'id')
     })
-  }, [baris, kunci, arah, cari, kelasDipilih])
+  }, [baris, kunci, arah, cari, kelasDipilih, jenisDipilih])
 
   // Fungsi biasa, bukan komponen: komponen yang dibuat di dalam render lahir
   // ulang tiap render dan membuang statusnya.
@@ -159,6 +168,16 @@ export default function TabelSiswaUrut({
           hanya lewat klik barisnya. */}
       <div className="flex flex-wrap items-center gap-3">
         {pemilihPeriode}
+        <select
+          aria-label="Filter jenis siswa"
+          value={jenisDipilih}
+          onChange={e => setJenisDipilih(e.target.value as '' | 'bimbel' | 'yayasan')}
+          className="rounded-lg border bg-white py-2 pl-3 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Semua siswa</option>
+          <option value="bimbel">Siswa bimbel</option>
+          <option value="yayasan">Siswa yayasan</option>
+        </select>
         <select
           aria-label="Filter kelas"
           value={kelasDipilih}
@@ -208,6 +227,7 @@ export default function TabelSiswaUrut({
               </th>
               {judul('nama', 'Siswa')}
               {judul('kelas', 'KLS', 'Kelas')}
+              {judul('jenis', 'Jenis', 'Siswa bimbel atau siswa yayasan')}
               {judul('pct', 'Kehadiran')}
               {mapel.map(m => judul(`mapel:${m}`, SINGKATAN[m] ?? m, SINGKATAN[m] ? m : undefined))}
             </tr>
@@ -215,7 +235,7 @@ export default function TabelSiswaUrut({
           <tbody>
             {terurut.length === 0 && (
               <tr>
-                <td colSpan={4 + mapel.length} className="px-4 py-10 text-center text-sm text-gray-400">
+                <td colSpan={5 + mapel.length} className="px-4 py-10 text-center text-sm text-gray-400">
                   Tidak ada siswa yang cocok dengan saringan ini.
                 </td>
               </tr>
@@ -249,6 +269,11 @@ export default function TabelSiswaUrut({
                   </td>
                   <td className={`${SEL} text-center text-gray-600`}>
                     {b.kelas ?? <span className="text-gray-300">—</span>}
+                  </td>
+                  <td className={`${SEL} whitespace-nowrap`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${GAYA_JENIS[b.jenis]}`}>
+                      {NAMA_JENIS[b.jenis]}
+                    </span>
                   </td>
                   <td className={`${SEL} tabular-nums`}>
                     {b.pct === null ? (

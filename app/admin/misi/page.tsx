@@ -10,6 +10,7 @@ import IsiKetuntasan from '@/components/keluarga/IsiKetuntasan'
 import KartuKesetaraan from '@/components/admin/laporan-bulanan/KartuKesetaraan'
 import { kesetaraanLengkap } from '@/lib/reports/kesetaraan-kelas'
 import { ringkasanLatihanSemua } from '@/lib/reports/ringkasan-latihan-semua'
+import { jenisSiswaBanyak } from '@/lib/reports/jenis-siswa'
 import { selisihHari, waktuRelatif } from '@/lib/waktu-relatif'
 import { nadaTerakhir } from '@/lib/reports/nada-sel'
 
@@ -83,6 +84,7 @@ export default async function MisiAdminPage({
     { kunci: 'tuntas', label: 'Tuntas', lengkap: 'Topik yang paket latihannya tuntas, dari seluruh topik peta' },
   ]
   if (!student_id) {
+    const jenisSiswa = await jenisSiswaBanyak(daftarSiswa.map(s => s.id))
     const ringkasan = await ringkasanLatihanSemua(daftarSiswa.map(s => s.id), { kesetaraan: true })
     baris = daftarSiswa.map(s => {
       const r = ringkasan.get(s.id)
@@ -134,7 +136,7 @@ export default async function MisiAdminPage({
       return {
         id: s.id,
         nama: s.full_name ?? '(tanpa nama)',
-        jenis: s.role === 'mandiri' ? ('langganan' as const) : ('bimbel' as const),
+        jenis: s.role === 'mandiri' ? ('langganan' as const) : (jenisSiswa.get(s.id) ?? 'bimbel'),
         hari,
         kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
         sel,

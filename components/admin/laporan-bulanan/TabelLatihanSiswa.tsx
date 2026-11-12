@@ -35,8 +35,8 @@ export type BarisLatihan = {
   nama: string
   /** Kelas siswa di sekolah; null kalau belum diisi. */
   kelas: string | null
-  /** Siswa bimbel (akun keluarga) atau pelanggan langganan (role `mandiri`). */
-  jenis: 'bimbel' | 'langganan'
+  /** Siswa bimbel, siswa kelas yayasan, atau pelanggan langganan (role `mandiri`). */
+  jenis: Jenis
   /** Hari sejak sesi latihan/Misi terakhir (hari kalender WIB); null = belum pernah berlatih. */
   hari: number | null
   /** Per kolom: teks yang digambar dan angka untuk mengurutkan (null = kosong). */
@@ -48,7 +48,15 @@ const KOSONG = '__kosong__'
 
 type Arah = 'asc' | 'desc'
 
-const NAMA_JENIS = { bimbel: 'Bimbel', langganan: 'Langganan' } as const
+const NAMA_JENIS = { bimbel: 'Bimbel', yayasan: 'Yayasan', langganan: 'Langganan' } as const
+
+const GAYA_JENIS = {
+  bimbel: 'bg-blue-50 text-blue-700',
+  yayasan: 'bg-purple-50 text-purple-700',
+  langganan: 'bg-emerald-50 text-emerald-700',
+} as const
+
+type Jenis = keyof typeof NAMA_JENIS
 
 /**
  * Tabel siswa untuk menu Latihan Mandiri dan Ketuntasan Materi: satu baris per
@@ -82,7 +90,7 @@ export default function TabelLatihanSiswa({
   const [cari, setCari] = useParamUrl<string>('cari', '')
   const [kelasDipilih, setKelasDipilih] = useParamUrl<string>('kelas', '')
   // '' = semua jenis.
-  const [jenisDipilih, setJenisDipilih] = useParamUrl<'' | 'bimbel' | 'langganan'>('jenis', '')
+  const [jenisDipilih, setJenisDipilih] = useParamUrl<'' | Jenis>('jenis', '')
   const [aktivitas, setAktivitas] = useParamUrl<Aktivitas>('aktivitas', '')
 
   const { opsiKelas, adaTanpaKelas } = useMemo(() => {
@@ -219,11 +227,12 @@ export default function TabelLatihanSiswa({
         <select
           aria-label="Filter jenis siswa"
           value={jenisDipilih}
-          onChange={e => setJenisDipilih(e.target.value as '' | 'bimbel' | 'langganan')}
+          onChange={e => setJenisDipilih(e.target.value as '' | Jenis)}
           className="rounded-lg border bg-white py-2 pl-3 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua siswa</option>
           <option value="bimbel">Siswa bimbel</option>
+          <option value="yayasan">Siswa yayasan</option>
           <option value="langganan">Siswa langganan</option>
         </select>
         <select
@@ -303,11 +312,7 @@ export default function TabelLatihanSiswa({
                   </td>
                   <td className={`${SEL} whitespace-nowrap`}>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        b.jenis === 'langganan'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-blue-50 text-blue-700'
-                      }`}
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${GAYA_JENIS[b.jenis]}`}
                     >
                       {NAMA_JENIS[b.jenis]}
                     </span>

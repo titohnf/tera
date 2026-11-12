@@ -1,5 +1,6 @@
 import { monthRange } from '@/lib/reports/laporan-bulanan'
 import { ringkasanProgresKelas } from '@/lib/reports/progres-kelas-semua'
+import { jenisSiswaBanyak } from '@/lib/reports/jenis-siswa'
 import TabelSiswaUrut, { type BarisSiswa } from '@/components/admin/laporan-bulanan/TabelSiswaUrut'
 
 /**
@@ -38,10 +39,13 @@ export default async function TabelProgresKelas({
         return { startIso, endIso }
       })()
 
-  const ringkasan = await ringkasanProgresKelas(
-    students.map(s => s.id),
-    periode,
-  )
+  const [ringkasan, jenisSiswa] = await Promise.all([
+    ringkasanProgresKelas(
+      students.map(s => s.id),
+      periode,
+    ),
+    jenisSiswaBanyak(students.map(s => s.id)),
+  ])
 
   const sekarang = new Date()
   const bulanIni = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2, '0')}`
@@ -54,6 +58,7 @@ export default async function TabelProgresKelas({
       // Kolom `profiles.grade` bertipe angka di database walau tipenya di kode
       // tertulis teks. Dijadikan teks di sini, supaya cocok dengan nilai pilihan
       // filter kelas (nilai <option> selalu teks).
+      jenis: jenisSiswa.get(s.id) ?? 'bimbel',
       kelas: s.grade === null || s.grade === undefined ? null : String(s.grade),
       pct: r.pct,
       hadir: r.hadir,
