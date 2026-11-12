@@ -38,7 +38,7 @@ export default function KartuKesetaraan({
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-400">Kemampuan setara</p>
+          <p className="text-xs text-gray-400">Materi Tera setingkat</p>
           <p className="text-2xl font-semibold tracking-tight text-gray-900">
             {ks.setara !== null ? `Kelas ${ks.setara}` : <span className="text-gray-300">Belum ada</span>}
           </p>
@@ -63,8 +63,9 @@ export default function KartuKesetaraan({
           <>Seluruh topik dari kelas 1 sampai kelas {ks.setara} sudah tuntas.</>
         ) : (
           <>
-            Belum ada kelas yang seluruh topiknya (mulai kelas 1) sudah tuntas, jadi klaim kemampuan
-            setara kelas tertentu belum bisa dibuat. Ini bukan penilaian bahwa siswa belum mampu.
+            Belum ada kelas yang seluruh topiknya (mulai kelas 1) sudah tuntas, jadi klaim &ldquo;setingkat
+            kelas tertentu&rdquo; belum bisa dibuat. Ini bukan penilaian bahwa siswa belum mampu, dan bukan perbandingan
+            dengan nilai sekolah atau anak lain.
           </>
         )}{' '}
         {ks.tuntas} dari {ks.total} topik tuntas

@@ -7,6 +7,8 @@ import {
   type RangkumanKetuntasan,
 } from '@/lib/reports/ringkasan-laporan'
 import { bulanIni } from '@/lib/waktu'
+import { todayWib } from '@/lib/daily-message'
+import { tanggalPanjang } from '@/lib/waktu-relatif'
 import { BilahRapor, GrafikNilaiBulanan, MAKS_SERI } from '@/components/keluarga/BilahRapor'
 
 /**
@@ -104,7 +106,7 @@ export default async function RaporPage({
         ) : r.ketuntasan.dikerjakan === 0 ? (
           <Kosong>Belum ada topik peta kompetensi yang dikerjakan.</Kosong>
         ) : (
-          <BarisKetuntasan k={r.ketuntasan} />
+          <BarisKetuntasan k={r.ketuntasan} tanggal={tanggalPanjang(todayWib())} />
         )}
       </KartuLaporan>
     </div>
@@ -264,35 +266,55 @@ function BarisMandiri({ m }: { m: RangkumanMandiri }) {
   )
 }
 
-function BarisKetuntasan({ k }: { k: RangkumanKetuntasan }) {
+function BarisKetuntasan({ k, tanggal }: { k: RangkumanKetuntasan; tanggal: string }) {
+  // Anak tangga pertama yang belum penuh: ke sanalah anaknya sedang menuju.
+  // Klaim "setingkat kelas Y" adalah KELENGKAPAN (tidak ada lubang sejak
+  // kelas 1); ini POSISINYA. Dua kabar yang berbeda, jadi dua kalimat — satu
+  // angka yang dipaksa membawa keduanya adalah yang membuat klaim lama terbaca
+  // kosong untuk anak yang sebenarnya sudah berjalan jauh.
+  const menuju = k.aturan === 'resmi' ? k.jenjang.find(j => j.tuntas < j.topik) : undefined
+
   return (
     <>
       <p className="text-sm leading-relaxed text-gray-600">
-        {k.levelKelas ? (
+        {k.aturan === 'resmi' ? (
+          // Kalimat ini yang akan DIKUTIP orang tua, sehingga ia harus aman
+          // dikutip utuh: tanggalnya, sumbernya ("Matematika Tera"), dan kata
+          // "setingkat" — bukan "setara", yang terbaca sebagai perbandingan
+          // dengan anak kelas itu pada umumnya, padahal tidak ada data pembanding.
+          k.levelKelas ? (
+            <>
+              Per {tanggal}, siswa sudah menuntaskan seluruh materi {k.mapel} Tera{' '}
+              <span className="font-semibold text-gray-900">setingkat kelas {k.levelKelas}</span>
+              {k.kelasTerdaftar !== null && <> (siswa di kelas {k.kelasTerdaftar})</>}.
+            </>
+          ) : (
+            <>
+              Per {tanggal}, belum ada tingkat kelas yang seluruh materi {k.mapel} Tera-nya, mulai
+              dari kelas 1, sudah tuntas.
+            </>
+          )
+        ) : k.levelKelas ? (
           <>
-            Kemampuan {k.mapel} siswa saat ini{' '}
-            {k.aturan === 'resmi' ? (
-              <>
-                setara <span className="font-semibold text-gray-900">kelas {k.levelKelas}</span>
-                {k.kelasTerdaftar !== null && <> (siswa di kelas {k.kelasTerdaftar})</>}.
-              </>
-            ) : (
-              <>
-                berada di <span className="font-semibold text-gray-900">level kelas {k.levelKelas}</span>.
-              </>
-            )}
+            Kemampuan {k.mapel} siswa saat ini berada di{' '}
+            <span className="font-semibold text-gray-900">level kelas {k.levelKelas}</span>.
           </>
         ) : (
           // Belum ada satu jenjang pun yang penuh. Dikatakan begitu, bukan
           // dibulatkan ke bawah jadi "level kelas 7" yang belum dimiliki
           // anaknya — kalimat inilah yang akan dikutip orang tua.
-          <>
-            {k.aturan === 'resmi'
-              ? 'Belum ada kelas yang seluruh topiknya, mulai dari kelas 1, sudah tuntas.'
-              : 'Belum ada jenjang yang seluruh topiknya tuntas.'}
-          </>
+          <>Belum ada jenjang yang seluruh topiknya tuntas.</>
         )}
       </p>
+      {menuju && (
+        <p className="pt-1 text-sm leading-relaxed text-gray-600">
+          Sedang menuju materi kelas {menuju.label}:{' '}
+          <span className="font-semibold text-gray-900">
+            {menuju.tuntas} dari {menuju.topik} topik
+          </span>{' '}
+          sudah tuntas.
+        </p>
+      )}
       {/* Tangga jenjang, dari kelas terendah ke atas. Ia yang membuat kalimat
           di atasnya bisa DIPERIKSA alih-alih dipercaya: pembacanya melihat
           sendiri jenjang mana yang penuh dan mana yang baru separuh, dan
@@ -324,7 +346,7 @@ function BarisKetuntasan({ k }: { k: RangkumanKetuntasan }) {
       <p className="pt-1 text-xs text-gray-400">
         {k.tuntas} dari {k.topik} topik tuntas.{' '}
         {k.aturan === 'resmi'
-          ? 'Setara kelas tertentu berarti seluruh topik dari kelas 1 sampai kelas itu tuntas; tiap topik dihitung di kelas tempat ia seharusnya dikuasai.'
+          ? 'Ini ukuran internal Tera: seluruh topik dari kelas 1 sampai kelas itu tuntas. Bukan perbandingan dengan nilai sekolah atau anak lain. Tiap topik dihitung di kelas tempat ia seharusnya dikuasai.'
           : 'Topik yang membentang dua kelas dihitung di kelas atasnya.'}
       </p>
     </>

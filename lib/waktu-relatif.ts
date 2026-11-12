@@ -36,3 +36,13 @@ export function waktuRelatif(iso: string, sekarang: Date = new Date()): { teks: 
   else teks = `${Math.floor(selisih / 365)} thn lalu`
   return { teks, lengkap }
 }
+
+/** "2026-11-12" -> "12 November 2026". Tanggal sudah WIB (lihat `todayWib`), jadi dibaca apa adanya. */
+export function tanggalPanjang(ymd: string): string {
+  return new Date(`${ymd}T00:00:00Z`).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}

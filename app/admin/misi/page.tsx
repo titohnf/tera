@@ -70,9 +70,9 @@ export default async function MisiAdminPage({
     },
     {
       kunci: 'setara',
-      label: 'Setara',
+      label: 'Setingkat',
       lengkap:
-        'Kemampuan setara kelas berapa: seluruh topik dari kelas 1 sampai kelas itu tuntas (kumulatif). Dalam kurung: selisih dengan kelas siswa sekarang',
+        'Materi Matematika Tera setingkat kelas berapa yang sudah tuntas seluruhnya (kumulatif dari kelas 1). Dalam kurung: selisih dengan kelas siswa sekarang. Kriteria internal Tera, bukan perbandingan dengan sekolah',
     },
     { kunci: 'dikerjakan', label: 'Dikerjakan', lengkap: 'Topik peta kompetensi yang pernah dikerjakan' },
     {
@@ -208,7 +208,7 @@ export default async function MisiAdminPage({
             kolom={kolom}
             hrefDasar="/admin/misi"
             kegiatan="mengerjakan Misi"
-            kataKosong="Setara = seluruh topik dari kelas 1 sampai kelas itu tuntas (kumulatif); angka dalam kurung adalah selisih dengan kelas siswa. Klik baris untuk melihat rincian per topik."
+            kataKosong="Setingkat = seluruh materi Tera dari kelas 1 sampai kelas itu tuntas (kumulatif); angka dalam kurung adalah selisih dengan kelas siswa. Klik baris untuk melihat rincian per topik."
           />
         </div>
       )}
