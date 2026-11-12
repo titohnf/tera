@@ -52,8 +52,8 @@ const NAMA_JENIS = { bimbel: 'Bimbel', yayasan: 'Yayasan', langganan: 'Langganan
 
 const GAYA_JENIS = {
   bimbel: 'bg-blue-50 text-blue-700',
-  yayasan: 'bg-purple-50 text-purple-700',
-  langganan: 'bg-emerald-50 text-emerald-700',
+  yayasan: 'bg-green-50 text-green-700',
+  langganan: 'bg-amber-50 text-amber-700',
 } as const
 
 type Jenis = keyof typeof NAMA_JENIS

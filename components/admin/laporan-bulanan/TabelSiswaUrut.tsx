@@ -45,7 +45,7 @@ const KOSONG = '__kosong__'
 type Kunci = 'nama' | 'kelas' | 'jenis' | 'pct' | `mapel:${string}`
 
 const NAMA_JENIS = { bimbel: 'Bimbel', yayasan: 'Yayasan' } as const
-const GAYA_JENIS = { bimbel: 'bg-blue-50 text-blue-700', yayasan: 'bg-purple-50 text-purple-700' } as const
+const GAYA_JENIS = { bimbel: 'bg-blue-50 text-blue-700', yayasan: 'bg-green-50 text-green-700' } as const
 type Arah = 'asc' | 'desc'
 
 /**
