@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
+import { alamatMateri } from '@/lib/belajar/alamat-materi'
+import { materiInteraktif } from '@/lib/materi-interaktif'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import { langkahTopik } from '@/lib/belajar/langkah'
 import { namaPaketAnak } from '@/lib/belajar/nama-paket'
@@ -99,6 +101,11 @@ export default async function IsiTopikMisi({
   // pernah ada.
   const adaPengayaan = paket.some(p => p.pengayaan)
 
+  // Materi interaktif topik ini (langkah Belajar), kalau ada. "Belum mulai"
+  // berarti belum satu paket pun dikerjakan: baru saat itu ia jadi ajakan utama.
+  const materi = materiInteraktif(topikId)
+  const belumMulai = lolos === 0 && !langkah?.pernahDikerjakan && !langkah?.sudahMulai
+
   const bukaPada = langkah?.bukaPada
     ? (() => {
         const l = labelSesiWib(langkah.bukaPada!, todayWib())
@@ -145,6 +152,35 @@ export default async function IsiTopikMisi({
           </div>
         )}
       </div>
+
+      {/* Langkah BELAJAR: materi interaktif topik ini, kalau ada. Ia langkah
+          pertama perjalanan topik (Belajar, Latihan, Tantangan Akhir), bukan
+          menu terpisah. Anak yang belum mulai diajak lebih dulu dengan tombol
+          biru; yang sudah berlatih melihatnya sebagai tawaran "belajar lagi".
+          Tidak wajib: paket di bawah tetap bisa dikerjakan tanpanya. */}
+      {materi && (
+        <div className="rounded-xl bg-white p-5 shadow-kartu">
+          <p className="text-xs text-gray-400">{belumMulai ? 'Mulai dari sini' : 'Belajar lagi'}</p>
+          <p className="mt-0.5 text-base font-semibold tracking-tight text-gray-900">
+            {materi.judul}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-gray-500">
+            {belumMulai
+              ? 'Coba dulu dengan lidi, baru berlatih.'
+              : 'Buka lagi materinya kalau ada yang masih bingung.'}
+          </p>
+          <Link
+            href={alamatMateri(studentId, topikId)}
+            className={`mt-3 block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
+              belumMulai
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
+            }`}
+          >
+            {belumMulai ? 'Belajar Dulu' : 'Buka Materi'}
+          </Link>
+        </div>
+      )}
 
       {/* Langkah berikutnya, dan tidak ada yang lain di kartu ini. Ini
           satu-satunya pertanyaan yang membawa anak ke halaman ini. */}

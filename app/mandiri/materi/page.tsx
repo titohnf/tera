@@ -1,17 +1,16 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { mandiriContext } from '@/lib/mandiri'
-import { HTML_AC01 } from '@/lib/materi-interaktif/ac01'
-import PenampilMateri from '@/components/belajar/PenampilMateri'
+import { alamatMateri } from '@/lib/belajar/alamat-materi'
+import { daftarMateriInteraktif } from '@/lib/materi-interaktif'
 
 /**
- * Materi untuk pelanggan langganan. Hari ini satu: AC-01, "Ikat Sepuluh"
- * (bilangan cacah sampai 100). Materi interaktif ini halaman HTML mandiri,
- * dimuat di iframe `sandbox="allow-scripts"` — tanpa `allow-same-origin`,
- * jadi skripnya tidak bisa menyentuh sesi atau cookie Tera.
+ * Daftar materi interaktif untuk pelanggan langganan.
  *
- * Ikut hak pakai SORA, seperti Misi: tanpa langganan aktif, dialihkan ke
- * halaman langganan.
+ * Materi sebenarnya adalah langkah pertama SEBUAH TOPIK Misi (lihat
+ * `IsiTopikMisi`), bukan menu yang berdiri sendiri; halaman ini perpustakaan
+ * untuk anak yang ingin mengulang. Ikut hak pakai SORA: tanpa langganan aktif,
+ * dialihkan ke halaman langganan.
  */
 export default async function MateriMandiriPage() {
   const { produk } = await mandiriContext()
@@ -24,13 +23,24 @@ export default async function MateriMandiriPage() {
           ← Beranda
         </Link>
         <h1 className="mt-1 text-xl font-bold tracking-tight text-gray-900">Materi</h1>
-        <p className="text-sm text-gray-500 mt-0.5">AC-01 · Bilangan cacah sampai 100</p>
+        <p className="text-sm text-gray-500 mt-0.5">Belajar dulu, baru berlatih.</p>
       </div>
-      <PenampilMateri
-        html={HTML_AC01}
-        judul="Ikat Sepuluh — AC-01"
-        hrefLatihan="/belajar/misi/AC-01"
-      />
+      <ul className="space-y-2">
+        {daftarMateriInteraktif.map(m => (
+          <li key={m.kode}>
+            <Link
+              href={alamatMateri(null, m.kode)}
+              className="block rounded-xl bg-white p-4 shadow-kartu transition hover:bg-slate-50"
+            >
+              <span className="block text-xs text-gray-400">{m.kode}</span>
+              <span className="block text-base font-semibold tracking-tight text-gray-900">
+                {m.judul}
+              </span>
+              <span className="block text-sm text-gray-500">{m.ringkas}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
