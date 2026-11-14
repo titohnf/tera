@@ -288,7 +288,7 @@ export async function mulaiPaketPeta(
   if (!sesiId) {
     return {
       error:
-        'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, kuncinya sudah dibuka, atau ujiannya sudah pernah dikerjakan.',
+        'Paket ini tidak bisa dikerjakan lagi — sudah benar semua, kuncinya sudah dibuka, atau Tantangan Akhir sudah pernah dikerjakan.',
     }
   }
   redirect(`/belajar/${sesiId}`)

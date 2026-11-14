@@ -277,7 +277,7 @@ function HitungMundur({ batas }: { batas: string }) {
       }`}
     >
       {habis ? (
-        <>Waktu ujiannya sudah habis. Jawabanmu tetap tersimpan — selesaikan saja.</>
+        <>Waktunya sudah habis. Jawabanmu tetap tersimpan — selesaikan saja.</>
       ) : (
         <>
           Sisa waktu{' '}

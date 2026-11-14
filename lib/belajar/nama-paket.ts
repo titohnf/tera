@@ -71,3 +71,58 @@ export function kodePaket(p: {
   const bloom = p.levelBloom == null ? undefined : NAMA_BLOOM[p.levelBloom]
   return bloom ? bloom.kode : `Paket ${p.nomor}`
 }
+
+/**
+ * Nama level seperti yang dibaca ANAK — tanpa kode C1-C6 dan tanpa istilah
+ * taksonomi. Istilah Bloom ("Memahami", "Menganalisis") adalah bahasa guru dan
+ * peneliti; bagi anak SD ia cuma terbaca sebagai pelajaran yang serius. Daftar
+ * ini dipakai di layar yang dilihat anak saja (peta Misi, daftar paket, sesi,
+ * hasil). Permukaan tutor, orang tua, dan rapor tetap memakai `namaPaket`
+ * dan `kodePaket` di atas, karena di sana istilahnya memang berguna.
+ *
+ * "Level 1" sampai "Level 6". SENGAJA tanpa julukan (Pemula, Mahir, Ahli...):
+ * kata-kata yang berdekatan artinya membuat tangganya tidak terbaca naik, dan
+ * sebagian kata tidak dikenal anak. Angka tidak bisa bertabrakan makna.
+ */
+
+/** "Level 2"; paket ujian "Tantangan Akhir". */
+export function namaPaketAnak(p: {
+  jenis: 'latihan' | 'ujian'
+  levelBloom: number | null
+  nomor: number
+}): string {
+  if (p.jenis === 'ujian') return 'Tantangan Akhir'
+  return p.levelBloom == null ? `Paket ${p.nomor}` : `Level ${p.levelBloom}`
+}
+
+/** Sebutan pendek untuk tombol: "Level 2"; paket ujian "Tantangan". */
+export function kodePaketAnak(p: {
+  jenis: 'latihan' | 'ujian'
+  levelBloom: number | null
+  nomor: number
+}): string {
+  if (p.jenis === 'ujian') return 'Tantangan'
+  return p.levelBloom == null ? `Paket ${p.nomor}` : `Level ${p.levelBloom}`
+}
+
+/**
+ * Julukan paket pengayaan untuk ANAK, mengikuti level taksonominya sehingga
+ * makin tinggi levelnya makin "naik" namanya: Menerapkan "Juara", Menganalisis
+ * "Detektif", Mengevaluasi "Pakar", Mencipta "Penemu" (bukan "Pencipta", yang
+ * terdengar terlalu besar). Level 1-2 jarang dipakai pengayaan, tapi tetap
+ * diberi nama supaya tidak ada yang kosong.
+ */
+const JULUKAN_PENGAYAAN: Record<number, string> = {
+  1: 'Pengingat',
+  2: 'Penjelas',
+  3: 'Juara',
+  4: 'Detektif',
+  5: 'Pakar',
+  6: 'Penemu',
+}
+
+/** "Tantangan Detektif" untuk pengayaan level 4. Tanpa level, "Tantangan Juara". */
+export function namaPengayaanAnak(levelBloom: number | null): string {
+  const julukan = levelBloom == null ? undefined : JULUKAN_PENGAYAAN[levelBloom]
+  return `Tantangan ${julukan ?? 'Juara'}`
+}

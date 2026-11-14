@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import type { PaketTopik } from '@/lib/belajar/sesi'
 import type { PaketPeta } from '@/lib/belajar/topik-peta'
-import { namaPaket } from '@/lib/belajar/nama-paket'
+import { namaPaketAnak, namaPengayaanAnak } from '@/lib/belajar/nama-paket'
 import { mulaiPaket, mulaiPaketPeta, muatPaket, muatPaketPeta } from '@/app/belajar/actions'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { labelSesiWib } from '@/lib/waktu'
@@ -208,7 +208,7 @@ function dariPeta(p: PaketPeta): Baris {
     putaran: p.putaran,
     terkunci: p.terkunci,
     kunci: p.paketId,
-    judul: namaPaket(p),
+    judul: namaPaketAnak(p),
     levelBloom: p.levelBloom,
     bukaPada: p.bukaPada,
     menungguLatihan: p.menungguLatihan,
@@ -342,12 +342,12 @@ export default function DaftarPaket({
         // dan menempelinya penanda "Wajib" akan membuat kartu terakhir tampak
         // sebagai syarat yang keenam. Namanya sendiri sudah menyebut ia apa.
         const penanda =
-          adaPengayaan && p.jenis !== 'ujian' ? (p.pengayaan ? 'Pengayaan' : 'Wajib') : null
+          adaPengayaan && p.jenis !== 'ujian' ? (p.pengayaan ? namaPengayaanAnak(p.levelBloom) : null) : null
 
         const ajakan = !bisa
           ? null
           : p.jenis === 'ujian'
-            ? 'Mulai ujian'
+            ? 'Mulai Tantangan Akhir'
             : belumTersentuh
               ? 'Mulai kerjakan'
               : 'Kerjakan lagi'
@@ -431,7 +431,7 @@ export default function DaftarPaket({
                 )}
                 {menunggu && (
                   <span className="mt-0.5 block text-xs text-gray-400">
-                    Terbuka setelah semua paket wajib tuntas
+                    Terbuka setelah semua level tuntas
                   </span>
                 )}
               </span>

@@ -5,7 +5,7 @@ import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belaj
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
 import { probeSesi } from '@/lib/belajar/retest'
 import { menitTanpaJeda } from '@/lib/belajar/beban'
-import { namaPaket } from '@/lib/belajar/nama-paket'
+import { namaPaketAnak } from '@/lib/belajar/nama-paket'
 import PelariSesi from '@/components/belajar/PelariSesi'
 import PulangKe from '@/components/belajar/PulangKe'
 
@@ -91,7 +91,7 @@ export default async function SesiLatihan({
               : paket
                 ? `Paket ${paket.nomor}`
                 : petaPaket
-                  ? namaPaket(petaPaket)
+                  ? namaPaketAnak(petaPaket)
                   : 'Latihan'}
           </span>{' '}
           · {pemilik.nama}

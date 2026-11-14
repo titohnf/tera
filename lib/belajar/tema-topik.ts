@@ -54,3 +54,20 @@ export function namaTema(elemen: string | null | undefined): string {
     .map(k => k.charAt(0).toUpperCase() + k.slice(1))
     .join(' & ')
 }
+
+const LABEL_ANAK: Record<Exclude<TemaTopik, 'lainnya'>, string> = {
+  bilangan: 'Bilangan',
+  aljabar: 'Pola & Persamaan',
+  geometri_pengukuran: 'Bentuk & Ukuran',
+  data_peluang: 'Data & Kemungkinan',
+}
+
+/**
+ * Nama tema untuk layar ANAK. Kata "Aljabar", "Geometri", dan "Peluang" belum
+ * dikenal anak SD; `namaTema` di atas tetap dipakai untuk orang tua, rapor, dan
+ * tutor, yang membaca istilah kurikulumnya.
+ */
+export function namaTemaAnak(elemen: string | null | undefined): string {
+  const e = (elemen ?? '').trim().toLowerCase()
+  return LABEL_ANAK[e as Exclude<TemaTopik, 'lainnya'>] ?? namaTema(elemen)
+}

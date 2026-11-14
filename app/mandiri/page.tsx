@@ -1,5 +1,5 @@
 import { mandiriContext } from '@/lib/mandiri'
-import KartuAplikasi, { IKON_MISI, IKON_SORA } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda pelanggan langganan: kartu produk yang sadar hak pakai.
@@ -52,12 +52,27 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Paket latihan bertingkat per topik, dari dasar sampai ujian topik.'
+            ? 'Paket latihan bertingkat per topik, dari dasar sampai Tantangan Akhir.'
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
         warna={produk.sora ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}
         ikon={IKON_MISI}
+      />
+
+      {/* Materi: belajar konsep lewat halaman interaktif (hari ini AC-01).
+          Ikut hak pakai SORA, sama seperti Misi. */}
+      <KartuAplikasi
+        nama="Materi"
+        keterangan={produk.sora ? undefined : 'Belum aktif'}
+        teks={
+          produk.sora
+            ? 'Belajar konsep lewat halaman interaktif, mulai dari bilangan sampai 100.'
+            : 'Aktifkan langganan untuk membuka Materi.'
+        }
+        href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
+        warna={produk.sora ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}
+        ikon={IKON_MATERI}
       />
     </div>
   )

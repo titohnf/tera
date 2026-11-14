@@ -19,7 +19,7 @@ import {
   paketTopikSesi,
   pesanPendampingan,
 } from '@/lib/belajar/topik-peta'
-import { namaPaket } from '@/lib/belajar/nama-paket'
+import { namaPaketAnak } from '@/lib/belajar/nama-paket'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
@@ -303,8 +303,8 @@ export default async function HasilSesi({
           anak: pemilik.milikSendiri ? null : (pemilik.profileId ?? null),
           label:
             langkah.jenis === 'ujian'
-              ? 'Lanjut ke Ujian Topik'
-              : `Lanjut ke ${namaPaket({
+              ? 'Lanjut ke Tantangan Akhir'
+              : `Lanjut ke ${namaPaketAnak({
                   jenis: 'latihan',
                   levelBloom: langkah.levelBloom,
                   nomor: langkah.levelBloom ?? 1,
@@ -419,7 +419,7 @@ export default async function HasilSesi({
                 : paket
                   ? `Paket ${paket.nomor}`
                   : petaPaket
-                    ? namaPaket(petaPaket)
+                    ? namaPaketAnak(petaPaket)
                     : 'Latihan'}
             </span>{' '}
             · {pemilik.nama}
@@ -493,7 +493,7 @@ export default async function HasilSesi({
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900">{petaPaket.topikNama}</p>
               <p className="text-xs text-gray-400">
-                {petaPaket.topikId} · {namaPaket(petaPaket)}
+                {petaPaket.topikId} · {namaPaketAnak(petaPaket)}
               </p>
               <p className="text-xs text-gray-400">{paketIni.total} Soal</p>
             </div>

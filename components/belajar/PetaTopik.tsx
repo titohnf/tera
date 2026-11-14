@@ -6,9 +6,9 @@ import { alamatMisi } from '@/lib/belajar/alamat-misi'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { dasarBagiKelas, kelompokkanPeta, sebutPrasyarat } from '@/lib/belajar/fringe'
-import { kodePaket } from '@/lib/belajar/nama-paket'
+import { kodePaketAnak } from '@/lib/belajar/nama-paket'
 import { labelSesiWib } from '@/lib/waktu'
-import { namaTema } from '@/lib/belajar/tema-topik'
+import { namaTemaAnak } from '@/lib/belajar/tema-topik'
 import { mulaiLangkahTopik } from '@/app/belajar/actions'
 
 /**
@@ -390,7 +390,7 @@ function Baris({
             apa pun yang dikerjakan anak hari itu — sebab itu mereka di sini, dan
             baris di bawah judul cuma memuat yang memang berubah. */}
         <span className="min-w-0 truncate text-xs text-gray-400">
-          {namaTema(t.elemen)} · {t.jumlahPaket} Paket Soal
+          {namaTemaAnak(t.elemen)} · {t.jumlahPaket} Paket Soal
         </span>
 
         {/* Statusnya di UJUNG KANAN, bukan menempel pada judul. Tempatnya jadi
@@ -729,7 +729,7 @@ function rona(
       isi: 'bg-slate-100 text-gray-400',
       garis: 'border-transparent',
       ikon: null,
-      sebut: 'menunggu paket wajibnya tuntas',
+      sebut: 'menunggu semua level tuntas',
     }
   }
   return {
@@ -812,13 +812,13 @@ function labelTombol(langkah?: LangkahTopik): string {
   return `${langkah?.pernahDikerjakan ? 'Ulangi' : 'Kerjakan'} ${kodeLangkah(langkah)}`
 }
 
-/** Kode pendek sebuah keping — "C1", "C4", "Ujian". */
+/** Kode pendek sebuah keping — "Level 1", "Level 4", "Tantangan". */
 function kodeRingkas(p: PaketRingkas): string {
-  return kodePaket({ jenis: p.jenis, levelBloom: p.levelBloom, nomor: p.nomor })
+  return kodePaketAnak({ jenis: p.jenis, levelBloom: p.levelBloom, nomor: p.nomor })
 }
 
 /**
- * Kode paket langkah berikutnya — "C1", "C4", "Ujian".
+ * Kode paket langkah berikutnya — "Level 1", "Level 4", "Tantangan".
  *
  * Dipakai tombol dan baris keterangan, dari satu tempat. Tombol yang berkata
  * "Kerjakan C4" sementara barisnya menyebut C3 bukan cuma membingungkan; ia
@@ -826,7 +826,7 @@ function kodeRingkas(p: PaketRingkas): string {
  */
 function kodeLangkah(langkah?: LangkahTopik): string {
   if (!langkah || !langkah.paketId) return 'soal'
-  return kodePaket({
+  return kodePaketAnak({
     jenis: langkah.jenis === 'ujian' ? 'ujian' : 'latihan',
     levelBloom: langkah.levelBloom,
     nomor: langkah.levelBloom ?? 1,
@@ -893,7 +893,7 @@ function ringkasKartu(
     // Tidak ada jam yang boleh dijanjikan, jadi yang disebut cuma keadaannya.
     bagian.push(`${kodeLangkah(langkah)} terkunci`)
   } else if (langkah?.jenis === 'ujian') {
-    bagian.push('paket wajibnya tuntas')
+    bagian.push('semua level tuntas')
   }
 
   // Ditulis sebagai kabar, bukan tenggat: dokumen Retest Terjadwal Bagian 4.3

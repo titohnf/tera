@@ -3,8 +3,8 @@ import { belajarContext } from '@/lib/belajar/konteks'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import { langkahTopik } from '@/lib/belajar/langkah'
-import { namaPaket } from '@/lib/belajar/nama-paket'
-import { namaTema } from '@/lib/belajar/tema-topik'
+import { namaPaketAnak } from '@/lib/belajar/nama-paket'
+import { namaTemaAnak } from '@/lib/belajar/tema-topik'
 import { labelSesiWib } from '@/lib/waktu'
 import { todayWib } from '@/lib/daily-message'
 import DaftarPaket from '@/components/belajar/DaftarPaket'
@@ -86,7 +86,7 @@ export default async function IsiTopikMisi({
   const lolos = indeks === -1 ? wajib.length : indeks
 
   const namaLangkah = langkah?.paketId
-    ? namaPaket({
+    ? namaPaketAnak({
         jenis: langkah.jenis === 'ujian' ? 'ujian' : 'latihan',
         levelBloom: langkah.levelBloom,
         nomor: langkah.levelBloom ?? 1,
@@ -114,7 +114,7 @@ export default async function IsiTopikMisi({
           <IkonTema elemen={t.elemen} size={44} />
           <div className="min-w-0 flex-1">
             <p className="text-xs text-gray-400">
-              {[namaTema(t.elemen), t.jenjangKelas && `Kelas ${t.jenjangKelas}`, t.id]
+              {[namaTemaAnak(t.elemen), t.jenjangKelas && `Kelas ${t.jenjangKelas}`, t.id]
                 .filter(Boolean)
                 .join(' · ')}
             </p>
@@ -179,7 +179,7 @@ export default async function IsiTopikMisi({
             // mengetuk tanpa tahu itu kehilangan sesuatu yang tidak bisa
             // dikembalikan.
             <p className="mt-1 text-sm leading-relaxed text-gray-500">
-              Semua paket latihanmu sudah tuntas. Ujian ini mencampur soal dari
+              Semua paket latihanmu sudah tuntas. Tantangan Akhir ini mencampur soal dari
               seluruh level dan hanya dikerjakan sekali — tidak ada putaran kedua.
             </p>
           )}
@@ -195,8 +195,8 @@ export default async function IsiTopikMisi({
             // resmi, pengayaan sebagai tawaran. Membalikkannya membuat yang
             // tidak wajib terbaca seperti syarat.
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              Kalau mau, paket pengayaan di bawah boleh kamu ambil dulu — tidak
-              wajib, dan ujiannya tetap menunggu sampai kamu siap.
+              Kalau mau, paket Tantangan Juara di bawah boleh kamu coba dulu, dan
+              Tantangan Akhir tetap menunggu sampai kamu siap.
             </p>
           )}
           <div className="mt-3">
@@ -205,7 +205,7 @@ export default async function IsiTopikMisi({
               topikId={topikId}
               label={
                 langkah.jenis === 'ujian'
-                  ? 'Mulai Ujian Topik'
+                  ? 'Mulai Tantangan Akhir'
                   : langkah.pernahDikerjakan
                     ? `Ulangi — ${namaLangkah}`
                     : langkah.sudahMulai
@@ -249,8 +249,8 @@ export default async function IsiTopikMisi({
         <div className="rounded-xl bg-emerald-50 p-5">
           <p className="text-sm font-semibold text-emerald-900">Topik ini sudah selesai</p>
           <p className="mt-1 text-sm leading-relaxed text-emerald-800">
-            Semua paket wajibnya tuntas dan ujiannya sudah kamu kerjakan. Paket
-            pengayaan di bawah tetap terbuka kalau kamu mau melangkah lebih jauh.
+            Semua level tuntas dan Tantangan Akhir sudah kamu kerjakan. Paket
+            Tantangan Juara di bawah tetap terbuka kalau kamu mau melangkah lebih jauh.
           </p>
         </div>
       )}
