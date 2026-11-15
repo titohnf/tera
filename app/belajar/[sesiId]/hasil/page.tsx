@@ -19,7 +19,7 @@ import {
   paketTopikSesi,
   pesanPendampingan,
 } from '@/lib/belajar/topik-peta'
-import { namaPaketAnak } from '@/lib/belajar/nama-paket'
+import { namaPaketAnak, namaPengayaanAnak } from '@/lib/belajar/nama-paket'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { createClient } from '@/lib/supabase/server'
 import { materiTopik } from '@/lib/belajar/materi'
@@ -304,11 +304,13 @@ export default async function HasilSesi({
           label:
             langkah.jenis === 'ujian'
               ? 'Lanjut ke Tantangan Akhir'
-              : `Lanjut ke ${namaPaketAnak({
-                  jenis: 'latihan',
-                  levelBloom: langkah.levelBloom,
-                  nomor: langkah.levelBloom ?? 1,
-                })}`,
+              : langkah.pengayaan
+                ? `Lanjut ke ${namaPengayaanAnak(langkah.levelBloom)}`
+                : `Lanjut ke ${namaPaketAnak({
+                    jenis: 'latihan',
+                    levelBloom: langkah.levelBloom,
+                    nomor: langkah.levelBloom ?? 1,
+                  })}`,
           // Ujian TIDAK dibuka langsung dari sini. Sampelnya lahir saat sesinya
           // dibuka dan tidak ada putaran kedua (189), jadi ia harus lewat
           // halaman topik yang menyebutkan itu lebih dulu — satu ketukan

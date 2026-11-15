@@ -33,6 +33,14 @@ export interface LangkahTopik {
    * yang baru saja ditutup anak berarti paketnya belum lolos ambang.
    */
   pernahDikerjakan: boolean
+  /** Langkahnya paket pengayaan (di luar cakupan Bloom), bukan paket wajib (220). */
+  pengayaan: boolean
+  /**
+   * Ujian yang masih menunggu (seluruh wajib lolos, ujiannya belum dibuka), atau
+   * null. Dipakai layar untuk menawarkan ujian sebagai pilihan kedua di samping
+   * pengayaan yang direkomendasikan.
+   */
+  ujianPaketId: string | null
 }
 
 interface BarisLangkah {
@@ -44,6 +52,8 @@ interface BarisLangkah {
   terkunci: boolean | null
   buka_pada: string | null
   pernah_dikerjakan: boolean | null
+  pengayaan: boolean | null
+  ujian_paket_id: string | null
 }
 
 function dariBaris(b: BarisLangkah): LangkahTopik {
@@ -56,6 +66,8 @@ function dariBaris(b: BarisLangkah): LangkahTopik {
     terkunci: Boolean(b.terkunci),
     bukaPada: b.buka_pada ?? null,
     pernahDikerjakan: Boolean(b.pernah_dikerjakan),
+    pengayaan: Boolean(b.pengayaan),
+    ujianPaketId: b.ujian_paket_id ?? null,
   }
 }
 

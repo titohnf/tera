@@ -5,13 +5,14 @@ import { alamatMateri } from '@/lib/belajar/alamat-materi'
 import { materiInteraktif } from '@/lib/materi-interaktif'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
 import { langkahTopik } from '@/lib/belajar/langkah'
-import { namaPaketAnak } from '@/lib/belajar/nama-paket'
+import { namaPaketAnak, namaPengayaanAnak } from '@/lib/belajar/nama-paket'
 import { namaTemaAnak } from '@/lib/belajar/tema-topik'
 import { labelSesiWib } from '@/lib/waktu'
 import { todayWib } from '@/lib/daily-message'
 import DaftarPaket from '@/components/belajar/DaftarPaket'
 import IkonTema from '@/components/belajar/IkonTema'
 import TombolLangkah from '@/components/belajar/TombolLangkah'
+import TombolUjianLangsung from '@/components/belajar/TombolUjianLangsung'
 
 /**
  * Halaman satu topik Misi: kamu sampai di mana, dan berikutnya apa.
@@ -88,11 +89,13 @@ export default async function IsiTopikMisi({
   const lolos = indeks === -1 ? wajib.length : indeks
 
   const namaLangkah = langkah?.paketId
-    ? namaPaketAnak({
-        jenis: langkah.jenis === 'ujian' ? 'ujian' : 'latihan',
-        levelBloom: langkah.levelBloom,
-        nomor: langkah.levelBloom ?? 1,
-      })
+    ? langkah.pengayaan
+      ? namaPengayaanAnak(langkah.levelBloom)
+      : namaPaketAnak({
+          jenis: langkah.jenis === 'ujian' ? 'ujian' : 'latihan',
+          levelBloom: langkah.levelBloom,
+          nomor: langkah.levelBloom ?? 1,
+        })
     : null
 
   // Topik ini punya paket pengayaan atau tidak. Menentukan apakah kartu ujian
@@ -219,6 +222,18 @@ export default async function IsiTopikMisi({
               seluruh level dan hanya dikerjakan sekali — tidak ada putaran kedua.
             </p>
           )}
+          {langkah.pengayaan && langkah.ujianPaketId && (
+            // PENGAYAAN DIREKOMENDASIKAN SEBELUM UJIAN (220). Masukan lapangan:
+            // ujian mencampur soal dari seluruh level dan hanya dikerjakan
+            // sekali, jadi anak yang langsung masuk dari paket wajib terakhir
+            // sering menemui soal yang belum pernah dilatih. Ujiannya TIDAK
+            // dikunci — tombol kedua di bawah membukanya langsung.
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">
+              Semua levelmu sudah tuntas. Sebelum Tantangan Akhir, coba {namaLangkah} dulu
+              supaya kamu lebih siap: Tantangan Akhir mencampur soal dari seluruh level
+              dan hanya dikerjakan sekali.
+            </p>
+          )}
           {langkah.jenis === 'ujian' && adaPengayaan && (
             // CABANGNYA DISEBUT, bukan cuma disediakan. Paket pengayaan memang
             // sudah berdiri di daftar bawah dengan judul kelompoknya sendiri,
@@ -250,6 +265,14 @@ export default async function IsiTopikMisi({
               }
             />
           </div>
+          {langkah.pengayaan && langkah.ujianPaketId && (
+            <div className="mt-2">
+              <TombolUjianLangsung anak={studentId} paketId={langkah.ujianPaketId} />
+              <p className="mt-1.5 text-center text-xs text-gray-400">
+                Hanya sekali, tidak ada putaran kedua.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
