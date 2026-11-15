@@ -322,6 +322,14 @@ export default async function HasilSesi({
         }
       : null
 
+  // Pengayaan direkomendasikan lebih dulu (220), tetapi ujiannya tidak ditutup:
+  // kalau paket wajib sudah lolos dan ujian masih menunggu, ia tetap ditawarkan
+  // sebagai pilihan kedua, lewat halaman topik.
+  const ujianLangsung =
+    langkah?.pengayaan && langkah.ujianPaketId && petaPaket && pemilik.profileId
+      ? { alamatTopik: alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId) }
+      : null
+
   // JALAN PULANG DIPASANG DI HEADER, bukan sebagai tombol di badan halaman.
   // "Pilih Paket Lain" dan "Pilih Latihan Lain" pernah berdiri paling bawah di
   // sini; keduanya kendali navigasi yang menyamar jadi isi, dan lima tombol
@@ -338,6 +346,7 @@ export default async function HasilSesi({
         materi={ulangi}
         probe={bukanPaket !== null}
         lanjut={lanjut}
+        ujian={ujianLangsung}
       />
     </>
   )

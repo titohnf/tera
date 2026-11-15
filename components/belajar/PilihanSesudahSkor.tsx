@@ -39,6 +39,7 @@ export default function PilihanSesudahSkor({
   materi,
   probe = false,
   lanjut = null,
+  ujian = null,
 }: {
   sesiId: string
   /** Soal paket ini yang masih salah. Nol berarti paketnya sudah benar semua. */
@@ -73,6 +74,12 @@ export default function PilihanSesudahSkor({
     /** Diisi untuk ujian: dilewatkan halaman topik dulu, tidak dibuka langsung. */
     alamatTopik: string | null
   } | null
+  /**
+   * Tantangan Akhir sebagai pilihan KEDUA, saat yang direkomendasikan pengayaan
+   * (migrasi 220). Selalu lewat halaman topik, yang menyebut bahwa ujian hanya
+   * sekali sebelum tombol pembukanya ada.
+   */
+  ujian?: { alamatTopik: string } | null
 }) {
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
@@ -134,6 +141,12 @@ export default function PilihanSesudahSkor({
             {lanjut.label}
           </button>
         ))}
+
+      {ujian && (
+        <Link href={ujian.alamatTopik} className={biasa}>
+          Lanjut ke Tantangan Akhir
+        </Link>
+      )}
 
       {/* Harganya ditulis di tombolnya. Sebuah tombol bernama "Lihat Kunci
           Jawaban" yang diam-diam menghentikan paket adalah tombol yang
