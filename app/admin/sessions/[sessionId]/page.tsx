@@ -114,11 +114,11 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
     session.subject_id
       ? admin
           .from('curriculum_topics')
-          .select('id, group_id, grade_level, semester, theme, topic, learning_outcomes')
+          .select('id, group_id, curriculum, grade_level, semester, theme, topic, learning_outcomes')
           .eq('subject_id', session.subject_id)
           .order('sort_order') as unknown as Promise<{
             data: {
-              id: string; group_id: string | null; grade_level: string; semester: number
+              id: string; group_id: string | null; curriculum: string; grade_level: string; semester: number
               theme: string | null; topic: string; learning_outcomes: string | null
             }[] | null
           }>

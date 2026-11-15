@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import { NOMOR_WA_ADMIN } from '@/lib/kontak'
+import { CURRICULA, hasSemester } from '@/lib/curriculum-config'
 
 type SaveTopicAction = (
   sessionId: string,
@@ -19,6 +20,7 @@ type SaveCustomTopicAction = (
 
 interface CurriculumTopic {
   id: string
+  curriculum?: string
   grade_level: string
   semester: number
   theme: string | null
@@ -28,6 +30,7 @@ interface CurriculumTopic {
 
 interface TopicGroup {
   key: string
+  curriculum: string
   gradeLevel: string
   semester: number
   theme: string | null
@@ -78,10 +81,11 @@ export default function SessionTopicEditor({
     const map = new Map<string, TopicGroup>()
     for (const t of curriculumTopics) {
       if (!t.topic?.trim()) continue // skip theme-only placeholder rows
-      const key = `${t.grade_level}|${t.semester}|${t.theme ?? ''}|${t.topic}`
+      const key = `${t.curriculum ?? ''}|${t.grade_level}|${t.semester}|${t.theme ?? ''}|${t.topic}`
       if (!map.has(key)) {
         map.set(key, {
           key,
+          curriculum: t.curriculum ?? '',
           gradeLevel: t.grade_level,
           semester: t.semester,
           theme: t.theme,
@@ -117,6 +121,20 @@ export default function SessionTopicEditor({
   const [savedCpIds, setSavedCpIds] = useState<Set<string>>(new Set(initialCpIds))
 
   const selectedGroup = topicGroups.find(g => g.key === selectedGroupKey) ?? null
+
+  // Tab per kurikulum, supaya daftar topik hanya berisi satu kurikulum sekali
+  // lihat. Urutannya mengikuti CURRICULA; kurikulum tanpa topik di sesi ini
+  // tidak dapat tab. Tab awal: kurikulum topik yang sudah tersimpan, kalau ada.
+  const kurikulumTab = useMemo(() => {
+    const ada = new Set(topicGroups.map(g => g.curriculum))
+    const urut: string[] = [...CURRICULA].filter(c => ada.has(c))
+    for (const c of ada) if (!urut.includes(c)) urut.push(c)
+    return urut
+  }, [topicGroups])
+  const [tabKurikulum, setTabKurikulum] = useState<string>(
+    () => initialGroup?.curriculum || kurikulumTab[0] || '',
+  )
+  const tabAktif = kurikulumTab.includes(tabKurikulum) ? tabKurikulum : (kurikulumTab[0] ?? '')
 
   const isDirty =
     selectedGroupKey !== savedGroupKey ||
@@ -166,6 +184,24 @@ export default function SessionTopicEditor({
     })
   }
 
+  function pilihTab(c: string) {
+    setTabKurikulum(c)
+    // Pilihan yang tidak ada di tab ini disingkirkan, supaya yang tersimpan
+    // tidak pernah topik yang tidak terlihat. Pilihan tersimpan dikembalikan
+    // kalau tabnya dibuka lagi.
+    if (selectedGroup && selectedGroup.curriculum !== c) {
+      if (savedGroupKey && topicGroups.find(g => g.key === savedGroupKey)?.curriculum === c) {
+        setSelectedGroupKey(savedGroupKey)
+        setSelectedCpIds(new Set(savedCpIds))
+      } else {
+        handleTopicChange('')
+      }
+    } else if (!selectedGroup && savedGroupKey && topicGroups.find(g => g.key === savedGroupKey)?.curriculum === c) {
+      setSelectedGroupKey(savedGroupKey)
+      setSelectedCpIds(new Set(savedCpIds))
+    }
+  }
+
   function handleTopicChange(key: string) {
     setSelectedGroupKey(key)
     setSelectedCpIds(new Set()) // reset CP when topic changes
@@ -205,12 +241,13 @@ export default function SessionTopicEditor({
   // Satu optgroup per tema. Jenjang hanya disebut di label kalau memang ada
   // lebih dari satu di daftar ini — sesi biasa tetap terbaca seperti dulu.
   const optionGroups = useMemo(() => {
-    const multiGrade = new Set(topicGroups.map(g => g.gradeLevel)).size > 1
+    const dalamTab = topicGroups.filter(g => g.curriculum === tabAktif)
+    const multiGrade = new Set(dalamTab.map(g => g.gradeLevel)).size > 1
     const gradeNumber = (level: string) => {
       const n = Number(level.replace(/\D/g, ''))
       return Number.isFinite(n) ? n : 0
     }
-    const ordered = topicGroups
+    const ordered = dalamTab
       .map((g, i) => ({ g, i }))
       .sort((a, b) =>
         gradeNumber(a.g.gradeLevel) - gradeNumber(b.g.gradeLevel) ||
@@ -223,7 +260,7 @@ export default function SessionTopicEditor({
     for (const g of ordered) {
       const label = [
         multiGrade ? g.gradeLevel : null,
-        `Sem ${g.semester}`,
+        hasSemester(tabAktif) ? `Sem ${g.semester}` : null,
         g.theme ?? '(Tanpa Tema)',
       ].filter(Boolean).join(' · ')
       const bucket = map.get(label)
@@ -231,7 +268,7 @@ export default function SessionTopicEditor({
       else map.set(label, [g])
     }
     return [...map.entries()]
-  }, [topicGroups])
+  }, [topicGroups, tabAktif])
 
   return (
     <div className="space-y-4">
@@ -355,6 +392,26 @@ export default function SessionTopicEditor({
         </p>
       ) : (
         <div className="space-y-4">
+          {kurikulumTab.length > 1 && (
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Kurikulum">
+              {kurikulumTab.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  role="tab"
+                  aria-selected={tabAktif === c}
+                  disabled={readOnly}
+                  onClick={() => pilihTab(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:cursor-not-allowed ${
+                    tabAktif === c
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50 disabled:hover:bg-white'
+                  }`}
+                >{c}</button>
+              ))}
+            </div>
+          )}
+
           {/* Step 1: Select Topic */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">

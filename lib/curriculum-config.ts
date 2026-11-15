@@ -4,11 +4,19 @@
  * which is how TKA ended up in the database but invisible in the UI.
  */
 
-export const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge', 'TKA', 'Fondasi Berhitung'] as const
+export const CURRICULA = ['Kurikulum Merdeka', 'Kurikulum Cambridge', 'TKA', 'Fondasi Berhitung', 'Misi Matematika'] as const
 export type Curriculum = typeof CURRICULA[number]
 
 export const TKA: Curriculum = 'TKA'
 export const FONDASI: Curriculum = 'Fondasi Berhitung'
+
+/**
+ * Misi Matematika: topik mastery (`topik`, kode AC-01 dst) yang dikerjakan siswa
+ * yayasan lewat Misi. Seperti Fondasi Berhitung ia tidak terikat kelas atau
+ * semester, jadi diarsipkan di bawah `SEMUA_KELAS`. Isinya disalin dari tabel
+ * `topik` oleh migrasi 214, bukan diketik admin.
+ */
+export const MISI: Curriculum = 'Misi Matematika'
 
 /**
  * Fondasi Berhitung (aritmetika dasar: penjumlahan sampai rasio) bukan bagian
@@ -38,12 +46,12 @@ export const TKA_GRADES = ['Kelas 6', 'Kelas 9', 'Kelas 12']
 export const TKA_SEMESTER = 1
 
 export function gradesFor(curriculum: string): string[] {
-  if (curriculum === FONDASI) return [SEMUA_KELAS]
+  if (curriculum === FONDASI || curriculum === MISI) return [SEMUA_KELAS]
   return curriculum === TKA ? TKA_GRADES : ALL_GRADES
 }
 
 export function hasSemester(curriculum: string): boolean {
-  return curriculum !== TKA && curriculum !== FONDASI
+  return curriculum !== TKA && curriculum !== FONDASI && curriculum !== MISI
 }
 
 /** The semester to file a row under: the chosen one, or the filler for curricula without semesters. */

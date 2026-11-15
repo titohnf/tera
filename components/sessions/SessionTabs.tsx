@@ -93,6 +93,7 @@ type TabKey = typeof TABS[number]['key']
 interface CurriculumTopic {
   id: string
   group_id: string | null
+  curriculum?: string
   grade_level: string
   semester: number
   theme: string | null
