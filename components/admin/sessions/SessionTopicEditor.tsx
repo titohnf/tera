@@ -123,18 +123,23 @@ export default function SessionTopicEditor({
   const selectedGroup = topicGroups.find(g => g.key === selectedGroupKey) ?? null
 
   // Tab per kurikulum, supaya daftar topik hanya berisi satu kurikulum sekali
-  // lihat. Urutannya mengikuti CURRICULA; kurikulum tanpa topik di sesi ini
-  // tidak dapat tab. Tab awal: kurikulum topik yang sudah tersimpan, kalau ada.
+  // lihat. SEMUA kurikulum yang dikenal sistem dapat tab (urutan CURRICULA),
+  // juga yang kosong untuk sesi ini: tab kosong menjelaskan dirinya, sedangkan
+  // tab yang hilang membuat tutor bertanya ke mana kurikulumnya pergi. Tab awal:
+  // kurikulum topik yang sudah tersimpan, lalu kurikulum pertama yang berisi.
   const kurikulumTab = useMemo(() => {
-    const ada = new Set(topicGroups.map(g => g.curriculum))
-    const urut: string[] = [...CURRICULA].filter(c => ada.has(c))
-    for (const c of ada) if (!urut.includes(c)) urut.push(c)
+    const urut: string[] = [...CURRICULA]
+    for (const g of topicGroups) if (!urut.includes(g.curriculum)) urut.push(g.curriculum)
     return urut
   }, [topicGroups])
   const [tabKurikulum, setTabKurikulum] = useState<string>(
-    () => initialGroup?.curriculum || kurikulumTab[0] || '',
+    () =>
+      initialGroup?.curriculum ||
+      kurikulumTab.find(c => topicGroups.some(g => g.curriculum === c)) ||
+      kurikulumTab[0] ||
+      '',
   )
-  const tabAktif = kurikulumTab.includes(tabKurikulum) ? tabKurikulum : (kurikulumTab[0] ?? '')
+  const tabAktif = tabKurikulum
 
   const isDirty =
     selectedGroupKey !== savedGroupKey ||
@@ -272,21 +277,40 @@ export default function SessionTopicEditor({
 
   return (
     <div className="space-y-4">
-      {canUseCustom && (
-        <div className="flex gap-2">
-          {([{ val: 'curriculum', label: 'Dari Kurikulum' }, { val: 'custom', label: 'Buat Sendiri' }] as const).map(opt => (
+      {(topicGroups.length > 0 || canUseCustom) && (
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Kurikulum">
+          {kurikulumTab.map(c => {
+            const aktif = mode === 'curriculum' && tabAktif === c
+            return (
+              <button
+                key={c}
+                type="button"
+                role="tab"
+                aria-selected={aktif}
+                disabled={readOnly}
+                onClick={() => { setMode('curriculum'); pilihTab(c) }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:cursor-not-allowed ${
+                  aktif
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50 disabled:hover:bg-white'
+                }`}
+              >{c}</button>
+            )
+          })}
+          {canUseCustom && (
             <button
-              key={opt.val}
               type="button"
+              role="tab"
+              aria-selected={mode === 'custom'}
               disabled={readOnly}
-              onClick={() => setMode(opt.val)}
+              onClick={() => setMode('custom')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:cursor-not-allowed ${
-                mode === opt.val
+                mode === 'custom'
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50 disabled:hover:bg-white'
               }`}
-            >{opt.label}</button>
-          ))}
+            >Buat Sendiri</button>
+          )}
         </div>
       )}
 
@@ -392,28 +416,14 @@ export default function SessionTopicEditor({
         </p>
       ) : (
         <div className="space-y-4">
-          {kurikulumTab.length > 1 && (
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Kurikulum">
-              {kurikulumTab.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  role="tab"
-                  aria-selected={tabAktif === c}
-                  disabled={readOnly}
-                  onClick={() => pilihTab(c)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:cursor-not-allowed ${
-                    tabAktif === c
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-slate-300 hover:bg-blue-50/50 disabled:hover:bg-white'
-                  }`}
-                >{c}</button>
-              ))}
-            </div>
+          {optionGroups.length === 0 && (
+            <p className="text-xs text-gray-400">
+              Tidak ada topik {tabAktif} untuk mata pelajaran dan kelas sesi ini.
+            </p>
           )}
 
           {/* Step 1: Select Topic */}
-          <div>
+          {optionGroups.length > 0 && <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
               Topik <span className="text-red-500">*</span>
             </label>
@@ -432,7 +442,7 @@ export default function SessionTopicEditor({
                 </optgroup>
               ))}
             </select>
-          </div>
+          </div>}
 
           {/* Step 2: Select CPs (multi-select checkboxes) */}
           {selectedGroup && (

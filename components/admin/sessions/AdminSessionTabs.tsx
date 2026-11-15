@@ -140,7 +140,7 @@ export default function AdminSessionTabs({
         {activeTab === 'topic-materials' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Topik Pembelajaran</h2>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">Kurikulum</h2>
               <SessionTopicEditor
                 sessionId={sessionId}
                 initialTopicId={curriculumTopicId}

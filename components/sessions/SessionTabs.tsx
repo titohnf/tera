@@ -224,7 +224,7 @@ export default function SessionTabs({
         {/* Topik & Materi */}
         {activeTab === 'materials' && (
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Topik Pembelajaran</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Kurikulum</p>
             <SessionTopicEditor
               sessionId={sessionId}
               initialTopicId={curriculumTopicId}

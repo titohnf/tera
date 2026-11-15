@@ -30,6 +30,8 @@
  * excessively deep". Yang dijaga di sini kebenaran DATANYA, dan itu ditegakkan
  * di bawah lewat cast eksplisit pada hasilnya, bukan lewat tipe parameternya.
  */
+import { materiInteraktif } from '@/lib/materi-interaktif'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Klien = { from: (tabel: string) => any }
 
@@ -37,6 +39,28 @@ export interface MateriSesi {
   id: string
   title: string
   groupId: string
+  /**
+   * Tautan siap pakai untuk materi interaktif (bukan berkas). Kosong untuk
+   * materi berkas, yang dibuka lewat `/api/materi/<id>`.
+   */
+  href?: string
+}
+
+/**
+ * Materi interaktif Misi untuk sekumpulan grup topik: grup yang menunjuk topik
+ * mastery (`topik_id`) yang punya entri di `lib/materi-interaktif`. Materi ini
+ * hidup di kode, bukan di `curriculum_resources`, jadi tanpa jembatan ini
+ * jurnal menganggap topik Misi tidak bermateri.
+ */
+async function materiInteraktifGrup(db: Klien, grup: string[]): Promise<MateriSesi[]> {
+  if (grup.length === 0) return []
+  const { data } = await db.from('curriculum_topic_groups').select('id, topik_id').in('id', grup)
+  const hasil: MateriSesi[] = []
+  for (const r of ((data as { id: string; topik_id: string | null }[] | null) ?? [])) {
+    const m = r.topik_id ? materiInteraktif(r.topik_id) : null
+    if (m) hasil.push({ id: `interaktif-${m.kode}`, title: m.judul, groupId: r.id, href: `/tutor/materi/${m.kode}` })
+  }
+  return hasil
 }
 
 export async function materiKurikulumSesi(
@@ -65,9 +89,10 @@ export async function materiKurikulumSesi(
     .not('readable_at', 'is', null)
     .order('title')
 
-  return ((data as { id: string; title: string; group_id: string | null }[] | null) ?? [])
+  const berkas = ((data as { id: string; title: string; group_id: string | null }[] | null) ?? [])
     .filter((r) => r.group_id)
     .map((r) => ({ id: r.id, title: r.title, groupId: r.group_id as string }))
+  return [...berkas, ...(await materiInteraktifGrup(db, grup))]
 }
 
 /**
@@ -112,6 +137,8 @@ export async function sesiBermateriKurikulum(
   const grupBermateri = new Set(
     ((resRows as { group_id: string | null }[] | null) ?? []).map((r) => r.group_id).filter((g): g is string => !!g),
   )
+
+  for (const m of await materiInteraktifGrup(db, grup)) grupBermateri.add(m.groupId)
 
   const hasil = new Set<string>()
   for (const [sesiId, cpIds] of cpPerSesi) {

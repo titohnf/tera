@@ -35,7 +35,7 @@ export default function MaterialUploader({
   tutorId: string
   classId: string
   /** Materi dari folder bimbel untuk topik sesi ini. Kosong = tutor mengisi sendiri. */
-  materiKurikulum?: { id: string; title: string; groupId: string }[]
+  materiKurikulum?: { id: string; title: string; groupId: string; href?: string }[]
 }) {
   // Link state
   const [linkTitle, setLinkTitle] = useState('')
@@ -87,7 +87,7 @@ export default function MaterialUploader({
               />
               <label className="block text-xs font-medium text-gray-600 mb-1 mt-2">Berkasnya</label>
               <a
-                href={`/api/materi/${m.id}`}
+                href={m.href ?? `/api/materi/${m.id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
@@ -97,9 +97,11 @@ export default function MaterialUploader({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
-              <p className="text-xs text-gray-400 mt-1">
-                Yang dibuka murid: <code className="text-gray-500">/belajar?topik={m.groupId}</code>
-              </p>
+              {!m.href && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Yang dibuka murid: <code className="text-gray-500">/belajar?topik={m.groupId}</code>
+                </p>
+              )}
             </div>
           ))}
           <p className="text-xs text-gray-400">
