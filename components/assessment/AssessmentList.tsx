@@ -16,6 +16,8 @@ interface AssessmentItem {
   due_at: string | null
   link_url: string | null
   pembahasan_url: string | null
+  /** Terisi untuk asesmen ujian Misi milik sistem (migrasi 217). */
+  topik_id?: string | null
   created_at: string
 }
 
@@ -109,6 +111,8 @@ export default function AssessmentList({
   const [editPembahasanUrl, setEditPembahasanUrl] = useState('')
   const [editMaxScore, setEditMaxScore] = useState(100)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  // Link pembahasan asesmen ujian Misi, diisi langsung di bawah nilai.
+  const [pembahasanInline, setPembahasanInline] = useState<Record<string, string>>({})
   const knownIdsRef = useRef<Set<string>>(new Set(initialAssessments.map(a => a.id)))
 
   useEffect(() => {
@@ -226,20 +230,44 @@ export default function AssessmentList({
     setEditMaxScore(assessment.max_score)
   }
 
+  function handleSavePembahasanInline(assessment: AssessmentItem) {
+    if (!updateAction) return
+    const pembahasanUrl = rapikanTautan(pembahasanInline[assessment.id] ?? assessment.pembahasan_url ?? '')
+    startTransition(async () => {
+      const result = await updateAction(assessment.id, sessionId, {
+        title: assessment.title,
+        description: assessment.description ?? undefined,
+        max_score: assessment.max_score,
+        due_at: assessment.due_at ?? null,
+        link_url: null,
+        pembahasan_url: pembahasanUrl,
+      })
+      if (result.error) setError(result.error)
+      else {
+        setError('')
+        // Tampilkan bentuk yang tersimpan (tautan sudah dirapikan).
+        setPembahasanInline(prev => ({ ...prev, [assessment.id]: pembahasanUrl ?? '' }))
+      }
+    })
+  }
+
   function handleSaveEdit(assessment: AssessmentItem) {
     if (!updateAction) return
-    const title = editTitle.trim()
+    // Asesmen ujian Misi milik sistem: hanya pembahasannya yang diisi tutor.
+    // Judul, skor, dan tautan soal (tidak ada: dikerjakan di Misi) tidak berubah.
+    const sistem = !!assessment.topik_id
+    const title = sistem ? assessment.title : editTitle.trim()
     if (!title) return
 
-    const linkUrl = rapikanTautan(editLinkUrl)
+    const linkUrl = sistem ? null : rapikanTautan(editLinkUrl)
     const pembahasanUrl = rapikanTautan(editPembahasanUrl)
-    if (!linkUrl) return
+    if (!sistem && !linkUrl) return
 
     startTransition(async () => {
       const result = await updateAction(assessment.id, sessionId, {
         title,
-        description: editDescription.trim() || undefined,
-        max_score: editMaxScore,
+        description: sistem ? (assessment.description ?? undefined) : (editDescription.trim() || undefined),
+        max_score: sistem ? assessment.max_score : editMaxScore,
         due_at: assessment.due_at ?? null,
         link_url: linkUrl,
         pembahasan_url: pembahasanUrl,
@@ -271,6 +299,12 @@ export default function AssessmentList({
                 <div className="flex-1 min-w-0">
                   {editingId === assessment.id ? (
                     <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                      {assessment.topik_id && (
+                        <p className="text-xs text-gray-500">
+                          {assessment.title}. Dikerjakan siswa di Misi, nilai terisi otomatis. Yang perlu Anda isi hanya link pembahasan ujian.
+                        </p>
+                      )}
+                      {!assessment.topik_id && <>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Judul Asesmen <span className="text-red-500">*</span></label>
                         <input
@@ -301,9 +335,12 @@ export default function AssessmentList({
                           className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
+                      </>}
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">
-                          Link Pembahasan Soal <span className="text-gray-400">(opsional)</span>
+                          Link Pembahasan Soal {assessment.topik_id
+                            ? <span className="text-gray-400">(wajib bila sudah ada siswa yang ujian)</span>
+                            : <span className="text-gray-400">(opsional)</span>}
                         </label>
                         <input
                           type="url"
@@ -313,7 +350,7 @@ export default function AssessmentList({
                           className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
-                      <div className="flex items-center gap-3">
+                      {!assessment.topik_id && <div className="flex items-center gap-3">
                         <label className="text-xs text-gray-600 shrink-0">Skor Maksimal:</label>
                         <input
                           type="number"
@@ -323,11 +360,11 @@ export default function AssessmentList({
                           onChange={e => setEditMaxScore(Number(e.target.value))}
                           className="w-24 px-2 py-1 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                      </div>
+                      </div>}
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => handleSaveEdit(assessment)}
-                          disabled={isPending || !editTitle.trim() || !rapikanTautan(editLinkUrl)}
+                          disabled={isPending || (!assessment.topik_id && (!editTitle.trim() || !rapikanTautan(editLinkUrl)))}
                           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
                         >
                           {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -352,10 +389,12 @@ export default function AssessmentList({
                           const graded = gradedCountByAssessment(assessment.id)
                           const ungraded = gradableStudents.length - graded
                           return (
-                            <span className={`text-xs font-medium ${ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
-                              {gradableStudents.length === 0
-                                ? 'Tidak ada siswa hadir'
-                                : ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
+                            <span className={`text-xs font-medium ${assessment.topik_id ? 'text-gray-500' : ungraded > 0 ? 'text-orange-500' : 'text-green-600'}`}>
+                              {assessment.topik_id
+                                ? `Nilai otomatis dari ujian di Misi · ${graded} siswa sudah ujian`
+                                : gradableStudents.length === 0
+                                  ? 'Tidak ada siswa hadir'
+                                  : ungraded > 0 ? `${ungraded} siswa belum dinilai` : 'Semua sudah dinilai'}
                             </span>
                           )
                         })()}
@@ -392,7 +431,7 @@ export default function AssessmentList({
                   )}
                 </div>
                 <div className="shrink-0 ml-3 flex items-center gap-1">
-                  {!readOnly && editingId !== assessment.id && (updateAction || deleteAction) && (
+                  {!readOnly && editingId !== assessment.id && !assessment.topik_id && (updateAction || deleteAction) && (
                     <div className="relative" ref={menuOpenId === assessment.id ? menuRef : undefined}>
                       <button
                         onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === assessment.id ? null : assessment.id) }}
@@ -413,10 +452,10 @@ export default function AssessmentList({
                               onClick={() => { startEditing(assessment); setMenuOpenId(null) }}
                               className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
                             >
-                              Edit asesmen
+                              {assessment.topik_id ? 'Isi pembahasan' : 'Edit asesmen'}
                             </button>
                           )}
-                          {deleteAction && (
+                          {deleteAction && !assessment.topik_id && (
                             <button
                               onClick={() => { handleDelete(assessment.id); setMenuOpenId(null) }}
                               disabled={isPending}
@@ -513,6 +552,41 @@ export default function AssessmentList({
                       {isPending ? 'Menyimpan...' : 'Simpan Nilai'}
                     </button>
                   )}
+                  {/* Asesmen ujian Misi: pembahasannya satu-satunya yang diisi
+                      tutor, jadi kolomnya langsung di sini, bukan di balik menu. */}
+                  {assessment.topik_id && (() => {
+                    const nilai = pembahasanInline[assessment.id] ?? assessment.pembahasan_url ?? ''
+                    const tersimpan = (assessment.pembahasan_url ?? '') === (rapikanTautan(nilai) ?? '')
+                    const adaNilai = results.some(r => r.assessment_id === assessment.id && r.score !== null)
+                    return (
+                      <div className="border-t border-slate-200 mt-4 pt-4 space-y-1.5">
+                        <label className="block text-xs text-gray-500">
+                          Link Pembahasan Soal Ujian{' '}
+                          {adaNilai && !nilai.trim() && <span className="text-orange-500 font-medium">— belum diisi</span>}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            value={nilai}
+                            onChange={e => setPembahasanInline(prev => ({ ...prev, [assessment.id]: e.target.value }))}
+                            placeholder="https://docs.google.com/..."
+                            disabled={readOnly}
+                            className="flex-1 min-w-0 px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-gray-700 disabled:cursor-not-allowed"
+                          />
+                          {!readOnly && (
+                            <button
+                              onClick={() => handleSavePembahasanInline(assessment)}
+                              disabled={isPending || tersimpan}
+                              className="shrink-0 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
+                            >
+                              Simpan Pembahasan
+                            </button>
+                          )}
+                        </div>
+                        {tersimpan && nilai.trim() && <p className="text-xs text-green-600">Tersimpan</p>}
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
             </div>

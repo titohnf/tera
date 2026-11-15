@@ -6,6 +6,8 @@ import SessionTabs from '@/components/sessions/SessionTabs'
 import SessionInfoCard from '@/components/admin/sessions/SessionInfoCard'
 import MaterialUploader from '@/components/materials/MaterialUploader'
 import { materiKurikulumSesi } from '@/lib/materi-sesi'
+import { sinkronUjianMisi, kodeMisiPerGrup } from '@/lib/misi-sesi'
+import { semuaTopikKurikulum } from '@/lib/curriculum-topics-semua'
 import { submitAttendance } from '@/lib/actions/attendance'
 import { savePerformanceNote } from '@/lib/actions/notes'
 import { createAssessment, submitGrades, deleteAssessment, updateAssessment } from '@/lib/actions/assessments'
@@ -191,6 +193,13 @@ export default async function SessionPage({
     ? 'not-tutor'
     : 'approved'
 
+  // Asesmen ujian Misi dibuat dan dinilai sistem; sinkronkan sebelum asesmen
+  // dibaca di bawah. Hanya oleh yang boleh mengubah jurnal ini. Selalu dijalankan, juga saat topik
+  // dikosongkan, supaya asesmen ujian dari topik yang sudah dilepas ikut hilang.
+  if (canEdit) {
+    await sinkronUjianMisi(sessionId)
+  }
+
   const [
     enrolledResult,
     attendanceResult,
@@ -225,7 +234,7 @@ export default async function SessionPage({
       .order('created_at', { ascending: false }),
     supabase
       .from('assessments')
-      .select('id, title, description, max_score, due_at, link_url, pembahasan_url, created_at')
+      .select('id, title, description, max_score, due_at, link_url, pembahasan_url, topik_id, created_at')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false }),
     supabase
@@ -234,11 +243,7 @@ export default async function SessionPage({
       .eq('id', session.tutor_id)
       .single(),
     session.subject_id
-      ? supabase
-          .from('curriculum_topics')
-          .select('id, group_id, curriculum, grade_level, semester, theme, topic, learning_outcomes')
-          .eq('subject_id', session.subject_id)
-          .order('sort_order')
+      ? semuaTopikKurikulum(supabase, session.subject_id)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -420,6 +425,7 @@ export default async function SessionPage({
               topic={session.topic}
               curriculumTopicId={session.curriculum_topic_id ?? null}
               curriculumTopics={filteredCurriculumTopics}
+              topikMisi={kodeMisiPerGrup(filteredCurriculumTopics)}
               hasSubject={!!session.subject_id}
               selectedCpIds={session.selected_cp_ids ?? []}
               cpUrls={session.cp_urls ?? {}}
@@ -545,7 +551,16 @@ export default async function SessionPage({
                   { label: `Materi (${completionCheck.materialsCount + completionCheck.materiKurikulumCount})`, ok: completionCheck.hasMaterials, opsional: false },
                   { label: `Presensi (${completionCheck.attendanceCount}/${completionCheck.studentCount})`, ok: completionCheck.hasAllAttendance, opsional: false },
                   { label: `Catatan (${completionCheck.notesCount}/${completionCheck.presentLateCount})`, ok: completionCheck.hasAllNotes, opsional: false },
-                  { label: `Asesmen (${completionCheck.gradedCount}/${completionCheck.gradesRequired})`, ok: completionCheck.hasAssessments, opsional: false },
+                  // Pembahasan ujian Misi ikut butir Asesmen, bukan butir sendiri: ia bagian
+                  // dari asesmennya. Merah selama masih kosong (sejak batas pembahasan).
+                  (() => {
+                    const pembahasanUjianKurang = completionCheck.pembahasanWajib && completionCheck.ujianTanpaPembahasan > 0
+                    return {
+                      label: `Asesmen (${completionCheck.gradedTampil}/${completionCheck.gradesRequiredTampil})${pembahasanUjianKurang ? ' · pembahasan belum diisi' : ''}`,
+                      ok: completionCheck.hasAssessments && !pembahasanUjianKurang,
+                      opsional: false,
+                    }
+                  })(),
                   // Pembahasan baru ditagih untuk sesi sejak September 2026.
                   // Sesi sebelumnya tetap menampilkan poinnya — supaya terlihat
                   // mana yang belum ada — tapi abu-abu, karena tidak menahan

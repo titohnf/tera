@@ -81,6 +81,15 @@ export type CompletionCheck = {
   pembahasanCount: number
   /** Berapa yang seharusnya ada: satu per topik sesi. */
   pembahasanRequired: number
+  /**
+   * Angka untuk TAMPILAN butir Asesmen: seluruh asesmen (termasuk ujian Misi)
+   * dikali siswa hadir, dan nilai yang sudah terisi. Bukan syarat selesai; itu
+   * tetap `gradedCount`/`gradesRequired`, yang tidak menagih nilai ujian.
+   */
+  gradedTampil: number
+  gradesRequiredTampil: number
+  /** Asesmen ujian Misi yang sudah bernilai tetapi pembahasannya belum diisi. */
+  ujianTanpaPembahasan: number
   /** Sesi ini sudah kena aturan pembahasan? Lihat PEMBAHASAN_WAJIB_SEJAK. */
   pembahasanWajib: boolean
   hasAllAttendance: boolean
@@ -120,7 +129,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     // A student may have up to one note per category — count distinct students, not rows
     admin.from('performance_notes').select('student_id').eq('session_id', sessionId),
     admin.from('materials').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
-    admin.from('assessments').select('id, link_url, pembahasan_url, quiz_id').eq('session_id', sessionId),
+    admin.from('assessments').select('id, link_url, pembahasan_url, quiz_id, topik_id').eq('session_id', sessionId),
   ])
 
   // Materi yang datang dari Kurikulum tidak pernah menjadi baris `materials`:
@@ -137,8 +146,14 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
   const notesCount = new Set((notedStudents ?? []).map(n => n.student_id)).size
 
   const sc = rosterForSession(enrollments ?? [], session.scheduled_at).length
-  const assessmentIds = (assessmentList ?? []).map(a => a.id)
-  const assessmentsCount = assessmentIds.length
+  // Asesmen ujian Misi dimiliki sistem (`topik_id` terisi, migrasi 217): nilainya
+  // datang dari hasil ujian siswa di Misi, dan ujian baru terbuka setelah
+  // latihan tuntas. Banyak sesi karenanya belum punya nilai ujian, dan menagih
+  // nilai untuk semua siswa membuat sesi itu tak pernah bisa selesai. Asesmen ini
+  // tetap dihitung sebagai asesmen, tetapi tidak ikut tagihan nilai.
+  const asesmenSistem = (assessmentList ?? []).filter(a => a.topik_id)
+  const assessmentIds = (assessmentList ?? []).filter(a => !a.topik_id).map(a => a.id)
+  const assessmentsCount = (assessmentList ?? []).length
   const presentLateIds = (presentLateAttendances ?? []).map(a => a.student_id)
   const presentLateCount = presentLateIds.length
 
@@ -154,7 +169,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
       .not('score', 'is', null)
     gradedCount = count ?? 0
   }
-  const gradesRequired = assessmentsCount * presentLateCount
+  const gradesRequired = assessmentIds.length * presentLateCount
 
   // Pembahasan asesmen opsional: asesmen menguji, bukan mengajari, jadi tutor
   // boleh mengisinya tapi tidak ditagih. Yang wajib adalah latihan soal: SETIAP
@@ -176,8 +191,18 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
         .select('id, group_id, learning_outcomes')
         .in('id', selectedCpIds)
     : { data: [] as { id: string; group_id: string | null; learning_outcomes: string | null }[] }
+  // Topik Misi dikerjakan siswa di Misi (latihan C1-C6), jadi tidak punya link
+  // soal maupun pembahasan yang bisa ditagih ke tutor. Dikenali dari `topik_id`
+  // di grupnya.
+  const grupCp = [...new Set((cpRows ?? []).map(r => r.group_id).filter((g): g is string => !!g))]
+  const { data: grupMisi } = grupCp.length > 0
+    ? await admin.from('curriculum_topic_groups').select('id').in('id', grupCp).not('topik_id', 'is', null)
+    : { data: [] as { id: string }[] }
+  const idGrupMisi = new Set((grupMisi ?? []).map(g => g.id))
   const kunciTopik = new Set<string>(
-    (cpRows ?? []).filter(r => r.learning_outcomes).map(r => r.group_id ?? r.id),
+    (cpRows ?? [])
+      .filter(r => r.learning_outcomes && !(r.group_id && idGrupMisi.has(r.group_id)))
+      .map(r => r.group_id ?? r.id),
   )
   const customOutcomes: string[] = session.custom_learning_outcomes ?? []
   if (customOutcomes.some(t => t?.trim())) kunciTopik.add(CUSTOM_TOPIC_KEY)
@@ -190,11 +215,32 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
       && cpUrls[key].trim() !== cpPembahasanUrls[key].trim()).length
 
   const pembahasanWajib = new Date(session.scheduled_at) >= PEMBAHASAN_WAJIB_SEJAK
-  const hasPembahasan = pembahasanCount >= pembahasanRequired
+  // Tanpa topik, 0 dari 0 bukan "lengkap": belum ada yang bisa ditagih. Butir
+  // ini baru boleh hijau setelah topik dipilih (topik Misi memang 0 dari 0:
+  // latihannya dikerjakan di Misi, tidak ada tautan untuk ditagih).
+  const hasPembahasan = !!(session.topic?.trim()) && pembahasanCount >= pembahasanRequired
 
   // Asesmen dari Sora (`quiz_id` terisi) dikerjakan di Belajar, jadi tidak punya
   // tautan dan tidak boleh ditagih satu.
-  const asesmenTanpaLink = (assessmentList ?? []).filter(a => !a.quiz_id && !adaTautan(a.link_url)).length
+  // Asesmen ujian Misi juga tanpa tautan: dikerjakan di Misi.
+  const asesmenTanpaLink = (assessmentList ?? []).filter(a => !a.quiz_id && !a.topik_id && !adaTautan(a.link_url)).length
+
+  // Pembahasan ujian Misi wajib, tetapi hanya bila sudah ada siswa hadir yang
+  // ujian: tanpa nilai tidak ada yang perlu dibahas. Pembahasan latihan C1-C6
+  // tidak ditagih sama sekali.
+  let ujianTanpaPembahasan = 0
+  let ujianBernilai = 0
+  if (asesmenSistem.length > 0 && presentLateIds.length > 0) {
+    const { data: nilaiUjian } = await admin
+      .from('assessment_results')
+      .select('assessment_id')
+      .in('assessment_id', asesmenSistem.map(a => a.id))
+      .in('student_id', presentLateIds)
+      .not('score', 'is', null)
+    ujianBernilai = (nilaiUjian ?? []).length
+    const adaNilai = new Set((nilaiUjian ?? []).map(r => r.assessment_id))
+    ujianTanpaPembahasan = asesmenSistem.filter(a => adaNilai.has(a.id) && !adaTautan(a.pembahasan_url)).length
+  }
 
   const hasTopic = !!(session.topic?.trim())
   const hasAllAttendance = (attendanceCount ?? 0) >= sc && sc > 0
@@ -216,7 +262,7 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
         // yang asesmennya tanpa link tidak ikut menjadi belum lengkap.
         && (!pembahasanWajib || asesmenTanpaLink === 0)
   const canComplete = hasTopic && hasAllAttendance && hasAllNotes && hasMaterials && hasAssessments
-    && (!pembahasanWajib || hasPembahasan)
+    && (!pembahasanWajib || (hasPembahasan && ujianTanpaPembahasan === 0))
 
   return {
     studentCount: sc,
@@ -231,6 +277,9 @@ export async function getSessionCompletionStatus(sessionId: string): Promise<Com
     gradesRequired,
     pembahasanCount,
     pembahasanRequired,
+    ujianTanpaPembahasan,
+    gradedTampil: gradedCount + ujianBernilai,
+    gradesRequiredTampil: assessmentsCount * presentLateCount,
     pembahasanWajib,
     hasAllAttendance,
     hasAllNotes,

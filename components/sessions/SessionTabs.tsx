@@ -70,6 +70,7 @@ interface AssessmentItem {
   due_at: string | null
   link_url: string | null
   pembahasan_url: string | null
+  topik_id?: string | null
   created_at: string
 }
 
@@ -113,6 +114,7 @@ export default function SessionTabs({
   hasSubject,
   selectedCpIds,
   cpUrls,
+  topikMisi,
   cpPembahasanUrls,
   subjectName,
   grade,
@@ -148,6 +150,8 @@ export default function SessionTabs({
   hasSubject?: boolean
   selectedCpIds?: string[]
   cpUrls?: Record<string, string>
+  /** Kode topik Misi per grup topik (lihat `kodeMisiPerGrup`): kartu latihannya tanpa link. */
+  topikMisi?: Record<string, string>
   cpPembahasanUrls?: Record<string, string>
   subjectName?: string | null
   grade?: number | null
@@ -282,6 +286,7 @@ export default function SessionTabs({
               cpRows={curriculumTopics}
               customLearningOutcomes={customLearningOutcomes}
               initialCpUrls={cpUrls ?? {}}
+              topikMisi={topikMisi ?? {}}
               initialCpPembahasanUrls={cpPembahasanUrls ?? {}}
               readOnly={!!readOnlyReason}
               saveAction={saveCpUrlsAction}

@@ -14,6 +14,8 @@ interface Props {
   initialCpUrls: Record<string, string>
   /** Pembahasan per topik, dikunci sama persis dengan `initialCpUrls`. */
   initialCpPembahasanUrls?: Record<string, string>
+  /** Kode topik Misi per grup topik: kartunya tanpa link, latihan dikerjakan di Misi. */
+  topikMisi?: Record<string, string>
   readOnly?: boolean
   saveAction?: (
     sessionId: string,
@@ -22,7 +24,7 @@ interface Props {
   ) => Promise<{ error?: string }>
 }
 
-export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, customLearningOutcomes = [], initialCpUrls, initialCpPembahasanUrls = {}, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
+export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, customLearningOutcomes = [], initialCpUrls, initialCpPembahasanUrls = {}, topikMisi = {}, readOnly = false, saveAction = saveSessionCpUrls }: Props) {
   const curriculumCps = cpRows.filter(r => selectedCpIds.includes(r.id) && r.learning_outcomes)
   const customOutcomes = customLearningOutcomes.filter(text => text?.trim())
 
@@ -82,6 +84,7 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
         {topics.map((topic, idx) => {
           const url = urls[topic.key] ?? ''
           const pembahasanUrl = pembahasanUrls[topic.key] ?? ''
+          const kodeMisi = topikMisi[topic.key]
           return (
             <div key={topic.key} className="border border-slate-200 rounded-xl p-4 space-y-2">
               <div className="flex items-start gap-2">
@@ -101,6 +104,12 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
                   )}
                 </div>
               </div>
+              {kodeMisi ? (
+                <p className="text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 leading-relaxed">
+                  Latihan {kodeMisi} (C1–C6) dikerjakan siswa di Misi, jadi tidak perlu link soal
+                  maupun pembahasan. Yang perlu Anda isi hanya pembahasan ujian, di bagian Asesmen.
+                </p>
+              ) : (<>
               <div className="space-y-1">
                 <label className="block text-xs text-gray-500">
                   Link Soal <span className="text-red-500">*</span>{' '}
@@ -161,6 +170,7 @@ export default function LatihanSoalTab({ sessionId, selectedCpIds, cpRows, custo
                   </a>
                 )}
               </div>
+              </>)}
             </div>
           )
         })}
