@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { bukaKunciJawaban, mulaiLangkahTopik, ulangiPaket } from '@/app/belajar/actions'
+import { mulaiLangkahTopik, ulangiPaket } from '@/app/belajar/actions'
+import TombolKunciJawaban from '@/components/belajar/TombolKunciJawaban'
 
 /**
  * Jalan keluar sesudah satu putaran — dan di sinilah taruhan seluruh alurnya.
@@ -40,6 +41,8 @@ export default function PilihanSesudahSkor({
   probe = false,
   lanjut = null,
   ujian = null,
+  namaPaket = null,
+  kunciDiKartu = false,
 }: {
   sesiId: string
   /** Soal paket ini yang masih salah. Nol berarti paketnya sudah benar semua. */
@@ -80,6 +83,10 @@ export default function PilihanSesudahSkor({
    * sekali sebelum tombol pembukanya ada.
    */
   ujian?: { alamatTopik: string } | null
+  /** Nama paket yang barusan dikerjakan (mis. "Level 2"), supaya tombol kuncinya menyebut kunci yang mana. */
+  namaPaket?: string | null
+  /** Tombol kunci jawabannya sudah dipasang di kartu paket, jadi jangan dobel di sini. */
+  kunciDiKartu?: boolean
 }) {
   const [galat, setGalat] = useState<string | null>(null)
   const [sibuk, mulai] = useTransition()
@@ -143,44 +150,24 @@ export default function PilihanSesudahSkor({
         ))}
 
       {ujian && (
-        <Link href={ujian.alamatTopik} className={biasa}>
-          Lanjut ke Tantangan Akhir
-        </Link>
+        <div className="space-y-1.5 pt-2">
+          <p className="text-center text-sm text-gray-600">
+            Sudah siap untuk menghadapi Tantangan Akhir?
+          </p>
+          <Link href={ujian.alamatTopik} className={biasa}>
+            Lanjut ke Tantangan Akhir
+          </Link>
+        </div>
       )}
 
-      {/* Harganya ditulis di tombolnya. Sebuah tombol bernama "Lihat Kunci
-          Jawaban" yang diam-diam menghentikan paket adalah tombol yang
-          berbohong, dan yang hilang karenanya tidak bisa dikembalikan. */}
-      {!probe && !kunciTerbuka && !terkunci && (
-        <button
-          type="button"
-          disabled={sibuk}
-          onClick={() => jalankan(() => bukaKunciJawaban(sesiId))}
-          className={bisaDiulang ? biasa : utama}
-        >
-          <span className="block">Lihat Kunci Jawaban</span>
-          {/* Warnanya ikut varian tombolnya. `text-gray-500` di atas biru
-              nyaris tidak terbaca — dan yang tidak terbaca justru harganya,
-              persis kalimat yang membuat tombol ini tidak berbohong. Varian
-              birunya muncul tepat ketika tidak ada yang bisa diulang, jadi
-              kalimat inilah satu-satunya peringatan yang tersisa. */}
-          <span
-            className={`mt-0.5 block text-xs font-normal ${
-              bisaDiulang ? 'text-gray-500' : 'text-blue-100'
-            }`}
-          >
-            Paket ini terkunci sesudahnya — nilainya berhenti di sini
-          </span>
-        </button>
-      )}
-
-      {/* Sudah terkunci: kuncinya boleh dibuka lagi kapan saja, karena yang
-          hilang sudah hilang. Tidak ada peringatan kedua untuk harga yang sudah
-          dibayar. */}
-      {!probe && terkunci && !kunciTerbuka && (
-        <Link href={`/belajar/${sesiId}/hasil?kunci=1`} className={utama}>
-          Lihat Kunci Jawaban
-        </Link>
+      {/* Kunci jawaban: di sesi jalur peta ia tinggal DI DALAM kartu paketnya
+          (hasil/page.tsx, `kunciDiKartu`), karena kunci itu milik paket yang
+          kartunya baru ditampilkan. Di sesi lain yang tidak punya kartu itu ia
+          berdiri di sini, sebagai tombol sekunder. */}
+      {!probe && !kunciTerbuka && !kunciDiKartu && (
+        <div className="border-t border-gray-200 pt-4">
+          <TombolKunciJawaban sesiId={sesiId} terkunci={terkunci} namaPaket={namaPaket} />
+        </div>
       )}
 
       {materi && (

@@ -29,6 +29,7 @@ import NudgeBeban from '@/components/belajar/NudgeBeban'
 import TinjauanSesi from '@/components/belajar/TinjauanSesi'
 import { hasilSoal, KeteranganJawaban, NomorJawaban } from '@/components/belajar/BilahJawaban'
 import PilihanSesudahSkor from '@/components/belajar/PilihanSesudahSkor'
+import TombolKunciJawaban from '@/components/belajar/TombolKunciJawaban'
 import PulangKe from '@/components/belajar/PulangKe'
 import { langkahTopik } from '@/lib/belajar/langkah'
 
@@ -305,7 +306,9 @@ export default async function HasilSesi({
             langkah.jenis === 'ujian'
               ? 'Lanjut ke Tantangan Akhir'
               : langkah.pengayaan
-                ? `Lanjut ke ${namaPengayaanAnak(langkah.levelBloom)}`
+                ? langkah.levelBloom != null
+                  ? `Lanjutkan ke Level ${langkah.levelBloom} (${namaPengayaanAnak(langkah.levelBloom)})`
+                  : `Lanjut ke ${namaPengayaanAnak(langkah.levelBloom)}`
                 : `Lanjut ke ${namaPaketAnak({
                     jenis: 'latihan',
                     levelBloom: langkah.levelBloom,
@@ -347,6 +350,8 @@ export default async function HasilSesi({
         probe={bukanPaket !== null}
         lanjut={lanjut}
         ujian={ujianLangsung}
+        namaPaket={petaPaket ? namaPaketAnak(petaPaket) : null}
+        kunciDiKartu={!!(petaPaket && paketIni)}
       />
     </>
   )
@@ -500,7 +505,7 @@ export default async function HasilSesi({
           satunya tempat nama topiknya muncul di layar hasil. */}
       {petaPaket && paketIni ? (
         <div className="overflow-hidden rounded-xl bg-white shadow-kartu">
-          <div className="flex items-center justify-between gap-3 p-4">
+          <div className="flex items-start justify-between gap-3 p-4">
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900">{petaPaket.topikNama}</p>
               <p className="text-xs text-gray-400">
@@ -511,6 +516,15 @@ export default async function HasilSesi({
             <div className="shrink-0 text-right">
               <p className="text-sm font-semibold text-gray-900">{persen}%</p>
               {label && <p className="text-xs text-gray-500">{label}</p>}
+              {/* Kunci jawaban milik paket ini, jadi tinggal di kartunya: link
+                  kecil tepat di bawah nilai yang dikuncinya. */}
+              {bukanPaket === null && !kunciTerbuka && (
+                <TombolKunciJawaban
+                  sesiId={sesiId}
+                  terkunci={paketIni.terkunci ?? false}
+                  dalamKartu
+                />
+              )}
             </div>
           </div>
         </div>
