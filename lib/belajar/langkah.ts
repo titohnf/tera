@@ -16,6 +16,17 @@ import { createClient } from '@/lib/supabase/server'
 
 const TANPA_KODE = ''
 
+/**
+ * Galat PostgREST yang bisa dibaca di log. Objeknya tidak mencetak apa pun lewat
+ * `console.error` di overlay Next (tampil sebagai `{}`), karena `message` dan
+ * kawan-kawannya bukan properti yang bisa dienumerasi.
+ */
+function rincianGalat(e: { message?: string; code?: string; details?: string; hint?: string }) {
+  // Dijadikan TEKS, bukan objek: lapisan galat dev Next menampilkan objek apa pun
+  // dari log server sebagai `{}`.
+  return `${e.message ?? '(tanpa pesan)'} | code=${e.code ?? '-'} | details=${e.details ?? '-'} | hint=${e.hint ?? '-'}`
+}
+
 export interface LangkahTopik {
   topikId: string
   /** Null berarti tidak ada langkah tersisa: wajibnya lolos, ujiannya sudah. */
@@ -82,7 +93,7 @@ export async function langkahSeluruhTopik(learnerId: string): Promise<LangkahTop
   if (error) {
     // Peta tetap digambar tanpa langkahnya — daftar topik yang kehilangan
     // indikator masih bisa dipakai, sedangkan halaman kosong tidak.
-    console.error('[misi] gagal membaca langkah berikutnya:', error)
+    console.error('[misi] gagal membaca langkah berikutnya:', rincianGalat(error))
     return []
   }
   return ((data as BarisLangkah[] | null) ?? []).map(dariBaris)
@@ -100,7 +111,7 @@ export async function langkahTopik(
     p_topik_id: topikId,
   })
   if (error) {
-    console.error('[misi] gagal membaca langkah topik:', error)
+    console.error('[misi] gagal membaca langkah topik:', rincianGalat(error))
     return null
   }
   const baris = (data as BarisLangkah[] | null) ?? []
@@ -168,7 +179,7 @@ export async function paketRingkasSeluruhTopik(learnerId: string): Promise<Paket
     // Kartunya tetap digambar tanpa kepingnya, dengan alasan yang sama seperti
     // `langkahSeluruhTopik`: peta tanpa hiasan masih bisa dipakai, peta yang
     // tidak muncul tidak.
-    console.error('[misi] gagal membaca ringkasan paket:', error)
+    console.error('[misi] gagal membaca ringkasan paket:', rincianGalat(error))
     return []
   }
   return ((data as BarisPaketRingkas[] | null) ?? []).map(b => ({

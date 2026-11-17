@@ -32,6 +32,12 @@ export interface TopikPeta {
    * tersendiri, bukan di tawaran utama.
    */
   kelasMulai: number | null
+  /**
+   * Kelas tempat topik ini seharusnya sudah dikuasai (`topik.kelas_kuasai`, 180).
+   * Inilah ukuran yang dipakai laporan orang tua ("setara kelas Y", 181), jadi
+   * checkpoint di Misi memakainya, bukan `kelasMulai`.
+   */
+  kelasKuasai: number | null
   /** Titik lemah nasional: `ekstra` atau `ekstra_wajib`, selain itu `biasa`. */
   penandaRemediasi: string
   jumlahPaket: number
@@ -184,10 +190,14 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
   // pantas bergantung pada migrasi untuk satu angka yang sudah ada di tabel.
   // Gagalnya pertanyaan ini hanya menghilangkan pemisahan jenjang — daftar
   // topiknya sendiri tetap lengkap.
-  const kelas = await supabase.from('topik').select('id, kelas_mulai')
+  const kelas = await supabase.from('topik').select('id, kelas_mulai, kelas_kuasai')
   if (kelas.error) console.error('[peta] gagal membaca kelas mulai topik:', kelas.error)
   const kelasMulai = new Map(
     (kelas.data ?? []).map(b => [b.id as string, (b.kelas_mulai as number | null) ?? null])
+  )
+
+  const kelasKuasai = new Map(
+    (kelas.data ?? []).map(b => [b.id as string, (b.kelas_kuasai as number | null) ?? null])
   )
 
   const hariIni = new Date().toISOString().slice(0, 10)
@@ -203,6 +213,7 @@ export async function petaTopik(learnerId: string): Promise<TopikPeta[]> {
     elemen: b.elemen,
     jenjangKelas: b.jenjang_kelas,
     kelasMulai: kelasMulai.get(b.topik_id) ?? null,
+    kelasKuasai: kelasKuasai.get(b.topik_id) ?? null,
     penandaRemediasi: b.penanda_remediasi,
     jumlahPaket: angka(b.jumlah_paket),
     prasyaratTerpenuhi: b.prasyarat_terpenuhi,
