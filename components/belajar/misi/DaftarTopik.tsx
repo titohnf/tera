@@ -3,7 +3,7 @@
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { PaketRingkas } from '@/lib/belajar/langkah'
 import { namaTemaAnak } from '@/lib/belajar/tema-topik'
-import { IkonTemaPutih, TigaBintang } from './Gambar'
+import { TigaBintang } from './Gambar'
 import { gayaTema, hitungBintang, hitungLevel } from './gaya'
 
 /**
@@ -116,13 +116,6 @@ function Baris({
       }`}
       style={giliran ? { boxShadow: '0 0 0 2px #FBBF24' } : undefined}
     >
-      <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
-        style={{ background: terkunci ? '#CBD5E1' : g.dasar }}
-      >
-        <IkonTemaPutih elemen={t.elemen} ukuran={20} terkunci={terkunci} />
-      </span>
-
       <span className="min-w-0 flex-1">
         <span
           className="block text-[10px] font-extrabold uppercase tracking-wide"

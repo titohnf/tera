@@ -8,11 +8,10 @@ import { kelompokkanPeta } from '@/lib/belajar/fringe'
 import {
   Bintang,
   Centang,
-  IkonTemaPutih,
   LencanaPangkat,
   TigaBintang,
 } from '@/components/belajar/misi/Gambar'
-import { gayaTema, hitungBintang, pangkatKelas } from '@/components/belajar/misi/gaya'
+import { hitungBintang, pangkatKelas } from '@/components/belajar/misi/gaya'
 import { namaTemaAnak } from '@/lib/belajar/tema-topik'
 import DaftarTopik from '@/components/belajar/misi/DaftarTopik'
 import KartuMisiHariIni from '@/components/belajar/misi/KartuMisiHariIni'
@@ -529,7 +528,6 @@ function Kisi({
   bintang: number
   onKetuk: () => void
 }) {
-  const g = gayaTema(t.elemen)
   const selesai = t.status === 'tuntas'
   return (
     <button
@@ -539,23 +537,13 @@ function Kisi({
       className="flex min-h-[132px] flex-col items-start gap-2 rounded-2xl bg-white p-3.5 text-left shadow-kartu transition active:scale-[0.98]"
       style={selesai ? { boxShadow: '0 0 0 2px #FBBF24' } : undefined}
     >
-      <span className="flex w-full items-center">
-        <span
-          className="flex h-11 w-11 items-center justify-center rounded-full text-white"
-          style={{
-            background: g.dasar,
-            opacity: selesai ? 1 : 0.55,
-            boxShadow: `0 3px 0 ${g.tua}`,
-          }}
-        >
-          <IkonTemaPutih elemen={t.elemen} ukuran={22} />
-        </span>
-        {selesai && (
-          <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">
+      {selesai && (
+        <span className="flex w-full justify-end">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">
             <Centang ukuran={14} />
           </span>
-        )}
-      </span>
+        </span>
+      )}
       <span className="line-clamp-3 text-sm font-extrabold leading-snug text-slate-800">
         {t.nama}
       </span>
