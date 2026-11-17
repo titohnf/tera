@@ -18,10 +18,10 @@ const BADAN: Record<Jenjang, string> = {
   sma: 'M50 4 L90 27 V73 L50 96 L10 73 V27 Z',
 }
 
-function Badan({ j, skala = 1, ...p }: { j: Jenjang; skala?: number } & React.SVGProps<SVGPathElement>) {
+export function Badan({ j: _j, skala = 1, ...p }: { j: Jenjang; skala?: number } & React.SVGProps<SVGPathElement>) {
   return (
     <path
-      d={BADAN[j]}
+      d={BADAN.sma /* semua jenjang segi enam */}
       transform={`translate(50 50) scale(${skala}) translate(-50 -50)`}
       strokeLinejoin="round"
       {...p}
@@ -84,7 +84,7 @@ export function LencanaA({ kelas, ukuran = 96 }: { kelas: number; ukuran?: numbe
 
 /* ───────────── KONSEP B — lambang logam berpangkat ───────────── */
 
-const LOGAM_B = [
+export const LOGAM_B = [
   { terang: '#F2C98A', dasar: '#B9803A', tua: '#6B4420', emas: '#FFF1CC' },
   { terang: '#BFD6E6', dasar: '#5F86A3', tua: '#2F4B63', emas: '#FFFFFF' },
   { terang: '#A5EC92', dasar: '#3FA64B', tua: '#1E6B2E', emas: '#FDE68A' },
@@ -95,21 +95,120 @@ const LOGAM_B = [
   { terang: '#FFEBA6', dasar: '#F5A623', tua: '#B45F06', emas: '#FFFFFF' },
 ]
 /** Tingkat (Pemula, Pejuang, Elit, Mahir, Ahli, Pakar, Maestro, Legenda) tiap kelas. */
-const TINGKAT_KELAS = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7]
+export const TINGKAT_KELAS = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7]
 
 const kutub = (r: number, i: number, n: number, mulai = -90) => {
   const a = ((mulai + (360 / n) * i) * Math.PI) / 180
   return [50 + r * Math.cos(a), 50 + r * Math.sin(a)] as const
 }
 
-function Chevron({ y, w = 17, warna, tebal = 5 }: { y: number; w?: number; warna: string; tebal?: number }) {
+export function Chevron({ y, w = 17, warna, tebal = 5, tegas = false }: { y: number; w?: number; warna: string; tebal?: number; tegas?: boolean }) {
+  const h = tegas ? w * 0.55 : 7
   return (
     <path
-      d={`M${50 - w} ${y + 7} L50 ${y} L${50 + w} ${y + 7}`}
+      d={`M${50 - w} ${y + h} L50 ${y} L${50 + w} ${y + h}`}
       fill="none"
       stroke={warna}
       strokeWidth={tebal}
-      strokeLinecap="round"
+      strokeLinecap={tegas ? 'butt' : 'round'}
+      strokeLinejoin={tegas ? 'miter' : 'round'}
+    />
+  )
+}
+
+/** Padi: dua tangkai melengkung seperti tanda kurung "( )", bulirnya berselang-seling di kedua sisi. */
+export function Padi({ warna, garis }: { warna: string; garis: string }) {
+  const sisi = (cermin: boolean) => {
+    const x = (v: number) => (cermin ? 100 - v : v)
+    const P = (t: number) => [(1 - t) ** 2 * 34 + 2 * (1 - t) * t * 16 + t * t * 34, (1 - t) ** 2 * 78 + 2 * (1 - t) * t * 50 + t * t * 22] as const
+    const T = (t: number) => [2 * (1 - t) * (16 - 34) + 2 * t * (34 - 16), 2 * (1 - t) * (50 - 78) + 2 * t * (22 - 50)] as const
+    return (
+      <g>
+        <path d={`M${x(34)} 78 Q${x(16)} 50 ${x(34)} 22`} fill="none" stroke={warna} strokeWidth={2.6} strokeLinecap="round" />
+        {[0.2, 0.32, 0.44, 0.56, 0.68, 0.8].map((t, i) => {
+          const [px, py] = P(t)
+          const [tx, ty] = T(t)
+          const sudut = (Math.atan2(ty, tx) * 180) / Math.PI - 90
+          const dalam = i % 2 === 0
+          // normal ke dalam (kanan jalur untuk sisi kiri) atau ke luar
+          const n = Math.hypot(tx, ty)
+          const nx = (-ty / n) * -1 * (dalam ? 1 : -1)
+          const ny = (tx / n) * -1 * (dalam ? 1 : -1)
+          const cx = px + nx * 4.2
+          const cy = py + ny * 4.2
+          const rot = sudut + (dalam ? -28 : 28)
+          return (
+            <ellipse
+              key={i}
+              cx={x(cx)}
+              cy={cy}
+              rx={2.8}
+              ry={5.6}
+              fill={warna}
+              stroke={garis}
+              strokeWidth={0.8}
+              transform={`rotate(${cermin ? -rot : rot} ${x(cx)} ${cy})`}
+            />
+          )
+        })}
+      </g>
+    )
+  }
+  return (
+    <g>
+      {sisi(false)}
+      {sisi(true)}
+    </g>
+  )
+}
+
+/** Sayap kaku di sisi kiri-kanan segi enam: bulu bersudut lurus, ujung runcing. */
+export function Sayap({ warna, garis }: { warna: string; garis: string }) {
+  const sisi = (
+    <>
+      <path
+        d="M13 34 L-9 22 L-6 30 L-13 31 L-8 39 L-14 41 L-8 48 L-12 52 L-4 57 L13 62 Z"
+        fill={warna}
+        stroke={garis}
+        strokeWidth={1.6}
+        strokeLinejoin="miter"
+      />
+      <path d="M13 40 L-4 33 M13 47 L-5 42 M13 54 L-3 50" stroke={garis} strokeWidth={1.2} strokeOpacity={0.6} fill="none" />
+    </>
+  )
+  return (
+    <g>
+      {sisi}
+      <g transform="translate(100 0) scale(-1 1)">{sisi}</g>
+    </g>
+  )
+}
+
+/** Mahkota kecil di bagian atas badan. */
+export function Mahkota({ warna, garis }: { warna: string; garis: string }) {
+  return (
+    <g>
+      <path
+        d="M39 27 L40 14 L45 21 L50 11 L55 21 L60 14 L61 27 Z"
+        fill={warna}
+        stroke={garis}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <circle cx="50" cy="11" r="2" fill="#fff" stroke={garis} strokeWidth={1} />
+    </g>
+  )
+}
+
+/** Kilau empat sudut. */
+export function Kilau({ x, y, r = 5 }: { x: number; y: number; r?: number }) {
+  const t = r * 0.28
+  return (
+    <path
+      d={`M${x} ${y - r} L${x + t} ${y - t} L${x + r} ${y} L${x + t} ${y + t} L${x} ${y + r} L${x - t} ${y + t} L${x - r} ${y} L${x - t} ${y - t} Z`}
+      fill="#fff"
+      stroke="#F59E0B"
+      strokeWidth={0.8}
       strokeLinejoin="round"
     />
   )
@@ -119,24 +218,40 @@ export function LencanaB({ kelas, ukuran = 96 }: { kelas: number; ukuran?: numbe
   const j = jenjangDari(kelas)
   const tingkat = TINGKAT_KELAS[kelas - 1]
   const m = LOGAM_B[tingkat]
-  const u = urutDalam(kelas)
-  // SD: kosong, garis, chevron 1–3, chevron 3 + garis. SMP: garis, chevron 1, chevron 2 (tak pernah kosong).
-  const tanda: ('garis' | 'chevron')[] =
-    j === 'smp'
-      ? u === 0 ? ['garis'] : Array(u).fill('chevron')
-      : u === 0 ? [] : u === 1 ? ['garis'] : u === 5 ? ['chevron', 'chevron', 'chevron', 'garis'] : Array(u - 1).fill('chevron')
-  const tengah = j === 'smp' ? 56 : 50
-  const ys = tanda.map((_, i) => tengah + i * 10 - ((tanda.length - 1) * 10) / 2)
-  const marks = tanda.map((t, i) =>
-    t === 'garis' ? (
-      <path key={i} d={`M32 ${ys[i]} H68`} stroke={m.emas} strokeWidth={5} strokeLinecap="round" />
-    ) : (
-      <Chevron key={i} y={ys[i] - 4} w={17} warna={m.emas} tebal={5} />
-    ),
+  // SD 1–6: garis, chevron 1–3, 1 chevron + bintang, 2 chevron + bintang. SMP/SMA memakai padi:
+  //   7–9 = bintang + chevron 1–3 (9 juga berbingkai emas); 10 = + sayap, 11 = + mahkota, 12 = + bingkai emas & kilau.
+  // SD 1–4: 1, 2, 3 chevron tegas, lalu 3 chevron + bintang kecil di bawah. SD 5: padi, SD 6: padi + bintang di tengah.
+  // SMP/SMA: padi + chevron tegas 1–3 + bintang kecil di bawah (9 berbingkai emas; 10 + sayap, 11 + mahkota, 12 + bingkai & kilau).
+  const dalamPadi = kelas >= 7
+  const nTegas = kelas <= 3 ? kelas : kelas === 4 ? 3 : dalamPadi ? Math.min(kelas - 6, 3) : 0
+  const w = dalamPadi ? 13 : 18
+  const jarak = dalamPadi ? 10 : 12
+  const tinggi = w * 0.55
+  const mulai = dalamPadi ? 30 : kelas === 4 ? 26 : 50 - ((nTegas - 1) * jarak + tinggi) / 2
+  const bintangKecil: [number, number, number] | null =
+    dalamPadi ? [50, 66, 0.22] : kelas === 6 ? [50, 50, 0.4] : null
+  const marks = (
+    <>
+      {kelas === 4 && (
+        <polygon points="50,66 58,75 50,84 42,75" fill={m.emas} stroke={m.tua} strokeWidth={1.2} strokeLinejoin="round" />
+      )}
+      {kelas >= 5 && <Padi warna={m.emas} garis={m.tua} />}
+      {Array.from({ length: nTegas }, (_, i) => (
+        <Chevron key={i} y={mulai + i * jarak} w={w} warna={m.emas} tebal={dalamPadi ? 6 : 7.5} tegas />
+      ))}
+      {bintangKecil && (
+        <g transform={`translate(${bintangKecil[0]} ${bintangKecil[1]}) scale(${bintangKecil[2]}) translate(-50 -50)`}>
+          <polygon points={BINTANG} fill={m.emas} />
+        </g>
+      )}
+    </>
   )
+  const sayap = kelas >= 10
+  const mahkota = kelas >= 11
+  const juara = kelas === 12
   const id = `kb${kelas}`
   return (
-    <svg viewBox="0 0 100 100" width={ukuran} height={ukuran} aria-hidden>
+    <svg viewBox="0 0 100 100" width={ukuran} height={ukuran} aria-hidden overflow="visible">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor={m.terang} />
@@ -144,30 +259,20 @@ export function LencanaB({ kelas, ukuran = 96 }: { kelas: number; ukuran?: numbe
           <stop offset="1" stopColor={m.tua} />
         </linearGradient>
       </defs>
+      {sayap && <Sayap warna={m.emas} garis={m.tua} />}
       <Badan j={j} fill={`url(#${id})`} stroke={m.tua} strokeWidth={2.5} />
       <Badan j={j} skala={0.82} fill={m.tua} fillOpacity={0.35} stroke={j === 'sma' ? m.emas : m.terang} strokeWidth={j === 'sma' ? 2.4 : 1.8} strokeOpacity={0.9} />
 
-      {j === 'sd' && marks}
-      {j === 'smp' && (
+      {(juara || kelas === 9) && <Badan j={j} skala={0.93} fill="none" stroke={m.emas} strokeWidth={1.6} />}
+      {marks}
+      {mahkota && <Mahkota warna={m.emas} garis={m.tua} />}
+      {juara && (
         <>
-          <path d="M50 22 L56 29 L50 36 L44 29 Z" fill="#fff" stroke={m.tua} strokeWidth={2} strokeLinejoin="round" />
-          <circle cx="37" cy="29" r="2.6" fill={m.emas} />
-          <circle cx="63" cy="29" r="2.6" fill={m.emas} />
-          {marks}
+          <Kilau x={14} y={16} />
+          <Kilau x={88} y={20} r={4} />
+          <Kilau x={82} y={86} />
         </>
       )}
-      {j === 'sma' &&
-        Array.from({ length: urutDalam(kelas) + 1 }, (_, i) => {
-          const n = urutDalam(kelas) + 1
-          const x = n === 1 ? 50 : n === 2 ? 36 + i * 28 : 30 + i * 20
-          const y = n === 3 ? (i === 1 ? 40 : 54) : 50
-          const sk = n === 1 ? 0.62 : n === 2 ? 0.46 : 0.4
-          return (
-            <g key={i} transform={`translate(${x} ${y}) scale(${sk}) translate(-50 -50)`}>
-              <polygon points={BINTANG} fill={m.emas} stroke="#B45309" strokeWidth={6} strokeLinejoin="round" />
-            </g>
-          )
-        })}
       <path d="M24 30 Q32 17 50 13" fill="none" stroke="#fff" strokeOpacity={0.4} strokeWidth={3} strokeLinecap="round" />
     </svg>
   )

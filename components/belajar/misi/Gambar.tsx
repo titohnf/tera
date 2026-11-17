@@ -1,7 +1,7 @@
 import { ChartColumn, Hash, Lock, Shapes, Sparkles, Variable, type LucideIcon } from 'lucide-react'
 import { temaTopik, type TemaTopik } from '@/lib/belajar/tema-topik'
 import { EMAS, EMAS_TUA } from './gaya'
-import { LencanaB } from './KonsepLencana'
+import { LencanaF } from './KonsepLencana2'
 
 /**
  * Gambar-gambar layar Misi: bintang, maskot, dan ikon tema.
@@ -132,8 +132,8 @@ export function Centang({ ukuran = 14 }: { ukuran?: number }) {
 }
 
 /**
- * LENCANA PANGKAT: bentuk menurut jenjang (SD bulat, SMP perisai, SMA segi
- * enam), pangkat ditandai chevron 1–3 (SD kelas 4–6 bertambah bintang di atas).
+ * LENCANA PANGKAT: segi enam. Kelas 1–3 chevron, kelas 4 chevron + diamond, kelas 5+ permata
+ * (diamond, segi lima, segi enam, bintang) dengan sayap dan pita yang makin rumit.
  * Gambarnya ada di `KonsepLencana.tsx`.
  */
 export function LencanaPangkat({
@@ -147,12 +147,8 @@ export function LencanaPangkat({
 }) {
   const k = kelas != null && kelas >= 1 && kelas <= 12 ? kelas : 1
   return (
-    <span
-      className="flex shrink-0 items-center justify-center"
-      style={{ opacity: redup ? 0.5 : 1, filter: redup ? 'grayscale(0.55)' : undefined }}
-      aria-hidden
-    >
-      <LencanaB kelas={k} ukuran={ukuran} />
+    <span className="flex shrink-0 items-center justify-center" aria-hidden>
+      <LencanaF kelas={k} ukuran={ukuran} aktif={!redup} />
     </span>
   )
 }
