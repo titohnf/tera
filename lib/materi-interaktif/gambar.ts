@@ -44,6 +44,10 @@ export const kartu = (d: number[]): Gambar => ({ k: 'kartu', d })
 export const blok = (n: number, label?: string): Gambar => ({ k: 'blok', n, ...(label ? { label } : {}) })
 /** Soal bersusun. `tanda`: catatan kecil di atas kolom (kol 0 = ribuan ... 3 = satuan), mis. simpanan "1" atau pinjaman "+10". */
 export const kolom = (a: number, b: number, op: '+' | '-', o: { hasil?: number; tanda?: { kol: number; teks: string }[]; sorot?: number } = {}): Gambar => ({ k: 'kolom', a, b, op, ...o })
+/** Larik titik r baris x c kolom (perkalian). `sorot`: banyak baris pertama yang dinyalakan. */
+export const larik = (r: number, c: number, sorot?: number): Gambar => ({ k: 'larik', r, c, ...(sorot === undefined ? {} : { sorot }) })
+/** k kelompok (piring) masing-masing n benda; `plus` menulis tanda + di antaranya; `sisa` benda yang tidak kebagian. */
+export const kelompok = (e: string, k: number, n: number, o: { sisa?: number; plus?: boolean } = {}): Gambar => ({ k: 'kelompok', e, jumlah: k, n, ...o })
 export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
@@ -98,6 +102,16 @@ export const CSS_GAMBAR = String.raw`
 .mq-gambar>*{animation:masukG .4s ease-out}
 @keyframes masukG{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes kedip{50%{transform:translateY(-3px);opacity:.55}}
+.mq-larik{display:grid;gap:4px;justify-content:center}
+.mq-larik .dt{width:100%;aspect-ratio:1;border-radius:50%;border:2px solid var(--ink);background:var(--ikat)}
+.mq-larik .dt.b{background:var(--rb,#4a7bd0)}
+.mq-larik .dt.mati{background:var(--line)}
+.mq-kel{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.mq-kel .plus{font-family:var(--display);font-weight:800;font-size:1.6rem;color:var(--ikat)}
+.mq-kel .piring{min-width:60px;min-height:60px;max-width:96px;border-radius:50%;border:3px solid var(--ink);background:var(--soft);display:flex;flex-wrap:wrap;gap:1px;justify-content:center;align-content:center;font-size:1.1rem;line-height:1.1;padding:5px}
+.mq-kel .piring b{font-family:var(--display);font-size:1.5rem}
+.mq-kel .sisa{min-width:60px;min-height:60px;border-radius:16px;border:3px dashed var(--ikat);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.1rem;padding:4px 8px}
+.mq-kel .sisa small{color:var(--ikat);font-weight:800}
 .mq-lr .sk{grid-column:2;display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-4px}
 `
 
@@ -424,6 +438,35 @@ GBR.blok=function(g){
     d.appendChild(isi);d.appendChild(el('div','cap',j+' '+nama[i]));w.appendChild(d);
   });
   if(g.label){var c=el('div','mq-kolom');c.appendChild(w);c.appendChild(el('div','mq-cap',g.label));return c}
+  return w;
+};
+
+/* larik titik: r baris, c kolom; baris bergantian warna agar mudah dihitung per baris */
+GBR.larik=function(g){
+  var w=el('div','mq-larik');w.style.gridTemplateColumns='repeat('+g.c+',minmax(0,22px))';
+  for(var i=0;i<g.r*g.c;i++){
+    var baris=Math.floor(i/g.c),k=el('span','dt'+(baris%2?' b':'')+(g.sorot!==undefined&&baris>=g.sorot?' mati':''));
+    w.appendChild(k);
+  }
+  var c=el('div','mq-kolom');c.appendChild(w);c.appendChild(el('div','mq-cap',g.r+' baris \u00d7 '+g.c+' kolom'));
+  return c;
+};
+
+/* kelompok sama banyak (piring), boleh dengan tanda +, boleh dengan sisa yang tak kebagian */
+GBR.kelompok=function(g){
+  var w=el('div','mq-kel'),i,j;
+  for(i=0;i<g.jumlah;i++){
+    if(g.plus&&i>0)w.appendChild(el('span','plus','+'));
+    var p=el('div','piring');
+    if(g.n>8)p.appendChild(el('b',null,String(g.n)));
+    else for(j=0;j<g.n;j++)p.appendChild(el('span',null,g.e));
+    w.appendChild(p);
+  }
+  if(g.sisa){
+    var s=el('div','sisa'),r=el('span');
+    for(j=0;j<g.sisa;j++)r.appendChild(el('span',null,g.e));
+    s.appendChild(r);s.appendChild(el('small',null,'sisa '+g.sisa));w.appendChild(s);
+  }
   return w;
 };
 
