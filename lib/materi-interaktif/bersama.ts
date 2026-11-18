@@ -15,6 +15,13 @@
  *   f3 "Tantangan Misi"      : 8 soal campuran (pilihan, benar-salah, isian);
  *                              bintang di akhir dihitung dari sini
  *
+ * TIDAK TERASA SEPERTI UJIAN. Pertanyaan disampaikan maskot (burung hantu) dalam
+ * gelembung ucapan, kemajuan berupa titik ("Tebakan 3 dari 8", bukan skor), jawaban
+ * keliru dibalas lembut ("Hampir!" dengan penjelasan), dan hampir tiap butir
+ * membawa gambar `g` (lihat `gambar.ts`) yang memperlihatkan soalnya: ikat lidi,
+ * nilai tempat, pola, bangun, garis bilangan, pecahan, neraca, piktogram, dan
+ * seterusnya. Butir tanpa gambar hanya yang sulit divisualkan (soal istilah murni).
+ *
  * CARA PAKAI. Berkas `acNN.ts` menyimpan halaman dasarnya sebagai `DASAR`, lalu
  * `export const HTML_ACNN = rakit(DASAR, { tantangan: 'sX', data })`. `rakit`
  * (1) membuang stasiun tantangan lama, (2) memasang tiga stasiun di atas,
@@ -26,12 +33,14 @@
  * atau "${" di dalam string HTML/JS yang disisipkan (isinya `String.raw`).
  */
 
+import { CSS_GAMBAR, JS_GAMBAR, type GambarItem } from './gambar'
+
 export type Item =
-  | { t: 'bs'; q: string; a: boolean; e: string; v?: string }
-  | { t: 'pg'; q: string; o: string[]; a: number; e: string; v?: string }
-  | { t: 'debat'; q: string; k: [string, string]; a: 0 | 1; e: string }
-  | { t: 'isi'; q: string; a: string[]; e: string; v?: string }
-  | { t: 'kata'; q: string; a: string[]; e: string; v?: string }
+  | { t: 'bs'; q: string; a: boolean; e: string; g?: GambarItem }
+  | { t: 'pg'; q: string; o: string[]; a: number; e: string; g?: GambarItem }
+  | { t: 'debat'; q: string; k: [string, string]; a: 0 | 1; e: string; g?: GambarItem }
+  | { t: 'isi'; q: string; a: string[]; e: string; g?: GambarItem }
+  | { t: 'kata'; q: string; a: string[]; e: string; g?: GambarItem }
   | { t: 'gen'; g: string }
 
 export interface DataMateri {
@@ -43,28 +52,33 @@ export interface DataMateri {
 }
 
 /** Pembangun item: menjaga data di berkas topik tetap ringkas dan seragam. */
-export const bs = (q: string, a: boolean, e: string, v?: string): Item => ({ t: 'bs', q, a, e, ...(v ? { v } : {}) })
-export const pg = (q: string, o: string[], a: number, e: string, v?: string): Item => ({ t: 'pg', q, o, a, e, ...(v ? { v } : {}) })
-export const isi = (q: string, a: string | string[], e: string, v?: string): Item => ({ t: 'isi', q, a: ([] as string[]).concat(a), e, ...(v ? { v } : {}) })
-export const kata = (q: string, a: string | string[], e: string, v?: string): Item => ({ t: 'kata', q, a: ([] as string[]).concat(a), e, ...(v ? { v } : {}) })
-export const debat = (q: string, k: [string, string], a: 0 | 1, e: string): Item => ({ t: 'debat', q, k, a, e })
+export const bs = (q: string, a: boolean, e: string, g?: GambarItem): Item => ({ t: 'bs', q, a, e, ...(g ? { g } : {}) })
+export const pg = (q: string, o: string[], a: number, e: string, g?: GambarItem): Item => ({ t: 'pg', q, o, a, e, ...(g ? { g } : {}) })
+export const isi = (q: string, a: string | string[], e: string, g?: GambarItem): Item => ({ t: 'isi', q, a: ([] as string[]).concat(a), e, ...(g ? { g } : {}) })
+export const kata = (q: string, a: string | string[], e: string, g?: GambarItem): Item => ({ t: 'kata', q, a: ([] as string[]).concat(a), e, ...(g ? { g } : {}) })
+export const debat = (q: string, k: [string, string], a: 0 | 1, e: string, g?: GambarItem): Item => ({ t: 'debat', q, k, a, e, ...(g ? { g } : {}) })
 export const gen = (g: string): Item => ({ t: 'gen', g })
 
 const CSS_MESIN = String.raw`
 /* mesin latihan bersama (awalan mq-) */
-.mq-soal{font-family:var(--display);font-size:1.4rem;font-weight:800;line-height:1.3;text-wrap:pretty}
-.mq-vis{white-space:pre-line;font-size:1.6rem;line-height:1.6;text-align:center;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:10px 12px;font-weight:800}
+.mq-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mq-lang{color:var(--muted);font-size:1rem}
+.mq-tanya{display:flex;gap:12px;align-items:flex-start}
+.mq-mas{font-size:2.8rem;line-height:1;flex:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.15))}
+.mq-gel{position:relative;flex:1;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:10px 14px;font-family:var(--display);font-size:1.3rem;font-weight:800;line-height:1.3;text-wrap:pretty}
+.mq-gel::before{content:"";position:absolute;left:-11px;top:16px;border:9px solid transparent;border-right-color:var(--line);border-left-width:0}
+.mq-gel::after{content:"";position:absolute;left:-8px;top:17px;border:8px solid transparent;border-right-color:var(--card);border-left-width:0}
 .mq-opsi{display:grid;gap:10px}
 .mq-opsi.mq-dua{grid-template-columns:1fr 1fr}
 .mq-opt{font:inherit;font-weight:800;font-size:1.1rem;line-height:1.3;text-align:left;min-height:56px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;padding:10px 14px;touch-action:manipulation}
 .mq-opt.bs{font-family:var(--display);font-size:1.5rem;text-align:center}
 .mq-opt.debat{border-radius:20px}
 .mq-opt.right{background:var(--ok);border-color:var(--ok);color:#fff}
-.mq-opt.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
+.mq-opt.wrong{background:var(--soft);border-color:var(--ikat);color:var(--ink)}
 .mq-opt:disabled{cursor:default}
 .mq-layar{min-height:64px;border:3px solid var(--ink);border-radius:16px;background:var(--card);font-family:var(--display);font-size:2.2rem;font-weight:800;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
 .mq-layar.right{background:var(--ok);border-color:var(--ok);color:#fff}
-.mq-layar.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
+.mq-layar.wrong{background:var(--soft);border-color:var(--ikat);color:var(--ink)}
 .mq-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .mq-pad button{font:inherit;font-family:var(--display);font-weight:800;font-size:1.6rem;min-height:56px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;touch-action:manipulation}
 .mq-pad button.mq-ok{background:var(--ikat);border-color:var(--ikat);color:#fff}
@@ -79,7 +93,7 @@ function sampel(a,n){return shuffle(a).slice(0,n)}
 function normJawab(s){return String(s).toLowerCase().replace(/[.\s]/g,'')}
 var GEN={};
 /*JS_TOPIK*/
-function Mesin(id,judul,ambil,pindah,hitung){
+function Mesin(id,judul,label,ambil,pindah,hitung){
   var daftar=[],i=0,kunci=false;
   function mulai(){
     daftar=ambil().map(function(x){return x.t==='gen'?GEN[x.g]():x});
@@ -92,7 +106,7 @@ function Mesin(id,judul,ambil,pindah,hitung){
     if(hitung){totalSoal++;if(ok)benar++}
     var fb=$(id+'fb');fb.style.display='flex';fb.className='msg '+(ok?'good':'warn');
     var t=(ok?'Benar! ':'Hampir! ')+(!ok&&jawab?'Jawabannya: '+jawab+'. ':'')+(it.e||'');
-    fb.textContent=t;setKata(t);
+    fb.textContent=(ok?'\u{1F389} ':'\u{1F914} ')+t;setKata(t);
     var nx=$(id+'next');nx.style.display='';nx.textContent=i===daftar.length-1?'Selesai':'Lanjut';
   }
   function bangunBS(it,o){
@@ -163,9 +177,10 @@ function Mesin(id,judul,ambil,pindah,hitung){
   function tampil(){
     var it=daftar[i];kunci=false;
     $(id+'j').textContent=judul;
-    $(id+'n').textContent='Soal '+(i+1)+' dari '+daftar.length;
+    $(id+'n').textContent=label+' '+(i+1)+' dari '+daftar.length;
+    var dt=$(id+'d');clear(dt);for(var j=0;j<daftar.length;j++)dt.appendChild(el('i',j<=i?'on':''));
     $(id+'q').textContent=it.q;
-    var v=$(id+'v');v.textContent=it.v||'';v.style.display=it.v?'':'none';
+    gambarItem(it.g,$(id+'v'));
     $(id+'fb').style.display='none';$(id+'next').style.display='none';
     var o=$(id+'o');clear(o);o.className='mq-opsi';
     if(it.t==='bs')bangunBS(it,o);
@@ -177,16 +192,16 @@ function Mesin(id,judul,ambil,pindah,hitung){
   $(id+'next').onclick=function(){if(i<daftar.length-1){i++;tampil()}else show(pindah)};
   return {mulai:mulai};
 }
-var mesinF1=Mesin('f1','Benar atau salah?',function(){return sampel(DATA.fakta,8)},'f2',false);
-var mesinF2=Mesin('f2','Siapa yang benar?',function(){return sampel(DATA.debat,4)},'f3',false);
-var mesinF3=Mesin('f3','Tantangan Misi',function(){return sampel(DATA.bank,8)},'akhir',true);
+var mesinF1=Mesin('f1','Tebak: benar atau salah?','Tebakan',function(){return sampel(DATA.fakta,8)},'f2',false);
+var mesinF2=Mesin('f2','Siapa yang benar?','Cerita',function(){return sampel(DATA.debat,4)},'f3',false);
+var mesinF3=Mesin('f3','Ayo buktikan!','Langkah',function(){return sampel(DATA.bank,8)},'akhir',true);
 `
 
 const bagianHtml = (id: string) => `  <section class="screen" id="${id}">
-    <div class="sub" id="${id}n"></div>
     <p class="say" id="${id}j"></p>
-    <div class="mq-soal" id="${id}q"></div>
-    <div class="mq-vis" id="${id}v" style="display:none"></div>
+    <div class="mq-top"><span class="sub mq-lang" id="${id}n"></span><div class="dots" id="${id}d"></div></div>
+    <div class="mq-tanya"><span class="mq-mas" aria-hidden="true">\u{1F989}</span><div class="mq-gel" id="${id}q"></div></div>
+    <div class="mq-gambar" id="${id}v"></div>
     <div class="mq-opsi" id="${id}o"></div>
     <div class="msg" id="${id}fb" style="display:none"></div>
     <div class="cta"><button class="big main" id="${id}next" style="display:none">Lanjut</button></div>
@@ -217,7 +232,7 @@ export function rakit(dasar: string, o: { kode: string; tantangan?: string; data
     throw new Error(`rakit(${kode}): bahan latihan memuat urutan karakter terlarang (</, backtick, atau dollar-kurung)`)
   }
   // Fungsi pengganti: `$` di dalam bahan topik tidak boleh ditafsirkan sebagai pola ganti.
-  const js = 'var DATA=' + bahan + ';\n' + JS_MESIN.replace('/*JS_TOPIK*/', () => data.jsTopik ?? '') + '\n'
+  const js = 'var DATA=' + bahan + ';\n' + JS_GAMBAR + '\n' + JS_MESIN.replace('/*JS_TOPIK*/', () => data.jsTopik ?? '') + '\n'
   const html = ['f1', 'f2', 'f3'].map(bagianHtml).join('\n') + '\n  '
   const pemanggil = "if(id==='f1')mesinF1.mulai();if(id==='f2')mesinF2.mulai();if(id==='f3')mesinF3.mulai();"
 
@@ -266,7 +281,7 @@ export function rakit(dasar: string, o: { kode: string; tantangan?: string; data
 
   // CSS.
   const css = wajibAda(h, '</style>', kode)
-  h = h.slice(0, css) + CSS_MESIN + h.slice(css)
+  h = h.slice(0, css) + CSS_GAMBAR + CSS_MESIN + h.slice(css)
 
   return h
 }
