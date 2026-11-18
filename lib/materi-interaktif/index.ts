@@ -5,6 +5,7 @@ import { HTML_AC04 } from './ac04'
 import { HTML_AC05 } from './ac05'
 import { HTML_AC06 } from './ac06'
 import { HTML_AC07 } from './ac07'
+import { HTML_AC08 } from './ac08'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -64,6 +65,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Pilah dan Hitung',
     ringkas: 'Memilah, mengurutkan, dan membaca piktogram',
     html: HTML_AC07,
+  },
+  {
+    kode: 'AC-08',
+    judul: 'Bilangan Ribuan',
+    ringkas: 'Bilangan sampai 10.000: nilai tempat, baca-tulis, bandingkan',
+    html: HTML_AC08,
   },
 ]
 

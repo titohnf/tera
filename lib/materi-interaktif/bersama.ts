@@ -200,51 +200,71 @@ function wajibAda(dasar: string, penanda: string, kode: string): number {
 }
 
 /**
- * Memasang mesin latihan ke halaman dasar sebuah materi. `tantangan` adalah id
- * stasiun tantangan lama (mis. 's4') yang digantikan.
+ * Memasang mesin latihan ke halaman dasar sebuah materi.
+ *
+ * - `tantangan` (mis. 's4'): id stasiun tantangan LAMA yang digantikan. Dipakai
+ *   materi yang sudah ada (AC-01 sampai AC-07).
+ * - tanpa `tantangan`: materi baru yang tidak punya tantangan lama. Mesin
+ *   dipasang sebelum layar akhir, dan stasiun praktik terakhirnya harus sudah
+ *   memanggil `show('f1')` sendiri.
  */
-export function rakit(dasar: string, o: { kode: string; tantangan: string; data: DataMateri }): string {
+export function rakit(dasar: string, o: { kode: string; tantangan?: string; data: DataMateri }): string {
   const { kode, tantangan: tid, data } = o
-  const nomor = tid.slice(1)
   let h = dasar
 
-  // 1) HTML: ganti stasiun tantangan lama dengan tiga stasiun mesin.
-  const a = wajibAda(h, `<!-- ${nomor}: tantangan -->`, kode)
-  const b = wajibAda(h, '<!-- akhir -->', kode)
-  h = h.slice(0, a) + ['f1', 'f2', 'f3'].map(bagianHtml).join('\n') + '\n  ' + h.slice(b)
-
-  // 2) JS: ganti blok tantangan lama dengan mesin + bahan topik.
-  const c = wajibAda(h, '/* ---- tantangan', kode)
-  const d = wajibAda(h, '/* ---- akhir', kode)
-  // Fungsi pengganti: `$` di dalam bahan topik tidak boleh ditafsirkan sebagai pola ganti.
-  const js = JS_MESIN.replace('/*JS_TOPIK*/', () => data.jsTopik ?? '')
   const bahan = JSON.stringify({ fakta: data.fakta, debat: data.debat, bank: data.bank })
   if (bahan.includes('</') || bahan.includes('`') || bahan.includes('${')) {
     throw new Error(`rakit(${kode}): bahan latihan memuat urutan karakter terlarang (</, backtick, atau dollar-kurung)`)
   }
-  h = h.slice(0, c) + 'var DATA=' + bahan + ';\n' + js + '\n' + h.slice(d)
+  // Fungsi pengganti: `$` di dalam bahan topik tidak boleh ditafsirkan sebagai pola ganti.
+  const js = 'var DATA=' + bahan + ';\n' + JS_MESIN.replace('/*JS_TOPIK*/', () => data.jsTopik ?? '') + '\n'
+  const html = ['f1', 'f2', 'f3'].map(bagianHtml).join('\n') + '\n  '
+  const pemanggil = "if(id==='f1')mesinF1.mulai();if(id==='f2')mesinF2.mulai();if(id==='f3')mesinF3.mulai();"
 
-  // 3) Urutan layar dan pemanggil stasiun.
-  const hook = `if(id==='${tid}')mulaiS${nomor}();`
-  wajibAda(h, hook, kode)
-  h = h.replace(hook, "if(id==='f1')mesinF1.mulai();if(id==='f2')mesinF2.mulai();if(id==='f3')mesinF3.mulai();")
+  const akhirHtml = wajibAda(h, '<!-- akhir -->', kode)
+  wajibAda(h, '/* ---- akhir', kode)
   const urut = /var urut=\[([^\]]*)\];/.exec(h)
   if (!urut) throw new Error(`rakit(${kode}): 'var urut=[...]' tidak ditemukan`)
-  const baru = urut[1].split(',').map(s => s.trim()).filter(s => s !== `'${tid}'` && s !== `'akhir'`)
-  h = h.replace(urut[0], `var urut=[${[...baru, "'f1'", "'f2'", "'f3'", "'akhir'"].join(',')}];`)
-  // Semua rujukan literal sisa ke stasiun lama (`show('s4')`, atau id yang dioper
-  // sebagai argumen) kini menuju stasiun mesin pertama. Wajib ada minimal satu:
-  // kalau tidak, stasiun praktik terakhir tak punya jalan ke latihan.
-  const ke = `'${tid}'`
-  wajibAda(h, ke, kode)
-  h = h.split(ke).join("'f1'")
+  const sisaUrut = urut[1].split(',').map(x => x.trim()).filter(x => x !== "'akhir'" && (!tid || x !== `'${tid}'`))
+  const urutBaru = `var urut=[${[...sisaUrut, "'f1'", "'f2'", "'f3'", "'akhir'"].join(',')}];`
 
-  // 4) Bintang dihitung dari Tantangan Misi (jumlah soal 8, bukan 4).
+  if (tid) {
+    const nomor = tid.slice(1)
+    // 1) HTML: ganti stasiun tantangan lama dengan tiga stasiun mesin.
+    const a = wajibAda(h, `<!-- ${nomor}: tantangan -->`, kode)
+    h = h.slice(0, a) + html + h.slice(akhirHtml)
+    // 2) JS: ganti blok tantangan lama dengan mesin + bahan topik.
+    const c = wajibAda(h, '/* ---- tantangan', kode)
+    const d = wajibAda(h, '/* ---- akhir', kode)
+    h = h.slice(0, c) + js + h.slice(d)
+    // 3) Pemanggil stasiun.
+    const hook = `if(id==='${tid}')mulaiS${nomor}();`
+    wajibAda(h, hook, kode)
+    h = h.replace(hook, pemanggil)
+    // 4) Semua rujukan literal sisa ke stasiun lama (`show('s4')`, atau id yang
+    //    dioper sebagai argumen) kini menuju stasiun mesin pertama. Wajib ada
+    //    minimal satu: kalau tidak, stasiun praktik terakhir tak punya jalan
+    //    ke latihan.
+    const ke = `'${tid}'`
+    wajibAda(h, ke, kode)
+    h = h.split(ke).join("'f1'")
+  } else {
+    h = h.slice(0, akhirHtml) + html + h.slice(akhirHtml)
+    const j = wajibAda(h, '/* ---- akhir', kode)
+    h = h.slice(0, j) + js + h.slice(j)
+    const hook = "if(id==='akhir')tampilAkhir();"
+    wajibAda(h, hook, kode)
+    h = h.replace(hook, pemanggil + hook)
+    if (!h.includes("show('f1')")) throw new Error(`rakit(${kode}): stasiun praktik terakhir harus memanggil show('f1')`)
+  }
+  h = h.replace(/var urut=\[[^\]]*\];/, urutBaru)
+
+  // Bintang dihitung dari Tantangan Misi (8 soal), bukan dari 4 soal lama.
   const bintang = 'var n=benar>=4?3:benar>=2?2:1;'
   wajibAda(h, bintang, kode)
   h = h.replace(bintang, 'var n=bintangDari();')
 
-  // 5) CSS.
+  // CSS.
   const css = wajibAda(h, '</style>', kode)
   h = h.slice(0, css) + CSS_MESIN + h.slice(css)
 
