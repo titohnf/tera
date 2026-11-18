@@ -129,6 +129,14 @@ export const sudut = (
 export const jam = (t: number, lab?: string): Gambar => ({ k: 'jam', t, ...(lab ? { lab } : {}) })
 /** garis waktu dari menit a ke menit b (b boleh melewati tengah malam); lab: label a, b, dan durasi d */
 export const lini = (a: number, b: number, lab: { a?: string; b?: string; d?: string } = {}): Gambar => ({ k: 'lini', a, b, lab })
+/**
+ * garis bilangan bulat dari lo sampai hi. titik: titik bertanda {v, l, w (warna)}; jejak: daftar posisi berurutan yang
+ * digambar sebagai lompatan melengkung; mutlak: v yang jaraknya ke 0 ditunjukkan dengan lengkung; sorotNol: tebalkan 0.
+ */
+export const garisbil = (
+  lo: number, hi: number,
+  o: { titik?: { v: number; l?: string; w?: string }[]; jejak?: number[]; mutlak?: number } = {},
+): Gambar => ({ k: 'garisbil', lo, hi, ...o })
 /** papan seratus: p dari 100 petak diwarnai (persen); sorot: petak terakhir yang ditandai */
 export const seratus = (p: number): Gambar => ({ k: 'seratus', p })
 /** bilangan desimal dalam kolom tempat (satuan, persepuluhan, perseratusan, perseribuan); s ditulis dengan koma, mis. "0,375" */
@@ -1221,6 +1229,38 @@ GBR.lini=function(g){
   for(var i=0;i<=n;i+=st){var x=X((h0+i)*60);sg('line',{x1:x,y1:y-8,x2:x,y2:y+8,stroke:'currentColor','stroke-width':2.2},s);tks(s,x,y+26,jm((h0+i)*60),{s:12,c:'#6b6878'})}
   [[a,lab.a],[b,lab.b]].forEach(function(q){sg('circle',{cx:X(q[0]),cy:y,r:6.5,fill:PL.merah,stroke:'currentColor','stroke-width':2.2},s);if(q[1])tks(s,X(q[0]),y-18,q[1],{s:13})});
   if(lab.d)tks(s,(X(a)+X(b))/2,y+48,lab.d,{s:14});
+  return s;
+};
+
+/* garis bilangan bulat dengan titik, lompatan, dan jarak ke nol */
+GBR.garisbil=function(g){
+  var lo=g.lo,hi=g.hi,n=hi-lo,W=320,x0=16,x1=304,y=88,u=(x1-x0)/n,s=kanvas(W,150,440),ng=function(v){return v<0?'\u2212'+(-v):String(v)},i,st=Math.max(1,Math.ceil(n/14));
+  function X(v){return x0+(v-lo)*u}
+  garisan(sg('line',{x1:x0-8,y1:y,x2:x1+8,y2:y},s),3);
+  for(i=lo;i<=hi;i++){
+    var z=i===0,lab=(i%st===0)||z;
+    sg('line',{x1:X(i),y1:y-(z?10:(lab?7:4)),x2:X(i),y2:y+(z?10:(lab?7:4)),stroke:'currentColor','stroke-width':z?3.2:(lab?2:1.2)},s);
+    if(lab)tks(s,X(i),y+24,ng(i),{s:z?14:11,c:z?'currentColor':'#6b6878'});
+  }
+  if(g.mutlak!==undefined&&g.mutlak!==0){
+    var a=X(0),b=X(g.mutlak),m=(a+b)/2,h=34;
+    sg('path',{d:'M '+a+' '+(y-10)+' Q '+m+' '+(y-10-h*1.6)+' '+b+' '+(y-10),fill:'none',stroke:PL.hijau,'stroke-width':3.2,'stroke-linecap':'round'},s);
+    tks(s,m,y-10-h*0.8-6,'jarak '+Math.abs(g.mutlak),{s:13,c:PL.hijau});
+  }
+  if(g.jejak&&g.jejak.length>1){
+    var j,war=[PL.biru,PL.merah,PL.ungu,PL.oranye,PL.hijau];
+    for(j=0;j<g.jejak.length-1;j++){
+      var p=X(g.jejak[j]),q=X(g.jejak[j+1]),mid=(p+q)/2,hh=Math.min(44,12+Math.abs(q-p)*0.28);
+      sg('path',{d:'M '+p+' '+(y-8)+' Q '+mid+' '+(y-8-hh*1.8)+' '+q+' '+(y-8),fill:'none',stroke:war[j%5],'stroke-width':2.6,'stroke-linecap':'round'},s);
+      var dir=q>p?-1:1;sg('polygon',{points:[q+','+(y-8),(q+dir*7)+','+(y-8-7),(q+dir*7)+','+(y-8+1)].join(' '),fill:war[j%5]},s);
+    }
+    g.jejak.forEach(function(v,k){sg('circle',{cx:X(v),cy:y,r:k===0||k===g.jejak.length-1?7:4.5,fill:k===0?PL.biru:(k===g.jejak.length-1?PL.merah:'#fff'),stroke:'currentColor','stroke-width':2},s)});
+  }
+  (g.titik||[]).forEach(function(t,k){
+    var c=sg('circle',{cx:X(t.v),cy:y,r:8,fill:PL[t.w||(k?'kuning':'merah')],stroke:'currentColor','stroke-width':2.4},s);
+    var l=tks(s,X(t.v),y+46+(k%2)*15,(t.l!==undefined?t.l:ng(t.v)),{s:13});
+    if(k===0){s._ke=function(v){c.setAttribute('cx',X(v));l.setAttribute('x',X(v));l.textContent=ng(Math.round(v))}}
+  });
   return s;
 };
 

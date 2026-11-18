@@ -29,6 +29,7 @@ import { HTML_AC28 } from './ac28'
 import { HTML_AC29 } from './ac29'
 import { HTML_AC30 } from './ac30'
 import { HTML_AC31 } from './ac31'
+import { HTML_D01 } from './d01'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -232,6 +233,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Baca Data, Pilih Ukuran',
     ringkas: 'Diagram batang, rata-rata, median, modus, dan jangkauan',
     html: HTML_AC31,
+  },
+  {
+    kode: 'D-01',
+    judul: 'Naik Turun di Garis Bilangan',
+    ringkas: 'Bilangan bulat: garis bilangan, nilai mutlak, operasi, dan urutan operasi',
+    html: HTML_D01,
   },
 ]
 

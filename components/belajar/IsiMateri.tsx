@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
@@ -20,22 +19,11 @@ export default async function IsiMateri({ anak, kode }: { anak?: string; kode: s
   if (!materi) notFound()
 
   return (
-    <div className="space-y-3">
-      <div>
-        <Link
-          href={alamatMisi(anak, materi.kode)}
-          className="text-sm text-gray-500 hover:text-gray-900"
-        >
-          ← Kembali ke topik
-        </Link>
-        <h1 className="mt-1 text-xl font-bold tracking-tight text-gray-900">{materi.judul}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{materi.kode} · {materi.ringkas}</p>
-      </div>
-      <PenampilMateri
-        html={materi.html}
-        judul={`${materi.judul} — ${materi.kode}`}
-        hrefLatihan={alamatMisi(anak, materi.kode)}
-      />
-    </div>
+    <PenampilMateri
+      html={materi.html}
+      judul={`${materi.judul} — ${materi.kode}`}
+      hrefLatihan={alamatMisi(anak, materi.kode)}
+      hrefKembali={alamatMisi(anak, materi.kode)}
+    />
   )
 }
