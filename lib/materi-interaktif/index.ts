@@ -1,4 +1,10 @@
 import { HTML_AC01 } from './ac01'
+import { HTML_AC02 } from './ac02'
+import { HTML_AC03 } from './ac03'
+import { HTML_AC04 } from './ac04'
+import { HTML_AC05 } from './ac05'
+import { HTML_AC06 } from './ac06'
+import { HTML_AC07 } from './ac07'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -22,6 +28,42 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Ikat Sepuluh',
     ringkas: 'Bilangan sampai 100 dengan ikat lidi',
     html: HTML_AC01,
+  },
+  {
+    kode: 'AC-02',
+    judul: 'Cari Bentuk',
+    ringkas: 'Bangun datar, bangun ruang, dan letak benda',
+    html: HTML_AC02,
+  },
+  {
+    kode: 'AC-03',
+    judul: 'Lompat Katak',
+    ringkas: 'Tambah dan kurang sampai 20 di garis bilangan',
+    html: HTML_AC03,
+  },
+  {
+    kode: 'AC-04',
+    judul: 'Ikuti Pola',
+    ringkas: 'Pola gambar, warna, dan bunyi',
+    html: HTML_AC04,
+  },
+  {
+    kode: 'AC-05',
+    judul: 'Bagi Adil',
+    ringkas: 'Setengah dan seperempat dengan bentuk yang dibelah',
+    html: HTML_AC05,
+  },
+  {
+    kode: 'AC-06',
+    judul: 'Siapa Lebih?',
+    ringkas: 'Bandingkan panjang, berat, dan lama dengan satuan tidak baku',
+    html: HTML_AC06,
+  },
+  {
+    kode: 'AC-07',
+    judul: 'Pilah dan Hitung',
+    ringkas: 'Memilah, mengurutkan, dan membaca piktogram',
+    html: HTML_AC07,
   },
 ]
 
