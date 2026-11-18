@@ -1,3 +1,6 @@
+import { rakit } from './bersama'
+import { DATA_AC07 } from './latihan/ac07'
+
 /**
  * Materi interaktif AC-07 "Pilah dan Hitung" (Mengurutkan, menyortir,
  * mengelompokkan, dan menyajikan data dengan piktogram). Satu halaman HTML
@@ -25,8 +28,13 @@
  * Tombol "Ayo berlatih" tidak menavigasi sendiri (iframe disandbox): ia mengirim
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-07 di Misi.
+ *
+ * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
+ * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
+ * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac07.ts`),
+ * supaya anak terbiasa dengan bentuk soal Misi yang sebenarnya.
  */
-export const HTML_AC07 = String.raw`<!DOCTYPE html>
+const DASAR = String.raw`<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
@@ -566,3 +574,5 @@ $('bonusSelesai').onclick=function(){show('akhir')};
 </script>
 </body>
 </html>`
+
+export const HTML_AC07 = rakit(DASAR, { kode: 'AC-07', tantangan: 's5', data: DATA_AC07 })

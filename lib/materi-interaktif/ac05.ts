@@ -1,3 +1,6 @@
+import { rakit } from './bersama'
+import { DATA_AC05 } from './latihan/ac05'
+
 /**
  * Materi interaktif AC-05 "Bagi Adil" (Pecahan setengah dan seperempat,
  * konkret). Satu halaman HTML mandiri, ditampilkan lewat iframe sandbox di
@@ -23,8 +26,13 @@
  * Tombol "Ayo berlatih" tidak menavigasi sendiri (iframe disandbox): ia mengirim
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-05 di Misi.
+ *
+ * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
+ * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
+ * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac05.ts`),
+ * supaya anak terbiasa dengan bentuk soal Misi yang sebenarnya.
  */
-export const HTML_AC05 = String.raw`<!DOCTYPE html>
+const DASAR = String.raw`<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
@@ -523,3 +531,5 @@ $('bonusSelesai').onclick=function(){show('akhir')};
 </script>
 </body>
 </html>`
+
+export const HTML_AC05 = rakit(DASAR, { kode: 'AC-05', tantangan: 's4', data: DATA_AC05 })
