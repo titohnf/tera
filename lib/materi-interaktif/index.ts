@@ -12,6 +12,23 @@ import { HTML_AC11 } from './ac11'
 import { HTML_AC12 } from './ac12'
 import { HTML_AC13 } from './ac13'
 import { HTML_AC14 } from './ac14'
+import { HTML_AC15 } from './ac15'
+import { HTML_AC16 } from './ac16'
+import { HTML_AC17 } from './ac17'
+import { HTML_AC18 } from './ac18'
+import { HTML_AC19 } from './ac19'
+import { HTML_AC20 } from './ac20'
+import { HTML_AC21 } from './ac21'
+import { HTML_AC22 } from './ac22'
+import { HTML_AC23 } from './ac23'
+import { HTML_AC24 } from './ac24'
+import { HTML_AC25 } from './ac25'
+import { HTML_AC26 } from './ac26'
+import { HTML_AC27 } from './ac27'
+import { HTML_AC28 } from './ac28'
+import { HTML_AC29 } from './ac29'
+import { HTML_AC30 } from './ac30'
+import { HTML_AC31 } from './ac31'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -113,6 +130,108 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Arsitek Kubus',
     ringkas: 'Menyusun, memotong, menggabungkan, dan memutar bangun ruang',
     html: HTML_AC14,
+  },
+  {
+    kode: 'AC-15',
+    judul: 'Ukur Tepat',
+    ringkas: 'Satuan baku panjang, berat, dan isi: memilih, mengubah, membandingkan, menghitung',
+    html: HTML_AC15,
+  },
+  {
+    kode: 'AC-16',
+    judul: 'Baca Batang',
+    ringkas: 'Membaca diagram batang dan mengenali diagram yang menyesatkan',
+    html: HTML_AC16,
+  },
+  {
+    kode: 'AC-17',
+    judul: 'Loncat dan Bagi',
+    ringkas: 'Kelipatan, faktor, dan yang sama-sama dimiliki dua bilangan',
+    html: HTML_AC17,
+  },
+  {
+    kode: 'AC-18',
+    judul: 'Pita Pecahan',
+    ringkas: 'Membandingkan, mengurutkan, dan menyederhanakan pecahan dengan pita',
+    html: HTML_AC18,
+  },
+  {
+    kode: 'AC-19',
+    judul: 'Garis Pecahan',
+    ringkas: 'Pecahan sejati, tidak murni, dan campuran pada pita dan garis bilangan',
+    html: HTML_AC19,
+  },
+  {
+    kode: 'AC-20',
+    judul: 'Tiga Wajah, Satu Nilai',
+    ringkas: 'Pecahan, desimal, dan persen: mengubah, membandingkan, mengurutkan',
+    html: HTML_AC20,
+  },
+  {
+    kode: 'AC-21',
+    judul: 'Saringan dan Pohon Faktor',
+    ringkas: 'Bilangan prima, faktorisasi prima, FPB, dan KPK',
+    html: HTML_AC21,
+  },
+  {
+    kode: 'AC-22',
+    judul: 'Hitung, Bulatkan, Taksir',
+    ringkas: 'Hitung bilangan besar, pembulatan, dan estimasi',
+    html: HTML_AC22,
+  },
+  {
+    kode: 'AC-23',
+    judul: 'Bulat Bertemu Pecahan',
+    ringkas: 'Pecahan campuran dan operasi bilangan bulat dengan pecahan',
+    html: HTML_AC23,
+  },
+  {
+    kode: 'AC-24',
+    judul: 'Neraca Persamaan',
+    ringkas: 'Persamaan satu langkah dan operasi kebalikan',
+    html: HTML_AC24,
+  },
+  {
+    kode: 'AC-25',
+    judul: 'Petak, Kubus, dan Akar',
+    ringkas: 'Pangkat dua, pangkat tiga, dan akar',
+    html: HTML_AC25,
+  },
+  {
+    kode: 'AC-26',
+    judul: 'Rumah dari Bangun',
+    ringkas: 'Luas dan keliling bangun datar gabungan',
+    html: HTML_AC26,
+  },
+  {
+    kode: 'AC-27',
+    judul: 'Luas Mundur',
+    ringkas: 'Menentukan ukuran dari luas',
+    html: HTML_AC27,
+  },
+  {
+    kode: 'AC-28',
+    judul: 'Isi dan Kulit Kotak',
+    ringkas: 'Volume dan luas permukaan kubus, balok, dan gabungan',
+    html: HTML_AC28,
+  },
+  {
+    kode: 'AC-29',
+    judul: 'Putar dan Ukur Sudut',
+    ringkas: 'Jenis sudut, pasangan sudut, dan jumlah sudut bangun',
+    html: HTML_AC29,
+  },
+  {
+    kode: 'AC-30',
+    judul: 'Jam dan Durasi',
+    ringkas: 'Durasi, waktu mulai, dan waktu selesai',
+    html: HTML_AC30,
+  },
+  {
+    kode: 'AC-31',
+    judul: 'Baca Data, Pilih Ukuran',
+    ringkas: 'Diagram batang, rata-rata, median, modus, dan jangkauan',
+    html: HTML_AC31,
   },
 ]
 

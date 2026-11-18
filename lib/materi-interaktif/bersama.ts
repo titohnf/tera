@@ -146,7 +146,8 @@ function Mesin(id,judul,label,ambil,pindah,hitung){
       layar.classList.add(ok?'right':'wrong');
       selesai(ok,it.a[0],it);
     };
-    if(it.t==='isi'){
+    /* papan angka hanya cukup bila semua jawaban murni angka; koma, garis miring, dan daftar butuh kolom ketik */
+    if(it.t==='isi'&&it.a.every(function(x){return /^[0-9]+$/.test(x)})){
       o.appendChild(layar);
       var pad=el('div','mq-pad');
       ['1','2','3','4','5','6','7','8','9','⌫','0','OK'].forEach(function(k){
