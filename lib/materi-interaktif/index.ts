@@ -9,6 +9,7 @@ import { HTML_AC08 } from './ac08'
 import { HTML_AC09 } from './ac09'
 import { HTML_AC10 } from './ac10'
 import { HTML_AC11 } from './ac11'
+import { HTML_AC12 } from './ac12'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -92,6 +93,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Si Kotak Misterius',
     ringkas: 'Mencari bilangan yang belum diketahui dengan timbangan',
     html: HTML_AC11,
+  },
+  {
+    kode: 'AC-12',
+    judul: 'Pola Ajaib',
+    ringkas: 'Pola gambar dan bilangan: kelompok, selisih, suku ke-n',
+    html: HTML_AC12,
   },
 ]
 

@@ -50,6 +50,8 @@ export const larik = (r: number, c: number, sorot?: number): Gambar => ({ k: 'la
 export const kelompok = (e: string, k: number, n: number, o: { sisa?: number; plus?: boolean } = {}): Gambar => ({ k: 'kelompok', e, jumlah: k, n, ...o })
 /** Timbangan seimbang untuk kalimat dengan kotak: k kantong "?", p butir tambahan, m butir yang dikurangkan di kiri; n butir di kanan. */
 export const timbang = (k: number, p: number, m: number, n: number): Gambar => ({ k: 'timbang', kantong: k, plus: p, minus: m, kanan: n })
+/** Tabel mendatar: tiap baris diawali label, mis. posisi dan nilai suku pola. */
+export const tabel = (baris: (string | number)[][]): Gambar => ({ k: 'tabel', baris })
 export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
@@ -115,6 +117,10 @@ export const CSS_GAMBAR = String.raw`
 .mq-kel .piring b{font-family:var(--display);font-size:1.5rem}
 .mq-kel .sisa{min-width:60px;min-height:60px;border-radius:16px;border:3px dashed var(--ikat);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.1rem;padding:4px 8px}
 .mq-kel .sisa small{color:var(--ikat);font-weight:800}
+.mq-tabel{border-collapse:collapse;font-family:var(--display);font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.mq-tabel td{border:2px solid var(--ink);padding:4px 10px;text-align:center;min-width:2.2em}
+.mq-tabel td:first-child{background:var(--soft);text-align:left}
+.mq-tabel td.q{color:var(--ikat)}
 .mq-lr .sk{grid-column:2;display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-4px}
 `
 
@@ -204,11 +210,11 @@ GBR.bangun=function(g){
 };
 
 /* deretan pola; token seperti "merah", "biru-lingkaran", "besar", "kuning-panjang", "tepuk" */
-var BENTUK_TOKEN=['segitiga','lingkaran','bulat','persegi','kotak','bintang','bulan'];
+var BENTUK_TOKEN=['segitiga','lingkaran','bulat','persegi','kotak','bintang','bulan','oval','persegipanjang'];
 var UKURAN_TOKEN=['besar','kecil','panjang','pendek'];
-var BUNYI_TOKEN={tepuk:'\u{1F44F}',ketuk:'\u{1F941}',diam:'\u{1F92B}'};
+var BUNYI_TOKEN={tepuk:'\u{1F44F}',ketuk:'\u{1F941}',diam:'\u{1F92B}',hati:'\u2764\uFE0F',awan:'\u2601\uFE0F',bunga:'\u{1F338}',daun:'\u{1F343}',matahari:'\u2600\uFE0F'};
 function tokenNode(tok){
-  if(/^\d+$/.test(tok)){var n=el('span','angka',tok);return n}
+  if(/^-?\d+$/.test(tok)){var n=el('span','angka',tok);return n}
   var p=tok.split('-'),w=null,b=null,u=null,e=null;
   p.forEach(function(x){
     if(PL[x]&&x!=='roti'&&x!=='abu')w=x;
@@ -225,6 +231,8 @@ function tokenNode(tok){
   else if(b==='persegi'||b==='kotak')garisan(sg('rect',{x:7,y:7,width:26,height:26,rx:3,fill:c},gr),2.5);
   else if(b==='bintang')garisan(sg('polygon',{points:'20,3 25,15 38,15 28,23 32,36 20,28 8,36 12,23 2,15 15,15',fill:c},gr),2);
   else if(b==='bulan')garisan(sg('path',{d:'M26 5 A16 16 0 1 0 26 35 A12 12 0 1 1 26 5 Z',fill:c},gr),2);
+  else if(b==='oval')garisan(sg('ellipse',{cx:20,cy:20,rx:16,ry:10,fill:c},gr),2.5);
+  else if(b==='persegipanjang')garisan(sg('rect',{x:4,y:11,width:32,height:18,rx:3,fill:c},gr),2.5);
   else garisan(sg('circle',{cx:20,cy:20,r:14,fill:c},gr),2.5);
   return s;
 }
@@ -504,6 +512,17 @@ GBR.timbang=function(g){
   pan(cx-L,kiri,0);
   if(kn.length>12)pan(cx+L,[],g.kanan);else pan(cx+L,kn,0);
   return s;
+};
+
+/* tabel: baris pertama biasanya "posisi", baris kedua "nilai"; sel "?" ditandai */
+GBR.tabel=function(g){
+  var t=el('table','mq-tabel');
+  g.baris.forEach(function(b){
+    var tr=el('tr');
+    b.forEach(function(x,i){tr.appendChild(el('td',i>0&&String(x)==='?'?'q':null,String(x)))});
+    t.appendChild(tr);
+  });
+  return t;
 };
 
 /* soal bersusun: penjumlahan atau pengurangan, dengan catatan simpanan/pinjaman di atas kolom */
