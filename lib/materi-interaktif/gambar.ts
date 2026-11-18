@@ -56,6 +56,12 @@ export const tabel = (baris: (string | number)[][]): Gambar => ({ k: 'tabel', ba
 export const jaring = (jenis: 'kubus' | 'tabung' | 'limas' | 'prisma'): Gambar => ({ k: 'jaring', jenis })
 /** Dua tampak sebuah benda: dari atas dan dari samping (nama bangun datar). */
 export const pandang = (atas: string, samping: string): Gambar => ({ k: 'pandang', atas, samping })
+/** Tumpukan kubus satuan (isometrik). `h`: peta tinggi (baris x kolom). `lapisan`: tampilkan hanya z < lapisan. `baru`: lapisan yang baru diletakkan (animasi). */
+export const tumpuk = (h: number[][], o: { lapisan?: number; baru?: number } = {}): Gambar => ({ k: 'tumpuk', h, ...o })
+/** Tampak tumpukan kubus dari 'atas', 'depan', atau 'samping'. */
+export const tampak = (h: number[][], dari: 'atas' | 'depan' | 'samping', angka = false): Gambar => ({ k: 'tampak', h, dari, angka })
+/** Bangun ruang yang dipotong lurus: arah 'mendatar' | 'tegak' | 'miring'; pos 0..1 letak potongan. */
+export const potong = (b: string, arah: 'mendatar' | 'tegak' | 'miring', pos = 0.5, w = 'biru'): Gambar => ({ k: 'potong', b, arah, pos, w })
 export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
@@ -125,6 +131,10 @@ export const CSS_GAMBAR = String.raw`
 .mq-tabel td{border:2px solid var(--ink);padding:4px 10px;text-align:center;min-width:2.2em}
 .mq-tabel td:first-child{background:var(--soft);text-align:left}
 .mq-tabel td.q{color:var(--ikat)}
+.kb.baru{animation:turunKb .5s ease-out}
+@keyframes turunKb{from{transform:translateY(-26px);opacity:0}to{transform:none;opacity:1}}
+.mq-tampak{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:flex-end}
+.pc{transition:transform .9s cubic-bezier(.4,1.2,.5,1)}
 .mq-lr .sk{grid-column:2;display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-4px}
 `
 
@@ -569,6 +579,94 @@ GBR.pandang=function(g){
     c.appendChild(el('div','mq-cap',x[0]));w.appendChild(c);
   });
   return w;
+};
+
+/* tumpukan kubus satuan dalam proyeksi isometrik, digambar dari belakang ke depan */
+var LAPIS=['#4a7bd0','#2e9a63','#e0a93b','#d94f3d','#c75ba0'];
+function jumlahTumpuk(h){var t=0;h.forEach(function(r){r.forEach(function(v){t+=v})});return t}
+GBR.tumpuk=function(g){
+  var h=g.h,R=h.length,C=h[0].length,u=g.u||20,vh=u,mz=0,i,j,z;
+  h.forEach(function(r){r.forEach(function(v){mz=Math.max(mz,v)})});
+  var lim=g.lapisan===undefined?mz:g.lapisan;
+  var sel=[];for(i=0;i<R;i++)for(j=0;j<C;j++)sel.push([i,j]);
+  sel.sort(function(a,b){return (a[0]+a[1])-(b[0]+b[1])||a[0]-b[0]});
+  var pad=6,x0=-(R-1)*u-u-pad,y0=-mz*vh-pad,W=(R-1)*u+(C-1)*u+2*u+2*pad,H=(R-1+C-1)*u/2+u+mz*vh+2*pad;
+  var s=sg('svg',{viewBox:x0+' '+y0+' '+W+' '+H,'aria-hidden':'true'});
+  s.style.width='100%';s.style.maxWidth=Math.min(W*2.4,340)+'px';s.style.height='auto';s.style.display='block';s.style.margin='0 auto';
+  function poli(pts,warna,ov,op,kel){
+    garisan(sg('polygon',{points:pts,fill:warna},kel),1.6);
+    if(ov)sg('polygon',{points:pts,fill:ov,'fill-opacity':op},kel);
+  }
+  sel.forEach(function(c){
+    var ri=c[0],ci=c[1],hh=h[ri][ci],sx=(ci-ri)*u,sy=(ci+ri)*u/2;
+    for(z=0;z<Math.min(hh,lim);z++){
+      var oy=sy-(z+1)*vh,col=LAPIS[z%5],kel=sg('g',{'class':'kb'+(g.baru===z?' baru':'')},s);
+      poli(sx+','+oy+' '+(sx+u)+','+(oy+u/2)+' '+sx+','+(oy+u)+' '+(sx-u)+','+(oy+u/2),col,'#fff',.4,kel);
+      poli((sx-u)+','+(oy+u/2)+' '+sx+','+(oy+u)+' '+sx+','+(oy+u+vh)+' '+(sx-u)+','+(oy+u/2+vh),col,null,0,kel);
+      poli(sx+','+(oy+u)+' '+(sx+u)+','+(oy+u/2)+' '+(sx+u)+','+(oy+u/2+vh)+' '+sx+','+(oy+u+vh),col,'#000',.28,kel);
+    }
+  });
+  return s;
+};
+
+/* tampak 2D tumpukan kubus: atas (kotak terisi), depan (tinggi tiap kolom), samping (tinggi tiap baris) */
+GBR.tampak=function(g){
+  var h=g.h,R=h.length,C=h[0].length,mz=0,sl=24,i,j,nm,cols,tinggi,nilai=[];
+  h.forEach(function(r){r.forEach(function(v){mz=Math.max(mz,v)})});
+  if(g.dari==='atas'){cols=C;tinggi=R;nm='tampak atas'}
+  else if(g.dari==='depan'){
+    cols=C;tinggi=mz;nm='tampak depan';
+    for(j=0;j<C;j++){var m1=0;for(i=0;i<R;i++)m1=Math.max(m1,h[i][j]);nilai.push(m1)}
+  }else{
+    cols=R;tinggi=mz;nm='tampak samping';
+    for(i=0;i<R;i++){var m2=0;for(j=0;j<C;j++)m2=Math.max(m2,h[i][j]);nilai.push(m2)}
+  }
+  var s=sg('svg',{viewBox:'0 0 '+(cols*sl+4)+' '+(tinggi*sl+4),'aria-hidden':'true'});
+  s.style.width=Math.min(cols*sl*1.6+8,200)+'px';s.style.height='auto';
+  if(g.dari==='atas'){
+    for(i=0;i<R;i++)for(j=0;j<C;j++){
+      if(h[i][j]>0){
+        garisan(sg('rect',{x:2+j*sl,y:2+i*sl,width:sl,height:sl,fill:'#e0a93b','fill-opacity':.8},s),2);
+        if(g.angka)tks(s,2+j*sl+sl/2,2+i*sl+sl/2+5,String(h[i][j]),{s:13});
+      }
+    }
+  }else{
+    nilai.forEach(function(v,k){
+      for(var z=0;z<v;z++)garisan(sg('rect',{x:2+k*sl,y:2+(tinggi-1-z)*sl,width:sl,height:sl,fill:'#4a7bd0','fill-opacity':.8},s),2);
+    });
+  }
+  var w=el('div','mq-kolom');w.appendChild(s);w.appendChild(el('div','mq-cap',nm));
+  return w;
+};
+
+/* bangun ruang yang dipotong lurus: dua potongan, boleh dijauhkan (celah) */
+var potongNo=0;
+function potongSvg(b,arah,pos,celah,warna,garis){
+  var id='pt'+(potongNo++),s=sg('svg',{viewBox:'0 0 200 150','aria-hidden':'true'}),defs=sg('defs',{},s);
+  var a=sg('clipPath',{id:id+'a'},defs),c=sg('clipPath',{id:id+'b'},defs),yc=10+pos*104,xc=46+pos*108,d;
+  if(arah==='mendatar'){sg('rect',{x:0,y:0,width:200,height:yc},a);sg('rect',{x:0,y:yc,width:200,height:150-yc},c);d=[0,-1,0,1]}
+  else if(arah==='tegak'){sg('rect',{x:0,y:0,width:xc,height:150},a);sg('rect',{x:xc,y:0,width:200-xc,height:150},c);d=[-1,0,1,0]}
+  else{sg('polygon',{points:'-20,-44 300,-44 300,276'},a);sg('polygon',{points:'-20,-44 300,276 -20,276'},c);d=[0.7,-0.7,-0.7,0.7]}
+  var inti=function(){var x=bangunSvg(b,warna);x.setAttribute('x',40);x.setAttribute('y',16);x.setAttribute('width',120);x.setAttribute('height',120);return x};
+  var g1=sg('g',{'class':'pc'},s),g2=sg('g',{'class':'pc'},s);
+  var k1=sg('g',{'clip-path':'url(#'+id+'a)'},g1),k2=sg('g',{'clip-path':'url(#'+id+'b)'},g2);
+  k1.appendChild(inti());k2.appendChild(inti());
+  if(garis){
+    var gp=arah==='mendatar'?[36,yc,164,yc]:arah==='tegak'?[xc,10,xc,142]:[40,16,160,136];
+    sg('line',{x1:gp[0],y1:gp[1],x2:gp[2],y2:gp[3],stroke:'#d94f3d','stroke-width':3,'stroke-dasharray':'7 5','stroke-linecap':'round'},s);
+    s._garis=s.lastChild;
+  }
+  s._ps=[g1,g2,d];
+  s._geser=function(f){
+    g1.style.transform='translate('+(d[0]*f)+'px,'+(d[1]*f)+'px)';
+    g2.style.transform='translate('+(d[2]*f)+'px,'+(d[3]*f)+'px)';
+  };
+  s._geser(celah||0);
+  return s;
+}
+GBR.potong=function(g){
+  var s=potongSvg(g.b,g.arah,g.pos,10,g.w);s.style.width='200px';s.style.maxWidth='100%';s.style.height='auto';
+  return s;
 };
 
 /* soal bersusun: penjumlahan atau pengurangan, dengan catatan simpanan/pinjaman di atas kolom */

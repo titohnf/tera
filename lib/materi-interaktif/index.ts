@@ -11,6 +11,7 @@ import { HTML_AC10 } from './ac10'
 import { HTML_AC11 } from './ac11'
 import { HTML_AC12 } from './ac12'
 import { HTML_AC13 } from './ac13'
+import { HTML_AC14 } from './ac14'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -106,6 +107,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Detektif Bentuk',
     ringkas: 'Ciri bangun datar dan ruang, jaring-jaring, dan tampak',
     html: HTML_AC13,
+  },
+  {
+    kode: 'AC-14',
+    judul: 'Arsitek Kubus',
+    ringkas: 'Menyusun, memotong, menggabungkan, dan memutar bangun ruang',
+    html: HTML_AC14,
   },
 ]
 
