@@ -48,6 +48,8 @@ export const kolom = (a: number, b: number, op: '+' | '-', o: { hasil?: number; 
 export const larik = (r: number, c: number, sorot?: number): Gambar => ({ k: 'larik', r, c, ...(sorot === undefined ? {} : { sorot }) })
 /** k kelompok (piring) masing-masing n benda; `plus` menulis tanda + di antaranya; `sisa` benda yang tidak kebagian. */
 export const kelompok = (e: string, k: number, n: number, o: { sisa?: number; plus?: boolean } = {}): Gambar => ({ k: 'kelompok', e, jumlah: k, n, ...o })
+/** Timbangan seimbang untuk kalimat dengan kotak: k kantong "?", p butir tambahan, m butir yang dikurangkan di kiri; n butir di kanan. */
+export const timbang = (k: number, p: number, m: number, n: number): Gambar => ({ k: 'timbang', kantong: k, plus: p, minus: m, kanan: n })
 export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
@@ -67,6 +69,7 @@ export const CSS_GAMBAR = String.raw`
 .mq-pola{display:grid;gap:5px;justify-content:center;width:100%}
 .mq-pc{aspect-ratio:1;min-width:0;border-radius:12px;border:2px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.7rem;line-height:1}
 .mq-pc svg{width:100%;height:100%}
+.mq-pc .angka{font-family:var(--display);font-weight:800;font-size:1.15rem;line-height:1}
 .mq-pc.q{border:2px dashed var(--ikat);background:var(--soft);font-family:var(--display);font-weight:800}
 .mq-nilai{display:flex;gap:6px;justify-content:center}
 .mq-nk{display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid var(--line);border-radius:14px;padding:6px 4px;min-width:64px;background:var(--card)}
@@ -205,6 +208,7 @@ var BENTUK_TOKEN=['segitiga','lingkaran','bulat','persegi','kotak','bintang','bu
 var UKURAN_TOKEN=['besar','kecil','panjang','pendek'];
 var BUNYI_TOKEN={tepuk:'\u{1F44F}',ketuk:'\u{1F941}',diam:'\u{1F92B}'};
 function tokenNode(tok){
+  if(/^\d+$/.test(tok)){var n=el('span','angka',tok);return n}
   var p=tok.split('-'),w=null,b=null,u=null,e=null;
   p.forEach(function(x){
     if(PL[x]&&x!=='roti'&&x!=='abu')w=x;
@@ -468,6 +472,38 @@ GBR.kelompok=function(g){
     s.appendChild(r);s.appendChild(el('small',null,'sisa '+g.sisa));w.appendChild(s);
   }
   return w;
+};
+
+/* timbangan seimbang dengan kantong berisi "?" (nilai kotak yang belum diketahui) */
+GBR.timbang=function(g){
+  var s=kanvas(300,176,420),cx=150,cy=52,L=95;
+  garisan(sg('polygon',{points:cx+','+cy+' '+(cx-22)+',168 '+(cx+22)+',168',fill:'#c78a12'},s),2.5);
+  garisan(sg('line',{x1:cx-L,y1:cy,x2:cx+L,y2:cy},s),5);
+  sg('circle',{cx:cx,cy:cy,r:6,fill:'#d94f3d',stroke:'currentColor','stroke-width':2},s);
+  function pan(x,benda,angka){
+    garisan(sg('line',{x1:x,y1:cy,x2:x-40,y2:cy+62},s),1.5);garisan(sg('line',{x1:x,y1:cy,x2:x+40,y2:cy+62},s),1.5);
+    garisan(sg('line',{x1:x-46,y1:cy+62,x2:x+46,y2:cy+62},s),4);
+    if(angka){sg('circle',{cx:x,cy:cy+36,r:20,fill:'#fff3d0',stroke:'currentColor','stroke-width':2.5},s);tks(s,x,cy+43,String(angka),{s:20});return}
+    var baris=0,kol=0,lebar=46;
+    benda.forEach(function(b){
+      var w=b==='k'?26:15;
+      if(kol+w>lebar*2-6){baris++;kol=0}
+      var bx=x-lebar+4+kol,by=cy+62-4-baris*22;
+      if(b==='k'){
+        garisan(sg('rect',{x:bx,y:by-26,width:24,height:26,rx:7,fill:'#b97f12'},s),2);tks(s,bx+12,by-8,'?',{s:16,c:'#fff'});
+      }else if(b==='p'){sg('circle',{cx:bx+7,cy:by-7,r:6.5,fill:'#d94f3d',stroke:'currentColor','stroke-width':2},s)}
+      else{sg('circle',{cx:bx+7,cy:by-7,r:6.5,fill:'none',stroke:'#d94f3d','stroke-width':2,'stroke-dasharray':'3 2'},s);tks(s,bx+7,by-3.5,'\u2212',{s:11,c:'#d94f3d'})}
+      kol+=w+2;
+    });
+  }
+  var kiri=[],i;
+  for(i=0;i<(g.kantong||0);i++)kiri.push('k');
+  for(i=0;i<(g.plus||0);i++)kiri.push('p');
+  for(i=0;i<(g.minus||0);i++)kiri.push('m');
+  var kn=[];for(i=0;i<(g.kanan||0);i++)kn.push('p');
+  pan(cx-L,kiri,0);
+  if(kn.length>12)pan(cx+L,[],g.kanan);else pan(cx+L,kn,0);
+  return s;
 };
 
 /* soal bersusun: penjumlahan atau pengurangan, dengan catatan simpanan/pinjaman di atas kolom */

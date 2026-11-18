@@ -8,6 +8,7 @@ import { HTML_AC07 } from './ac07'
 import { HTML_AC08 } from './ac08'
 import { HTML_AC09 } from './ac09'
 import { HTML_AC10 } from './ac10'
+import { HTML_AC11 } from './ac11'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -85,6 +86,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Kali dan Bagi',
     ringkas: 'Kali, bagi, sisa, dan hubungan keduanya',
     html: HTML_AC10,
+  },
+  {
+    kode: 'AC-11',
+    judul: 'Si Kotak Misterius',
+    ringkas: 'Mencari bilangan yang belum diketahui dengan timbangan',
+    html: HTML_AC11,
   },
 ]
 
