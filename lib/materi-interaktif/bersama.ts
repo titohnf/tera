@@ -41,7 +41,7 @@ export type Item =
   | { t: 'debat'; q: string; k: [string, string]; a: 0 | 1; e: string; g?: GambarItem }
   | { t: 'isi'; q: string; a: string[]; e: string; g?: GambarItem }
   | { t: 'kata'; q: string; a: string[]; e: string; g?: GambarItem }
-  | { t: 'gen'; g: string }
+  | { t: 'gen'; nama: string }
 
 export interface DataMateri {
   fakta: Item[]
@@ -57,7 +57,7 @@ export const pg = (q: string, o: string[], a: number, e: string, g?: GambarItem)
 export const isi = (q: string, a: string | string[], e: string, g?: GambarItem): Item => ({ t: 'isi', q, a: ([] as string[]).concat(a), e, ...(g ? { g } : {}) })
 export const kata = (q: string, a: string | string[], e: string, g?: GambarItem): Item => ({ t: 'kata', q, a: ([] as string[]).concat(a), e, ...(g ? { g } : {}) })
 export const debat = (q: string, k: [string, string], a: 0 | 1, e: string, g?: GambarItem): Item => ({ t: 'debat', q, k, a, e, ...(g ? { g } : {}) })
-export const gen = (g: string): Item => ({ t: 'gen', g })
+export const gen = (nama: string): Item => ({ t: 'gen', nama })
 
 const CSS_MESIN = String.raw`
 /* mesin latihan bersama (awalan mq-) */
@@ -96,7 +96,7 @@ var GEN={};
 function Mesin(id,judul,label,ambil,pindah,hitung){
   var daftar=[],i=0,kunci=false;
   function mulai(){
-    daftar=ambil().map(function(x){return x.t==='gen'?GEN[x.g]():x});
+    daftar=ambil().map(function(x){return x.t==='gen'?GEN[x.nama]():x});
     i=0;
     if(hitung){benar=0;totalSoal=0}
     tampil();

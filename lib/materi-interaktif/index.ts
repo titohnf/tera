@@ -6,6 +6,7 @@ import { HTML_AC05 } from './ac05'
 import { HTML_AC06 } from './ac06'
 import { HTML_AC07 } from './ac07'
 import { HTML_AC08 } from './ac08'
+import { HTML_AC09 } from './ac09'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -71,6 +72,12 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Bilangan Ribuan',
     ringkas: 'Bilangan sampai 10.000: nilai tempat, baca-tulis, bandingkan',
     html: HTML_AC08,
+  },
+  {
+    kode: 'AC-09',
+    judul: 'Susun dan Hitung',
+    ringkas: 'Tambah-kurang sampai 1.000: menyimpan, meminjam, memeriksa',
+    html: HTML_AC09,
   },
 ]
 

@@ -41,6 +41,10 @@ export const meja = (atas: string, bawah: string): Gambar => ({ k: 'meja', atas,
 export const dalam = (dalamE: string, luarE: string): Gambar => ({ k: 'dalam', dalam: dalamE, luar: luarE })
 export const susun = (items: { l: string; w?: string }[], arah: 'tegak' | 'datar' = 'tegak'): Gambar => ({ k: 'susun', items, arah })
 export const kartu = (d: number[]): Gambar => ({ k: 'kartu', d })
+export const blok = (n: number, label?: string): Gambar => ({ k: 'blok', n, ...(label ? { label } : {}) })
+/** Soal bersusun. `tanda`: catatan kecil di atas kolom (kol 0 = ribuan ... 3 = satuan), mis. simpanan "1" atau pinjaman "+10". */
+export const kolom = (a: number, b: number, op: '+' | '-', o: { hasil?: number; tanda?: { kol: number; teks: string }[]; sorot?: number } = {}): Gambar => ({ k: 'kolom', a, b, op, ...o })
+export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
 /* pustaka gambar bahan latihan (awalan mq-) */
@@ -77,6 +81,23 @@ export const CSS_GAMBAR = String.raw`
 .mq-lr .lb{font-family:var(--display);font-weight:800;font-size:1.05rem}
 .mq-lr .tr{position:relative;height:22px;border-radius:99px;background:var(--line)}
 .mq-lr .tr i{position:absolute;top:0;bottom:0;border-radius:99px;border:2px solid var(--ink)}
+.mq-blok{display:flex;gap:16px;align-items:flex-end;justify-content:center;flex-wrap:wrap}
+.mq-bg{display:flex;flex-direction:column;align-items:center;gap:4px}
+.mq-bg .isi{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:116px;min-height:16px}
+.mq-bg .r .b{width:30px;height:30px;background:#4a7bd0;border:2px solid currentColor;border-radius:5px}
+.mq-bg .p .b{width:10px;height:34px;background:#2e9a63;border:2px solid currentColor;border-radius:3px}
+.mq-bg .s .b{width:11px;height:11px;background:#e0a93b;border:2px solid currentColor;border-radius:3px}
+.mq-bg .cap{font-size:.82rem;color:var(--muted);font-weight:800}
+.mq-kol{display:grid;grid-template-columns:34px repeat(4,46px);gap:2px 4px;font-family:var(--display);font-weight:800;font-size:2.2rem;line-height:1.15;font-variant-numeric:tabular-nums;justify-items:center;align-items:center}
+.mq-kol .c{width:100%;text-align:center;border-radius:8px}
+.mq-kol .c.sorot{background:var(--soft);box-shadow:0 0 0 2px var(--lidi)}
+.mq-kol .t{font-size:1.1rem;color:var(--ikat);min-height:1.3em;animation:kedip 1.6s ease-in-out infinite}
+.mq-kol .op{font-size:2rem;color:var(--ikat)}
+.mq-kol .gr{grid-column:1 / -1;width:100%;border-top:4px solid var(--ink);border-radius:2px;margin:2px 0}
+.mq-kol .q{color:var(--ikat)}
+.mq-gambar>*{animation:masukG .4s ease-out}
+@keyframes masukG{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes kedip{50%{transform:translateY(-3px);opacity:.55}}
 .mq-lr .sk{grid-column:2;display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-4px}
 `
 
@@ -213,7 +234,7 @@ GBR.garis=function(g){
     if(par)tks(s,X(v),y+24,titikRibu(v),{s:11});
   }
   (g.busur||[]).forEach(function(r){
-    var xa=X(r.dari),xb=X(r.ke),mid=(xa+xb)/2,tinggi=Math.min(34,10+Math.abs(xb-xa)/6);
+    var xa=X(r.dari),xb=X(r.ke),mid=(xa+xb)/2,tinggi=Math.max(24,Math.min(34,10+Math.abs(xb-xa)/6));
     sg('path',{d:'M'+xa+' '+(y-4)+' Q'+mid+' '+(y-4-tinggi*1.6)+' '+xb+' '+(y-4),fill:'none',stroke:'#d94f3d','stroke-width':3,'stroke-linecap':'round'},s);
     sg('polygon',{points:xb+','+(y-3)+' '+(xb-6)+','+(y-12)+' '+(xb+6)+','+(y-12),fill:'#d94f3d'},s);
     if(r.l)tks(s,mid,y-8-tinggi*0.8-4,r.l,{s:12,c:'#d94f3d'});
@@ -391,6 +412,58 @@ GBR.susun=function(g){
 /* kartu angka */
 GBR.kartu=function(g){
   var w=el('div','mq-kartu');g.d.forEach(function(x){w.appendChild(el('span',null,String(x)))});return w;
+};
+
+/* balok nilai tempat: ratusan (kotak biru), puluhan (batang hijau), satuan (kubus kuning) */
+GBR.blok=function(g){
+  var n=g.n,jum=[Math.floor(n/100)%10,Math.floor(n/10)%10,n%10],kls=['r','p','s'],nama=['ratusan','puluhan','satuan'];
+  var w=el('div','mq-blok');
+  jum.forEach(function(j,i){
+    var d=el('div','mq-bg'),isi=el('div','isi '+kls[i]);
+    for(var k=0;k<j;k++)isi.appendChild(el('span','b'));
+    d.appendChild(isi);d.appendChild(el('div','cap',j+' '+nama[i]));w.appendChild(d);
+  });
+  if(g.label){var c=el('div','mq-kolom');c.appendChild(w);c.appendChild(el('div','mq-cap',g.label));return c}
+  return w;
+};
+
+/* soal bersusun: penjumlahan atau pengurangan, dengan catatan simpanan/pinjaman di atas kolom */
+GBR.kolom=function(g){
+  var w=el('div','mq-kol');
+  function digit(n){var t=String(n);return new Array(5-t.length).join(' ')+t}
+  function baris(op,teks,kls){
+    w.appendChild(el('span','op',op));
+    for(var i=0;i<4;i++){
+      var ch=teks.charAt(i);
+      w.appendChild(el('span','c'+(g.sorot===i?' sorot':'')+((kls||ch==='?')?' q':''),ch===' '?' ':ch));
+    }
+  }
+  if(g.tanda&&g.tanda.length){
+    w.appendChild(el('span'));
+    for(var i=0;i<4;i++){
+      var t=null;g.tanda.forEach(function(x){if(x.kol===i)t=x});
+      w.appendChild(el('span','t',t?t.teks:' '));
+    }
+  }
+  baris('',digit(g.a));
+  baris(g.op==='+'?'+':'−',digit(g.b));
+  w.appendChild(el('span','gr'));
+  if(g.hasil===undefined||g.hasil===null)baris('','   ?','q');
+  else baris('',digit(g.hasil));
+  return w;
+};
+
+/* model batang untuk soal cerita: bagian-bagian yang menyusun satu keseluruhan */
+GBR.bar=function(g){
+  var tot=0;g.bagian.forEach(function(b){tot+=b.v});
+  var W=300,x0=10,lebar=W-20,s=kanvas(W,g.atas?92:58,400),x=x0,y=g.atas?40:8;
+  if(g.atas){garisan(sg('path',{d:'M'+x0+' 32 L'+x0+' 24 L'+(x0+lebar)+' 24 L'+(x0+lebar)+' 32',fill:'none'},s),2.5);tks(s,W/2,16,g.atas,{s:13})}
+  g.bagian.forEach(function(b){
+    var wd=b.v/tot*lebar;
+    garisan(sg('rect',{x:x,y:y,width:wd,height:38,fill:PL[b.w||'biru']},s),2.5);
+    tks(s,x+wd/2,y+24,b.l,{s:13,c:'#fff'});x+=wd;
+  });
+  return s;
 };
 
 function gambarItem(g,wadah){
