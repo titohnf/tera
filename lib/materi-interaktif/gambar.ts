@@ -26,7 +26,7 @@ export const nilai = (n: number, d = 4, sorot?: number, ket = false): Gambar => 
 export const baris = (b: { e: string; n: number; l: string }[], skala?: string): Gambar => ({ k: 'baris', baris: b, ...(skala ? { skala } : {}) })
 export const pola = (s: string[], hilang: number[] = [], kol?: number): Gambar => ({ k: 'pola', s, hilang, ...(kol ? { kol } : {}) })
 export const bangun = (b: string, w = 'biru', l?: string): Gambar => ({ k: 'bangun', b, w, ...(l ? { l } : {}) })
-export const bangunDaftar = (daftar: { b: string; w?: string; l?: string }[]): Gambar => ({ k: 'bangun', daftar })
+export const bangunDaftar = (daftar: { b: string; w?: string; l?: string; r?: number }[]): Gambar => ({ k: 'bangun', daftar })
 export const garis = (a: number, b: number, langkah: number, o: { lab?: number; titik?: { v: number; w?: string; l?: string }[]; busur?: { dari: number; ke: number; l?: string }[] } = {}): Gambar => ({ k: 'garis', a, b, langkah, ...o })
 export const kerangka = (isi: number, luar = 0, k = 1): Gambar => ({ k: 'kerangka', isi, luar, kerangka: k })
 export const gabung = (e: string, a: number, b: number, op: '+' | '-'): Gambar => ({ k: 'gabung', e, a, b, op })
@@ -52,6 +52,10 @@ export const kelompok = (e: string, k: number, n: number, o: { sisa?: number; pl
 export const timbang = (k: number, p: number, m: number, n: number): Gambar => ({ k: 'timbang', kantong: k, plus: p, minus: m, kanan: n })
 /** Tabel mendatar: tiap baris diawali label, mis. posisi dan nilai suku pola. */
 export const tabel = (baris: (string | number)[][]): Gambar => ({ k: 'tabel', baris })
+/** Jaring-jaring: kubus, tabung, limas, atau prisma. */
+export const jaring = (jenis: 'kubus' | 'tabung' | 'limas' | 'prisma'): Gambar => ({ k: 'jaring', jenis })
+/** Dua tampak sebuah benda: dari atas dan dari samping (nama bangun datar). */
+export const pandang = (atas: string, samping: string): Gambar => ({ k: 'pandang', atas, samping })
 export const bar = (bagian: { l: string; v: number; w?: string }[], atas?: string): Gambar => ({ k: 'bar', bagian, ...(atas ? { atas } : {}) })
 
 export const CSS_GAMBAR = String.raw`
@@ -182,8 +186,9 @@ GBR.nilai=function(g){
 };
 
 /* bangun datar dan bangun ruang */
-function bangunSvg(b,warna){
-  var s=sg('svg',{viewBox:'0 0 120 120','aria-hidden':'true'}),c=PL[warna]||PL.biru;
+function bangunSvg(b,warna,rot){
+  var svg0=sg('svg',{viewBox:'0 0 120 120','aria-hidden':'true'}),c=PL[warna]||PL.biru;
+  var s=rot?sg('g',{transform:'rotate('+rot+' 60 60)'},svg0):svg0;
   function poli(pts,fill,ov,op){garisan(sg('polygon',{points:pts,fill:fill},s));if(ov)sg('polygon',{points:pts,fill:ov,'fill-opacity':op},s)}
   if(b==='lingkaran')garisan(sg('circle',{cx:60,cy:60,r:48,fill:c},s));
   else if(b==='persegi')garisan(sg('rect',{x:16,y:16,width:88,height:88,rx:4,fill:c},s));
@@ -197,13 +202,24 @@ function bangunSvg(b,warna){
     garisan(sg('line',{x1:30,y1:30,x2:30,y2:94},s));garisan(sg('line',{x1:90,y1:30,x2:90,y2:94},s));
     garisan(sg('ellipse',{cx:60,cy:30,rx:30,ry:11,fill:c},s));sg('ellipse',{cx:60,cy:30,rx:30,ry:11,fill:'#fff','fill-opacity':.4},s);
   }else if(b==='kerucut'){garisan(sg('ellipse',{cx:60,cy:96,rx:36,ry:12,fill:c},s));poli('24,96 96,96 60,14',c);sg('polygon',{points:'60,14 96,96 60,96',fill:'#000','fill-opacity':.2},s)}
+  else if(b==='jajargenjang')poli('30,34 112,34 90,92 8,92',c);
+  else if(b==='belahketupat')poli('60,2 102,60 60,118 18,60',c);
+  else if(b==='trapesium')poli('40,32 82,32 112,92 8,92',c);
+  else if(b==='segitigasiku')poli('16,14 16,104 106,104',c);
+  else if(b==='limas'){
+    poli('18,98 90,106 112,80 40,72',c,'#fff',.55);poli('62,12 18,98 90,106',c);poli('62,12 90,106 112,80',c,'#000',.25);
+    garisan(sg('line',{x1:18,y1:98,x2:40,y2:72,'stroke-dasharray':'4 4'},s),2);garisan(sg('line',{x1:40,y1:72,x2:112,y2:80,'stroke-dasharray':'4 4'},s),2);garisan(sg('line',{x1:62,y1:12,x2:40,y2:72,'stroke-dasharray':'4 4'},s),2);
+  }else if(b==='prisma'){
+    poli('46,76 110,76 82,24 18,24',c,'#fff',.4);poli('12,102 76,102 46,50',c);poli('76,102 110,76 82,24 46,50',c,'#000',.25);
+    garisan(sg('line',{x1:12,y1:102,x2:46,y2:76,'stroke-dasharray':'4 4'},s),2);
+  }
   else throw new Error('bangun tidak dikenal: '+b);
-  return s;
+  return svg0;
 }
 GBR.bangun=function(g){
   var w=el('div','mq-row');
   (g.daftar||[g]).forEach(function(d){
-    var c=el('div','mq-kolom'),s=bangunSvg(d.b,d.w);s.style.width='104px';s.style.height='104px';c.appendChild(s);
+    var c=el('div','mq-kolom'),s=bangunSvg(d.b,d.w,d.r);s.style.width='104px';s.style.height='104px';c.appendChild(s);
     if(d.l)c.appendChild(el('div','mq-cap',d.l));w.appendChild(c);
   });
   return w;
@@ -523,6 +539,36 @@ GBR.tabel=function(g){
     t.appendChild(tr);
   });
   return t;
+};
+
+/* jaring-jaring: bentuk datar yang jika dilipat menjadi bangun ruang */
+GBR.jaring=function(g){
+  var s=kanvas(240,150,320),c='#4a7bd0',j=g.jenis;
+  function kt(x,y,w,h,w2){garisan(sg('rect',{x:x,y:y,width:w,height:h,fill:PL[w2||'biru'],'fill-opacity':.85},s),2.5)}
+  function sg3(a,w2){garisan(sg('polygon',{points:a,fill:PL[w2||'kuning'],'fill-opacity':.85},s),2.5)}
+  if(j==='kubus'){var u=30,x0=60,y0=8;[[1,0],[0,1],[1,1],[2,1],[3,1],[1,2]].forEach(function(p){kt(x0+p[0]*u,y0+p[1]*u,u,u)})}
+  else if(j==='tabung'){
+    kt(40,52,160,46,'hijau');
+    garisan(sg('circle',{cx:80,cy:30,r:22,fill:PL.biru,'fill-opacity':.85},s),2.5);
+    garisan(sg('circle',{cx:160,cy:120,r:22,fill:PL.biru,'fill-opacity':.85},s),2.5);
+  }else if(j==='limas'){
+    kt(90,50,50,50,'hijau');
+    sg3('90,50 140,50 115,8');sg3('140,50 140,100 182,75');sg3('140,100 90,100 115,142');sg3('90,100 90,50 48,75');
+  }else{
+    kt(60,45,40,60,'hijau');kt(100,45,40,60,'hijau');kt(140,45,40,60,'hijau');
+    sg3('100,45 140,45 120,8','biru');sg3('100,105 140,105 120,142','biru');
+  }
+  return s;
+};
+
+/* dua tampak benda: dari atas dan dari samping */
+GBR.pandang=function(g){
+  var w=el('div','mq-row');
+  [['tampak atas',g.atas],['tampak samping',g.samping]].forEach(function(x){
+    var c=el('div','mq-kolom'),s=bangunSvg(x[1],'kuning');s.style.width='96px';s.style.height='96px';c.appendChild(s);
+    c.appendChild(el('div','mq-cap',x[0]));w.appendChild(c);
+  });
+  return w;
 };
 
 /* soal bersusun: penjumlahan atau pengurangan, dengan catatan simpanan/pinjaman di atas kolom */
