@@ -25,6 +25,8 @@ import { DATA_AC04 } from './latihan/ac04'
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-04 di Misi.
  *
+ * Stasiun tambahan (sx): cari satuan pola terkecil, lalu isi bagian yang hilang di tengah.
+ *
  * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
  * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
  * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac04.ts`),
@@ -138,6 +140,17 @@ button.cell.bad{border-color:var(--bad);animation:goyang .4s}
 .slot.w3{background:#e0a93b;border:3px solid var(--ink)}
 .slot.w4{background:#2e9a63;border:3px solid var(--ink)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* stasiun tambahan: satuan pola dan bagian hilang di tengah */
+.sp-grid{display:grid;gap:6px;justify-content:center}
+.sp-c{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.7rem;line-height:1;background:var(--card)}
+.sp-c.q{border:2px dashed var(--ikat);background:var(--soft);font-family:var(--display);font-weight:800}
+.sp-c.isi{animation:pop .3s}
+.sp-c.kol{background:var(--soft);border-color:var(--lidi)}
+.sp-pil{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sp-pil button{font:inherit;font-family:var(--display);font-weight:800;font-size:1.2rem;min-height:52px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;padding:6px 14px;touch-action:manipulation}
+.sp-pil button.sim{font-size:2rem;min-width:60px;padding:4px 10px}
+.sp-pil button.bad{animation:goyang .4s;border-color:var(--bad)}
 </style>
 </head>
 <body>
@@ -194,6 +207,18 @@ button.cell.bad{border-color:var(--bad);animation:goyang .4s}
     <div class="panel"><div class="seq" id="s3seq"></div></div>
     <div class="msg" id="s3msg">Lihat polanya dulu.</div>
     <div class="cta"><button class="big main" id="s3next" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- 3b: satuan pola dan bagian hilang di tengah -->
+  <section class="screen" id="sx">
+    <p class="say" id="sxsay"></p>
+    <div class="dots" id="sxdots"></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+      <div class="sp-grid" id="sxgrid"></div>
+      <div class="sp-pil" id="sxpil"></div>
+    </div>
+    <div class="msg" id="sxmsg"></div>
+    <div class="cta"><button class="big main" id="sxnext" disabled>Lanjut</button></div>
   </section>
 
   <!-- 4: tantangan -->
@@ -276,7 +301,7 @@ $('suara').onclick=function(){
 };
 
 /* ---- navigasi ---- */
-var urut=['intro','s1','s2','s3','s4','akhir'];
+var urut=['intro','s1','s2','s3','sx','s4','akhir'];
 var cur='intro';
 function show(id){
   clearTimers();
@@ -291,7 +316,7 @@ function show(id){
   window.scrollTo(0,0);
   if(id==='s1')mulaiS1();
   if(id==='s2')mulaiS2();
-  if(id==='s3')mulaiS3();
+  if(id==='s3')mulaiS3();if(id==='sx')mulaiSx();
   if(id==='s4')mulaiS4();
   if(id==='akhir')tampilAkhir();
   if(id==='bonus')mulaiBonus();
@@ -446,7 +471,79 @@ function ronde3(){
   $('s3next').disabled=true;$('s3msg').className='msg';$('s3msg').textContent='Lihat polanya dulu.';
   setKata('Satu gambar salah. Ketuk yang beda.');
 }
-$('s3next').onclick=function(){if(r3<KODE.length-1){r3++;ronde3()}else show('s4')};
+$('s3next').onclick=function(){if(r3<KODE.length-1){r3++;ronde3()}else show('sx')};
+
+/* ---- stasiun tambahan: cari satuan pola, lalu isi bagian yang hilang di tengah ---- */
+var SIM=['\u{1F534}','\u{1F535}','\u{1F7E2}','\u{1F7E1}'];
+var RP=[{kode:[0,1,2],len:9,hilang:4},{kode:[0,0,1],len:9,hilang:5},{kode:[0,1],len:8,hilang:3},{kode:[0,1,1,2],len:12,hilang:6}];
+var rpi=0,sim=[],seqP=[],k0=0,fase=0;
+function msgP(k,t){var m=$('sxmsg');m.className='msg'+(k?' '+k:'');m.textContent=t}
+function mulaiSx(){rpi=0;rondeP()}
+function rondeP(){
+  var d=RP[rpi],w=$('sxdots');clear(w);for(var j=0;j<RP.length;j++)w.appendChild(el('i',j<=rpi?'on':''));
+  sim=shuffle(SIM).slice(0,3);k0=d.kode.length;fase=1;
+  seqP=[];for(var i=0;i<d.len;i++)seqP.push(d.kode[i%k0]);
+  $('sxsay').textContent='Ada satu yang hilang. Cari satuan polanya dulu.';
+  gambarP(0);
+  var p=$('sxpil');clear(p);
+  [2,3,4].forEach(function(k){
+    var b=el('button',null,k+' unsur');
+    b.onclick=function(){pilihK(k,b)};
+    p.appendChild(b);
+  });
+  $('sxnext').disabled=true;
+  msgP('','Satuan pola ada berapa unsur? Coba pilih.');
+  setKata('Ada satu yang hilang. Cari satuan polanya dulu.');
+}
+function gambarP(k){
+  var d=RP[rpi],g=$('sxgrid');clear(g);
+  var kol=k||d.len;
+  g.style.gridTemplateColumns='repeat('+Math.min(kol,d.len)+',44px)';
+  var hl=d.hilang%k0;
+  seqP.forEach(function(v,i){
+    var c;
+    if(i===d.hilang&&fase<3){c=el('div','sp-c q','?')}
+    else c=el('div','sp-c'+(fase===3&&k&&i%k===hl?' kol':''),sim[v]);
+    g.appendChild(c);
+  });
+}
+function pilihK(k,b){
+  if(fase!==1)return;
+  var d=RP[rpi],sahih=true;
+  for(var i=k;i<seqP.length;i++){if(i===d.hilang||i-k===d.hilang)continue;if(seqP[i]!==seqP[i-k])sahih=false}
+  if(k===k0){
+    fase=2;gambarP(k);
+    var t='Betul! Satuan polanya '+k+' unsur. Sekarang lihat kolom yang sama. Apa yang hilang?';
+    msgP('good',t);setKata(t);
+    $('sxsay').textContent='Pilih yang hilang.';
+    var p=$('sxpil');clear(p);
+    var pakai=[];seqP.forEach(function(v){if(pakai.indexOf(v)<0)pakai.push(v)});
+    shuffle(pakai).forEach(function(v){
+      var bt=el('button','sim',sim[v]);bt.setAttribute('aria-label','pilihan');
+      bt.onclick=function(){pilihIsi(v,bt)};
+      p.appendChild(bt);
+    });
+  }else{
+    b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');
+    var t2=(sahih&&k>k0)?'Itu juga berulang, tapi bukan yang terkecil. Coba yang lebih sedikit.':'Kelompoknya tidak sama. Coba jumlah unsur yang lain.';
+    msgP('warn',t2);setKata(t2);
+  }
+}
+function pilihIsi(v,b){
+  if(fase!==2)return;
+  var d=RP[rpi],benar=seqP[d.hilang];
+  if(v===benar){
+    fase=3;gambarP(k0);
+    var kolom=d.hilang%k0+1;
+    var t='Betul! Kolom ke-'+kolom+' selalu berisi '+sim[benar]+'. Tempat kosong ada di urutan ke-'+kolom+' dalam satuan pola.';
+    msgP('good',t);setKata('Betul! Tempat kosong ada di urutan ke-'+kolom+' dalam satuan pola.');$('sxnext').disabled=false;
+  }else{
+    b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');
+    var t2='Hampir! Lihat kolom yang sama di baris lain. Jangan menyalin yang sebelumnya.';
+    msgP('warn',t2);setKata(t2);
+  }
+}
+$('sxnext').onclick=function(){if(rpi<RP.length-1){rpi++;rondeP()}else show('s4')};
 
 /* ---- tantangan: 4 soal, balasan langsung ---- */
 function soalGambar(kode,len){

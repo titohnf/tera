@@ -28,6 +28,8 @@ import { DATA_AC06 } from './latihan/ac06'
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-06 di Misi.
  *
+ * Stasiun tambahan (sx): dua petunjuk lalu urutkan tiga benda (sifat transitif).
+ *
  * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
  * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
  * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac06.ts`),
@@ -142,6 +144,17 @@ button.big.hint{animation:denyut 1s infinite}
 .chip{font:inherit;font-weight:800;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:8px 14px;cursor:pointer;min-height:44px}
 .chip.on{border-color:var(--ikat);background:var(--soft)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* stasiun tambahan: sifat transitif (A > B dan B > C) */
+.tr-petunjuk{display:flex;flex-direction:column;gap:8px}
+.tr-petunjuk div{background:var(--soft);border:2px solid var(--lidi);border-radius:14px;padding:10px 12px;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.tr-daftar{display:flex;flex-direction:column;gap:10px}
+.tr-opt{font:inherit;font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:16px;min-height:58px;padding:6px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;touch-action:manipulation}
+.tr-opt .no{width:34px;height:34px;border-radius:50%;background:var(--ok);color:#fff;font-size:1.1rem;display:none;align-items:center;justify-content:center}
+.tr-opt.sudah{opacity:.6;border-color:var(--ok)}
+.tr-opt.sudah .no{display:flex}
+.tr-opt.bad{animation:goyang .4s;border-color:var(--bad)}
+.tr-bar{height:20px;border-radius:99px;border:3px solid var(--ink)}
 </style>
 </head>
 <body>
@@ -203,6 +216,16 @@ button.big.hint{animation:denyut 1s infinite}
     <div class="pilih2" id="s3pilih"></div>
     <div class="msg" id="s3msg">Ketuk Mulai, lihat siapa selesai belakangan.</div>
     <div class="cta"><button class="big main" id="s3next" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- 3b: sifat transitif -->
+  <section class="screen" id="sx">
+    <p class="say" id="sxsay"></p>
+    <div class="dots" id="sxdots"></div>
+    <div class="tr-petunjuk" id="sxpet"></div>
+    <div class="tr-daftar" id="sxdaftar"></div>
+    <div class="msg" id="sxmsg"></div>
+    <div class="cta"><button class="big main" id="sxnext" disabled>Lanjut</button></div>
   </section>
 
   <!-- 4: tantangan -->
@@ -271,7 +294,7 @@ $('suara').onclick=function(){
 };
 
 /* ---- navigasi ---- */
-var urut=['intro','s1','s2','s3','s4','akhir'];
+var urut=['intro','s1','s2','s3','sx','s4','akhir'];
 var cur='intro';
 function show(id){
   clearTimers();
@@ -286,7 +309,7 @@ function show(id){
   window.scrollTo(0,0);
   if(id==='s1')mulaiS1();
   if(id==='s2')mulaiS2();
-  if(id==='s3')mulaiS3();
+  if(id==='s3')mulaiS3();if(id==='sx')mulaiSx();
   if(id==='s4')mulaiS4();
   if(id==='akhir')tampilAkhir();
   if(id==='bonus')mulaiBonus();
@@ -443,7 +466,49 @@ $('s3mulai').onclick=function(){
     msg('s3msg','','Mana yang lebih lama? Ketuk.');setKata('Mana yang lebih lama? Ketuk.');
   },maks*1000+250);
 };
-$('s3next').onclick=function(){if(r3<PAS3.length-1){r3++;ronde3()}else show('s4')};
+$('s3next').onclick=function(){if(r3<PAS3.length-1){r3++;ronde3()}else show('sx')};
+
+/* ---- stasiun tambahan: dua petunjuk, urutkan tiga benda (transitif) ---- */
+var TR=[
+  {nama:['Tongkat A','Tongkat B','Tongkat C'],kata:'panjang'},
+  {nama:['Batu P','Batu Q','Batu R'],kata:'berat'},
+  {nama:['Kegiatan 1','Kegiatan 2','Kegiatan 3'],kata:'lama'}
+];
+var tri=0,urutT=[],kunciT=0;
+function msgT(k,t){var m=$('sxmsg');m.className='msg'+(k?' '+k:'');m.textContent=t}
+function mulaiSx(){TR=shuffle(TR);tri=0;rondeT()}
+function rondeT(){
+  var d=TR[tri],w=$('sxdots');clear(w);for(var j=0;j<TR.length;j++)w.appendChild(el('i',j<=tri?'on':''));
+  urutT=shuffle(d.nama);kunciT=0;
+  var terbesar=urutT[0],tengah=urutT[1],terkecil=urutT[2];
+  $('sxsay').textContent='Urutkan dari yang paling '+d.kata+'.';
+  var p=$('sxpet');clear(p);
+  shuffle([terbesar+' lebih '+d.kata+' dari '+tengah+'.',tengah+' lebih '+d.kata+' dari '+terkecil+'.']).forEach(function(t){p.appendChild(el('div',null,t))});
+  var l=$('sxdaftar');clear(l);
+  shuffle(d.nama).forEach(function(n){
+    var b=el('button','tr-opt');b.appendChild(el('span',null,n));b.appendChild(el('span','no'));
+    b.onclick=function(){
+      if(b.classList.contains('sudah')||kunciT>=3)return;
+      if(n===urutT[kunciT]){
+        kunciT++;b.classList.add('sudah');b.querySelector('.no').textContent=String(kunciT);
+        if(kunciT===3)selesaiT();else msgT('good','Betul! Berikutnya.');
+      }else{
+        b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');
+        var t='Cari yang paling '+d.kata+' dulu: ia lebih '+d.kata+' dari yang lain di petunjuk.';
+        msgT('warn',t);setKata(t);
+      }
+    };
+    l.appendChild(b);
+  });
+  $('sxnext').disabled=true;msgT('','Baca dua petunjuk, lalu ketuk satu per satu.');
+  setKata($('sxsay').textContent);
+}
+function selesaiT(){
+  var d=TR[tri];
+  var t=urutT[0]+' > '+urutT[1]+' > '+urutT[2]+'. Jadi '+urutT[0]+' juga lebih '+d.kata+' dari '+urutT[2]+', walau tidak ada petunjuk langsungnya.';
+  msgT('good',t);setKata(t);$('sxnext').disabled=false;
+}
+$('sxnext').onclick=function(){if(tri<TR.length-1){tri++;rondeT()}else show('s4')};
 
 /* ---- tantangan: 4 soal, balasan langsung ---- */
 function namaPasang(p){return p.e+' '+p.n}

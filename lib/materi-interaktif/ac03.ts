@@ -24,6 +24,8 @@ import { DATA_AC03 } from './latihan/ac03'
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-03 di Misi.
  *
+ * Stasiun tambahan (sx): kerangka sepuluh untuk strategi buat sepuluh dan kurangi lewat sepuluh.
+ *
  * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
  * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
  * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac03.ts`),
@@ -128,6 +130,17 @@ input[type=range]{width:100%;accent-color:var(--ikat);height:40px}
 .blk{display:inline-block;width:14px;height:14px;border-radius:3px;margin:1px}
 .blk.a{background:#4a7bd0}.blk.b{background:#d94f3d}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* stasiun tambahan: kerangka sepuluh */
+.tf{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:320px;margin:0 auto;width:100%}
+.tf .sl{aspect-ratio:1;border:3px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:4px;background:transparent;cursor:default}
+.tf button.sl{cursor:pointer;touch-action:manipulation}
+.dt{display:block;width:100%;aspect-ratio:1;border-radius:50%;background:var(--ikat);border:3px solid var(--ink)}
+.dt.k{background:var(--lidi)}
+.kt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:52px;align-items:center}
+.kt .lbl{width:100%;text-align:center;color:var(--muted);font-size:.95rem}
+.kt button{width:48px;height:48px;border-radius:50%;border:3px solid var(--ink);background:var(--lidi);cursor:pointer;padding:0;touch-action:manipulation}
+.kt button.hint,.tf button.hint{animation:denyut 1s infinite}
 </style>
 </head>
 <body>
@@ -190,6 +203,25 @@ input[type=range]{width:100%;accent-color:var(--ikat);height:40px}
     <div class="panel"><div class="telur" id="s3telur"></div></div>
     <div class="msg" id="s3msg">Ketuk tempat yang kosong.</div>
     <div class="cta"><button class="big main" id="s3next" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- 3b: buat sepuluh dengan kerangka sepuluh -->
+  <section class="screen" id="sx">
+    <p class="say" id="sxsay"></p>
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <div class="num" id="sxn" style="font-size:2.6rem"></div>
+      <div class="dots" id="sxdots"></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div class="tf" id="sxframe"></div>
+      <div class="kt" id="sxkt"></div>
+      <div class="kt" id="sxluar"></div>
+    </div>
+    <div class="msg" id="sxmsg"></div>
+    <div class="cta">
+      <button class="big main" id="sxnext" disabled>Lanjut</button>
+      <button class="big soft" id="sxulang">Mulai lagi</button>
+    </div>
   </section>
 
   <!-- 4: tantangan -->
@@ -261,7 +293,7 @@ $('suara').onclick=function(){
 };
 
 /* ---- navigasi ---- */
-var urut=['intro','s1','s2','s3','s4','akhir'];
+var urut=['intro','s1','s2','s3','sx','s4','akhir'];
 var cur='intro';
 function show(id){
   clearTimers();
@@ -276,7 +308,7 @@ function show(id){
   window.scrollTo(0,0);
   if(id==='s1')lompat1.mulai();
   if(id==='s2')lompat2.mulai();
-  if(id==='s3')mulaiS3();
+  if(id==='s3')mulaiS3();if(id==='sx')mulaiSx();
   if(id==='s4')mulaiS4();
   if(id==='akhir')tampilAkhir();
   if(id==='bonus')renderBonus();
@@ -388,7 +420,78 @@ function hitungS3(n,awal){
     $('s3msg').className='msg';$('s3msg').textContent='Kurang '+(10-n-tambah)+' lagi.';
   }
 }
-$('s3next').onclick=function(){if(tr<AWAL.length-1){tr++;rondeTelur()}else show('s4')};
+$('s3next').onclick=function(){if(tr<AWAL.length-1){tr++;rondeTelur()}else show('sx')};
+
+/* ---- stasiun tambahan: buat sepuluh (tambah) dan kurangi lewat sepuluh (kurang) ---- */
+var SX=[{op:'+',a:8,b:5},{op:'-',a:13,b:5},{op:'+',a:7,b:6},{op:'-',a:15,b:8}];
+var rx=0,fr=[],kg=0,lr=0,hp=0,doneX=false,penuhX=false;
+function msgX(k,t){var m=$('sxmsg');m.className='msg'+(k?' '+k:'');m.textContent=t}
+function mulaiSx(){rx=0;rondeX()}
+function rondeX(){
+  var d=SX[rx],tambah=d.op==='+';
+  var w=$('sxdots');clear(w);for(var j=0;j<SX.length;j++)w.appendChild(el('i',j<=rx?'on':''));
+  $('sxn').textContent=d.a+(tambah?' + ':' − ')+d.b;
+  $('sxsay').textContent=tambah?'Isi kerangka sampai 10, baru tambah sisanya.':'Ambil dulu yang di luar kerangka, sampai tinggal 10.';
+  fr=[];for(var i=0;i<10;i++)fr.push(tambah?i<d.a:true);
+  kg=tambah?d.b:d.a-10;lr=0;hp=0;doneX=false;penuhX=false;
+  gambarX();
+  $('sxnext').disabled=true;
+  msgX('',tambah?'Ketuk titik kuning untuk mengisi kerangka.':'Ketuk titik kuning di luar untuk mengambilnya.');
+  setKata($('sxsay').textContent);
+}
+function gambarX(){
+  var d=SX[rx],tambah=d.op==='+';
+  var f=$('sxframe');clear(f);
+  fr.forEach(function(isi,i){
+    var c;
+    if(!tambah&&isi){c=el('button','sl');c.setAttribute('aria-label','titik');c.onclick=function(){ambilFrame(i)}}
+    else c=el('div','sl');
+    if(isi)c.appendChild(el('span','dt'));
+    f.appendChild(c);
+  });
+  var k=$('sxkt');clear(k);
+  if(kg>0){
+    k.appendChild(el('div','lbl',tambah?'Yang akan ditambah':'Di luar kerangka'));
+    for(var i=0;i<kg;i++){var b=el('button',rx===0&&i===0?'hint':'');b.setAttribute('aria-label','titik kuning');b.onclick=function(){ketukKt()};k.appendChild(b)}
+  }
+  var l=$('sxluar');clear(l);
+  if(lr>0){l.appendChild(el('div','lbl','Di luar kerangka'));for(var j=0;j<lr;j++){var s=el('span','dt k');s.style.width='34px';s.style.display='inline-block';l.appendChild(s)}}
+}
+function ketukKt(){
+  if(doneX)return;
+  var d=SX[rx];
+  if(d.op==='+'){
+    var kosong=fr.indexOf(false);
+    if(kosong>=0)fr[kosong]=true;else lr++;
+    kg--;gambarX();
+    if(!fr.some(function(x){return !x})&&!penuhX){
+      penuhX=true;var dipakai=10-d.a;
+      msgX('good',d.a+' + '+dipakai+' = 10. Kerangka penuh! Tinggal '+(d.b-dipakai)+' lagi.');setKata(d.a+' tambah '+dipakai+' sama dengan sepuluh.');
+    }
+    if(kg===0&&penuhX)selesaiX();
+  }else{
+    kg--;hp++;gambarX();
+    if(kg===0){
+      msgX('good',d.a+' − '+(d.a-10)+' = 10. Kurangi '+(d.b-hp)+' lagi dari kerangka.');setKata('Tinggal sepuluh. Kurangi '+(d.b-hp)+' lagi.');
+      if(hp===d.b)selesaiX();
+    }
+  }
+}
+function ambilFrame(i){
+  var d=SX[rx];if(doneX)return;
+  if(kg>0){msgX('warn','Ambil dulu yang di luar kerangka.');return}
+  fr[i]=false;hp++;gambarX();
+  if(hp===d.b)selesaiX();else msgX('',' Kurangi '+(d.b-hp)+' lagi.');
+}
+function selesaiX(){
+  var d=SX[rx],tambah=d.op==='+';doneX=true;
+  var hasil=tambah?d.a+d.b:d.a-d.b;
+  var sisa=tambah?d.b-(10-d.a):d.b-(d.a-10);
+  var t=tambah?'10 + '+sisa+' = '+hasil+'. Jadi '+d.a+' + '+d.b+' = '+hasil+'.':'10 − '+sisa+' = '+hasil+'. Jadi '+d.a+' − '+d.b+' = '+hasil+'.';
+  msgX('good',t);setKata(t);$('sxnext').disabled=false;
+}
+$('sxulang').onclick=function(){rondeX()};
+$('sxnext').onclick=function(){if(rx<SX.length-1){rx++;rondeX()}else show('s4')};
 
 /* ---- tantangan: 4 soal, balasan langsung ---- */
 function pilihan(r){

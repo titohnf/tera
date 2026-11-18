@@ -25,6 +25,8 @@ import { DATA_AC02 } from './latihan/ac02'
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-02 di Misi.
  *
+ * Stasiun tambahan (sx): dua anak berhadapan, kiri dan kanan berbalik (soal sudut pandang).
+ *
  * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
  * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
  * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac02.ts`),
@@ -138,6 +140,13 @@ svg{color:var(--ink);display:block}
 .bagian{cursor:pointer}
 .bagian:focus-visible{outline:3px solid var(--ikat);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* stasiun tambahan: dua anak berhadapan (sudut pandang) */
+.bh-peta svg{width:100%;height:auto;max-width:420px;margin:0 auto}
+.bh-opsi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bh-opsi button{font:inherit;font-family:var(--display);font-weight:800;font-size:1.4rem;min-height:58px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;touch-action:manipulation}
+.bh-opsi button.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.bh-opsi button.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
 </style>
 </head>
 <body>
@@ -188,6 +197,17 @@ svg{color:var(--ink);display:block}
     <div class="panel"><div id="s3adegan"></div></div>
     <div class="msg" id="s3msg">Ketuk tempat yang tepat.</div>
     <div class="cta"><button class="big main" id="s3next" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- 3b: dua anak berhadapan -->
+  <section class="screen" id="sx">
+    <p class="say">Dua anak berhadapan. Lihat dari sudut pandang mereka.</p>
+    <div class="dots" id="sxdots"></div>
+    <div class="panel bh-peta"><div id="sxpeta"></div></div>
+    <p class="say" id="sxtanya" style="font-size:1.35rem"></p>
+    <div class="bh-opsi" id="sxopsi"></div>
+    <div class="msg" id="sxmsg"></div>
+    <div class="cta"><button class="big main" id="sxnext" disabled>Lanjut</button></div>
   </section>
 
   <!-- 4: tantangan -->
@@ -297,7 +317,7 @@ $('suara').onclick=function(){
 };
 
 /* ---- navigasi ---- */
-var urut=['intro','s1','s2','s3','s4','akhir'];
+var urut=['intro','s1','s2','s3','sx','s4','akhir'];
 var cur='intro';
 function show(id){
   clearTimers();
@@ -312,7 +332,7 @@ function show(id){
   window.scrollTo(0,0);
   if(id==='s1')mulaiS1();
   if(id==='s2')mulaiS2();
-  if(id==='s3')mulaiS3();
+  if(id==='s3')mulaiS3();if(id==='sx')mulaiSx();
   if(id==='s4')mulaiS4();
   if(id==='akhir')tampilAkhir();
   if(id==='bonus')mulaiBonus();
@@ -474,8 +494,63 @@ function rondePosisi(){
   setKata('Taruh bola di '+w+' kotak.');
 }
 $('s3next').onclick=function(){
-  if(pr<POSISI.length-1){pr++;rondePosisi()}else show('s4');
+  if(pr<POSISI.length-1){pr++;rondePosisi()}else show('sx');
 };
+
+/* ---- stasiun tambahan: sudut pandang dua anak yang berhadapan ---- */
+var BH=[
+  {t:'Dari Rani, Dodi ada di ...',a:'depan',bola:null,e:'Rani dan Dodi saling berhadapan. Dodi ada di depan Rani.'},
+  {t:'Dari Dodi, Rani ada di ...',a:'depan',bola:null,e:'Berhadapan: Rani juga ada di depan Dodi.'},
+  {t:'Bola ada di KANAN Rani. Dari Dodi, bola ada di ...',a:'kiri',bola:'rani',e:'Dodi menghadap ke arah yang berlawanan. Kanan Rani menjadi KIRI Dodi.'},
+  {t:'Bola ada di KIRI Dodi. Dari Rani, bola ada di ...',a:'kanan',bola:'dodi',e:'Kiri Dodi menjadi KANAN Rani, karena mereka berhadapan.'},
+  {t:'Bola ada di DEPAN Rani, di antara mereka. Dari Dodi, bola ada di ...',a:'depan',bola:'tengah',e:'Bola ada di antara mereka, jadi juga di depan Dodi.'}
+];
+var bhi=0,kunciB=false;
+function msgB(k,t){var m=$('sxmsg');m.className='msg'+(k?' '+k:'');m.textContent=t}
+function petaB(bola){
+  var NS='http://www.w3.org/2000/svg',s=document.createElementNS(NS,'svg');
+  s.setAttribute('viewBox','0 0 300 190');s.setAttribute('aria-hidden','true');
+  function e(tag,a,parent){var x=document.createElementNS(NS,tag);for(var k in a)x.setAttribute(k,a[k]);(parent||s).appendChild(x);return x}
+  function orang(x,warna,nama,hadap,kananAtas){
+    e('circle',{cx:x,cy:95,r:22,fill:warna,stroke:'currentColor','stroke-width':3});
+    e('polygon',{points:(hadap>0?(x+22)+',88 '+(x+34)+',95 '+(x+22)+',102':(x-22)+',88 '+(x-34)+',95 '+(x-22)+',102'),fill:'currentColor'});
+    var t=e('text',{x:x,y:100,'text-anchor':'middle','font-size':13,'font-weight':800,fill:'#fff'});t.textContent=nama;
+    var atas=95-42,bawah=95+42;
+    var yKa=kananAtas?atas:bawah,yKi=kananAtas?bawah:atas;
+    e('circle',{cx:x,cy:yKa,r:8,fill:'none',stroke:'currentColor','stroke-width':2.5});
+    e('circle',{cx:x,cy:yKi,r:8,fill:'none',stroke:'currentColor','stroke-width':2.5});
+    var a=e('text',{x:x+(hadap>0?-14:14),y:yKa+4,'text-anchor':hadap>0?'end':'start','font-size':11,fill:'currentColor'});a.textContent='kanan';
+    var b=e('text',{x:x+(hadap>0?-14:14),y:yKi+4,'text-anchor':hadap>0?'end':'start','font-size':11,fill:'currentColor'});b.textContent='kiri';
+  }
+  orang(70,'#4a7bd0','Rani',1,false);
+  orang(230,'#2e9a63','Dodi',-1,true);
+  if(bola==='rani')e('circle',{cx:70,cy:95+42,r:10,fill:'#d94f3d',stroke:'currentColor','stroke-width':2.5});
+  if(bola==='dodi')e('circle',{cx:230,cy:95+42,r:10,fill:'#d94f3d',stroke:'currentColor','stroke-width':2.5});
+  if(bola==='tengah')e('circle',{cx:150,cy:95,r:10,fill:'#d94f3d',stroke:'currentColor','stroke-width':2.5});
+  return s;
+}
+function mulaiSx(){bhi=0;rondeB()}
+function rondeB(){
+  var d=BH[bhi],w=$('sxdots');clear(w);for(var j=0;j<BH.length;j++)w.appendChild(el('i',j<=bhi?'on':''));
+  kunciB=false;
+  var p=$('sxpeta');clear(p);p.appendChild(petaB(d.bola));
+  $('sxtanya').textContent=d.t;
+  var o=$('sxopsi');clear(o);
+  ['depan','belakang','kiri','kanan'].forEach(function(x){
+    var b=el('button',null,x);
+    b.onclick=function(){
+      if(kunciB)return;
+      if(x===d.a){
+        kunciB=true;b.classList.add('right');var t='Betul! '+d.e;msgB('good',t);setKata(t);$('sxnext').disabled=false;
+      }else{
+        b.classList.add('wrong');msgB('warn','Hampir! Lihat tangan kanan dan kiri di gambar. Mereka berhadapan, jadi berbalik.');
+      }
+    };
+    o.appendChild(b);
+  });
+  $('sxnext').disabled=true;msgB('','Ketuk jawabannya.');setKata(d.t);
+}
+$('sxnext').onclick=function(){if(bhi<BH.length-1){bhi++;rondeB()}else show('s4')};
 
 /* ---- tantangan: 4 soal, balasan langsung ---- */
 function bangunSoal(){

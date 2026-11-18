@@ -29,6 +29,8 @@ import { DATA_AC07 } from './latihan/ac07'
  * pesan `ayo-berlatih` ke halaman induk (`PenampilMateri`), yang berpindah ke
  * topik AC-07 di Misi.
  *
+ * Stasiun tambahan (sx): piktogram berskala (1 gambar = 2, 5, ...) dan membuatnya.
+ *
  * LATIHAN SESUDAH STASIUN PRAKTIK. Tantangan lama diganti tiga stasiun dari mesin
  * bersama (`bersama.ts`): Benar atau salah, Siapa yang benar, dan Tantangan Misi.
  * Bahannya disusun dari konsep yang diuji bank soal topik ini (`latihan/ac07.ts`),
@@ -145,6 +147,21 @@ button.big:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 .pilihan3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .pilihan3 button{font-size:2.6rem;line-height:1;background:var(--card);border:2px solid var(--line);border-radius:18px;min-height:72px;cursor:pointer;touch-action:manipulation}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* stasiun tambahan: piktogram berskala */
+.sb{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:2px dashed var(--line)}
+.sb .lb{font-size:2rem;width:44px;text-align:center;flex:none;line-height:1}
+.sb .ik{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.sb .ik button{font-size:2rem;line-height:1;background:transparent;border:2px solid var(--line);border-radius:12px;width:50px;height:50px;cursor:pointer;padding:0;touch-action:manipulation}
+.sb .ik button.hit{border-color:var(--ok);background:var(--soft)}
+.sb .tt{font-family:var(--display);font-weight:800;font-size:1.4rem;min-width:3.2em;text-align:right;flex:none}
+.sk-ctrl{display:flex;align-items:center;justify-content:center;gap:14px}
+.sk-ctrl button{width:60px;height:60px;border-radius:50%;border:2px solid var(--ink);background:var(--card);color:var(--ink);font-size:1.8rem;font-family:var(--display);font-weight:800;cursor:pointer}
+.sk-ctrl .nn{font-family:var(--display);font-weight:800;font-size:2rem;min-width:3ch;text-align:center}
+.sk-pil{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sk-pil button{font:inherit;font-family:var(--display);font-weight:800;font-size:1.4rem;min-height:60px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.sk-pil button.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.sk-pil button.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
 </style>
 </head>
 <body>
@@ -202,6 +219,16 @@ button.big:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
     <div class="panel"><div class="pk" id="s4pk"></div></div>
     <div class="msg" id="s4msg">Ketuk satu benda.</div>
     <div class="cta"><button class="big main" id="s4next" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- 3c: piktogram berskala -->
+  <section class="screen" id="sx">
+    <p class="say" id="sxsay"></p>
+    <div class="dots" id="sxdots"></div>
+    <div class="panel"><div id="sxpk"></div></div>
+    <div id="sxkontrol"></div>
+    <div class="msg" id="sxmsg"></div>
+    <div class="cta"><button class="big main" id="sxnext" disabled>Lanjut</button></div>
   </section>
 
   <!-- 5: tantangan -->
@@ -293,7 +320,7 @@ $('suara').onclick=function(){
 };
 
 /* ---- navigasi ---- */
-var urut=['intro','s1','s2','s3','s4','s5','akhir'];
+var urut=['intro','s1','s2','s3','s4','sx','s5','akhir'];
 var cur='intro';
 function show(id){
   clearTimers();
@@ -309,7 +336,7 @@ function show(id){
   if(id==='s1')mulaiS1();
   if(id==='s2')mulaiS2();
   if(id==='s3')mulaiS3();
-  if(id==='s4')mulaiS4();
+  if(id==='s4')mulaiS4();if(id==='sx')mulaiSx();
   if(id==='s5')mulaiS5();
   if(id==='akhir')tampilAkhir();
   if(id==='bonus')mulaiBonus();
@@ -467,7 +494,92 @@ function ronde4(){
   $('s4next').disabled=true;msg('s4msg','','Ketuk satu benda.');
   setKata('Ketuk benda. Gambarnya pindah ke bawah.');
 }
-$('s4next').onclick=function(){if(r4<1){r4++;ronde4()}else show('s5')};
+$('s4next').onclick=function(){if(r4<1){r4++;ronde4()}else show('sx')};
+
+/* ---- stasiun tambahan: piktogram berskala (1 gambar = 2, 5, ...) ---- */
+var RX=[
+  {tipe:'hitung',say:'Satu gambar = 2 anak. Ketuk tiap gambar untuk menghitung.',baris:[{n:'Kucing',e:'\u{1F431}',g:4,s:2}]},
+  {tipe:'hitung',say:'Satu gambar = 5 anak. Ketuk tiap gambar untuk menghitung.',baris:[{n:'Ikan',e:'\u{1F41F}',g:3,s:5}]},
+  {tipe:'banding',say:'Skalanya beda! Hitung keduanya. Mana yang lebih banyak anak?',baris:[{n:'A',e:'\u{1F34E}',g:4,s:2},{n:'B',e:'\u{1F34A}',g:4,s:5}]},
+  {tipe:'buat',say:'Ada 12 anak suka merah. Satu gambar = 4 anak. Berapa gambar?',total:12,s:4,e:'\u{1F534}'},
+  {tipe:'buat',say:'Ada 20 anak suka biru. Satu gambar = 5 anak. Berapa gambar?',total:20,s:5,e:'\u{1F535}'}
+];
+var rxi=0,hitX=[],doneS=false,nBuat=0;
+function msgS(k,t){var m=$('sxmsg');m.className='msg'+(k?' '+k:'');m.textContent=t}
+function mulaiSx(){rxi=0;rondeS()}
+function rondeS(){
+  var d=RX[rxi];doneS=false;hitX=[];nBuat=0;
+  titik('sxdots',RX.length,rxi);
+  $('sxsay').textContent=d.say;
+  $('sxnext').disabled=true;
+  var pk=$('sxpk');clear(pk);var kt=$('sxkontrol');clear(kt);
+  if(d.tipe==='buat')bangunBuat(d,pk,kt);
+  else bangunHitung(d,pk,kt);
+  setKata(d.say);
+}
+function bangunHitung(d,pk,kt){
+  d.baris.forEach(function(b,bi){
+    hitX[bi]=0;
+    var row=el('div','sb');row.appendChild(el('span','lb',b.e));
+    var ik=el('div','ik'),tt=el('span','tt','0');
+    for(var i=0;i<b.g;i++){
+      var t=el('button',null,b.e);t.setAttribute('aria-label','gambar');
+      t.onclick=(function(t,bi,b,tt){return function(){
+        if(t.classList.contains('hit'))return;
+        t.classList.add('hit');hitX[bi]++;tt.textContent=String(hitX[bi]*b.s);
+        if(hitX[bi]===b.g){tt.style.color='var(--ok)';cekHitung(d)}
+        else msgS('',hitX[bi]+' gambar × '+b.s+' = '+hitX[bi]*b.s+'.');
+      }})(t,bi,b,tt);
+      ik.appendChild(t);
+    }
+    row.appendChild(ik);row.appendChild(tt);pk.appendChild(row);
+  });
+  msgS('','Ketuk gambar satu per satu.');
+}
+function cekHitung(d){
+  var semua=d.baris.every(function(b,i){return hitX[i]===b.g});
+  if(!semua){msgS('good',d.baris[0].g+' gambar × '+d.baris[0].s+' = '+d.baris[0].g*d.baris[0].s+'. Hitung baris berikutnya.');return}
+  if(d.tipe==='hitung'){
+    var b=d.baris[0],t=b.g+' gambar × '+b.s+' = '+b.g*b.s+' anak. Satu gambar tidak selalu satu anak!';
+    msgS('good',t);setKata(t);$('sxnext').disabled=false;doneS=true;
+  }else{
+    var tot=d.baris.map(function(b){return b.g*b.s});
+    msgS('','A: '+d.baris[0].g+' × '+d.baris[0].s+' = '+tot[0]+'. B: '+d.baris[1].g+' × '+d.baris[1].s+' = '+tot[1]+'. Mana yang lebih banyak?');
+    var kt=$('sxkontrol');clear(kt);var w=el('div','sk-pil');
+    ['A','B'].forEach(function(h,i){
+      var bt=el('button',null,'Piktogram '+h);
+      bt.onclick=function(){
+        if(doneS)return;
+        var ok=tot[i]===Math.max(tot[0],tot[1]);
+        if(ok){doneS=true;bt.classList.add('right');var t='Betul! Piktogram '+h+' mewakili lebih banyak anak, walau jumlah gambarnya sama.';msgS('good',t);setKata(t);$('sxnext').disabled=false}
+        else{bt.classList.add('wrong');msgS('warn','Hampir! Bandingkan hasil kali: '+tot[0]+' dan '+tot[1]+'.')}
+      };
+      w.appendChild(bt);
+    });
+    kt.appendChild(w);
+  }
+}
+function bangunBuat(d,pk,kt){
+  var ctrl=el('div','sk-ctrl'),kurang=el('button',null,'−'),nn=el('span','nn','0'),tambah=el('button',null,'+');
+  kurang.setAttribute('aria-label','kurangi gambar');tambah.setAttribute('aria-label','tambah gambar');
+  ctrl.appendChild(kurang);ctrl.appendChild(nn);ctrl.appendChild(tambah);kt.appendChild(ctrl);
+  var row=el('div','sb');row.appendChild(el('span','lb',d.e));var ik=el('div','ik'),tt=el('span','tt','0');
+  row.appendChild(ik);row.appendChild(tt);pk.appendChild(row);
+  var gambarB=function(){
+    clear(ik);for(var i=0;i<nBuat;i++)ik.appendChild(el('span',null,d.e)).style.fontSize='2rem';
+    nn.textContent=String(nBuat);tt.textContent=String(nBuat*d.s);
+    if(doneS)return;
+    if(nBuat*d.s===d.total){
+      doneS=true;tt.style.color='var(--ok)';
+      var t=nBuat+' gambar × '+d.s+' = '+d.total+'. Pas! '+d.total+' dibagi '+d.s+' = '+nBuat+'.';
+      msgS('good',t);setKata(t);$('sxnext').disabled=false;
+    }else msgS('',nBuat+' × '+d.s+' = '+nBuat*d.s+'. Masih kurang dari '+d.total+'.');
+  };
+  tambah.onclick=function(){if(doneS||nBuat>=10)return;nBuat++;gambarB()};
+  kurang.onclick=function(){if(doneS||nBuat<=0)return;nBuat--;gambarB()};
+  gambarB();msgS('','Tambah gambar sampai jumlah anaknya pas.');
+}
+$('sxnext').onclick=function(){if(rxi<RX.length-1){rxi++;rondeS()}else show('s5')};
 
 /* ---- tantangan: 4 soal, balasan langsung ---- */
 function bangunSoal(){
