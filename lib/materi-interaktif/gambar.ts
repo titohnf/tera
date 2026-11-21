@@ -137,6 +137,66 @@ export const garisbil = (
   lo: number, hi: number,
   o: { titik?: { v: number; l?: string; w?: string }[]; jejak?: number[]; mutlak?: number } = {},
 ): Gambar => ({ k: 'garisbil', lo, hi, ...o })
+/**
+ * garis bilangan rasional dari lo sampai hi (bilangan bulat), bagi: banyak tanda per satuan (mis. 4 untuk seperempat, 10 untuk persepuluh).
+ * titik: {v (boleh pecahan), l (label), w (warna)}; jejak: daftar posisi berurutan sebagai lompatan melengkung.
+ */
+export const garisrat = (
+  lo: number, hi: number, bagi: number,
+  o: { titik?: { v: number; l?: string; w?: string }[]; jejak?: number[] } = {},
+): Gambar => ({ k: 'garisrat', lo, hi, bagi, ...o })
+/**
+ * dua garis k (atas) dan l (bawah) dipotong transversal m. deg: besar sudut 1 (kanan-atas di k, diukur dari k ke m);
+ * tilt: garis l dimiringkan sekian derajat (tidak sejajar). Sudut 1..4 di k (kanan-atas, kiri-atas, kiri-bawah, kanan-bawah),
+ * 5..8 di l dengan pola yang sama. lab: tulisan per nomor (mis. {1:'70°',5:'?'}); sorot: nomor yang diwarnai (merah, lalu biru);
+ * nomor: false menyembunyikan nomor yang tidak punya lab.
+ */
+export const sejajar = (
+  deg: number,
+  o: { lab?: Record<number, string>; sorot?: number[]; nomor?: boolean; tilt?: number } = {},
+): Gambar => ({ k: 'sejajar', deg, ...o })
+/**
+ * model luas untuk perkalian bentuk aljabar: lebar tersusun dari w (mis. ['x', 3]), tinggi dari h (mis. ['x', 2]).
+ * 'x' berarti sisi sepanjang x, angka berarti sisi sepanjang angka itu; tiap sel berlabel hasil kalinya (x², 3x, 6).
+ * hanyaSisi: sel tidak diberi label hasil (hanya sisi). tinggiTunggal: satu bangun saja tanpa memecah.
+ */
+export const luasAlj = (w: (string | number)[], h: (string | number)[], o: { hanyaSisi?: boolean } = {}): Gambar => ({ k: 'luasalj', w, h, ...o })
+/**
+ * metode bayangan: dua segitiga siku-siku sebangun (benda kecil dan benda besar) beserta bayangannya.
+ * a: {h, b, lh, lb} tongkat (tinggi, bayangan, label tinggi, label bayangan); c: benda besar dengan struktur sama.
+ * Ukuran h dan b dipakai untuk menggambar (boleh perkiraan), label yang tertulis. nama: label kedua benda.
+ */
+export const bayangan = (
+  a: { h: number; b: number; lh: string; lb: string },
+  c: { h: number; b: number; lh: string; lb: string },
+  nama: [string, string] = ['tongkat', 'pohon'],
+): Gambar => ({ k: 'bayangan', a, c, nama })
+/**
+ * susunan persegi pada petak (untuk menilai jaring-jaring kubus). sel: daftar [kolom, baris];
+ * lab: tulisan di tengah semua persegi (mis. luas '16'); warna nama warna PL; tandai: indeks sel yang diberi warna lain.
+ */
+export const netPetak = (sel: [number, number][], o: { lab?: string; warna?: string; tandai?: number[] } = {}): Gambar => ({ k: 'netpetak', sel, ...o })
+/**
+ * segitiga siku-siku (siku-siku di kiri bawah) dengan persegi pada ketiga sisinya (gambar teorema Pythagoras).
+ * a: kaki tegak, b: kaki mendatar; c dihitung. lab: {a, b, c} label sisi; luas: tulis luas persegi (a², b², c²) di dalam persegi (lab menimpa angka itu);
+ * polos: hanya segitiga (tanpa persegi), label di luar sisi; lab.c boleh teks seperti '√61' atau '?'.
+ */
+export const pyth = (
+  a: number, b: number,
+  o: { lab?: { a?: string; b?: string; c?: string }; luas?: boolean; sorot?: 'a' | 'b' | 'c'; polos?: boolean } = {},
+): Gambar => ({ k: 'pyth', a, b, ...o })
+/**
+ * bidang Kartesius dari -r sampai r pada kedua sumbu. titik: {x, y, l (label), w (warna), k (true: tanpa garis bantu)};
+ * garis: segmen [x1, y1, x2, y2, warna]; kuadran: tulis I sampai IV; bantu: garis putus-putus dari titik ke kedua sumbu.
+ */
+export const kartesius = (
+  r: number,
+  o: { titik?: { x: number; y: number; l?: string; w?: string }[]; garis?: [number, number, number, number, string?][]; kuadran?: boolean; bantu?: boolean } = {},
+): Gambar => ({ k: 'kartesius', r, ...o })
+/**
+ * diagram panah relasi dari himpunan A (kiri) ke B (kanan). a, b: daftar elemen (teks); pasangan: [indeks A, indeks B].
+ */
+export const panahRelasi = (a: (string | number)[], b: (string | number)[], pasangan: [number, number][], nama: [string, string] = ['A', 'B']): Gambar => ({ k: 'panahrelasi', a, b, pasangan, nama })
 /** papan seratus: p dari 100 petak diwarnai (persen); sorot: petak terakhir yang ditandai */
 export const seratus = (p: number): Gambar => ({ k: 'seratus', p })
 /** bilangan desimal dalam kolom tempat (satuan, persepuluhan, perseratusan, perseribuan); s ditulis dengan koma, mis. "0,375" */
@@ -1261,6 +1321,172 @@ GBR.garisbil=function(g){
     var l=tks(s,X(t.v),y+46+(k%2)*15,(t.l!==undefined?t.l:ng(t.v)),{s:13});
     if(k===0){s._ke=function(v){c.setAttribute('cx',X(v));l.setAttribute('x',X(v));l.textContent=ng(Math.round(v))}}
   });
+  return s;
+};
+
+/* garis bilangan rasional: tanda per 1/bagi, titik dan lompatan boleh pecahan */
+GBR.garisrat=function(g){
+  var lo=g.lo,hi=g.hi,bg=g.bagi||4,n=hi-lo,W=320,x0=18,x1=302,y=88,u=(x1-x0)/n,s=kanvas(W,150,440),i;
+  var ng=function(v){var r=Math.round(v*100)/100;return r<0?'\u2212'+String(-r).replace('.',','):String(r).replace('.',',')};
+  function X(v){return x0+(v-lo)*u}
+  garisan(sg('line',{x1:x0-8,y1:y,x2:x1+8,y2:y},s),3);
+  for(i=lo*bg;i<=hi*bg;i++){
+    var v=i/bg,w=i%bg===0,z=v===0;
+    sg('line',{x1:X(v),y1:y-(z?10:(w?8:4)),x2:X(v),y2:y+(z?10:(w?8:4)),stroke:'currentColor','stroke-width':z?3.2:(w?2.2:1.2)},s);
+    if(w&&(n<=14||v%2===0||z))tks(s,X(v),y+24,ng(v),{s:z?14:11,c:z?'currentColor':'#6b6878'});
+  }
+  if(g.jejak&&g.jejak.length>1){
+    var j,war=[PL.biru,PL.merah,PL.ungu,PL.oranye,PL.hijau];
+    for(j=0;j<g.jejak.length-1;j++){
+      var p=X(g.jejak[j]),q=X(g.jejak[j+1]),mid=(p+q)/2,hh=Math.min(44,12+Math.abs(q-p)*0.28);
+      sg('path',{d:'M '+p+' '+(y-8)+' Q '+mid+' '+(y-8-hh*1.8)+' '+q+' '+(y-8),fill:'none',stroke:war[j%5],'stroke-width':2.6,'stroke-linecap':'round'},s);
+      var dir=q>p?-1:1;sg('polygon',{points:[q+','+(y-8),(q+dir*7)+','+(y-8-7),(q+dir*7)+','+(y-8+1)].join(' '),fill:war[j%5]},s);
+    }
+    g.jejak.forEach(function(v,k){sg('circle',{cx:X(v),cy:y,r:k===0||k===g.jejak.length-1?7:4.5,fill:k===0?PL.biru:(k===g.jejak.length-1?PL.merah:'#fff'),stroke:'currentColor','stroke-width':2},s)});
+  }
+  (g.titik||[]).forEach(function(t,k){
+    var c=sg('circle',{cx:X(t.v),cy:y,r:8,fill:PL[t.w||(k?'kuning':'merah')],stroke:'currentColor','stroke-width':2.4},s);
+    var l=tks(s,X(t.v),y+46+(k%2)*15,(t.l!==undefined?t.l:ng(t.v)),{s:13});
+    if(k===0){s._ke=function(v){c.setAttribute('cx',X(v));l.setAttribute('x',X(v));l.textContent=ng(v)}}
+  });
+  return s;
+};
+
+/* dua garis dipotong transversal: sudut 1..8 bernomor, sebagian disorot atau berlabel */
+GBR.sejajar=function(g){
+  var s=kanvas(320,226,440),R=Math.PI/180,th=g.deg,tl=g.tilt||0,yk=62,yl=166,cot=Math.cos(th*R)/Math.sin(th*R);
+  var xk=160+(yl-yk)/2*cot,xl=160-(yl-yk)/2*cot,war=[PL.merah,PL.biru,PL.hijau,PL.oranye];
+  function P(x,y,r,d){return [x+r*Math.cos(d*R),y-r*Math.sin(d*R)]}
+  function gl(x,y,a,L,w){var p=P(x,y,L,a),q=P(x,y,L,a+180);return sg('line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],stroke:'currentColor','stroke-width':w||3,'stroke-linecap':'round'},s)}
+  gl(xk,yk,0,140,3);gl(xl,yl,tl,140,3);var mt=P(xk,yk,64,th),mb=P(xl,yl,64,th+180);sg('line',{x1:mt[0],y1:mt[1],x2:mb[0],y2:mb[1],stroke:'currentColor','stroke-width':3,'stroke-linecap':'round'},s);
+  tks(s,14,yk-8,'k',{s:14});tks(s,14,yl-8,'l',{s:14});tks(s,P(xk,yk,76,th)[0],P(xk,yk,76,th)[1]+4,'m',{s:14});
+  var cs=[[xk,yk,0],[xl,yl,tl]];
+  cs.forEach(function(c,ci){
+    var a0=c[2],ras=[a0,th,a0+180,th+180,a0+360];
+    for(var j=0;j<4;j++){
+      var no=ci*4+j+1,d1=ras[j],d2=ras[j+1],mid=(d1+d2)/2,si=g.sorot?g.sorot.indexOf(no):-1;
+      if(si>=0){
+        var A=P(c[0],c[1],30,d1),B=P(c[0],c[1],30,d2);
+        sg('path',{d:['M',c[0],c[1],'L',A[0],A[1],'A',30,30,0,(d2-d1)>180?1:0,0,B[0],B[1],'Z'].join(' '),fill:war[si%4],'fill-opacity':.4,stroke:war[si%4],'stroke-width':2},s);
+      }
+      var t=g.lab&&g.lab[no]!==undefined?g.lab[no]:(g.nomor===false?'':String(no));
+      if(t){var tp=P(c[0],c[1],si>=0||(g.lab&&g.lab[no]!==undefined)?48:40,mid);tks(s,tp[0],tp[1]+5,t,{s:g.lab&&g.lab[no]!==undefined?14:12,c:(g.lab&&g.lab[no]!==undefined)?'currentColor':'#6b6878'})}
+    }
+    sg('circle',{cx:c[0],cy:c[1],r:3.5,fill:'currentColor'},s);
+  });
+  return s;
+};
+
+/* model luas: sel hasil kali dua sisi, x dan angka */
+GBR.luasalj=function(g){
+  var U=16,X=64,s=kanvas(320,226,440),i,j;
+  function sz(v){return v==='x'?X:v*U}
+  function kali(a,b){if(a==='x'&&b==='x')return 'x\u00B2';if(a==='x')return (b===1?'':b)+'x';if(b==='x')return (a===1?'':a)+'x';return String(a*b)}
+  var W=0,H=0;g.w.forEach(function(v){W+=sz(v)});g.h.forEach(function(v){H+=sz(v)});
+  var k=Math.min(1,250/W,150/H),x0=(320-W*k)/2+10,y0=34,yy=y0,war=[PL.biru,PL.hijau,PL.kuning,PL.merah,PL.ungu];
+  g.h.forEach(function(hv,r){
+    var xx=x0;
+    g.w.forEach(function(wv,c){
+      var cw=sz(wv)*k,ch=sz(hv)*k,tipe=(wv==='x'&&hv==='x')?0:(wv==='x'||hv==='x')?1:2;
+      garisan(sg('rect',{x:xx,y:yy,width:cw,height:ch,fill:[PL.biru,PL.hijau,PL.kuning][tipe],'fill-opacity':.45},s),2);
+      if(!g.hanyaSisi)tks(s,xx+cw/2,yy+ch/2+5,kali(wv,hv),{s:Math.min(15,Math.max(11,cw/2.6))});
+      xx+=cw;
+    });
+    tks(s,x0-8,yy+sz(hv)*k/2+5,String(hv),{a:'end',s:14,c:'#6b6878'});
+    yy+=sz(hv)*k;
+  });
+  var xx2=x0;g.w.forEach(function(wv){tks(s,xx2+sz(wv)*k/2,y0-10,String(wv),{s:14,c:'#6b6878'});xx2+=sz(wv)*k});
+  return s;
+};
+
+/* metode bayangan: dua segitiga siku-siku sebangun dari benda dan bayangannya */
+GBR.bayangan=function(g){
+  var s=kanvas(320,200,440),gy=168,A=g.a,C=g.c,wC=Math.min(150,128*C.b/C.h),wA=wC*0.4,x1=24,x2=x1+wA+34;
+  garisan(sg('line',{x1:6,y1:gy,x2:314,y2:gy},s),2);
+  function seg(x,w,o,nm,war){
+    var b=w,h=w*o.h/o.b;
+    sg('polygon',{points:[x+','+gy,x+','+(gy-h),(x+b)+','+gy].join(' '),fill:war,'fill-opacity':.3,stroke:'currentColor','stroke-width':2.5,'stroke-linejoin':'round'},s);
+    tks(s,x-4,gy-h/2+4,o.lh,{a:'end',s:13});
+    tks(s,x+b/2,gy+16,o.lb,{s:13});
+    tks(s,x+4,gy-h-6,nm,{a:'start',s:11,c:'#6b6878'});
+  }
+  seg(x1+30,wA,A,g.nama[0],PL.biru);seg(x2+30,wC,C,g.nama[1],PL.hijau);
+  sg('circle',{cx:300,cy:22,r:11,fill:PL.kuning},s);
+  return s;
+};
+
+/* susunan persegi pada petak, untuk jaring-jaring kubus */
+GBR.netpetak=function(g){
+  var cs=0,rs=0,i;g.sel.forEach(function(c){if(c[0]+1>cs)cs=c[0]+1;if(c[1]+1>rs)rs=c[1]+1});
+  var u=Math.min(40,270/cs,150/rs),W=320,H=Math.max(70,rs*u+20),s=kanvas(W,H,360),x0=(W-cs*u)/2,y0=(H-rs*u)/2;
+  g.sel.forEach(function(c,k){
+    var tg=g.tandai&&g.tandai.indexOf(k)>=0;
+    garisan(sg('rect',{x:x0+c[0]*u,y:y0+c[1]*u,width:u,height:u,fill:PL[tg?'merah':(g.warna||'biru')],'fill-opacity':.8},s),2.2);
+    if(g.lab)tks(s,x0+c[0]*u+u/2,y0+c[1]*u+u/2+4,g.lab,{s:Math.min(14,u/2.2),c:'#fff'});
+  });
+  return s;
+};
+
+/* teorema Pythagoras: segitiga siku-siku dengan persegi pada ketiga sisi */
+GBR.pyth=function(g){
+  var a=g.a,b=g.b,c=Math.sqrt(a*a+b*b),s,P=[0,0],A=[0,-a],B=[b,0];
+  var sqa=[A,P,[P[0]-a,P[1]],[A[0]-a,A[1]]],sqb=[P,B,[B[0],B[1]+b],[P[0],P[1]+b]],nx=a,ny=-b,sqc=[A,B,[B[0]+nx,B[1]+ny],[A[0]+nx,A[1]+ny]];
+  var all=g.polos?[A,P,B]:sqa.concat(sqb).concat(sqc),mx=1e9,Mx=-1e9,my=1e9,My=-1e9;
+  all.forEach(function(q){mx=Math.min(mx,q[0]);Mx=Math.max(Mx,q[0]);my=Math.min(my,q[1]);My=Math.max(My,q[1])});
+  var W=320,H=230,k=Math.min(280/(Mx-mx),190/(My-my)),ox=(W-(Mx-mx)*k)/2-mx*k,oy=(H-(My-my)*k)/2-my*k;
+  s=kanvas(W,H,420);
+  function X(q){return [ox+q[0]*k,oy+q[1]*k]}
+  function poly(q,w,so){garisan(sg('polygon',{points:q.map(function(t){return X(t).join(',')}).join(' '),fill:PL[w],'fill-opacity':so?.7:.38},s),so?3.4:2)}
+  if(!g.polos){poly(sqa,'merah',g.sorot==='a');poly(sqb,'hijau',g.sorot==='b');poly(sqc,'biru',g.sorot==='c')}
+  garisan(sg('polygon',{points:[A,P,B].map(function(t){return X(t).join(',')}).join(' '),fill:PL.kuning,'fill-opacity':.65},s),2.8);
+  var tp=X([P[0]+Math.min(a,b)*0.14,P[1]-Math.min(a,b)*0.14]);
+  sg('rect',{x:X(P)[0]+2,y:X(P)[1]-11,width:9,height:9,fill:'none',stroke:'currentColor','stroke-width':1.6},s);
+  function cen(q){var x=0,y=0;q.forEach(function(t){x+=t[0];y+=t[1]});return X([x/4,y/4])}
+  var L=g.lab||{};
+  if(g.luas&&!g.polos){tks(s,cen(sqa)[0],cen(sqa)[1]+5,L.a!==undefined?L.a:String(a*a),{s:14});tks(s,cen(sqb)[0],cen(sqb)[1]+5,L.b!==undefined?L.b:String(b*b),{s:14});tks(s,cen(sqc)[0],cen(sqc)[1]+5,L.c!==undefined?L.c:fmtId(a*a+b*b),{s:14})}
+  else{tks(s,X([0,-a/2])[0]-12,X([0,-a/2])[1]+4,L.a!==undefined?L.a:String(a),{a:'end',s:14});tks(s,X([b/2,0])[0],X([0,0])[1]+18,L.b!==undefined?L.b:String(b),{s:14});tks(s,X([b/2,-a/2])[0]+10,X([0,-a/2])[1]-4,L.c!==undefined?L.c:fmtId(c),{a:'start',s:14})}
+  return s;
+};
+
+/* bidang Kartesius */
+GBR.kartesius=function(g){
+  var r=g.r||6,W=320,H=250,u=Math.min(104/r*1.0,120/r),cx=W/2,cy=H/2,s=kanvas(W,H,400),i;
+  u=Math.min(150/r,112/r);
+  function X(x){return cx+x*u}function Y(y){return cy-y*u}
+  for(i=-r;i<=r;i++){
+    var l1=sg('line',{x1:X(i),y1:Y(-r),x2:X(i),y2:Y(r),'stroke-width':1},s);l1.style.stroke='var(--line)';
+    var l2=sg('line',{x1:X(-r),y1:Y(i),x2:X(r),y2:Y(i),'stroke-width':1},s);l2.style.stroke='var(--line)';
+    if(i!==0&&(r<=6||i%2===0)){tks(s,X(i),Y(0)+14,String(i).replace('-','\u2212'),{s:10,c:'#6b6878'});tks(s,X(0)-6,Y(i)+4,String(i).replace('-','\u2212'),{a:'end',s:10,c:'#6b6878'})}
+  }
+  garisan(sg('line',{x1:X(-r)-6,y1:Y(0),x2:X(r)+8,y2:Y(0)},s),2.4);garisan(sg('line',{x1:X(0),y1:Y(-r)+6,x2:X(0),y2:Y(r)-8},s),2.4);
+  sg('polygon',{points:[X(r)+10,Y(0),X(r)+2,Y(0)-4,X(r)+2,Y(0)+4].join(' '),fill:'currentColor'},s);
+  sg('polygon',{points:[X(0),Y(r)-10,X(0)-4,Y(r)-2,X(0)+4,Y(r)-2].join(' '),fill:'currentColor'},s);
+  tks(s,X(r)+4,Y(0)-8,'x',{s:13});tks(s,X(0)+10,Y(r)-2,'y',{s:13});
+  if(g.kuadran){[['I',1,1],['II',-1,1],['III',-1,-1],['IV',1,-1]].forEach(function(q){tks(s,X(q[1]*r*0.6),Y(q[2]*r*0.6)+5,q[0],{s:16,c:'#9b95ab'})})}
+  (g.garis||[]).forEach(function(q){sg('line',{x1:X(q[0]),y1:Y(q[1]),x2:X(q[2]),y2:Y(q[3]),stroke:PL[q[4]||'biru'],'stroke-width':3,'stroke-linecap':'round'},s)});
+  (g.titik||[]).forEach(function(t,k){
+    if(g.bantu){var b1=sg('line',{x1:X(t.x),y1:Y(t.y),x2:X(t.x),y2:Y(0),'stroke-dasharray':'4 3','stroke-width':1.6,stroke:PL.merah},s),b2=sg('line',{x1:X(t.x),y1:Y(t.y),x2:X(0),y2:Y(t.y),'stroke-dasharray':'4 3','stroke-width':1.6,stroke:PL.merah},s)}
+    sg('circle',{cx:X(t.x),cy:Y(t.y),r:5.5,fill:PL[t.w||'merah'],stroke:'currentColor','stroke-width':2},s);
+    if(t.l!==undefined&&t.l!=='')tks(s,X(t.x)+8,Y(t.y)-8,t.l,{a:'start',s:12});
+  });
+  return s;
+};
+
+/* diagram panah relasi */
+GBR.panahrelasi=function(g){
+  var W=320,n=Math.max(g.a.length,g.b.length),H=Math.max(150,n*34+50),s=kanvas(W,H,400),xa=96,xb=224;
+  function ya(i,m){return 40+(H-70)*(m===1?0.5:i/(m-1))}
+  sg('ellipse',{cx:xa,cy:H/2+8,rx:48,ry:H/2-22,fill:PL.biru,'fill-opacity':.15,stroke:'currentColor','stroke-width':2},s);
+  sg('ellipse',{cx:xb,cy:H/2+8,rx:48,ry:H/2-22,fill:PL.hijau,'fill-opacity':.15,stroke:'currentColor','stroke-width':2},s);
+  var nm=g.nama||['A','B'];tks(s,xa,16,nm[0],{s:14});tks(s,xb,16,nm[1],{s:14});
+  g.pasangan.forEach(function(p){
+    var y1=ya(p[0],g.a.length),y2=ya(p[1],g.b.length);
+    sg('line',{x1:xa+14,y1:y1,x2:xb-16,y2:y2,stroke:PL.merah,'stroke-width':2.4},s);
+    var ang=Math.atan2(y2-y1,(xb-16)-(xa+14));
+    sg('polygon',{points:[(xb-16)+','+y2,(xb-16-9*Math.cos(ang-0.4))+','+(y2-9*Math.sin(ang-0.4)),(xb-16-9*Math.cos(ang+0.4))+','+(y2-9*Math.sin(ang+0.4))].join(' '),fill:PL.merah},s);
+  });
+  g.a.forEach(function(v,i){tks(s,xa,ya(i,g.a.length)+5,String(v).replace('-','\u2212'),{s:15})});
+  g.b.forEach(function(v,i){tks(s,xb,ya(i,g.b.length)+5,String(v).replace('-','\u2212'),{s:15})});
   return s;
 };
 

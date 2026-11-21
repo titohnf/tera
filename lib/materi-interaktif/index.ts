@@ -30,6 +30,21 @@ import { HTML_AC29 } from './ac29'
 import { HTML_AC30 } from './ac30'
 import { HTML_AC31 } from './ac31'
 import { HTML_D01 } from './d01'
+import { HTML_D02 } from './d02'
+import { HTML_D03 } from './d03'
+import { HTML_D04 } from './d04'
+import { HTML_D05 } from './d05'
+import { HTML_D06 } from './d06'
+import { HTML_D07 } from './d07'
+import { HTML_D08 } from './d08'
+import { HTML_D09 } from './d09'
+import { HTML_D10 } from './d10'
+import { HTML_D11 } from './d11'
+import { HTML_D12 } from './d12'
+import { HTML_D13 } from './d13'
+import { HTML_D14 } from './d14'
+import { HTML_D15 } from './d15'
+import { HTML_D16 } from './d16'
 
 /**
  * Daftar materi interaktif, dikunci dengan kode topik Misi (`topik.id`, mis.
@@ -239,6 +254,96 @@ const DAFTAR: MateriInteraktif[] = [
     judul: 'Naik Turun di Garis Bilangan',
     ringkas: 'Bilangan bulat: garis bilangan, nilai mutlak, operasi, dan urutan operasi',
     html: HTML_D01,
+  },
+  {
+    kode: 'D-02',
+    judul: 'Satu Nilai, Banyak Wajah',
+    ringkas: 'Bilangan rasional: pecahan, desimal, persen, urutan, dan operasi',
+    html: HTML_D02,
+  },
+  {
+    kode: 'D-03',
+    judul: 'Rasio dan Perbandingan',
+    ringkas: 'Rasio, membagi menurut rasio, senilai dan berbalik nilai, serta skala',
+    html: HTML_D03,
+  },
+  {
+    kode: 'D-04',
+    judul: 'Data dan Diagram',
+    ringkas: 'Pertanyaan statistik, jenis data, memilih diagram, dan kesimpulan yang wajar',
+    html: HTML_D04,
+  },
+  {
+    kode: 'D-05',
+    judul: 'Mean, Median, Modus',
+    ringkas: 'Ukuran pemusatan dan jangkauan, nilai ekstrem, dan memilih ukuran yang tepat',
+    html: HTML_D05,
+  },
+  {
+    kode: 'D-06',
+    judul: 'Hubungan Antar-Sudut',
+    ringkas: 'Berpelurus, berpenyiku, bertolak belakang, garis sejajar dengan transversal, dan aljabar sudut',
+    html: HTML_D06,
+  },
+  {
+    kode: 'D-07',
+    judul: 'Bentuk Aljabar',
+    ringkas: 'Suku sejenis, menyederhanakan, sifat distributif, dan perkalian dua kurung',
+    html: HTML_D07,
+  },
+  {
+    kode: 'D-08',
+    judul: 'Pangkat, Akar, Notasi Ilmiah',
+    ringkas: 'Pangkat nol dan negatif, sifat pangkat, bentuk akar, dan notasi ilmiah',
+    html: HTML_D08,
+  },
+  {
+    kode: 'D-09',
+    judul: 'Persamaan dan Pertidaksamaan',
+    ringkas: 'PLSV dan pertidaksamaan linear satu variabel, termasuk membalik tanda dan soal cerita',
+    html: HTML_D09,
+  },
+  {
+    kode: 'D-10',
+    judul: 'Kongruen dan Sebangun',
+    ringkas: 'Kongruen, sebangun, faktor skala, metode bayangan, serta skala peta dan denah',
+    html: HTML_D10,
+  },
+  {
+    kode: 'D-11',
+    judul: 'Jaring-Jaring Bangun Ruang',
+    ringkas: 'Jaring-jaring kubus, balok, prisma, limas, rumus Euler, dan luas permukaan',
+    html: HTML_D11,
+  },
+  {
+    kode: 'D-12',
+    judul: 'Teorema Pythagoras',
+    ringkas: 'Hipotenusa, triple Pythagoras, mencari sisi, jenis segitiga, dan soal cerita',
+    html: HTML_D12,
+  },
+  {
+    kode: 'D-13',
+    judul: 'Relasi, Fungsi, Koordinat',
+    ringkas: 'Domain, range, fungsi, f(x), koordinat Kartesius, jarak, dan fungsi dalam keseharian',
+    html: HTML_D13,
+  },
+  {
+    kode: 'D-14',
+    judul: 'Sistem Persamaan Linear',
+    ringkas: 'SPLDV: grafik, substitusi, eliminasi, dan soal cerita',
+    html: HTML_D14,
+  },
+  {
+    kode: 'D-15',
+    judul: 'Barisan dan Deret',
+    ringkas: 'Barisan aritmetika dan geometri, suku ke-n, deret, dan soal cerita',
+    html: HTML_D15,
+  },
+  {
+    kode: 'D-16',
+    judul: 'Transformasi Geometri',
+    ringkas: 'Translasi, refleksi, rotasi, dan dilatasi pada titik',
+    html: HTML_D16,
   },
 ]
 
