@@ -65,7 +65,9 @@ export default function DaftarTryOut({
                 </div>
                 {!buka && !tunggu && (
                   <a
-                    href={`${SORA_TRYOUT_URL}/q/${p.kode}`}
+                    // Peserta berkode dibawa dengan `?kode=` supaya Sora melewati layar Selamat Datang
+                    // dan langsung membuka halaman persiapan. Akun tidak membawa apa pun di alamat.
+                    href={`${SORA_TRYOUT_URL}/q/${p.kode}${kode ? `?kode=${encodeURIComponent(kode)}` : ''}`}
                     className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                   >
                     Mulai

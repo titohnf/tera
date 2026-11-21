@@ -72,7 +72,7 @@ export default async function PesertaTryOutPage() {
 
   const pesan = (p: Peserta) =>
     `Assalamu'alaikum Bapak/Ibu${p.nama_wali ? ' ' + p.nama_wali : ''}. Berikut kode peserta Try Out TKA Bimbel Tera untuk ${p.name}: *${p.access_code}*. ` +
-    `Buka ${tautanTryOut}, pilih "Kode peserta", lalu masukkan kode tersebut. Kode ini juga dipakai untuk try out berikutnya. Terima kasih.`
+    `Buka ${tautanTryOut}?kode=${p.access_code} untuk langsung ke halaman persiapan (atau buka ${tautanTryOut}, pilih "Kode peserta", lalu masukkan kode tersebut). Kode ini juga dipakai untuk try out berikutnya. Terima kasih.`
 
   const pesanHasil = (p: Peserta) =>
     `Assalamu'alaikum Bapak/Ibu${p.nama_wali ? ' ' + p.nama_wali : ''}. Hasil Try Out TKA Bimbel Tera untuk ${p.name} sudah bisa dilihat di ${SORA_URL}/hasil/${p.access_code} ` +
