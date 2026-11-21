@@ -1,7 +1,13 @@
 # Rancangan: mengamankan soal dan percobaan try out
 
-Status: **rancangan, belum dikerjakan.** Dibuat 21 Nov 2026 setelah ditemukan bahwa
-kunci jawaban try out bisa dibaca peserta lewat API.
+Status: **tahap 1 sudah ditulis (21 Nov 2026, malam), belum dijalankan/dideploy.** Migrasi
+`225_fungsi_aman_soal_dan_kirim_percobaan.sql` dan `226_tutup_baca_soal_publik.sql` ada di
+`supabase/migrations`; kode Sora (repo `form`) sudah diganti memakai `soal_peserta`,
+`bobot_paket`, dan `kirim_percobaan`. Tahap 2 belum. Dibuat setelah ditemukan bahwa kunci
+jawaban try out bisa dibaca peserta lewat API.
+
+Catatan penyimpangan dari rancangan: batas waktu pada `kirim_percobaan` TIDAK dibuat, karena
+tabel `answers` tidak menyimpan waktu masuknya jawaban; batas waktu tetap dijaga `saveAnswer`.
 
 ## 1. Temuan
 
