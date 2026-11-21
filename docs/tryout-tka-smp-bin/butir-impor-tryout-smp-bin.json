@@ -1,0 +1,674 @@
+{
+ "format": "tera/butir-impor@1",
+ "catatan": "Try out TKA SMP Bahasa Indonesia, 30 contoh soal resmi Pusat Asesmen Pendidikan (daya serap TKA 2025/2026), nomor soal = nomor indikator. Kunci dibuat Claude dan WAJIB ditinjau manusia sebelum dipakai. Tanpa topik dan tanpa kolam, jadi tidak masuk paket latihan.",
+ "butir": [
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s01_0.jpg]\nGambar: Robot RUN\n\nRobot pengantar makanan kini menjadi pemandangan menarik di berbagai restoran dan hotel di dunia. Di restoran Dona Alicia, Kuba, robot pelayan mulai digunakan sejak awal 2025 dan berhasil menarik perhatian banyak pengunjung. Di Tiongkok, hotel-hotel di Beijing juga memanfaatkan robot bernama RUN saat Olimpiade Musim Dingin 2022 untuk mengantar makanan tanpa kontak langsung. Sementara itu, di Amerika Serikat, robot menjadi solusi andalan saat musim dingin karena bisa bekerja meskipun jalanan bersalju. Kota Dubai pun tak ketinggalan, dengan menghadirkan robot pengantar di kawasan Sustainable City sejak 2024.\n\nPenggunaan robot ini dinilai lebih efisien, higienis, dan praktis. Selain menghemat waktu, robot juga membantu mengurangi interaksi langsung antara petugas dan pelanggan, yang sangat penting selama masa pandemi. Robot-robot ini bekerja dengan sistem navigasi otonom, yaitu kemampuan gerak mandiri tanpa dikendalikan manusia. Mereka dilengkapi sensor LiDAR, yaitu sistem pemindaian laser atau pendeteksi rintangan sekitar. Seluruh pergerakan robot diawasi oleh Fleet Management System, yaitu sistem pemantau dari jarak jauh. Makanan yang dibawa robot disimpan dalam kompartemen aman sehingga tetap bersih dan terjaga sampai pelanggan membukanya.\n\nGagasan tentang robot sudah muncul sejak abad ke-20. Salah satu tokoh penting dalam pengembangan robot modern adalah Joseph Engelberger, insinyur asal Amerika yang menciptakan robot industri pertama, Unimate, pada tahun 1961.\n\nProses pembuatan robot umumnya dimulai dari tahap perancangan desain, lalu dilanjutkan dengan perakitan komponen mekanik dan elektronik. Setelah itu, dipasang sistem sensor dan pemrograman agar robot dapat berpikir dan bergerak. Terakhir, robot diuji coba untuk memastikan semua fungsinya berjalan dengan baik dan aman digunakan.\n\nGlosarium:\n\n- Kompartemen : wadah atau bagian terpisah untuk menyimpan benda.\n\n[pertanyaan]\n\nApa yang dimaksud dengan istilah sensor LiDAR pada teknologi robot pengantar makanan?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Sistem pemindaian laser.",
+     "Pemantau dari jarak jauh.",
+     "Pendeteksi rintangan sekitar.",
+     "Kemampuan gerak mandiri."
+    ]
+   },
+   "correct_answer": [
+    "Sistem pemindaian laser.",
+    "Pendeteksi rintangan sekitar."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: sensor LiDAR = \"sistem pemindaian laser atau pendeteksi rintangan sekitar\". Pemantau jarak jauh = Fleet Management System; gerak mandiri = navigasi otonom. [Kunci buatan Claude.] Sumber bacaan: https://www.kompas.id/artikel/heboh-robot-pelayan-restoran-pertama-di-kuba | https://food.detik.com/info-kuliner/d-7660919/bule-ini-girang-lihat-robot-antar-makanan-di-hotel-china | https://radarsampit.jawapos.com/featured/2345605645/robot-pengantar-makanan-mulai-populer-di-as-jadi-andalan-saat-musim-dingin | https://kumparan.com/kumparanfood/robot-pengantar-makanan-tersedia-di-hotel-beijing-selama-olimpiade-musim-dingin-1xR1I7m1m1L/full | https://voi.id/berita/410805/dubai-sustainable-city-luncurkan-program-robot-pengantar-waktu-tunggunya-kurang-dari-30-menit | www.robotrunner.com/en/indoor-delivery-service-robot.html"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_0.jpg]\nGambar: Robot RUN\n\nRobot pengantar makanan kini menjadi pemandangan menarik di berbagai restoran dan hotel di dunia. Di restoran Dona Alicia, Kuba, robot pelayan mulai digunakan sejak awal 2025 dan berhasil menarik perhatian banyak pengunjung. Di Tiongkok, hotel-hotel di Beijing juga memanfaatkan robot bernama RUN saat Olimpiade Musim Dingin 2022 untuk mengantar makanan tanpa kontak langsung. Sementara itu, di Amerika Serikat, robot menjadi solusi andalan saat musim dingin karena bisa bekerja meskipun jalanan bersalju. Kota Dubai pun tak ketinggalan, dengan menghadirkan robot pengantar di kawasan Sustainable City sejak 2024.\n\nPenggunaan robot ini dinilai lebih efisien, higienis, dan praktis. Selain menghemat waktu, robot juga membantu mengurangi interaksi langsung antara petugas dan pelanggan, yang sangat penting selama masa pandemi. Robot-robot ini bekerja dengan sistem navigasi otonom, yaitu kemampuan gerak mandiri tanpa dikendalikan manusia. Mereka dilengkapi sensor LiDAR, yaitu sistem pemindaian laser atau pendeteksi rintangan sekitar. Seluruh pergerakan robot diawasi oleh Fleet Management System, yaitu sistem pemantau dari jarak jauh. Makanan yang dibawa robot disimpan dalam kompartemen aman sehingga tetap bersih dan terjaga sampai pelanggan membukanya.\n\nGagasan tentang robot sudah muncul sejak abad ke-20. Salah satu tokoh penting dalam pengembangan robot modern adalah Joseph Engelberger, insinyur asal Amerika yang menciptakan robot industri pertama, Unimate, pada tahun 1961.\n\nProses pembuatan robot umumnya dimulai dari tahap perancangan desain, lalu dilanjutkan dengan perakitan komponen mekanik dan elektronik. Setelah itu, dipasang sistem sensor dan pemrograman agar robot dapat berpikir dan bergerak. Terakhir, robot diuji coba untuk memastikan semua fungsinya berjalan dengan baik dan aman digunakan.\n\nGlosarium:\n\n- Kompartemen : wadah atau bagian terpisah untuk menyimpan benda.\n\n[pertanyaan]\n\nBagaimana urutan yang menggambarkan cara pembuatan robot pengantar makanan?",
+   "options": {
+    "choices": [
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o0.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o1.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o2.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o3.jpg]"
+    ]
+   },
+   "correct_answer": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o1.jpg]",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Urutan menurut teks: perancangan desain, perakitan komponen mekanik dan elektronik, pemasangan sistem sensor dan pemrograman, uji coba. [Kunci buatan Claude.] Sumber bacaan: https://www.kompas.id/artikel/heboh-robot-pelayan-restoran-pertama-di-kuba | https://food.detik.com/info-kuliner/d-7660919/bule-ini-girang-lihat-robot-antar-makanan-di-hotel-china | https://radarsampit.jawapos.com/featured/2345605645/robot-pengantar-makanan-mulai-populer-di-as-jadi-andalan-saat-musim-dingin | https://kumparan.com/kumparanfood/robot-pengantar-makanan-tersedia-di-hotel-beijing-selama-olimpiade-musim-dingin-1xR1I7m1m1L/full | https://voi.id/berita/410805/dubai-sustainable-city-luncurkan-program-robot-pengantar-waktu-tunggunya-kurang-dari-30-menit | www.robotrunner.com/en/indoor-delivery-service-robot.html"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s05_0.jpg]\nGambar: Robot RUN\n\nRobot pengantar makanan kini menjadi pemandangan menarik di berbagai restoran dan hotel di dunia. Di restoran Dona Alicia, Kuba, robot pelayan mulai digunakan sejak awal 2025 dan berhasil menarik perhatian banyak pengunjung. Di Tiongkok, hotel-hotel di Beijing juga memanfaatkan robot bernama RUN saat Olimpiade Musim Dingin 2022 untuk mengantar makanan tanpa kontak langsung. Sementara itu, di Amerika Serikat, robot menjadi solusi andalan saat musim dingin karena bisa bekerja meskipun jalanan bersalju. Kota Dubai pun tak ketinggalan, dengan menghadirkan robot pengantar di kawasan Sustainable City sejak 2024.\n\nPenggunaan robot ini dinilai lebih efisien, higienis, dan praktis. Selain menghemat waktu, robot juga membantu mengurangi interaksi langsung antara petugas dan pelanggan, yang sangat penting selama masa pandemi. Robot-robot ini bekerja dengan sistem navigasi otonom, yaitu kemampuan gerak mandiri tanpa dikendalikan manusia. Mereka dilengkapi sensor LiDAR, yaitu sistem pemindaian laser atau pendeteksi rintangan sekitar. Seluruh pergerakan robot diawasi oleh Fleet Management System, yaitu sistem pemantau dari jarak jauh. Makanan yang dibawa robot disimpan dalam kompartemen aman sehingga tetap bersih dan terjaga sampai pelanggan membukanya.\n\nGagasan tentang robot sudah muncul sejak abad ke-20. Salah satu tokoh penting dalam pengembangan robot modern adalah Joseph Engelberger, insinyur asal Amerika yang menciptakan robot industri pertama, Unimate, pada tahun 1961.\n\nProses pembuatan robot umumnya dimulai dari tahap perancangan desain, lalu dilanjutkan dengan perakitan komponen mekanik dan elektronik. Setelah itu, dipasang sistem sensor dan pemrograman agar robot dapat berpikir dan bergerak. Terakhir, robot diuji coba untuk memastikan semua fungsinya berjalan dengan baik dan aman digunakan.\n\nGlosarium:\n\n- Kompartemen : wadah atau bagian terpisah untuk menyimpan benda.\n\nNadin dan Ami membaca berita mengenai robot pengantar makanan. Mereka sepakat bahwa berita itu informatif dan mudah dipahami.\n\n[pertanyaan]\n\nMengapa teks itu dapat dipahami Nadin dan Ami?\nKlik pada pilihan Tepat atau Tidak tepat untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Terdapat penjelasan makna untuk setiap istilah asing yang disebutkan.",
+     "Kalimat-kalimat dalam teks menggunakan istilah yang cukup familiar.",
+     "Teks disertai dengan keterangan tentang istilah khusus yang digunakan."
+    ],
+    "answer_labels": [
+     "Tepat",
+     "Tidak tepat"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Istilah (navigasi otonom, LiDAR, Fleet Management System) dijelaskan dan ada glosarium; istilahnya teknis, bukan istilah yang familiar. [Kunci buatan Claude.] Sumber bacaan: https://www.kompas.id/artikel/heboh-robot-pelayan-restoran-pertama-di-kuba | https://food.detik.com/info-kuliner/d-7660919/bule-ini-girang-lihat-robot-antar-makanan-di-hotel-china | https://radarsampit.jawapos.com/featured/2345605645/robot-pengantar-makanan-mulai-populer-di-as-jadi-andalan-saat-musim-dingin | https://kumparan.com/kumparanfood/robot-pengantar-makanan-tersedia-di-hotel-beijing-selama-olimpiade-musim-dingin-1xR1I7m1m1L/full | https://voi.id/berita/410805/dubai-sustainable-city-luncurkan-program-robot-pengantar-waktu-tunggunya-kurang-dari-30-menit | www.robotrunner.com/en/indoor-delivery-service-robot.html"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "SCOBY (Symbiotic Culture of Bacteria and Yeast) adalah kultur mikroba yang digunakan dalam pembuatan minuman kombucha. Kombucha bermanfaat untuk menguatkan sistem imunitas dan sumber prebiotik yang tinggi.\n\nAlat dan bahan:\n\n1. Panci\n\n2. Toples kaca\n\n3. Kain kasa\n\n4. Karet gelang\n\n5. Teh hitam atau teh hijau sebanyak 2 sendok makan\n\n6. Gula pasir sebanyak 1/4 cangkir\n\n7. Air mendidih sebanyak 4 cangkir\n\n8. Minuman kombucha siap pakai sebanyak 1/2 cangkir (berfungsi membuat fermentasi teh menjadi minuman yang menyegarkan).\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s03_0.jpg]\n\nKeterangan:\n\nStarter kombucha adalah kultur campuran bakteri dan ragi dengan cairan kombucha yang sudah matang/tua\n\n[pertanyaan]\n\nApa saja khasiat kombucha bagi tubuh berdasarkan isi teks tersebut?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Menguatkan sistem imunitas.",
+     "Sumber prebiotik yang tinggi.",
+     "Membantu proses fermentasi.",
+     "Memungkinkan udara untuk  mengalir."
+    ]
+   },
+   "correct_answer": [
+    "Menguatkan sistem imunitas.",
+    "Sumber prebiotik yang tinggi."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: kombucha bermanfaat menguatkan sistem imunitas dan sumber prebiotik yang tinggi. Fermentasi dan aliran udara bukan khasiat bagi tubuh. [Kunci buatan Claude.] Sumber bacaan: https://kumparan.com/seputar-hobi/cara-membuat-scoby-kombucha-yang-mudah-dan-tepat-20U6EHsuNX9/full | https://picklesnhoney-com.translate.goog/how-to-make-kombucha-growing-a-scoby/?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc | https://www-foodnetwork-com.translate.goog/how-to/packages/food-network-essentials/how-to-make-a-scoby?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "SCOBY (Symbiotic Culture of Bacteria and Yeast) adalah kultur mikroba yang digunakan dalam pembuatan minuman kombucha. Kombucha bermanfaat untuk menguatkan sistem imunitas dan sumber prebiotik yang tinggi.\n\nAlat dan bahan:\n\n1. Panci\n\n2. Toples kaca\n\n3. Kain kasa\n\n4. Karet gelang\n\n5. Teh hitam atau teh hijau sebanyak 2 sendok makan\n\n6. Gula pasir sebanyak 1/4 cangkir\n\n7. Air mendidih sebanyak 4 cangkir\n\n8. Minuman kombucha siap pakai sebanyak 1/2 cangkir (berfungsi membuat fermentasi teh menjadi minuman yang menyegarkan).\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s14_0.jpg]\n\nKeterangan:\n\nStarter kombucha adalah kultur campuran bakteri dan ragi dengan cairan kombucha yang sudah matang/tua\n\n[pertanyaan]\n\nDalam proses pembuatan SCOBY, mengapa toples ditutup menggunakan kain kasa?",
+   "options": {
+    "choices": [
+     "Supaya sirkulasi udara tetap terjaga.",
+     "Demi menjaga toples tetap bersuhu hangat.",
+     "Agar toples bisa ditutup dengan rapat.",
+     "Untuk mempertahankan tekstur kenyal."
+    ]
+   },
+   "correct_answer": "Supaya sirkulasi udara tetap terjaga.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Infografik langkah 5: kain kasa mencegah serangga/kotoran masuk sambil memungkinkan udara mengalir. [Kunci buatan Claude.] Sumber bacaan: https://kumparan.com/seputar-hobi/cara-membuat-scoby-kombucha-yang-mudah-dan-tepat-20U6EHsuNX9/full | https://picklesnhoney-com.translate.goog/how-to-make-kombucha-growing-a-scoby/?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc | https://www-foodnetwork-com.translate.goog/how-to/packages/food-network-essentials/how-to-make-a-scoby?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "SCOBY (Symbiotic Culture of Bacteria and Yeast) adalah kultur mikroba yang digunakan dalam pembuatan minuman kombucha. Kombucha bermanfaat untuk menguatkan sistem imunitas dan sumber prebiotik yang tinggi.\n\nAlat dan bahan:\n\n1. Panci\n\n2. Toples kaca\n\n3. Kain kasa\n\n4. Karet gelang\n\n5. Teh hitam atau teh hijau sebanyak 2 sendok makan\n\n6. Gula pasir sebanyak 1/4 cangkir\n\n7. Air mendidih sebanyak 4 cangkir\n\n8. Minuman kombucha siap pakai sebanyak 1/2 cangkir (berfungsi membuat fermentasi teh menjadi minuman yang menyegarkan).\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s18_0.jpg]\n\nKeterangan:\n\nStarter kombucha adalah kultur campuran bakteri dan ragi dengan cairan kombucha yang sudah matang/tua\n\n[pertanyaan]\n\nApa yang akan terjadi jika toples tidak disimpan di tempat yang hangat saat melakukan percobaan pembuatan SCOBY?",
+   "options": {
+    "choices": [
+     "SCOBY tetap terbentuk dengan baik karena cahaya tidak akan memengaruhi fermentasi.",
+     "SCOBY gagal terbentuk karena keberadaan cahaya menghambat pertumbuhan mikroorganisme.",
+     "SCOBY terbentuk lebih cepat karena matahari dapat membantu mempercepat proses fermentasi.",
+     "SCOBY akan mengandung lebih banyak gula karena proses fermentasi tidak pernah berlangsung."
+    ]
+   },
+   "correct_answer": "SCOBY akan mengandung lebih banyak gula karena proses fermentasi tidak pernah berlangsung.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Infografik langkah 6: fermentasi butuh tempat hangat (24-29 C). Tanpa itu fermentasi tidak berlangsung sehingga gula tidak terpakai. Pilihan 2 dan 3 mengaitkan penyebab dengan cahaya, padahal syaratnya suhu. Soal ambigu. [Kunci buatan Claude; PERIKSA.] Sumber bacaan: https://kumparan.com/seputar-hobi/cara-membuat-scoby-kombucha-yang-mudah-dan-tepat-20U6EHsuNX9/full | https://picklesnhoney-com.translate.goog/how-to-make-kombucha-growing-a-scoby/?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc | https://www-foodnetwork-com.translate.goog/how-to/packages/food-network-essentials/how-to-make-a-scoby?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s22_0.jpg]\n\n[pertanyaan]\n\nMengapa penulis menyampaikan informasi tentang uji biodegradasi plastik konvensional dan bioplastik?",
+   "options": {
+    "choices": [
+     "Memaparkan cara membuat bioplastik dari bahan-bahan alami.",
+     "Menganalisis efek larutan cuka terhadap laju biodegradasi bioplastik.",
+     "Menyajikan langkah-langkah merendam plastik ke dalam larutan air dan cuka.",
+     "Membandingkan tingkat pelarutan plastik konvensional dan bioplastik pada air."
+    ]
+   },
+   "correct_answer": "Menganalisis efek larutan cuka terhadap laju biodegradasi bioplastik.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Infografik, bagian Tujuan: mengetahui pengaruh larutan asam asetat (cuka) terhadap biodegradasi bioplastik dibandingkan plastik konvensional. [Kunci buatan Claude.] Sumber bacaan: Rahmawati, L., Hadiyanto, H., & Fudholi, A. (2021). Evaluasi biodegradabilitas plastik berbahan dasar campuran pati dan polietilen menggunakan metode enzimatik, konsorsia mikroba, dan pengomposan. Jurnal Teknologi Lingkungan, 22(3), 145–156. | Tim Abdi Guru. (2021). Ilmu Pengetahuan Alam untuk SMP/MTs Kelas VII. Jakarta: Penerbit Erlangga."
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s15_0.jpg]\n\n[pertanyaan]\n\nMengapa bioplastik dinyatakan lebih ramah lingkungan pada uji biodegradasi tersebut?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Massa bioplastik mengalami penurunan lebih cepat saat direndam larutan cuka.",
+     "Bahan bioplastik mudah terurai, terutama saat berada dalam keadaan asam.",
+     "Material polyethylene dalam bioplastik mempercepat proses penguraian."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Kesimpulan infografik: cuka mempercepat biodegradasi bioplastik (massa turun lebih cepat). Polyethylene adalah plastik konvensional yang sulit terurai. [Kunci buatan Claude.] Sumber bacaan: Rahmawati, L., Hadiyanto, H., & Fudholi, A. (2021). Evaluasi biodegradabilitas plastik berbahan dasar campuran pati dan polietilen menggunakan metode enzimatik, konsorsia mikroba, dan pengomposan. Jurnal Teknologi Lingkungan, 22(3), 145–156. | Tim Abdi Guru. (2021). Ilmu Pengetahuan Alam untuk SMP/MTs Kelas VII. Jakarta: Penerbit Erlangga."
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s06_0.jpg]\n\nSetelah membaca teks prosedur uji biodegradasi, Nake, Elvina, dan Ratna berpendapat sebagai berikut.\n\nNake : \"Menurutku petunjuk kegiatan dalam teks mudah dimengerti. Penulis menggunakan kalimat perintah yang sederhana.\"\nElvina: \"Betul, Nake. Apalagi tampilan teks juga sangat menarik. Aku sangat suka dengan pilihan warna infografiknya.\"\nRatna: “Menurutku, setiap pernyataan dalam teks juga jelas, termasuk rincian waktu penelitian, misalnya ‘setelah 7 hari’.”\n\n[pertanyaan]\n\nPendapat siapakah yang lebih sesuai untuk menilai penggunaan bahasa dalam teks prosedur tersebut?\nKlik pada pilihan Sesuai atau Tidak Sesuai untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Elvina karena alasan yang diungkapkan mencerminkan tingkat estetika bahasa.",
+     "Nake karena pernyataan yang disampaikan merujuk pada efektivitas bahasa teks.",
+     "Ratna karena argumen yang disampaikan merujuk pada keunggulan kalimat rincian."
+    ],
+    "answer_labels": [
+     "Sesuai",
+     "Tidak Sesuai"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Elvina menilai warna infografik (visual), bukan bahasa. Nake (kalimat perintah sederhana, efektivitas) dan Ratna (kejelasan rincian kalimat) menilai bahasa. [Kunci buatan Claude.] Sumber bacaan: Rahmawati, L., Hadiyanto, H., & Fudholi, A. (2021). Evaluasi biodegradabilitas plastik berbahan dasar campuran pati dan polietilen menggunakan metode enzimatik, konsorsia mikroba, dan pengomposan. Jurnal Teknologi Lingkungan, 22(3), 145–156. | Tim Abdi Guru. (2021). Ilmu Pengetahuan Alam untuk SMP/MTs Kelas VII. Jakarta: Penerbit Erlangga."
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s27_0.jpg]\n\nSaat membeli kaos kaki, kalian akan memilih yang kualitasnya bagus, harganya mahal, dan hanya dapat satu pasang? Atau yang kualitasnya biasa saja, harga terjangkau, dan dapatnya lima pasang kaos kaki? Ayo, kalian akan pilih kualitas atau kuantitas?\n\nSaat kalian membeli kaos kaki seperti ini, sebenarnya kalian sedang menerapkan konsumsi dan produksi yang bertanggung jawab, lho. Pada dasarnya, patokan barang itu, ada harga ada rupa. Jadi, semakin bagus kualitas sebuah barang, maka biasanya semakin mahal juga harga barangnya. Namun, akan awet dan tahan lama saat dipakai. Akhirnya, kalian juga akan menghemat pengeluaran membeli kaos kaki. Uangnya bisa dipakai untuk keperluan lainnya.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s27_1.jpg]\n\nCoba bandingkan dengan membeli kaos kaki yang harganya murah, dapatnya banyak, tapi kualitasnya kurang bagus. Akhirnya baru dipakai sebentar, kaos kaki sudah sobek. Lima pasang kaos kaki itu, akan cepat ganti semua. Kaos kaki ini malah akan dibuang dan menjadi sampah. Pastinya akan berpengaruh juga pada lingkungan, kesehatan, dan Bumi kita.\n\nJadi, sebaiknya kalian membeli barang berkualitas jumlah sedikit dan bisa dipakai lama. Belilah barang yang benar-benar kalian butuhkan agar terus bisa dipakai lama. Jangan beli barang yang hanya sekadar ingin beli. Biasanya malah akan cepat bosan. Akhirnya, tidak terpakai dan menumpuk di rumah. Sayang sekali, kan?\n\n[pertanyaan]\n\nBagaimana manfaat ekonomi dari tips memilih barang tersebut?",
+   "options": {
+    "choices": [
+     "Lebih awet sehingga jangka waktu pemakaiannya lebih lama.",
+     "Mencegah banyaknya barang yang terbuang di tempat sampah.",
+     "Menghemat pengeluaran karena tidak perlu terus membeli.",
+     "Membuat kepercayaan diri meningkat saat menggunakannya."
+    ]
+   },
+   "correct_answer": "Menghemat pengeluaran karena tidak perlu terus membeli.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Memilih barang berkualitas membuat awet sehingga tidak perlu terus membeli: menghemat pengeluaran (manfaat ekonomi). [Kunci buatan Claude.] Sumber bacaan: https://mytravelingroads.com/teaching-kids-about-responsible-consumption-production/ (dengan penyesuaian)"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s16_0.jpg]\n\nSaat membeli kaos kaki, kalian akan memilih yang kualitasnya bagus, harganya mahal, dan hanya dapat satu pasang? Atau yang kualitasnya biasa saja, harga terjangkau, dan dapatnya lima pasang kaos kaki? Ayo, kalian akan pilih kualitas atau kuantitas?\n\nSaat kalian membeli kaos kaki seperti ini, sebenarnya kalian sedang menerapkan konsumsi dan produksi yang bertanggung jawab, lho. Pada dasarnya, patokan barang itu, ada harga ada rupa. Jadi, semakin bagus kualitas sebuah barang, maka biasanya semakin mahal juga harga barangnya. Namun, akan awet dan tahan lama saat dipakai. Akhirnya, kalian juga akan menghemat pengeluaran membeli kaos kaki. Uangnya bisa dipakai untuk keperluan lainnya.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s16_1.jpg]\n\nCoba bandingkan dengan membeli kaos kaki yang harganya murah, dapatnya banyak, tapi kualitasnya kurang bagus. Akhirnya baru dipakai sebentar, kaos kaki sudah sobek. Lima pasang kaos kaki itu, akan cepat ganti semua. Kaos kaki ini malah akan dibuang dan menjadi sampah. Pastinya akan berpengaruh juga pada lingkungan, kesehatan, dan Bumi kita.\n\nJadi, sebaiknya kalian membeli barang berkualitas jumlah sedikit dan bisa dipakai lama. Belilah barang yang benar-benar kalian butuhkan agar terus bisa dipakai lama. Jangan beli barang yang hanya sekadar ingin beli. Biasanya malah akan cepat bosan. Akhirnya, tidak terpakai dan menumpuk di rumah. Sayang sekali, kan?\n\n[pertanyaan]\n\nBagaimana perbedaan kedua anak pada ilustrasi tersebut saat membeli kaos kaki?",
+   "options": {
+    "choices": [
+     "Anak laki-laki membeli kaos kaki lebih banyak.",
+     "Anak perempuan memilih kaos kaki lebih mahal.",
+     "Anak laki-laki pengeluaran kaos kakinya lebih hemat.",
+     "Anak perempuan memilih kaos kaki kualitas terbaik."
+    ]
+   },
+   "correct_answer": "Anak laki-laki pengeluaran kaos kakinya lebih hemat.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Gambar kedua: anak laki-laki menabung dan senang, anak perempuan sedih dengan kaos kaki sobek: anak laki-laki lebih hemat. [Kunci buatan Claude.] Sumber bacaan: https://mytravelingroads.com/teaching-kids-about-responsible-consumption-production/ (dengan penyesuaian)"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s07_0.jpg]\n\nSaat membeli kaos kaki, kalian akan memilih yang kualitasnya bagus, harganya mahal, dan hanya dapat satu pasang? Atau yang kualitasnya biasa saja, harga terjangkau, dan dapatnya lima pasang kaos kaki? Ayo, kalian akan pilih kualitas atau kuantitas?\n\nSaat kalian membeli kaos kaki seperti ini, sebenarnya kalian sedang menerapkan konsumsi dan produksi yang bertanggung jawab, lho. Pada dasarnya, patokan barang itu, ada harga ada rupa. Jadi, semakin bagus kualitas sebuah barang, maka biasanya semakin mahal juga harga barangnya. Namun, akan awet dan tahan lama saat dipakai. Akhirnya, kalian juga akan menghemat pengeluaran membeli kaos kaki. Uangnya bisa dipakai untuk keperluan lainnya.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s07_1.jpg]\n\nCoba bandingkan dengan membeli kaos kaki yang harganya murah, dapatnya banyak, tapi kualitasnya kurang bagus. Akhirnya baru dipakai sebentar, kaos kaki sudah sobek. Lima pasang kaos kaki itu, akan cepat ganti semua. Kaos kaki ini malah akan dibuang dan menjadi sampah. Pastinya akan berpengaruh juga pada lingkungan, kesehatan, dan Bumi kita.\n\nJadi, sebaiknya kalian membeli barang berkualitas jumlah sedikit dan bisa dipakai lama. Belilah barang yang benar-benar kalian butuhkan agar terus bisa dipakai lama. Jangan beli barang yang hanya sekadar ingin beli. Biasanya malah akan cepat bosan. Akhirnya, tidak terpakai dan menumpuk di rumah. Sayang sekali, kan?\n\n[pertanyaan]\n\nMengapa ekspresi dua anak yang terdapat pada gambar kedua berbeda dari gambar pertama?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Anak perempuan menyadari dirinya masih mempunyai banyak kaos kaki yang masih bagus.",
+     "Anak laki-laki merasa senang karena bisa menabung uangnya untuk membeli keperluan lain.",
+     "Anak laki-laki tetap merasa puas, meskipun mempunyai sedikit kaos kaki dengan kualitas biasa."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Gambar kedua: anak perempuan sedih (kaos kaki sobek); anak laki-laki senang menabung dengan kaos kaki berkualitas, bukan kualitas biasa. [Kunci buatan Claude.] Sumber bacaan: https://mytravelingroads.com/teaching-kids-about-responsible-consumption-production/ (dengan penyesuaian)"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s28_0.jpg]\n\n[pertanyaan]\n\nApa tujuan utama teks brosur tersebut?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Memberi tahu pembaca tentang keindahan laut yang dimiliki Indonesia.",
+     "Memberikan informasi pengelolaan laut yang dilakukan oleh pemerintah.",
+     "Menyebutkan nama-nama taman nasional dan suaka laut di Indonesia.",
+     "Mendorong pembaca berperan dalam pelestarian kawasan konservasi."
+    ]
+   },
+   "correct_answer": [
+    "Memberikan informasi pengelolaan laut yang dilakukan oleh pemerintah.",
+    "Mendorong pembaca berperan dalam pelestarian kawasan konservasi."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Brosur menjelaskan pengelolaan laut oleh pemerintah dan mengajak berperan dalam pelestarian. Keindahan hanya pembuka; nama taman adalah contoh. [Kunci buatan Claude; PERIKSA.] Sumber bacaan: Situs Kementerian Kelautan dan Perikanan RI. https://kkp.go.id | https://lautsehat.id/ekonomi-hijau/lautsehat/kawasan-konservasi-laut-di-indonesia/ | https://jdih.maritim.go.id/cfind/source/files/permen-kp/permen-kp-nomor-31-tahun-2020.pdf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s23_0.jpg]\n\n[pertanyaan]\n\nMengapa perlindungan terhadap Kawasan Konservasi Maritim diperlukan?",
+   "options": {
+    "choices": [
+     "Agar dapat digunakan sepenuhnya untuk situs arkeologi dan kemaritiman.",
+     "Dengan tujuan menjaga keberlanjutan sumber daya ikan yang hampir punah.",
+     "Supaya dapat mendukung kegiatan wisata berbasis alam dan budaya.",
+     "Untuk melindungi kearifan lokal, adat, dan situs sejarah di wilayah pesisir."
+    ]
+   },
+   "correct_answer": "Untuk melindungi kearifan lokal, adat, dan situs sejarah di wilayah pesisir.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Brosur: Taman Konservasi Maritim mempertahankan warisan budaya maritim dan kearifan lokal. [Kunci buatan Claude.] Sumber bacaan: Situs Kementerian Kelautan dan Perikanan RI. https://kkp.go.id | https://lautsehat.id/ekonomi-hijau/lautsehat/kawasan-konservasi-laut-di-indonesia/ | https://jdih.maritim.go.id/cfind/source/files/permen-kp/permen-kp-nomor-31-tahun-2020.pdf"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s08_0.jpg]\n\n[pertanyaan]\n\nMengapa dalam brosur disertakan peta Indonesia?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Menegaskan bahwa kawasan yang dibahas berada di wilayah Indonesia.",
+     "Membantu memahami persebaran lokasi kawasan konservasi di satu daerah.",
+     "Menunjukkan letak kawasan konservasi laut yang diinformasikan dalam brosur."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Peta menegaskan lokasi di Indonesia. Peta hanya gambar umum seluruh Indonesia, tidak menandai persebaran atau letak kawasan tertentu. [Kunci buatan Claude; PERIKSA.] Sumber bacaan: Situs Kementerian Kelautan dan Perikanan RI. https://kkp.go.id | https://lautsehat.id/ekonomi-hijau/lautsehat/kawasan-konservasi-laut-di-indonesia/ | https://jdih.maritim.go.id/cfind/source/files/permen-kp/permen-kp-nomor-31-tahun-2020.pdf"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s24_0.jpg]\n\nPagi itu, Damang, ketua adat, menegaskan bahwa siapa pun yang melanggar aturan Lilifuk akan didenda ternak, uang, dan beras. Ya, sebagai nelayan kami hanya boleh menangkap ikan pada bulan Juni dan Desember. Pelanggaran berarti hukuman dan rasa malu, seakan terputus dari darah Lilifuk dan Pulau Timor.\n\nAku dan Seno sama-sama nelayan yang menanti Saun Ta’et, upacara menangkap ikan. Menjelang panen, ketua adat memimpin ritual di pantai dan menyerahkan upeti ikan kepada Tuan Lilifuk. Upacara itu sangat kami nantikan. Kami berdiri hormat menunggu laut dibuka, menjaga adat, warisan, dan hidup bersama alam Lilifuk yang sakral.\n\nMalam harinya, aku berjalan menyisir pantai bersama adikku, Ading. Udara malam selalu menenangkanku. Namun, di tengah lautan jauh di sana, aku melihat seseorang di atas perahu. Padahal upacara belum dilakukan, tapi sudah ada nelayan menangkap ikan. Aku berlari ke rumah ketua adat. Aku juga memanggil warga yang masih tidur untuk bergegas menangkap nelayan itu.\n\nNelayan itu ditangkap, ternyata dia adalah Seno. Ia dibawa ke rumah ketua adat untuk diadili.\n\n“Kami menemukan bom di perahumu, apa yang hendak kamu lakukan?”\n\n“Aku ingin pergi dari pulau!” Seno berteriak, “Aku sudah tidak ingin hidup di sini. Aku akan mengambil ikan sebanyak-banyaknya untuk bekal hidup di luar pulau!”\n\nSeno tahu, mengebom ikan akan merusak terumbu karang. Dia sengaja mengkhianati desa karena merasa iri dengan petinggi di Lilifuk.\n\nSetelah Seno ditangkap, aku tidak pernah bertemu lagi dengannya. Aku tidak tahu apa hukuman yang dijatuhkan untuknya. Aku pun tahu bahwa dia tidak akan sanggup membayar denda.\n\nTapi jika tidak ada darah Lilifuk mengalir di tubuhnya, aku yakin dia sudah meninggalkan pulau.\n\n[pertanyaan]\n\nApa yang terjadi kepada Seno setelah dia ditangkap?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Seno membayar denda sebagai sanksi dari ketua adat.",
+     "Seno tidak pernah lagi bertemu dengan tokoh Aku.",
+     "Seno mengambil ikan sebagai bekal pergi ke pulau lain."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: Aku tidak tahu hukuman Seno dan yakin ia tak sanggup membayar denda; ia tidak pernah bertemu lagi dengan Aku; ia ditangkap sebelum membawa ikan keluar pulau. [Kunci buatan Claude.] Sumber bacaan: https://www.ekuatorial.com/2021/07/tradisi-lilifuk-kearifan-suku-baineo-menjaga-ekosistem-terumbu-karang/ (dengan penyesuaian)"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s19_0.jpg]\n\nPagi itu, Damang, ketua adat, menegaskan bahwa siapa pun yang melanggar aturan Lilifuk akan didenda ternak, uang, dan beras. Ya, sebagai nelayan kami hanya boleh menangkap ikan pada bulan Juni dan Desember. Pelanggaran berarti hukuman dan rasa malu, seakan terputus dari darah Lilifuk dan Pulau Timor.\n\nAku dan Seno sama-sama nelayan yang menanti Saun Ta’et, upacara menangkap ikan. Menjelang panen, ketua adat memimpin ritual di pantai dan menyerahkan upeti ikan kepada Tuan Lilifuk. Upacara itu sangat kami nantikan. Kami berdiri hormat menunggu laut dibuka, menjaga adat, warisan, dan hidup bersama alam Lilifuk yang sakral.\n\nMalam harinya, aku berjalan menyisir pantai bersama adikku, Ading. Udara malam selalu menenangkanku. Namun, di tengah lautan jauh di sana, aku melihat seseorang di atas perahu. Padahal upacara belum dilakukan, tapi sudah ada nelayan menangkap ikan. Aku berlari ke rumah ketua adat. Aku juga memanggil warga yang masih tidur untuk bergegas menangkap nelayan itu.\n\nNelayan itu ditangkap, ternyata dia adalah Seno. Ia dibawa ke rumah ketua adat untuk diadili.\n\n“Kami menemukan bom di perahumu, apa yang hendak kamu lakukan?”\n\n“Aku ingin pergi dari pulau!” Seno berteriak, “Aku sudah tidak ingin hidup di sini. Aku akan mengambil ikan sebanyak-banyaknya untuk bekal hidup di luar pulau!”\n\nSeno tahu, mengebom ikan akan merusak terumbu karang. Dia sengaja mengkhianati desa karena merasa iri dengan petinggi di Lilifuk.\n\nSetelah Seno ditangkap, aku tidak pernah bertemu lagi dengannya. Aku tidak tahu apa hukuman yang dijatuhkan untuknya. Aku pun tahu bahwa dia tidak akan sanggup membayar denda.\n\nTapi jika tidak ada darah Lilifuk mengalir di tubuhnya, aku yakin dia sudah meninggalkan pulau.\n\n[pertanyaan]\n\nApa yang akan terjadi kepada Seno apabila dia tetap patuh pada aturan adat?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Masih bisa mengikuti Saun Ta’et yang dirayakan esok harinya.",
+     "Masih menjadi nelayan di Pulau Timor bersama tokoh Aku.",
+     "Tetap menjadi warga pulau yang selalu menantikan Saun Ta’et.",
+     "Dapat menangkap ikan kapan saja tanpa harus menunggu lama."
+    ]
+   },
+   "correct_answer": [
+    "Masih bisa mengikuti Saun Ta’et yang dirayakan esok harinya.",
+    "Masih menjadi nelayan di Pulau Timor bersama tokoh Aku.",
+    "Tetap menjadi warga pulau yang selalu menantikan Saun Ta’et."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Jika patuh: tetap warga dan nelayan pulau yang menantikan Saun Ta'et. Pilihan 1 menyebut upacara \"esok harinya\", yang tidak dinyatakan jelas di teks. Pilihan 4 bertentangan dengan aturan (hanya Juni dan Desember). [Kunci buatan Claude; PERIKSA.] Sumber bacaan: https://www.ekuatorial.com/2021/07/tradisi-lilifuk-kearifan-suku-baineo-menjaga-ekosistem-terumbu-karang/ (dengan penyesuaian)"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s10_0.jpg]\n\nPagi itu, Damang, ketua adat, menegaskan bahwa siapa pun yang melanggar aturan Lilifuk akan didenda ternak, uang, dan beras. Ya, sebagai nelayan kami hanya boleh menangkap ikan pada bulan Juni dan Desember. Pelanggaran berarti hukuman dan rasa malu, seakan terputus dari darah Lilifuk dan Pulau Timor.\n\nAku dan Seno sama-sama nelayan yang menanti Saun Ta’et, upacara menangkap ikan. Menjelang panen, ketua adat memimpin ritual di pantai dan menyerahkan upeti ikan kepada Tuan Lilifuk. Upacara itu sangat kami nantikan. Kami berdiri hormat menunggu laut dibuka, menjaga adat, warisan, dan hidup bersama alam Lilifuk yang sakral.\n\nMalam harinya, aku berjalan menyisir pantai bersama adikku, Ading. Udara malam selalu menenangkanku. Namun, di tengah lautan jauh di sana, aku melihat seseorang di atas perahu. Padahal upacara belum dilakukan, tapi sudah ada nelayan menangkap ikan. Aku berlari ke rumah ketua adat. Aku juga memanggil warga yang masih tidur untuk bergegas menangkap nelayan itu.\n\nNelayan itu ditangkap, ternyata dia adalah Seno. Ia dibawa ke rumah ketua adat untuk diadili.\n\n“Kami menemukan bom di perahumu, apa yang hendak kamu lakukan?”\n\n“Aku ingin pergi dari pulau!” Seno berteriak, “Aku sudah tidak ingin hidup di sini. Aku akan mengambil ikan sebanyak-banyaknya untuk bekal hidup di luar pulau!”\n\nSeno tahu, mengebom ikan akan merusak terumbu karang. Dia sengaja mengkhianati desa karena merasa iri dengan petinggi di Lilifuk.\n\nSetelah Seno ditangkap, aku tidak pernah bertemu lagi dengannya. Aku tidak tahu apa hukuman yang dijatuhkan untuknya. Aku pun tahu bahwa dia tidak akan sanggup membayar denda.\n\nTapi jika tidak ada darah Lilifuk mengalir di tubuhnya, aku yakin dia sudah meninggalkan pulau.\n\n[pertanyaan]\n\nApa yang dapat dipelajari dari peristiwa yang dialami Seno dalam cerita tersebut?",
+   "options": {
+    "choices": [
+     "Kebebasan berpendapat diperlukan untuk menunjukkan jati diri.",
+     "Keserakahan berdampak buruk terhadap alam dan persahabatan.",
+     "Keterbukaan diperlukan dalam mempertahankan persahabatan.",
+     "Kejujuran dapat membawa dampak negatif bagi lingkungan sekitar."
+    ]
+   },
+   "correct_answer": "Keserakahan berdampak buruk terhadap alam dan persahabatan.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Seno mengebom ikan karena serakah/iri: keserakahan merusak alam (terumbu karang) dan hubungan dengan warga. [Kunci buatan Claude.] Sumber bacaan: https://www.ekuatorial.com/2021/07/tradisi-lilifuk-kearifan-suku-baineo-menjaga-ekosistem-terumbu-karang/ (dengan penyesuaian)"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s20_0.jpg]\n\nNamaku Lobi, si lebah hutan dari keluarga Apis dorsata. Koloniku tinggal di cabang pohon tinggi di tengah hutan. Di sarang tempat tinggalku ada 60 hingga 70 ribu lebah. Meski sangat ramai, hidup kami sangat rapi dan teratur.\n\n“Hei, Lobi. Kau ini lebah pekerja. Jangan bermalas-malasan terus”, seru Tawi, temanku sesama lebah pengumpul nektar.\n\n“Alangkah enaknya menjadi Kuina, ratu kita. Dia tidak harus repot bekerja. Tubuhnya besar sekali.” Aku selalu iri membayangkan ukuran tubuhnya yang hampir 3 kali berat tubuhku.\n\n“Apa-apaan kau ini, Lobi? Kuina itu pemimpin yang harus selalu kita patuhi dan ikuti ke manapun ia pergi.” Tawi berbicara seolah aku tak paham. “Ratu juga punya tugas besar. Untuk kelangsungan hidup koloni kita, ia bertelur sekitar 1500 hingga 2000 butir setiap harinya.”\n\n“Iya. Tapi tahukah kamu rahasia umur panjang Kuina?”\n\n“Tentu saja. Itu karena ratu selalu mengonsumsi royal jelly sepanjang hidupnya. Berbeda dengan kita yang hanya mengonsumsi royal jelly tiga hari saat menjadi larva. Itulah mengapa hidup ratu bisa mencapai 3-5 tahun. Sementara kita cuma sampai 40 hari.”\n\nTawi terbang kesana kemari dengan sayapnya yang kecil tapi kuat. Tubuhnya ramping berwarna kecokelatan dengan ekor yang dilengkapi sengat lurus serta berduri. Sengat inilah yang kami gunakan untuk melindungi sarang dari para pengganggu.\n\n“Hai, kami punya kabar baik. Ada kebun bunga di dekat telaga sana.” Bee dan Polly, para lebah pencari mengabarkan lokasi sumber makanan terbaik.\n\n“Ayo, Lobi. Sekarang saatnya kita bekerja.”\n\nKami beramai-ramai terbang dan hinggap di bunga-bunga yang sedang mekar, menghisap setiap tetes nektar menggunakan alat hisap, lalu menyimpannya ke dalam kantong madu yang ada di kaki. Nektar yang terkumpul kami simpan dalam sel madu yang terbuka sampai nektar menguap dan membentuk cairan madu yang kental dan matang.\n\nKami bersemangat mondar-mandir dari sarang ke kebun bunga sampai 75.000 kali untuk menghasilkan madu terbaik. Sungguh sibuk kehidupan koloni kami ini.\n\n[pertanyaan]\n\nApa yang selanjutnya akan dilakukan Lobi setelah memahami peran dan tugas lebah dalam koloni?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Lobi akan membantu dan menggantikan tugas Kuina sebagai ratu lebah untuk menghasilkan banyak telur.",
+     "Lobi akan terus melakukan pekerjaan mengumpulkan nektar bersama Tawi dan lebah pekerja lain.",
+     "Lobi akan tetap bertugas mengisap nektar dari bunga-bunga dan memindahkannya ke sarang.",
+     "Lobi akan hidup lama selama bertahun-tahun sebagai ratu dengan mengkonsumsi nektar dan royal jelly."
+    ]
+   },
+   "correct_answer": [
+    "Lobi akan terus melakukan pekerjaan mengumpulkan nektar bersama Tawi dan lebah pekerja lain.",
+    "Lobi akan tetap bertugas mengisap nektar dari bunga-bunga dan memindahkannya ke sarang."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Lobi tetap pekerja: mengumpulkan nektar bersama Tawi dan memindahkannya ke sarang; tidak menggantikan ratu. [Kunci buatan Claude.] Sumber bacaan: Cerita dikembangkan dari: https://rimbakita.com/lebah-madu/"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s17_0.jpg]\n\nNamaku Lobi, si lebah hutan dari keluarga Apis dorsata. Koloniku tinggal di cabang pohon tinggi di tengah hutan. Di sarang tempat tinggalku ada 60 hingga 70 ribu lebah. Meski sangat ramai, hidup kami sangat rapi dan teratur.\n\n“Hei, Lobi. Kau ini lebah pekerja. Jangan bermalas-malasan terus”, seru Tawi, temanku sesama lebah pengumpul nektar.\n\n“Alangkah enaknya menjadi Kuina, ratu kita. Dia tidak harus repot bekerja. Tubuhnya besar sekali.” Aku selalu iri membayangkan ukuran tubuhnya yang hampir 3 kali berat tubuhku.\n\n“Apa-apaan kau ini, Lobi? Kuina itu pemimpin yang harus selalu kita patuhi dan ikuti ke manapun ia pergi.” Tawi berbicara seolah aku tak paham. “Ratu juga punya tugas besar. Untuk kelangsungan hidup koloni kita, ia bertelur sekitar 1500 hingga 2000 butir setiap harinya.”\n\n“Iya. Tapi tahukah kamu rahasia umur panjang Kuina?”\n\n“Tentu saja. Itu karena ratu selalu mengonsumsi royal jelly sepanjang hidupnya. Berbeda dengan kita yang hanya mengonsumsi royal jelly tiga hari saat menjadi larva. Itulah mengapa hidup ratu bisa mencapai 3-5 tahun. Sementara kita cuma sampai 40 hari.”\n\nTawi terbang kesana kemari dengan sayapnya yang kecil tapi kuat. Tubuhnya ramping berwarna kecokelatan dengan ekor yang dilengkapi sengat lurus serta berduri. Sengat inilah yang kami gunakan untuk melindungi sarang dari para pengganggu.\n\n“Hai, kami punya kabar baik. Ada kebun bunga di dekat telaga sana.” Bee dan Polly, para lebah pencari mengabarkan lokasi sumber makanan terbaik.\n\n“Ayo, Lobi. Sekarang saatnya kita bekerja.”\n\nKami beramai-ramai terbang dan hinggap di bunga-bunga yang sedang mekar, menghisap setiap tetes nektar menggunakan alat hisap, lalu menyimpannya ke dalam kantong madu yang ada di kaki. Nektar yang terkumpul kami simpan dalam sel madu yang terbuka sampai nektar menguap dan membentuk cairan madu yang kental dan matang.\n\nKami bersemangat mondar-mandir dari sarang ke kebun bunga sampai 75.000 kali untuk menghasilkan madu terbaik. Sungguh sibuk kehidupan koloni kami ini.\n\n[pertanyaan]\n\nBagaimana perbedaan sifat tokoh yang terdapat dalam cerita tersebut?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan sifat tokoh yang sesuai!",
+   "options": {
+    "statements": [
+     "Lebah Tawi merupakan sosok yang rajin, sedangkan Lebah Lobi malas bekerja.",
+     "Lebah Tawi punya tubuh yang gendut sedangkan Lobi punya tubuh yang ramping.",
+     "Lebah Tawi sosok yang bijaksana, sedangkan Lebah Lobi sosok yang suka cemburu."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Tawi rajin dan bijaksana menegur Lobi; Lobi iri pada ratu. Tubuh Tawi ramping, bukan gendut. [Kunci buatan Claude.] Sumber bacaan: Cerita dikembangkan dari: https://rimbakita.com/lebah-madu/"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s11_0.jpg]\n\nNamaku Lobi, si lebah hutan dari keluarga Apis dorsata. Koloniku tinggal di cabang pohon tinggi di tengah hutan. Di sarang tempat tinggalku ada 60 hingga 70 ribu lebah. Meski sangat ramai, hidup kami sangat rapi dan teratur.\n\n“Hei, Lobi. Kau ini lebah pekerja. Jangan bermalas-malasan terus”, seru Tawi, temanku sesama lebah pengumpul nektar.\n\n“Alangkah enaknya menjadi Kuina, ratu kita. Dia tidak harus repot bekerja. Tubuhnya besar sekali.” Aku selalu iri membayangkan ukuran tubuhnya yang hampir 3 kali berat tubuhku.\n\n“Apa-apaan kau ini, Lobi? Kuina itu pemimpin yang harus selalu kita patuhi dan ikuti ke manapun ia pergi.” Tawi berbicara seolah aku tak paham. “Ratu juga punya tugas besar. Untuk kelangsungan hidup koloni kita, ia bertelur sekitar 1500 hingga 2000 butir setiap harinya.”\n\n“Iya. Tapi tahukah kamu rahasia umur panjang Kuina?”\n\n“Tentu saja. Itu karena ratu selalu mengonsumsi royal jelly sepanjang hidupnya. Berbeda dengan kita yang hanya mengonsumsi royal jelly tiga hari saat menjadi larva. Itulah mengapa hidup ratu bisa mencapai 3-5 tahun. Sementara kita cuma sampai 40 hari.”\n\nTawi terbang kesana kemari dengan sayapnya yang kecil tapi kuat. Tubuhnya ramping berwarna kecokelatan dengan ekor yang dilengkapi sengat lurus serta berduri. Sengat inilah yang kami gunakan untuk melindungi sarang dari para pengganggu.\n\n“Hai, kami punya kabar baik. Ada kebun bunga di dekat telaga sana.” Bee dan Polly, para lebah pencari mengabarkan lokasi sumber makanan terbaik.\n\n“Ayo, Lobi. Sekarang saatnya kita bekerja.”\n\nKami beramai-ramai terbang dan hinggap di bunga-bunga yang sedang mekar, menghisap setiap tetes nektar menggunakan alat hisap, lalu menyimpannya ke dalam kantong madu yang ada di kaki. Nektar yang terkumpul kami simpan dalam sel madu yang terbuka sampai nektar menguap dan membentuk cairan madu yang kental dan matang.\n\nKami bersemangat mondar-mandir dari sarang ke kebun bunga sampai 75.000 kali untuk menghasilkan madu terbaik. Sungguh sibuk kehidupan koloni kami ini.\n\n[pertanyaan]\n\nSetelah membaca teks tersebut, bagaimana tindakan yang tepat ketika kamu melihat sarang lebah madu?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Ketika melihat seekor lebah yang paling besar di antara lebah lainnya, maka harus dibuang jauh-jauh agar tidak mengganggu lebah-lebah yang lebih kecil.",
+     "Harus berhati-hati saat dekat dengan sarang lebah, karena bisa diaggap sebagai ancaman yang mengganggu sehingga disengat oleh lebah-lebah tersebut.",
+     "Menanam tumbuhan berbunga di sekitar sarang lebah, supaya bisa menjadi sumber makanan dan tempat bagi lebah mengumpulkan nektar."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Ratu tidak dibuang. Sarang lebah sebaiknya didekati dengan hati-hati (bisa disengat); tanaman berbunga menyediakan nektar. [Kunci buatan Claude.] Sumber bacaan: Cerita dikembangkan dari: https://rimbakita.com/lebah-madu/"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s04_0.jpg]\n\n[pertanyaan]\n\nManakah kosakata yang menggambarkan suasana petang berdasarkan puisi tersebut?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Hamparan waktu.",
+     "Suara kalong.",
+     "Surya berlalu.",
+     "Suara bedug."
+    ]
+   },
+   "correct_answer": [
+    "Suara kalong.",
+    "Surya berlalu.",
+    "Suara bedug."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Larik \"suara kalong menghalau petang\", \"sebelum surya berlalu\", dan \"suara bedug bertalu-talu\" menggambarkan petang. \"Hamparan waktu\" tidak spesifik. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s29_0.jpg]\n\n[pertanyaan]\n\nApa makna larik “Berloncatan di semak-semak rindu” pada puisi tersebut?\nKlik pada pilihan Tepat atau Tidak Tepat untuk setiap pernyataan!",
+   "options": {
+    "statements": [
+     "Rindu yang muncul dan hilang begitu saja.",
+     "Rindu yang tidak tenang tetapi terasa indah.",
+     "Rindu yang membawa keputusasaan mendalam."
+    ],
+    "answer_labels": [
+     "Tepat",
+     "Tidak Tepat"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah, timbul tenggelam. Bukan keputusasaan. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s25_0.jpg]\n\n[pertanyaan]\n\nApa pesan yang ingin disampaikan penulis melalui puisi tersebut?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan!",
+   "options": {
+    "statements": [
+     "Alam menyimpan kenangan yang senantiasa dapat dijadikan pelajaran.",
+     "Ketulusan dalam hidup meskipun tidak berjalan sesuai harapan di masa lalu.",
+     "Manusia dapat merenungi kehidupannya melalui suara dan gerakan di sekitarnya."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Puisi merenungkan kenangan dan rindu lewat suara dan gerak alam. \"Ketulusan meski tak sesuai harapan\" tidak ada di puisi. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_0.jpg]\n\nDahulu kala, ada seorang Nenek yang hidup di Pulau Kei Kecil. Nenek itu hidup sendiri. Setiap hari Nenek itu menanam apa saja di kebunnya. Selain bertani, masyarakat di kampung itu kadang ke laut untuk mencari ikan. Suatu ketika, para lelaki hendak ke laut. Seluruh wanita mempersiapkan bekal untuk suami dan anak mereka yang akan melaut. Tak terkecuali si Nenek. Ia juga turut mempersiapkan bekal meski tidak ada anggota keluarganya yang melaut.\n\nSelang beberapa waktu, para lelaki di kampung itu kembali. Membawa hasil tangkapan yang luar biasa banyaknya. Namun, yang paling menarik perhatian adalah hasil tangkapan berupa seekor penyu yang besar. Atas saran kepala kampung, penyu itu akan dipotong dan dibagikan kepada seluruh warga kampung. Tentunya dengan ukuran yang sama. Nenek juga mendapat bagian dari hasil tangkapan itu. Namun, potongan penyu yang diberikan kepada Nenek hanya sebagian kecil. Itu pun hanya tulang-belulang. Nenek menjadi daun kering dalam pesta pembagian hasil tangkapan itu.\n\nNenek sakit hati dengan perlakuan warga. Dengan perasaan sedih, Nenek berjalan ke tepi pantai. Air matanya pun terjatuh. Tiba-tiba, kampung tersebut yang dulunya rata, berubah menjadi gundukan tanah yang tinggi. Anehnya, gundukan itu berbentuk mirip cangkang penyu. Nenek terkejut dan waktu pun berlalu. Nenek menanami gundukan tanah tersebut seperti yang dulu sering Ia lakukan. Hal yang tidak disangka pun terjadi. Muncul emas berkilauan di antara dedaunannya. Tadinya, Nenek ingin merahasiakan pohon emas ini. Namun, Nenek tidak tega. Ia membaginya ke seluruh warga kampung sama rata. Warga kampung menyadari kesalahannya dan meminta maaf pada Nenek karena sudah bersikap buruk.\n\n[pertanyaan]\n\nBagaimana urutan kejadian yang dialami nenek hingga menemukan emas?",
+   "options": {
+    "choices": [
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o0.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o1.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o2.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o3.png]"
+    ]
+   },
+   "correct_answer": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o3.png]",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Urutan teks: air mata nenek jatuh, muncul gundukan tanah, nenek menanam di gundukan, muncul emas berkilau. [Kunci buatan Claude.] Sumber bacaan: https://repositori.kemendikdasmen.go.id/26046/1/Batu%20Penyu.pdf | Canva.com"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s12_0.jpg]\n\nDahulu kala, ada seorang Nenek yang hidup di Pulau Kei Kecil. Nenek itu hidup sendiri. Setiap hari Nenek itu menanam apa saja di kebunnya. Selain bertani, masyarakat di kampung itu kadang ke laut untuk mencari ikan. Suatu ketika, para lelaki hendak ke laut. Seluruh wanita mempersiapkan bekal untuk suami dan anak mereka yang akan melaut. Tak terkecuali si Nenek. Ia juga turut mempersiapkan bekal meski tidak ada anggota keluarganya yang melaut.\n\nSelang beberapa waktu, para lelaki di kampung itu kembali. Membawa hasil tangkapan yang luar biasa banyaknya. Namun, yang paling menarik perhatian adalah hasil tangkapan berupa seekor penyu yang besar. Atas saran kepala kampung, penyu itu akan dipotong dan dibagikan kepada seluruh warga kampung. Tentunya dengan ukuran yang sama. Nenek juga mendapat bagian dari hasil tangkapan itu. Namun, potongan penyu yang diberikan kepada Nenek hanya sebagian kecil. Itu pun hanya tulang-belulang. Nenek menjadi daun kering dalam pesta pembagian hasil tangkapan itu.\n\nNenek sakit hati dengan perlakuan warga. Dengan perasaan sedih, Nenek berjalan ke tepi pantai. Air matanya pun terjatuh. Tiba-tiba, kampung tersebut yang dulunya rata, berubah menjadi gundukan tanah yang tinggi. Anehnya, gundukan itu berbentuk mirip cangkang penyu. Nenek terkejut dan waktu pun berlalu. Nenek menanami gundukan tanah tersebut seperti yang dulu sering Ia lakukan. Hal yang tidak disangka pun terjadi. Muncul emas berkilauan di antara dedaunannya. Tadinya, Nenek ingin merahasiakan pohon emas ini. Namun, Nenek tidak tega. Ia membaginya ke seluruh warga kampung sama rata. Warga kampung menyadari kesalahannya dan meminta maaf pada Nenek karena sudah bersikap buruk.\n\n[pertanyaan]\n\nApa yang terjadi jika warga kampung berlaku adil kepada Nenek?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Warga tidak akan mendapatkan emas berkilau.",
+     "Nenek tidak akan merasa sedih dan kecewa.",
+     "Nenek tidak akan melakukan aktivitas menanam."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Jika warga adil, nenek tidak sedih sehingga tidak ada gundukan dan emas; nenek tetap bertani/menanam seperti biasa. [Kunci buatan Claude.] Sumber bacaan: https://repositori.kemendikdasmen.go.id/26046/1/Batu%20Penyu.pdf | Canva.com"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s13_0.jpg]\n\nDahulu kala, ada seorang Nenek yang hidup di Pulau Kei Kecil. Nenek itu hidup sendiri. Setiap hari Nenek itu menanam apa saja di kebunnya. Selain bertani, masyarakat di kampung itu kadang ke laut untuk mencari ikan. Suatu ketika, para lelaki hendak ke laut. Seluruh wanita mempersiapkan bekal untuk suami dan anak mereka yang akan melaut. Tak terkecuali si Nenek. Ia juga turut mempersiapkan bekal meski tidak ada anggota keluarganya yang melaut.\n\nSelang beberapa waktu, para lelaki di kampung itu kembali. Membawa hasil tangkapan yang luar biasa banyaknya. Namun, yang paling menarik perhatian adalah hasil tangkapan berupa seekor penyu yang besar. Atas saran kepala kampung, penyu itu akan dipotong dan dibagikan kepada seluruh warga kampung. Tentunya dengan ukuran yang sama. Nenek juga mendapat bagian dari hasil tangkapan itu. Namun, potongan penyu yang diberikan kepada Nenek hanya sebagian kecil. Itu pun hanya tulang-belulang. Nenek menjadi daun kering dalam pesta pembagian hasil tangkapan itu.\n\nNenek sakit hati dengan perlakuan warga. Dengan perasaan sedih, Nenek berjalan ke tepi pantai. Air matanya pun terjatuh. Tiba-tiba, kampung tersebut yang dulunya rata, berubah menjadi gundukan tanah yang tinggi. Anehnya, gundukan itu berbentuk mirip cangkang penyu. Nenek terkejut dan waktu pun berlalu. Nenek menanami gundukan tanah tersebut seperti yang dulu sering Ia lakukan. Hal yang tidak disangka pun terjadi. Muncul emas berkilauan di antara dedaunannya. Tadinya, Nenek ingin merahasiakan pohon emas ini. Namun, Nenek tidak tega. Ia membaginya ke seluruh warga kampung sama rata. Warga kampung menyadari kesalahannya dan meminta maaf pada Nenek karena sudah bersikap buruk.\n\nSetelah membaca cerita, Dini berpendapat bahwa ia kagum pada keputusan nenek.\n\nDini merasa bahwa nenek tetap membagi emas pada warga dengan adil. Fira dan Dafa pun setuju dengan pendapat Dini.\n\n[pertanyaan]\n\nAlasan apa yang memperkuat Fira dan Dafa setuju dengan pendapat Dini?\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Dini menyukai keputusan nenek yang memperlakukan warga seperti warga memperlakukan nenek.",
+     "Dini setuju dengan tindakan nenek saat merasa tidak enak hati bila merahasiakan pohon emas.",
+     "Dini merasa kagum sebab perilaku nenek terpuji dan layak dicontoh untuk orang lain."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Nenek membagi emas sama rata (tidak membalas), tidak tega merahasiakannya, dan perilakunya terpuji. [Kunci buatan Claude.] Sumber bacaan: https://repositori.kemendikdasmen.go.id/26046/1/Batu%20Penyu.pdf | Canva.com"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s26_0.jpg]\n\nPada suatu pagi di akhir bulan Ramadan, Bu Dini pulang dari pasar membawa janur.\n\n“Daun apa itu, Bunda?” tanya Zainal penasaran.\n\n“Ini daun kelapa muda atau disebut janur,” jawab Bu Dini.\n\nFitri datang dan bertanya, “Untuk apa janur itu, Bunda?”\n\n“Kita akan membuat ketupat untuk Lebaran besok, Nak,” jelas Bu Dini.\n\n“Hore! Besok kita udah Lebaran ya, Bunda?” tanya Zainal.\n\n“Iya, sekarang ayo bantu Bunda membuat ketupat bersama!” pinta Bu Dini.\n\nMereka bertiga pun akhirnya membuat ketupat bersama.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s26_1.jpg]\n\nHari Lebaran yang dinantikan pun tiba.\n\nPak Hasan, Bu Dini, Zainal, dan Fitri berkumpul di meja makan.\n\n“Anak-anak, mari kita sarapan dulu sebelum berangkat sholat,” pinta Pak Hasan.\n\n“Baik, Ayah,” jawab Zainal dan Fitri bersama-sama.\n\nBu Dini menyiapkan ketupat dan opor ayam untuk dihidangkan.\n\n“Sebelum kita makan, Bunda minta tolong Kak Zainal boleh?” tanya Bu Dini.\n\n“Minta tolong apa, Bunda?”\n\n“Tolong antarkan ketupat dan opor ayam ini ke rumah Bu Tuti, Pak Ridwan, dan Pak Christian.”\n\n“Baik, Bunda. Tapi kenapa memberi Pak Cristian juga? Dia kan tidak merayakan Lebaran.”\n\n“Nak, ketupat itu bukan hanya untuk kita yang beragama Islam saja,” jelas Pak Hasan.\n\n“Jadi semua orang boleh makan ya, Ayah?” tanya Zainal.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s26_2.jpg]\n\nPak Hasan menjawab, “Tentu saja boleh.”\n\nZainal pun pergi untuk mengantarkan ketupat dan opor ayam ke tetangganya.\n\n[pertanyaan]\n\nApa yang dipahami Zainal setelah mendengar penjelasan Ayahnya tentang ketupat?",
+   "options": {
+    "choices": [
+     "Tidak semua orang suka makan ketupat saat lebaran.",
+     "Membuat ketupat saat Lebaran sangat sulit dilakukan.",
+     "Ternyata ada tetangganya bukan beragama selain Islam.",
+     "Ketupat lebaran boleh dimakan siapa saja, bukan hanya orang islam"
+    ]
+   },
+   "correct_answer": "Ketupat lebaran boleh dimakan siapa saja, bukan hanya orang islam",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Pak Hasan: ketupat bukan hanya untuk yang beragama Islam; semua orang boleh makan. [Kunci buatan Claude.] Sumber bacaan: https://klasika.kompas.id/baca/dongeng-anak-ketupat-lebaran/ dengan adaptasi"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s21_0.jpg]\n\nPada suatu pagi di akhir bulan Ramadan, Bu Dini pulang dari pasar membawa janur.\n\n“Daun apa itu, Bunda?” tanya Zainal penasaran.\n\n“Ini daun kelapa muda atau disebut janur,” jawab Bu Dini.\n\nFitri datang dan bertanya, “Untuk apa janur itu, Bunda?”\n\n“Kita akan membuat ketupat untuk Lebaran besok, Nak,” jelas Bu Dini.\n\n“Hore! Besok kita udah Lebaran ya, Bunda?” tanya Zainal.\n\n“Iya, sekarang ayo bantu Bunda membuat ketupat bersama!” pinta Bu Dini.\n\nMereka bertiga pun akhirnya membuat ketupat bersama.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s21_1.jpg]\n\nHari Lebaran yang dinantikan pun tiba.\n\nPak Hasan, Bu Dini, Zainal, dan Fitri berkumpul di meja makan.\n\n“Anak-anak, mari kita sarapan dulu sebelum berangkat sholat,” pinta Pak Hasan.\n\n“Baik, Ayah,” jawab Zainal dan Fitri bersama-sama.\n\nBu Dini menyiapkan ketupat dan opor ayam untuk dihidangkan.\n\n“Sebelum kita makan, Bunda minta tolong Kak Zainal boleh?” tanya Bu Dini.\n\n“Minta tolong apa, Bunda?”\n\n“Tolong antarkan ketupat dan opor ayam ini ke rumah Bu Tuti, Pak Ridwan, dan Pak Christian.”\n\n“Baik, Bunda. Tapi kenapa memberi Pak Cristian juga? Dia kan tidak merayakan Lebaran.”\n\n“Nak, ketupat itu bukan hanya untuk kita yang beragama Islam saja,” jelas Pak Hasan.\n\n“Jadi semua orang boleh makan ya, Ayah?” tanya Zainal.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s21_2.jpg]\n\nPak Hasan menjawab, “Tentu saja boleh.”\n\nZainal pun pergi untuk mengantarkan ketupat dan opor ayam ke tetangganya.\n\n[pertanyaan]\n\nMengapa Bu Dini membuat ketupat di hari terakhir bulan Ramadan?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Ketupat adalah makanan khas saat Lebaran.",
+     "Sengaja disiapkan untuk menyambut Lebaran.",
+     "Bu Dini harus membagikan ketupat saat Lebaran.",
+     "Ketupat merupakan syarat untuk merayakan Lebaran."
+    ]
+   },
+   "correct_answer": [
+    "Ketupat adalah makanan khas saat Lebaran.",
+    "Sengaja disiapkan untuk menyambut Lebaran."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Ketupat makanan khas Lebaran dan sengaja disiapkan menyambut Lebaran; tidak ada kewajiban membagikan atau syarat. [Kunci buatan Claude.] Sumber bacaan: https://klasika.kompas.id/baca/dongeng-anak-ketupat-lebaran/ dengan adaptasi"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s09_0.jpg]\n\nPada suatu pagi di akhir bulan Ramadan, Bu Dini pulang dari pasar membawa janur.\n\n“Daun apa itu, Bunda?” tanya Zainal penasaran.\n\n“Ini daun kelapa muda atau disebut janur,” jawab Bu Dini.\n\nFitri datang dan bertanya, “Untuk apa janur itu, Bunda?”\n\n“Kita akan membuat ketupat untuk Lebaran besok, Nak,” jelas Bu Dini.\n\n“Hore! Besok kita udah Lebaran ya, Bunda?” tanya Zainal.\n\n“Iya, sekarang ayo bantu Bunda membuat ketupat bersama!” pinta Bu Dini.\n\nMereka bertiga pun akhirnya membuat ketupat bersama.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s09_1.jpg]\n\nHari Lebaran yang dinantikan pun tiba.\n\nPak Hasan, Bu Dini, Zainal, dan Fitri berkumpul di meja makan.\n\n“Anak-anak, mari kita sarapan dulu sebelum berangkat sholat,” pinta Pak Hasan.\n\n“Baik, Ayah,” jawab Zainal dan Fitri bersama-sama.\n\nBu Dini menyiapkan ketupat dan opor ayam untuk dihidangkan.\n\n“Sebelum kita makan, Bunda minta tolong Kak Zainal boleh?” tanya Bu Dini.\n\n“Minta tolong apa, Bunda?”\n\n“Tolong antarkan ketupat dan opor ayam ini ke rumah Bu Tuti, Pak Ridwan, dan Pak Christian.”\n\n“Baik, Bunda. Tapi kenapa memberi Pak Cristian juga? Dia kan tidak merayakan Lebaran.”\n\n“Nak, ketupat itu bukan hanya untuk kita yang beragama Islam saja,” jelas Pak Hasan.\n\n“Jadi semua orang boleh makan ya, Ayah?” tanya Zainal.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s09_2.jpg]\n\nPak Hasan menjawab, “Tentu saja boleh.”\n\nZainal pun pergi untuk mengantarkan ketupat dan opor ayam ke tetangganya.\n\n[pertanyaan]\n\nMengapa Zainal dan Fitri memegang daun kelapa pada gambar pertama?\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Menunjukkan mereka ingin membantu Ibu membuat ketupat.",
+     "Membuktikan jika mereka akan membuat ketupat bersama.",
+     "Memberi tahu Ibu kalau besok adalah hari raya Lebaran.",
+     "Menunjukkan bahwa Ibu mereka baru saja pulang dari pasar."
+    ]
+   },
+   "correct_answer": [
+    "Menunjukkan mereka ingin membantu Ibu membuat ketupat.",
+    "Membuktikan jika mereka akan membuat ketupat bersama."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Gambar: anak-anak memegang janur dan menganyam ketupat bersama ibu (membantu dan membuat ketupat bersama). [Kunci buatan Claude.] Sumber bacaan: https://klasika.kompas.id/baca/dongeng-anak-ketupat-lebaran/ dengan adaptasi"
+  }
+ ]
+}

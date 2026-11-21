@@ -1,0 +1,259 @@
+{
+ "catatan": "Kunci dikerjakan Claude dari soal contoh Pusat Asesmen (daya serap TKA SMP Bahasa Indonesia 2025/2026); situs tidak menampilkan kunci. WAJIB ditinjau manusia sebelum diaktifkan. Bertanda periksa = ambigu atau bergantung pada penafsiran/gambar.",
+ "kunci": {
+  "1": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Sistem pemindaian laser.",
+    "Pendeteksi rintangan sekitar."
+   ],
+   "alasan": "Teks: sensor LiDAR = \"sistem pemindaian laser atau pendeteksi rintangan sekitar\". Pemantau jarak jauh = Fleet Management System; gerak mandiri = navigasi otonom.",
+   "periksa": false
+  },
+  "2": {
+   "tipe": "mcq_single",
+   "jawaban": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s02_o1.jpg]",
+   "alasan": "Urutan menurut teks: perancangan desain, perakitan komponen mekanik dan elektronik, pemasangan sistem sensor dan pemrograman, uji coba.",
+   "periksa": false
+  },
+  "3": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Tepat",
+    "Tidak tepat",
+    "Tepat"
+   ],
+   "alasan": "Istilah (navigasi otonom, LiDAR, Fleet Management System) dijelaskan dan ada glosarium; istilahnya teknis, bukan istilah yang familiar.",
+   "periksa": false
+  },
+  "4": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Menguatkan sistem imunitas.",
+    "Sumber prebiotik yang tinggi."
+   ],
+   "alasan": "Teks: kombucha bermanfaat menguatkan sistem imunitas dan sumber prebiotik yang tinggi. Fermentasi dan aliran udara bukan khasiat bagi tubuh.",
+   "periksa": false
+  },
+  "5": {
+   "tipe": "mcq_single",
+   "jawaban": "Supaya sirkulasi udara tetap terjaga.",
+   "alasan": "Infografik langkah 5: kain kasa mencegah serangga/kotoran masuk sambil memungkinkan udara mengalir.",
+   "periksa": false
+  },
+  "6": {
+   "tipe": "mcq_single",
+   "jawaban": "SCOBY akan mengandung lebih banyak gula karena proses fermentasi tidak pernah berlangsung.",
+   "alasan": "Infografik langkah 6: fermentasi butuh tempat hangat (24-29 C). Tanpa itu fermentasi tidak berlangsung sehingga gula tidak terpakai. Pilihan 2 dan 3 mengaitkan penyebab dengan cahaya, padahal syaratnya suhu. Soal ambigu.",
+   "periksa": true
+  },
+  "7": {
+   "tipe": "mcq_single",
+   "jawaban": "Menganalisis efek larutan cuka terhadap laju biodegradasi bioplastik.",
+   "alasan": "Infografik, bagian Tujuan: mengetahui pengaruh larutan asam asetat (cuka) terhadap biodegradasi bioplastik dibandingkan plastik konvensional.",
+   "periksa": false
+  },
+  "8": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Kesimpulan infografik: cuka mempercepat biodegradasi bioplastik (massa turun lebih cepat). Polyethylene adalah plastik konvensional yang sulit terurai.",
+   "periksa": false
+  },
+  "9": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Tidak Sesuai",
+    "Sesuai",
+    "Sesuai"
+   ],
+   "alasan": "Elvina menilai warna infografik (visual), bukan bahasa. Nake (kalimat perintah sederhana, efektivitas) dan Ratna (kejelasan rincian kalimat) menilai bahasa.",
+   "periksa": false
+  },
+  "10": {
+   "tipe": "mcq_single",
+   "jawaban": "Menghemat pengeluaran karena tidak perlu terus membeli.",
+   "alasan": "Memilih barang berkualitas membuat awet sehingga tidak perlu terus membeli: menghemat pengeluaran (manfaat ekonomi).",
+   "periksa": false
+  },
+  "11": {
+   "tipe": "mcq_single",
+   "jawaban": "Anak laki-laki pengeluaran kaos kakinya lebih hemat.",
+   "alasan": "Gambar kedua: anak laki-laki menabung dan senang, anak perempuan sedih dengan kaos kaki sobek: anak laki-laki lebih hemat.",
+   "periksa": false
+  },
+  "12": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Salah",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Gambar kedua: anak perempuan sedih (kaos kaki sobek); anak laki-laki senang menabung dengan kaos kaki berkualitas, bukan kualitas biasa.",
+   "periksa": false
+  },
+  "13": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Memberikan informasi pengelolaan laut yang dilakukan oleh pemerintah.",
+    "Mendorong pembaca berperan dalam pelestarian kawasan konservasi."
+   ],
+   "alasan": "Brosur menjelaskan pengelolaan laut oleh pemerintah dan mengajak berperan dalam pelestarian. Keindahan hanya pembuka; nama taman adalah contoh.",
+   "periksa": true
+  },
+  "14": {
+   "tipe": "mcq_single",
+   "jawaban": "Untuk melindungi kearifan lokal, adat, dan situs sejarah di wilayah pesisir.",
+   "alasan": "Brosur: Taman Konservasi Maritim mempertahankan warisan budaya maritim dan kearifan lokal.",
+   "periksa": false
+  },
+  "15": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Salah"
+   ],
+   "alasan": "Peta menegaskan lokasi di Indonesia. Peta hanya gambar umum seluruh Indonesia, tidak menandai persebaran atau letak kawasan tertentu.",
+   "periksa": true
+  },
+  "16": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Salah",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Teks: Aku tidak tahu hukuman Seno dan yakin ia tak sanggup membayar denda; ia tidak pernah bertemu lagi dengan Aku; ia ditangkap sebelum membawa ikan keluar pulau.",
+   "periksa": false
+  },
+  "17": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Masih bisa mengikuti Saun Ta’et yang dirayakan esok harinya.",
+    "Masih menjadi nelayan di Pulau Timor bersama tokoh Aku.",
+    "Tetap menjadi warga pulau yang selalu menantikan Saun Ta’et."
+   ],
+   "alasan": "Jika patuh: tetap warga dan nelayan pulau yang menantikan Saun Ta'et. Pilihan 1 menyebut upacara \"esok harinya\", yang tidak dinyatakan jelas di teks. Pilihan 4 bertentangan dengan aturan (hanya Juni dan Desember).",
+   "periksa": true
+  },
+  "18": {
+   "tipe": "mcq_single",
+   "jawaban": "Keserakahan berdampak buruk terhadap alam dan persahabatan.",
+   "alasan": "Seno mengebom ikan karena serakah/iri: keserakahan merusak alam (terumbu karang) dan hubungan dengan warga.",
+   "periksa": false
+  },
+  "19": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Lobi akan terus melakukan pekerjaan mengumpulkan nektar bersama Tawi dan lebah pekerja lain.",
+    "Lobi akan tetap bertugas mengisap nektar dari bunga-bunga dan memindahkannya ke sarang."
+   ],
+   "alasan": "Lobi tetap pekerja: mengumpulkan nektar bersama Tawi dan memindahkannya ke sarang; tidak menggantikan ratu.",
+   "periksa": false
+  },
+  "20": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Tawi rajin dan bijaksana menegur Lobi; Lobi iri pada ratu. Tubuh Tawi ramping, bukan gendut.",
+   "periksa": false
+  },
+  "21": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Salah",
+    "Benar",
+    "Benar"
+   ],
+   "alasan": "Ratu tidak dibuang. Sarang lebah sebaiknya didekati dengan hati-hati (bisa disengat); tanaman berbunga menyediakan nektar.",
+   "periksa": false
+  },
+  "22": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Suara kalong.",
+    "Surya berlalu.",
+    "Suara bedug."
+   ],
+   "alasan": "Larik \"suara kalong menghalau petang\", \"sebelum surya berlalu\", dan \"suara bedug bertalu-talu\" menggambarkan petang. \"Hamparan waktu\" tidak spesifik.",
+   "periksa": true
+  },
+  "23": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Tepat",
+    "Tepat",
+    "Tidak Tepat"
+   ],
+   "alasan": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah, timbul tenggelam. Bukan keputusasaan.",
+   "periksa": true
+  },
+  "24": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Puisi merenungkan kenangan dan rindu lewat suara dan gerak alam. \"Ketulusan meski tak sesuai harapan\" tidak ada di puisi.",
+   "periksa": true
+  },
+  "25": {
+   "tipe": "mcq_single",
+   "jawaban": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-bin/s30_o3.png]",
+   "alasan": "Urutan teks: air mata nenek jatuh, muncul gundukan tanah, nenek menanam di gundukan, muncul emas berkilau.",
+   "periksa": false
+  },
+  "26": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Jika warga adil, nenek tidak sedih sehingga tidak ada gundukan dan emas; nenek tetap bertani/menanam seperti biasa.",
+   "periksa": false
+  },
+  "27": {
+   "tipe": "statement_grid",
+   "jawaban": [
+    "Salah",
+    "Benar",
+    "Benar"
+   ],
+   "alasan": "Nenek membagi emas sama rata (tidak membalas), tidak tega merahasiakannya, dan perilakunya terpuji.",
+   "periksa": false
+  },
+  "28": {
+   "tipe": "mcq_single",
+   "jawaban": "Ketupat lebaran boleh dimakan siapa saja, bukan hanya orang islam",
+   "alasan": "Pak Hasan: ketupat bukan hanya untuk yang beragama Islam; semua orang boleh makan.",
+   "periksa": false
+  },
+  "29": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Ketupat adalah makanan khas saat Lebaran.",
+    "Sengaja disiapkan untuk menyambut Lebaran."
+   ],
+   "alasan": "Ketupat makanan khas Lebaran dan sengaja disiapkan menyambut Lebaran; tidak ada kewajiban membagikan atau syarat.",
+   "periksa": false
+  },
+  "30": {
+   "tipe": "mcq_multi",
+   "jawaban": [
+    "Menunjukkan mereka ingin membantu Ibu membuat ketupat.",
+    "Membuktikan jika mereka akan membuat ketupat bersama."
+   ],
+   "alasan": "Gambar: anak-anak memegang janur dan menganyam ketupat bersama ibu (membantu dan membuat ketupat bersama).",
+   "periksa": false
+  }
+ }
+}
