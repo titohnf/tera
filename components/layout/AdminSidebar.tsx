@@ -93,6 +93,11 @@ const nav: NavEntry[] = [
         label: 'Hasil Try Out',
         icon: <ChartBarIcon className="w-5 h-5" />,
       },
+      {
+        href: '/admin/peserta-tryout',
+        label: 'Peserta Try Out',
+        icon: <UserGroupIcon className="w-5 h-5" />,
+      },
     ],
   },
   {
