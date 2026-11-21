@@ -64,7 +64,7 @@ export default async function TryOutKeluargaPage({
       <div className="rounded-xl bg-white p-4 shadow-kartu">
         <p className="font-semibold tracking-tight text-gray-900">Belum ada hasil try out</p>
         <p className="mt-1 text-sm text-gray-500">
-          Hasil try out muncul di sini setelah anak mengerjakan try out dan hasilnya ditautkan ke akunnya oleh admin Bimbel Tera.
+          Hasil try out muncul di sini setelah anak mengerjakan try out dan hasilnya dibuka oleh admin Bimbel Tera, biasanya setelah semua sesi try out selesai.
         </p>
       </div>
     )

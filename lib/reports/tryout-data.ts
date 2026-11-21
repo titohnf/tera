@@ -159,12 +159,17 @@ export async function tryOutSiswa(learnerId: string): Promise<{ quizId: string; 
   const admin = createAdminClient()
   const { data } = await admin
     .from('attempts')
-    .select('id, quiz_id, submitted_at, quizzes!inner(kind, status)')
+    .select('id, quiz_id, submitted_at, quizzes!inner(kind, status, settings)')
     .eq('learner_id', learnerId)
     .not('submitted_at', 'is', null)
     .eq('quizzes.kind', 'tryout')
     .order('submitted_at', { ascending: false })
-  return ((data ?? []) as unknown as { id: string; quiz_id: string; submitted_at: string }[]).map((r) => ({
+  // Hanya try out yang hasilnya sudah DIBUKA admin (`settings.hasil_dibuka`):
+  // keluarga tidak boleh melihat hasil sebelum sesi try out berakhir, sama
+  // seperti peserta berkode di halaman Hasil.
+  return ((data ?? []) as unknown as { id: string; quiz_id: string; submitted_at: string; quizzes: { settings: { hasil_dibuka?: boolean } | null } }[])
+    .filter((r) => r.quizzes?.settings?.hasil_dibuka === true)
+    .map((r) => ({
     quizId: r.quiz_id,
     attemptId: r.id,
     dikirim: r.submitted_at,

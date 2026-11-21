@@ -33,6 +33,7 @@ function FormLogin() {
   const params = useSearchParams()
   const [tab, setTab] = useState<'bimbel' | 'umum'>(params.get('tab') === 'umum' ? 'umum' : 'bimbel')
   const galatKode = params.get('galat') === '1'
+  const akunBaru = params.get('info') === 'akun'
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -62,7 +63,7 @@ function FormLogin() {
             <h1 className="text-2xl font-bold text-gray-900">Bimbel Tera</h1>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {tab === 'bimbel' ? 'Masuk ke akun kamu' : 'Masuk dengan kode peserta'}
+            {tab === 'bimbel' ? 'Masuk dengan email dan password (siswa bimbel dan pelanggan)' : 'Masuk dengan kode peserta'}
           </p>
         </div>
 
@@ -108,6 +109,11 @@ function FormLogin() {
           </form>
         ) : (
         <>
+        {akunBaru && (
+          <p className="mb-4 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+            Akun dibuat. Masuk dengan email dan password barumu.
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
