@@ -76,6 +76,7 @@ const LAYAR: Record<string, Layar> = {
   laporan: { judul: 'Progres Kelas', kembali: '/rapor' },
   penguasaan: { judul: 'Latihan Mandiri', kembali: '/rapor' },
   ketuntasan: { judul: 'Ketuntasan Materi', kembali: '/rapor' },
+  tryout: { judul: 'Hasil Try Out', kembali: '/rapor' },
 }
 
 /**

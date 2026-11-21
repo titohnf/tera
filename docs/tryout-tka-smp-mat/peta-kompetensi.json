@@ -1,0 +1,602 @@
+{
+ "1": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 36.03
+  },
+  "subelemen": {
+   "nama": "Bilangan Real",
+   "nasional": 35.63
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait perbandingan dan sifat-sifat bilangan",
+   "nasional": 34.09
+  },
+  "indikator": {
+   "nama": "Menyelesaikan operasi bilangan bentuk pangkat",
+   "nasional": 34.09,
+   "nomor": 1
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "2": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 36.03
+  },
+  "subelemen": {
+   "nama": "Bilangan Real",
+   "nasional": 35.63
+  },
+  "kompetensi": {
+   "nama": "Melakukan operasi hitung pada berbagai jenis bilangan yang meliputi bilangan bulat, pecahan, desimal, persen, dan bilangan berpangkat bulat.",
+   "nasional": 32.2
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan menggunakan operasi bilangan",
+   "nasional": 32.2,
+   "nomor": 2
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "3": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 36.03
+  },
+  "subelemen": {
+   "nama": "Bilangan Real",
+   "nasional": 35.63
+  },
+  "kompetensi": {
+   "nama": "Operasi pada bilangan (bilangan bulat, pecahan, desimal, persen, dan bilangan berpangkat bulat)",
+   "nasional": 39.14
+  },
+  "indikator": {
+   "nama": "Menganalisis/mengevaluasi beberapa pernyataan berkaitan dengan operasi bilangan berdasarkan informasi",
+   "nasional": 39.14,
+   "nomor": 3
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "4": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 36.03
+  },
+  "subelemen": {
+   "nama": "Bilangan Real",
+   "nasional": 35.63
+  },
+  "kompetensi": {
+   "nama": "Mengurutkan bilangan termasuk bilangan bulat negatif, desimal, persentase dan pecahan",
+   "nasional": 37.08
+  },
+  "indikator": {
+   "nama": "Mengurutkan bilangan termasuk bilangan bulat dan bilangan desimal, berdasarkan informasi",
+   "nasional": 37.08,
+   "nomor": 4
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "5": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 36.03
+  },
+  "subelemen": {
+   "nama": "Bilangan Real (2)",
+   "nasional": 37.65
+  },
+  "kompetensi": {
+   "nama": "Memahami bilangan bulat, bilangan berpangkat, dan bentuk akar",
+   "nasional": 37.65
+  },
+  "indikator": {
+   "nama": "Menentukan lambang bilangan lain dari suatu bilangan",
+   "nasional": 37.65,
+   "nomor": 5
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "6": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Bentuk Aljabar",
+   "nasional": 37.92
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait bentuk aljabar dan sifat-sifat operasinya (komutatif, asosiatif, dan distributif)",
+   "nasional": 37.92
+  },
+  "indikator": {
+   "nama": "Mengidentifikasi unsur-unsur pembentuk suatu bentuk aljabar.",
+   "nasional": 36.14,
+   "nomor": 6
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "7": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Fungsi",
+   "nasional": 40.9
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait relasi dan fungsi (domain, kodomain, range) dan penyajiannya",
+   "nasional": 40.94
+  },
+  "indikator": {
+   "nama": "Mengelompokkan berbagai bentuk penyajian relasi ke dalam fungsi atau bukan fungsi.",
+   "nasional": 42.08,
+   "nomor": 7
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "8": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Fungsi",
+   "nasional": 40.9
+  },
+  "kompetensi": {
+   "nama": "Menyajikan, menganalisis, dan menyelesaikan masalah dengan menggunakan relasi, fungsi dan persamaan linear beserta grafiknya.",
+   "nasional": 38.66
+  },
+  "indikator": {
+   "nama": "Menginterpretasi grafik fungsi linear dan memberikan beberapa kesimpulan menggunakan konsep relasi, fungsi, persamaan linear dan grafiknya.",
+   "nasional": 38.66,
+   "nomor": 8
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "9": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Fungsi",
+   "nasional": 40.9
+  },
+  "kompetensi": {
+   "nama": "Menggunakan sistem koordinat kartesius",
+   "nasional": 43.06
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan dengan menerapkan konsep sistem koordinat kartesius",
+   "nasional": 43.06,
+   "nomor": 9
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "10": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Persamaan dan Pertidaksamaan Linear",
+   "nasional": 45.48
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait pertidaksamaan linear satu variabel",
+   "nasional": 45.92
+  },
+  "indikator": {
+   "nama": "Menyatakan grafik penyelesaian pertidaksamaan linear satu variabel pada garis bilangan.",
+   "nasional": 45.92,
+   "nomor": 10
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "11": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Persamaan dan Pertidaksamaan Linear",
+   "nasional": 45.48
+  },
+  "kompetensi": {
+   "nama": "Menyelesaikan persamaan dan pertidaksamaan linier 1 variabel serta sistem persamaan linear 2 variabel.",
+   "nasional": 45.04
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan terkait informasi tersebut menggunakan konsep sistem persamaan linier 2 variabel",
+   "nasional": 45.04,
+   "nomor": 11
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "12": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Bentuk Aljabar",
+   "nasional": 37.92
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait bentuk aljabar dan sifat-sifat operasinya (komutatif, asosiatif, dan distributif)",
+   "nasional": 37.92
+  },
+  "indikator": {
+   "nama": "Memodelkan masalah kontekstual ke dalam bentuk aljabar menggunakan sifat-sifat operasinya.",
+   "nasional": 39.69,
+   "nomor": 12
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "13": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Fungsi",
+   "nasional": 40.9
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait relasi dan fungsi (domain, kodomain, range) dan penyajiannya",
+   "nasional": 40.94
+  },
+  "indikator": {
+   "nama": "Menentukan rumus fungsi linear berdasarkan himpunan pasangan berurutan dari masalah kontekstual.",
+   "nasional": 39.81,
+   "nomor": 13
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "14": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Barisan dan Deret",
+   "nasional": 41.15
+  },
+  "kompetensi": {
+   "nama": "Menggeneralisasi pola barisan bilangan dan konfigurasi objek",
+   "nasional": 41.15
+  },
+  "indikator": {
+   "nama": "Menentukan suku ke-n (lebih dari 3 suku berikutnya dari yang diketahui) dari pola bilangan berdasarkan konfigurasi objek tersebut",
+   "nasional": 41.89,
+   "nomor": 14
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "15": {
+  "elemen": {
+   "nama": "Aljabar",
+   "nasional": 41.27
+  },
+  "subelemen": {
+   "nama": "Barisan dan Deret",
+   "nasional": 41.15
+  },
+  "kompetensi": {
+   "nama": "Menggeneralisasi pola barisan bilangan dan konfigurasi objek",
+   "nasional": 41.15
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan terkait pola bilangan berdasarkan konfigurasi objek",
+   "nasional": 40.4,
+   "nomor": 15
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "16": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.93
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait hubungan antar-sudut yang terbentuk oleh dua garis yang berpotongan, dan oleh dua garis sejajar yang dipotong suatu garis transversal (termasuk penentuan besar sudut dalam segitiga)",
+   "nasional": 40.8
+  },
+  "indikator": {
+   "nama": "Menentukan nilai variabel pada sudut yang terbentuk dari dua garis berpotongan menggunakan hubungan antar-sudut.",
+   "nasional": 38.85,
+   "nomor": 16
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "17": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.93
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait jaring-jaring bangun ruang (prisma, tabung, limas dan kerucut)",
+   "nasional": 42.54
+  },
+  "indikator": {
+   "nama": "Menginterpretasikan posisi masing-masing sisi pada jaring-jaring prisma yang dibentuk menjadi bangun ruang.",
+   "nasional": 42.54,
+   "nomor": 17
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "18": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.93
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait hubungan antar-sudut yang terbentuk oleh dua garis yang berpotongan, dan oleh dua garis sejajar yang dipotong suatu garis transversal (termasuk penentuan besar sudut dalam segitiga)",
+   "nasional": 40.8
+  },
+  "indikator": {
+   "nama": "Menentukan besar sudut pada gabungan segitiga dan dua garis sejajar menggunakan hubungan antar-sudut.",
+   "nasional": 42.76,
+   "nomor": 18
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "19": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.93
+  },
+  "kompetensi": {
+   "nama": "Menggunakan konsep Teorema Pythagoras",
+   "nasional": 43.57
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan yang menggunakan konsep teorema Pythagoras",
+   "nasional": 43.57,
+   "nomor": 19
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "20": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Transformasi Geometri",
+   "nasional": 42.42
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait transformasi tunggal (refleksi, translasi, rotasi, dan dilatasi) terhadap titik, garis, dan bangun datar pada bidang",
+   "nasional": 42.42
+  },
+  "indikator": {
+   "nama": "Menganalisis hubungan posisi antara dua bangun datar setelah mengalami operasi translasi.",
+   "nasional": 42.42,
+   "nomor": 20
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "21": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 35.87
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait keliling dan luas bangun datar (daerah segi banyak dan daerah lingkaran, serta daerah gabungannya)",
+   "nasional": 35.23
+  },
+  "indikator": {
+   "nama": "Membandingkan luas juring atau panjang busur pada lingkaran berdasarkan komponen yang diketahui.",
+   "nasional": 35.23,
+   "nomor": 21
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "22": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 35.87
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait kekongruenan dan kesebangunan bangun datar",
+   "nasional": 38.2
+  },
+  "indikator": {
+   "nama": "Menentukan luas atau keliling persegi panjang lain menggunakan konsep kesebangunan bangun datar.",
+   "nasional": 38.2,
+   "nomor": 22
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "23": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 35.87
+  },
+  "kompetensi": {
+   "nama": "Menghitung dan mengestimasi volume dan luas permukaan balok, kubus, dan gabungannya (termasuk yang membutuhkan konversi satuan baku volume)",
+   "nasional": 35.01
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan yang berkaitan dengan luas permukaan atau volume bangun ruang",
+   "nasional": 34.81,
+   "nomor": 23
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "24": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 39.29
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 35.87
+  },
+  "kompetensi": {
+   "nama": "Menghitung dan mengestimasi volume dan luas permukaan balok, kubus, dan gabungannya (termasuk yang membutuhkan konversi satuan baku volume)",
+   "nasional": 35.01
+  },
+  "indikator": {
+   "nama": "Menganalisis/mengevaluasi beberapa pernyataan yang berkaitan dengan luas permukaan atau volume bangun ruang",
+   "nasional": 35.22,
+   "nomor": 24
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "25": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Data",
+   "nasional": 39.21
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait perumusan pertanyaan untuk mendapatkan data, serta penyajian dan penginterpretasian data",
+   "nasional": 41.11
+  },
+  "indikator": {
+   "nama": "Menyajikan sebagian data acak dari tabel ke dalam bentuk diagram garis atau batang.",
+   "nasional": 41.11,
+   "nomor": 25
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "26": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Data",
+   "nasional": 39.21
+  },
+  "kompetensi": {
+   "nama": "Menentukan dan menggunakan mean, median, dan modus dalam pemecahan masalah.",
+   "nasional": 38.27
+  },
+  "indikator": {
+   "nama": "Menentukan modus dari kumpulan data yang ada dalam informasi",
+   "nasional": 33.69,
+   "nomor": 26
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "27": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Data",
+   "nasional": 39.21
+  },
+  "kompetensi": {
+   "nama": "Menentukan dan menggunakan mean, median, dan modus dalam pemecahan masalah.",
+   "nasional": 38.27
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan menggunakan konsep rata-rata (mean)",
+   "nasional": 42.84,
+   "nomor": 27
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "28": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Peluang",
+   "nasional": 45.65
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait peluang dan frekuensi relatif dari kejadian tunggal",
+   "nasional": 50.38
+  },
+  "indikator": {
+   "nama": "Menentukan nilai peluang kejadian tunggal dengan dua kemungkinan kondisi dari suatu masalah kontekstual.",
+   "nasional": 47.63,
+   "nomor": 28
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "29": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Peluang",
+   "nasional": 45.65
+  },
+  "kompetensi": {
+   "nama": "Menghitung peluang kejadian sederhana.",
+   "nasional": 36.2
+  },
+  "indikator": {
+   "nama": "Menghitung peluang kejadian sederhana berdasarkan informasi",
+   "nasional": 36.2,
+   "nomor": 29
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ },
+ "30": {
+  "elemen": {
+   "nama": "Data dan Peluang",
+   "nasional": 42.43
+  },
+  "subelemen": {
+   "nama": "Peluang",
+   "nasional": 45.65
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait peluang dan frekuensi relatif dari kejadian tunggal",
+   "nasional": 50.38
+  },
+  "indikator": {
+   "nama": "Memperkirakan jumlah awal suatu objek dari percobaan pengambilan tanpa pengembalian menggunakan konsep peluang.",
+   "nasional": 53.13,
+   "nomor": 30
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SMP Matematika 2025/2026 (nasional)"
+ }
+}

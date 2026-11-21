@@ -10,6 +10,8 @@ import { bulanIni } from '@/lib/waktu'
 import { todayWib } from '@/lib/daily-message'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 import { BilahRapor, GrafikNilaiBulanan, MAKS_SERI } from '@/components/keluarga/BilahRapor'
+import { learnerAnak } from '@/lib/belajar/sesi'
+import { tryOutSiswa } from '@/lib/reports/tryout-data'
 
 /**
  * Rapor: pintu masuk ketiga laporan seorang anak.
@@ -39,6 +41,8 @@ export default async function RaporPage({
 
   const sekarang = await bulanIni()
   const r = await rangkumanLaporan(studentId, sekarang)
+  const learnerTryOut = await learnerAnak(studentId)
+  const riwayatTryOut = learnerTryOut ? await tryOutSiswa(learnerTryOut) : []
 
   return (
     // Tanpa kalimat pembuka. Ketiga kartunya berjudul, berketerangan, dan
@@ -107,6 +111,20 @@ export default async function RaporPage({
           <Kosong>Belum ada topik peta kompetensi yang dikerjakan.</Kosong>
         ) : (
           <BarisKetuntasan k={r.ketuntasan} tanggal={tanggalPanjang(todayWib())} />
+        )}
+      </KartuLaporan>
+
+      <KartuLaporan
+        judul="Hasil Try Out"
+        keterangan="Nilai try out dan capaian per kompetensi, dibandingkan dengan capaian nasional"
+        href={`/keluarga/${studentId}/tryout`}
+      >
+        {riwayatTryOut.length === 0 ? (
+          <Kosong>Belum ada hasil try out untuk anak ini.</Kosong>
+        ) : (
+          <p className="text-sm text-gray-700">
+            {riwayatTryOut.length} try out sudah dikerjakan, terakhir {tanggalPanjang(riwayatTryOut[0].dikirim)}
+          </p>
         )}
       </KartuLaporan>
     </div>
