@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 /** Try Out untuk akun mandiri. Terbuka untuk semua akun, berlangganan atau tidak. */
 export default async function TryOutMandiri() {
-  const { nama } = await mandiriContext()
+  await mandiriContext()
   const supabase = await createClient()
   const [paket, { data }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_tryout_saya')])
   return (
@@ -19,9 +19,8 @@ export default async function TryOutMandiri() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
-        nama={nama}
         petunjukMasuk='Di layar masuk, pilih "Akun Tera" lalu masuk dengan email dan password akunmu.'
-        ctaHref="/mandiri/langganan"
+        hrefHasil={(id) => `/mandiri/tryout/${id}`}
       />
     </div>
   )

@@ -8,7 +8,7 @@ export const metadata = { title: 'Try Out' }
 export const dynamic = 'force-dynamic'
 
 export default async function TryOutUmum() {
-  const { kode, nama } = await umumContext()
+  const { kode } = await umumContext()
   const supabase = await createClient()
   const [paket, { data }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode })])
   return (
@@ -23,9 +23,8 @@ export default async function TryOutUmum() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
-        nama={nama}
         petunjukMasuk={`Di layar masuk, pilih "Kode peserta" lalu masukkan ${kode}.`}
-        ctaHref="/umum/langganan"
+        hrefHasil={(id) => `/umum/tryout/${id}`}
         kode={kode}
       />
     </div>

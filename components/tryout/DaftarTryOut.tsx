@@ -1,5 +1,6 @@
 import { TRYOUT_PATH } from '@/lib/tryout/alamat'
-import HasilPeserta, { type HasilTryOut } from '@/components/tryout/HasilPeserta'
+import Link from 'next/link'
+import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 
 export interface PaketTersedia {
   id: string
@@ -29,16 +30,15 @@ export async function paketTryOutTerbit(supabase: { from: (t: string) => any }):
 export default function DaftarTryOut({
   paket,
   hasil,
-  nama,
   petunjukMasuk,
-  ctaHref,
+  hrefHasil,
   kode,
 }: {
   paket: PaketTersedia[]
   hasil: HasilTryOut | null
-  nama: string
   petunjukMasuk: string
-  ctaHref: string
+  /** Halaman hasil satu try out (di Tera, tanpa kode atau login lagi). */
+  hrefHasil: (quizId: string) => string
   kode?: string
 }) {
   const selesaiBuka = new Set((hasil?.paket ?? []).map((p) => p.quiz_id))
@@ -55,15 +55,16 @@ export default function DaftarTryOut({
           paket.map((p) => {
             const buka = selesaiBuka.has(p.id)
             const tunggu = selesaiTunggu.has(p.id) || judulTunggu.has(p.judul)
+            const sudah = buka || tunggu
             return (
               <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
                 <div className="min-w-0">
                   <p className="font-medium text-gray-900">{p.judul}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">
-                    {buka ? 'Selesai · hasil ada di bawah' : tunggu ? 'Sudah dikerjakan · hasil belum dibuka' : petunjukMasuk}
+                  <p className={`mt-0.5 text-xs ${sudah ? 'font-medium text-emerald-700' : 'text-gray-500'}`}>
+                    {sudah ? 'Kamu sudah mengerjakan try out ini' : petunjukMasuk}
                   </p>
                 </div>
-                {!buka && !tunggu && (
+                {!sudah && (
                   <a
                     // Satu alamat: Sora ada di bawah /tryout. Peserta berkode dibawa dengan `?kode=`,
                     // akun dengan `?akun=1` (sesinya sudah dibagi), jadi layar Selamat Datang dilewati
@@ -74,20 +75,22 @@ export default function DaftarTryOut({
                     Mulai
                   </a>
                 )}
+                {sudah && buka && (
+                  <Link href={hrefHasil(p.id)} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                    Lihat hasil
+                  </Link>
+                )}
+                {sudah && !buka && (
+                  <span className="rounded-full bg-slate-100 px-5 py-2 text-sm font-medium text-slate-500" title="Hasil dibuka setelah semua sesi try out selesai">
+                    Hasil belum dibuka
+                  </span>
+                )}
               </div>
             )
           })
         )}
       </section>
 
-      {(hasil?.paket ?? []).length > 0 && (
-        <section className="space-y-8">
-          <h2 className="text-base font-semibold text-gray-900">Hasil</h2>
-          {(hasil?.paket ?? []).map((p) => (
-            <HasilPeserta key={p.quiz_id} p={p} nama={hasil?.nama ?? nama} ctaHref={ctaHref} kode={kode} />
-          ))}
-        </section>
-      )}
     </div>
   )
 }
