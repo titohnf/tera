@@ -1,10 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { tambahPesertaTryOut, tautkanPesertaKeSiswa } from '@/lib/actions/admin/peserta-tryout'
+import { TRYOUT_URL_PUBLIK } from '@/lib/tryout/alamat'
 
 export const metadata = { title: 'Peserta Try Out' }
 export const dynamic = 'force-dynamic'
 
-const SORA_URL = (process.env.NEXT_PUBLIC_SORA_TRYOUT_URL ?? 'https://sora-bimbeltera.vercel.app').replace(/\/$/, '')
+const SORA_URL = TRYOUT_URL_PUBLIK
 
 interface Peserta {
   id: string

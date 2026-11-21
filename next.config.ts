@@ -27,6 +27,18 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  /**
+   * Sora (aplikasi try out) dipasang di bawah `/tryout` pada alamat Tera
+   * (multi-zone): satu alamat, dan cookie sesi login dibagi karena keduanya
+   * memakai proyek Supabase yang sama. Sora di sisinya memakai `basePath:
+   * '/tryout'`, jadi jalurnya diteruskan apa adanya.
+   */
+  async rewrites() {
+    const sora = (process.env.SORA_ORIGIN ?? 'https://sora-bimbeltera.vercel.app').replace(/\/$/, '')
+    return {
+      beforeFiles: [{ source: '/tryout/:path*', destination: `${sora}/tryout/:path*` }],
+    }
+  },
   async redirects() {
     return [
       {

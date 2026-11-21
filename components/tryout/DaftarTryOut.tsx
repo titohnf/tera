@@ -1,4 +1,4 @@
-import { SORA_TRYOUT_URL } from '@/lib/tryout/alamat'
+import { TRYOUT_PATH } from '@/lib/tryout/alamat'
 import HasilPeserta, { type HasilTryOut } from '@/components/tryout/HasilPeserta'
 
 export interface PaketTersedia {
@@ -65,9 +65,10 @@ export default function DaftarTryOut({
                 </div>
                 {!buka && !tunggu && (
                   <a
-                    // Peserta berkode dibawa dengan `?kode=` supaya Sora melewati layar Selamat Datang
-                    // dan langsung membuka halaman persiapan. Akun tidak membawa apa pun di alamat.
-                    href={`${SORA_TRYOUT_URL}/q/${p.kode}${kode ? `?kode=${encodeURIComponent(kode)}` : ''}`}
+                    // Satu alamat: Sora ada di bawah /tryout. Peserta berkode dibawa dengan `?kode=`,
+                    // akun dengan `?akun=1` (sesinya sudah dibagi), jadi layar Selamat Datang dilewati
+                    // dan peserta langsung ke halaman persiapan. `<a>`, bukan Link: itu bukan rute Tera.
+                    href={`${TRYOUT_PATH}/q/${p.kode}${kode ? `?kode=${encodeURIComponent(kode)}` : '?akun=1'}`}
                     className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                   >
                     Mulai
