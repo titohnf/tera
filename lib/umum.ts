@@ -23,9 +23,9 @@ export interface KonteksUmum {
 
 export async function umumContext(): Promise<KonteksUmum> {
   const kode = (await cookies()).get(COOKIE_KODE)?.value
-  if (!kode) redirect('/masuk-kode')
+  if (!kode) redirect('/login?tab=umum')
   const supabase = await createClient()
   const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
-  if (!nama) redirect('/masuk-kode?galat=1')
+  if (!nama) redirect('/login?tab=umum&galat=1')
   return { kode, nama: nama as string, namaPendek: namaPendek({ full_name: nama as string, nickname: null }) }
 }

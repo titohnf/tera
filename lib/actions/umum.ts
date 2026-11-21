@@ -8,10 +8,10 @@ import { COOKIE_KODE } from '@/lib/umum'
 /** Masuk dengan kode peserta: kode benar -> cookie httpOnly 30 hari, lalu ke beranda umum. */
 export async function masukDenganKode(formData: FormData): Promise<void> {
   const kode = String(formData.get('kode') ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-  if (!kode) redirect('/masuk-kode?galat=1')
+  if (!kode) redirect('/login?tab=umum&galat=1')
   const supabase = await createClient()
   const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
-  if (!nama) redirect('/masuk-kode?galat=1')
+  if (!nama) redirect('/login?tab=umum&galat=1')
   ;(await cookies()).set(COOKIE_KODE, kode, {
     httpOnly: true,
     secure: true,
@@ -24,5 +24,5 @@ export async function masukDenganKode(formData: FormData): Promise<void> {
 
 export async function keluarUmum(): Promise<void> {
   ;(await cookies()).delete(COOKIE_KODE)
-  redirect('/masuk-kode')
+  redirect('/login?tab=umum')
 }
