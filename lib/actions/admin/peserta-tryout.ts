@@ -88,3 +88,33 @@ export async function aturHasilDibuka(formData: FormData): Promise<void> {
   await ctx.admin.from('quizzes').update({ settings: { ...settings, hasil_dibuka: buka } }).eq('id', quizId)
   revalidatePath('/admin/hasil-tryout')
 }
+
+/**
+ * Jadwal sebuah try out: kapan tombol Mulai bisa dipakai (`opens_at`) dan, bila perlu,
+ * kapan ditutup (`closes_at`). Jam diisi dalam WIB. Kosong berarti tanpa batas. Hanya dua
+ * kunci itu yang diubah; database yang menahan peserta sebelum jamnya
+ * (`mulai_percobaan_peserta` memeriksa `opens_at`).
+ */
+export async function aturJadwalTryOut(formData: FormData): Promise<void> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return
+  const quizId = String(formData.get('quiz_id') ?? '')
+  if (!quizId) return
+  const keIso = (v: FormDataEntryValue | null): string | null | undefined => {
+    const t = String(v ?? '').trim()
+    if (!t) return null
+    const d = new Date(`${t.length === 16 ? t + ':00' : t}+07:00`)
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString()
+  }
+  const buka = keIso(formData.get('opens_at'))
+  const tutup = keIso(formData.get('closes_at'))
+  if (buka === undefined || tutup === undefined) return
+  if (buka && tutup && new Date(tutup) <= new Date(buka)) return
+  const { data: kuis } = await ctx.admin.from('quizzes').select('settings, kind').eq('id', quizId).maybeSingle()
+  if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return
+  const settings = ((kuis as { settings: Record<string, unknown> | null }).settings ?? {}) as Record<string, unknown>
+  await ctx.admin.from('quizzes').update({ settings: { ...settings, opens_at: buka, closes_at: tutup } }).eq('id', quizId)
+  revalidatePath('/admin/jadwal-tryout')
+  revalidatePath('/umum/tryout')
+  revalidatePath('/mandiri/tryout')
+}

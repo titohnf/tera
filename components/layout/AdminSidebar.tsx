@@ -98,6 +98,11 @@ const nav: NavEntry[] = [
         label: 'Peserta Try Out',
         icon: <UserGroupIcon className="w-5 h-5" />,
       },
+      {
+        href: '/admin/jadwal-tryout',
+        label: 'Jadwal Try Out',
+        icon: <CalendarDaysIcon className="w-5 h-5" />,
+      },
     ],
   },
   {
