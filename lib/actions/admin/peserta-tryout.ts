@@ -69,3 +69,22 @@ export async function tautkanPesertaKeSiswa(formData: FormData): Promise<void> {
   revalidatePath('/admin/peserta-tryout')
   revalidatePath('/admin/hasil-tryout')
 }
+
+/**
+ * Membuka atau menutup hasil try out untuk peserta berkode. Hasil di
+ * /hasil/<kode> (Sora) baru tampil bila `quizzes.settings.hasil_dibuka` true;
+ * dibuka admin setelah semua sesi selesai supaya sesi pertama tidak
+ * membocorkan ke sesi berikutnya. Hanya kunci itu yang diubah.
+ */
+export async function aturHasilDibuka(formData: FormData): Promise<void> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return
+  const quizId = String(formData.get('quiz_id') ?? '')
+  const buka = String(formData.get('buka') ?? '') === '1'
+  if (!quizId) return
+  const { data: kuis } = await ctx.admin.from('quizzes').select('settings, kind').eq('id', quizId).maybeSingle()
+  if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return
+  const settings = ((kuis as { settings: Record<string, unknown> | null }).settings ?? {}) as Record<string, unknown>
+  await ctx.admin.from('quizzes').update({ settings: { ...settings, hasil_dibuka: buka } }).eq('id', quizId)
+  revalidatePath('/admin/hasil-tryout')
+}

@@ -74,6 +74,10 @@ export default async function PesertaTryOutPage() {
     `Assalamu'alaikum Bapak/Ibu${p.nama_wali ? ' ' + p.nama_wali : ''}. Berikut kode peserta Try Out TKA Bimbel Tera untuk ${p.name}: *${p.access_code}*. ` +
     `Buka ${tautanTryOut}, pilih "Kode peserta", lalu masukkan kode tersebut. Kode ini juga dipakai untuk try out berikutnya. Terima kasih.`
 
+  const pesanHasil = (p: Peserta) =>
+    `Assalamu'alaikum Bapak/Ibu${p.nama_wali ? ' ' + p.nama_wali : ''}. Hasil Try Out TKA Bimbel Tera untuk ${p.name} sudah bisa dilihat di ${SORA_URL}/hasil/${p.access_code} ` +
+    `(atau buka ${SORA_URL}/hasil dan masukkan kode ${p.access_code}). Terima kasih.`
+
   return (
     <div className="space-y-5">
       <div>
@@ -154,6 +158,16 @@ export default async function PesertaTryOutPage() {
                         className="mt-1 inline-block text-sm font-medium text-green-700 hover:underline"
                       >
                         Kirim kode lewat WhatsApp
+                      </a>
+                    )}
+                    {p.access_code && p.wa && n > 0 && (
+                      <a
+                        href={`https://wa.me/${p.wa}?text=${encodeURIComponent(pesanHasil(p))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block text-sm font-medium text-blue-700 hover:underline"
+                      >
+                        Kirim tautan hasil lewat WhatsApp
                       </a>
                     )}
                   </div>

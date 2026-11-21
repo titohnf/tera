@@ -11,6 +11,7 @@ import {
   type Simpul,
 } from '@/lib/reports/kompetensi-tryout'
 import { lepasTautanPercobaan, tautkanPercobaan } from '@/lib/actions/admin/tryout'
+import { aturHasilDibuka } from '@/lib/actions/admin/peserta-tryout'
 
 export const metadata = { title: 'Hasil Try Out' }
 
@@ -95,6 +96,8 @@ export default async function HasilTryOutAdminPage({
   })
 
   const admin = createAdminClient()
+  const { data: kuisPengaturan } = await admin.from('quizzes').select('settings').eq('id', data.id).maybeSingle()
+  const hasilDibuka = ((kuisPengaturan as { settings: Record<string, unknown> | null } | null)?.settings ?? {}).hasil_dibuka === true
   const { data: siswaMentah } = await admin
     .from('profiles')
     .select('id, full_name, grade')
@@ -134,6 +137,20 @@ export default async function HasilTryOutAdminPage({
           {rataNilai !== null && <> · rata-rata nilai <b>{fmt(rataNilai)}</b> dari 100</>}
         </p>
       </div>
+
+      <form action={aturHasilDibuka} className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <input type="hidden" name="quiz_id" value={data.id} />
+        <input type="hidden" name="buka" value={hasilDibuka ? '0' : '1'} />
+        <p className="min-w-60 flex-1 text-sm text-gray-700">
+          Hasil untuk peserta berkode (halaman Hasil di Sora): <b>{hasilDibuka ? 'sudah dibuka' : 'belum dibuka'}</b>.{' '}
+          {hasilDibuka
+            ? 'Peserta bisa melihat nilai dan capaian dengan kodenya.'
+            : 'Buka setelah semua sesi try out selesai, supaya sesi pertama tidak membocorkan ke sesi berikutnya.'}
+        </p>
+        <button type="submit" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50">
+          {hasilDibuka ? 'Tutup hasil' : 'Buka hasil untuk peserta'}
+        </button>
+      </form>
 
       {data.tanpaKolomKompetensi && (
         <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
