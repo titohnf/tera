@@ -1,0 +1,594 @@
+{
+ "format": "tera/butir-impor@1",
+ "catatan": "Try out TKA SMP Matematika, 30 contoh soal resmi Pusat Asesmen Pendidikan (daya serap TKA 2025/2026). Kunci dibuat Claude dan WAJIB ditinjau manusia sebelum diaktifkan. Tanpa topik dan tanpa kolam, jadi tidak masuk paket latihan.",
+ "butir": [
+  {
+   "type": "mcq_single",
+   "prompt": "Hasil dari operasi bilangan berpangkat berikut adalah ....\n\n$$\\frac{7^{3}\\times 7^{-4}}{7^{2}}$$\n\n[pertanyaan]\n",
+   "options": {
+    "choices": [
+     "$7^{-9}$",
+     "$7^{-6}$",
+     "$7^{-3}$",
+     "$7$"
+    ]
+   },
+   "correct_answer": "$7^{-3}$",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Layanan Film Berbayar\n\nSaat ini ada banyak aplikasi yang menyediakan layanan film berbayar. Dengan membayar biaya berlangganan, setiap orang bisa menikmati berbagai film yang ada pada aplikasi tersebut. Biaya itu, biasanya dibayarkan setiap bulan. Selain itu, setiap aplikasi mempunyai jumlah pengguna yang berbeda. Berikut ini adalah infografis mengenai harga langganan dan banyak pengguna tiap aplikasi.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s02_0.jpg]\n\nSetiap aplikasi berusaha untuk menarik pelanggan baru dengan cara memberikan harga promo atau menambah koleksi film-film. Setelah promo tersebut, setiap aplikasi mendapatkan kenaikan jumlah pengguna dari yang ada pada wacana. Berikut ini persentase kenaikan jumlah pengguna setiap aplikasi dibandingkan sebelumnya:\n\nAplikasi M meningkat 50%.\nAplikasi Y meningkat 10%.\nAplikasi W meningkat 10%.\nAplikasi D meningkat 20%.\n\n[pertanyaan]\n\nRara akan memilih berlangganan aplikasi yang memiliki jumlah pengguna lebih dari 4,5 juta. Aplikasi apa yang mungkin dipilih Rara? Klik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Aplikasi M.",
+     "Aplikasi Y.",
+     "Aplikasi W.",
+     "Aplikasi D."
+    ]
+   },
+   "correct_answer": [
+    "Aplikasi Y.",
+    "Aplikasi D."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "M 2,2x1,5=3,3; Y 4,2x1,1=4,62; W 4x1,1=4,4; D 3,9x1,2=4,68; >4,5 juta: Y dan D"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Layanan Film Berbayar\n\nSaat ini ada banyak aplikasi yang menyediakan layanan film berbayar. Dengan membayar biaya berlangganan, setiap orang bisa menikmati berbagai film yang ada pada aplikasi tersebut. Biaya itu, biasanya dibayarkan setiap bulan. Selain itu, setiap aplikasi mempunyai jumlah pengguna yang berbeda. Berikut ini adalah infografis mengenai harga langganan dan banyak pengguna tiap aplikasi.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s02_0.jpg]\n\nSaat ini Freya dan Denis masing-masing sedang berlangganan satu aplikasi penyedia film yang berbeda. Saat melakukan pembayaran pada bulan tertentu, salah satu aplikasi sedang memberikan potongan harga sebesar 40%. Jumlah pembayaran mereka pada bulan tersebut tidak lebih dari Rp140.000,00 tetapi tidak kurang dari Rp130.000,00. Denis berlangganan aplikasi dengan harga yang lebih mahal daripada Freya.\n\n[pertanyaan]\n\nTentukan setiap pernyataan berikut apakah Mungkin atau Tidak Mungkin terkait aplikasi langganan mereka!",
+   "options": {
+    "statements": [
+     "Denis berlangganan aplikasi yang memberikan potongan harga.",
+     "Freya berlangganan aplikasi Y.",
+     "Denis berlangganan aplikasi M."
+    ],
+    "answer_labels": [
+     "Mungkin",
+     "Tidak Mungkin"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "total 130-140rb hanya W+D (diskon W) atau W+M (diskon W): Freya=W"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Buah merupakan salah satu sumber vitamin C. Buah yang banyak mengandung vitamin C biasanya memiliki rasa masam dan warna cerah. Selain itu, buah yang mengandung vitamin C juga biasanya identik dengan buah yang banyak mengandung air. Namun, apakah itu benar? Apakah semakin berat dan semakin berair suatu buah maka kandungan vitamin C-nya semakin banyak? Untuk mengetahui hal tersebut tim peneliti akan menguji kandungan vitamin C yang dimiliki suatu buah dengan ukuran dan kandungan air yang beragam. Berikut disajikan data terkait ukuran dan kandungan air keempat buah tersebut.\n\n| Buah | Berat (gr) | Kandungan air (mL) |\n| --- | --- | --- |\n| Buah A | 118,4 | 96,3 |\n| Buah B | 130,7 | 150 |\n| Buah C | 130,55 | 140 |\n| Buah D | 96,255 | 118,15 |\n\nKarena keterbatasan waktu pengujian, pada hari pertama hanya satu buah yang akan diteliti. Buah yang akan diteliti pertama adalah buah yang memiliki berat terbesar dan kandungan air paling banyak.\n\n[pertanyaan]\n\nBuah yang akan diteliti pertama adalah ....",
+   "options": {
+    "choices": [
+     "Buah A",
+     "Buah B",
+     "Buah C",
+     "Buah D"
+    ]
+   },
+   "correct_answer": "Buah B",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Pada beberapa jenis makanan, suhu penyimpanan yang terlalu tinggi dapat menyebabkan makanan tersebut menjadi cepat basi. Gambar di bawah ini menunjukkan berbagai suhu penyimpanan makanan di dalam lemari pendingin menurut Departemen Pertanian Amerika Serikat (FDA).\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s05_0.jpg]\n\nCatatan: Daging unggas adalah daging yang berasal dari burung ternak seperti ayam, merpati, dan sebagainya. Daging merah adalah daging yang berasal dari mamalia ternak seperti sapi, kambing, dan sebagainya.\n\n[pertanyaan]\n\nBerdasarkan saran FDA, berapa suhu lemari pendingin yang direkomendasikan untuk menyimpan daging ayam?",
+   "options": {
+    "choices": [
+     "18 derajat di bawah 0 °C",
+     "18 derajat di atas 0 °C",
+     "19 derajat di bawah 0 °C",
+     "19 derajat di atas 0 °C"
+    ]
+   },
+   "correct_answer": "19 derajat di bawah 0 °C",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Diketahui bentuk aljabar berikut ini.\n\n$$2ab - b^{2} + 3a^{2}b + ab^{2} - 5$$\n\n[pertanyaan]\n\nBerdasarkan informasi tersebut, manakah di antara pernyataan berikut ini yang benar?\n\nTentukan Benar atau Salah pada setiap pernyataan berikut terkait bentuk aljabar tersebut!",
+   "options": {
+    "statements": [
+     "Terdapat 2 variabel yaitu $a$ dan $b$.",
+     "Konstanta pada bentuk aljabar tersebut adalah 5.",
+     "Bilangan 2, -1, 3, dan 1 merupakan koefisien."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "2ab - b^2 + 3a^2b + ab^2 - 5; konstanta = -5"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Rino, Tiko, dan Bayu pergi ke toko buku dekat rumahnya untuk membeli buku tulis dan pulpen keperluan sekolah. Berikut banyak buku tulis dan pulpen yang dibeli oleh setiap anak.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s07_0.jpg]\n\n[pertanyaan]\n\nApabila harga 1 buku tulis disimbolkan dengan \"x\" dan harga 1 pulpen disimbolkan dengan \"y\", bagaimana kalimat matematika yang menyatakan total harga yang harus dibayar oleh ketiga anak tersebut?",
+   "options": {
+    "choices": [
+     "$24x + 18y$",
+     "$20x + 15y$",
+     "$12x + 9y$",
+     "$4x + 3y$"
+    ]
+   },
+   "correct_answer": "$24x + 18y$",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Perhatikan diagram panah berikut ini.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s08_0.jpg]\n\n[pertanyaan]\n\nApakah diagram 1, diagram 2, dan diagram 3 merupakan fungsi? Tentukan fungsi atau bukan fungsi pada setiap diagram berikut!",
+   "options": {
+    "statements": [
+     "Diagram 1",
+     "Diagram 2",
+     "Diagram 3"
+    ],
+    "answer_labels": [
+     "Fungsi",
+     "Bukan Fungsi"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Naura menggunakan operator seluler \"Nusantara Mobile\". Terdapat beberapa pilihan paket kuota internet yang dapat dipilih oleh pelanggannya. Naura menuliskan pilihan paket kuota yang tersedia dan harganya dalam bentuk himpunan pasangan berurutan sebagai berikut.\n\n{(5, 14.000), (10, 23.000), (20, 41.000), (25, 50.000)}\n\nCatatan tersebut ditulis dalam bentuk (paket kuota internet dalam gigabyte (GB), harga dalam rupiah). Sebagai contoh, (5, 14.000) memiliki arti bahwa paket kuota internet 5 GB dikenakan harga sebesar Rp14.000,00.\n\n[pertanyaan]\n\nJika $x$ adalah paket kuota internet dalam GB, rumus fungsi $f(x)$ yang menyatakan harga paket kuota internet adalah ....",
+   "options": {
+    "choices": [
+     "f(x) = 2.000x + 4.000",
+     "f(x) = 2.000x + 1.000",
+     "f(x) = 1.800x + 9.000",
+     "f(x) = 1.800x + 5.000"
+    ]
+   },
+   "correct_answer": "f(x) = 1.800x + 5.000",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Pembayaran air PDAM setiap rumah berbeda-beda tergantung banyaknya pemakaian air. Biaya pemasangan awal adalah Rp800.000,00. Tarif pemakaian air berdasarkan banyak air yang digunakan dengan pemasangan awal dapat dilihat pada grafik berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s10_0.jpg]\n\nSeseorang menghabiskan biaya Rp920.000,00 dalam 1 bulan pemakaian dengan pemasangan baru.\n\n[pertanyaan]\n\nBerdasarkan informasi tersebut, manakah di antara pernyataan berikut ini yang benar?\n\nTentukan Benar atau Salah pada setiap pernyataan berikut terkait kondisi tersebut!",
+   "options": {
+    "statements": [
+     "Jumlah pemakaian air mencapai 60 m³.",
+     "Orang tersebut akan menghabiskan biaya sebesar Rp120.000,00 jika tanpa pemasangan baru.",
+     "Tarif dapat mencapai 1 juta jika pemakaian air kurang dari 90 m³ dengan pemasangan baru."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "gradien 2.000/m3; 120.000/2.000=60; 1.000.000 butuh 100 m3"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Pekarangan Rumah\n\nAyunda mulai memanfaatkan lahan kosong di pekarangan rumahnya untuk menanam berbagai jenis tanaman. Setelah melihat tanamannya tumbuh subur, ia berencana untuk menanam pohon mangga di pekarangan tersebut. Berikut adalah peta pekarangan rumah Ayunda.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s11_0.jpg]\n\nDalam menentukan lokasi penanaman, Ayunda harus mempertimbangkan beberapa faktor penting yaitu ketersediaan sinar matahari dan kualitas tanah. Berdasarkan beberapa faktor tersebut, Ayunda hanya akan menanam pohon mangga di lokasi 1, 3, dan 4 hanya pada lahan yang masih kosong (belum ada tanaman lain) di lokasi tersebut.\n\n[pertanyaan]\n\nBerdasarkan hal tersebut, pada koordinat mana sajakah Ayunda bisa menanam pohon mangga?\n\nTentukan \"Bisa ditanami pohon mangga\" atau \"Tidak bisa ditanami pohon mangga\" untuk beberapa koordinat berikut ini!",
+   "options": {
+    "statements": [
+     "$(9, -2)$",
+     "$(-2, 9)$",
+     "$(-9, -9)$"
+    ],
+    "answer_labels": [
+     "Bisa ditanami pohon mangga",
+     "Tidak bisa ditanami pohon mangga"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Diketahui pertidaksamaan sebagai berikut.\n\n$$3x + 17 \\le 7 - 2x$$\n\n[pertanyaan]\n\nManakah garis bilangan yang menunjukkan himpunan penyelesaian dari pertidaksamaan tersebut?",
+   "options": {
+    "choices": [
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no12-A.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no12-B.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no12-C.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no12-D.png]"
+    ]
+   },
+   "correct_answer": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no12-A.png]",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "x <= -2"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Jajanan Tradisional\n\nJajanan tradisional merupakan makanan khas dari nenek moyang dan biasanya digunakan untuk acara atau tradisi. Seiring berjalannya waktu, jajanan tradisional bisa dijumpai dan ditemukan setiap hari tidak hanya saat acara tertentu. Berikut merupakan harga jajanan tradisional kue putu mayang dan kue pancong yang dijual di sebuah bazar makanan.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s13_0.jpg]\n\nKeterangan:\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s13_1.jpg]\n\n[pertanyaan]\n\nBerapa harga 3 kotak kue putu mayang dan 1 kotak kue pancong?",
+   "options": {
+    "choices": [
+     "Rp10.000,00.",
+     "Rp14.000,00.",
+     "Rp44.000,00.",
+     "Rp52.000,00."
+    ]
+   },
+   "correct_answer": "Rp44.000,00.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "3g+2r=58, 2g+3r=62 -> g=10, r=14"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Suatu kompleks X memiliki kebiasaan membuat pagar rumah dengan desain yang unik. Hampir seluruh warga kompleks X menyusun pagar membentuk pola barisan. Desain pagar rumah tersebut disusun menggunakan 2 jenis batu bata, yang jika dari depan batu bata tersebut terlihat berbentuk segitiga dan persegi panjang. Batu bata tersebut disusun membentuk pola seperti gambar di bawah.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s14_0.jpg]\n\n[pertanyaan]\n\nJika ingin dibuat pagar dengan 10 tingkat susunan batu bata, berapakah jumlah total batu bata (segitiga maupun persegi panjang) yang ada pada tingkat ke-10 dari pagar tersebut?",
+   "options": {
+    "choices": [
+     "10 batu bata",
+     "11 batu bata",
+     "20 batu bata",
+     "21 batu bata"
+    ]
+   },
+   "correct_answer": "21 batu bata",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "tingkat n: n segitiga + (n+1) persegi panjang"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Suatu kompleks X memiliki kebiasaan membuat pagar rumah dengan desain yang unik. Hampir seluruh warga kompleks X menyusun pagar membentuk pola barisan. Desain pagar rumah tersebut disusun menggunakan 2 jenis batu bata, yang jika dari depan batu bata tersebut terlihat berbentuk segitiga dan persegi panjang. Batu bata tersebut disusun membentuk pola seperti gambar di bawah.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s14_0.jpg]\n\nDua pagar yang sama persis dengan masing-masing memiliki 9 tingkat akan dibangun. Tetapi hanya ada persediaan sebanyak 60 batu bata segitiga dan 80 batu bata persegi panjang.\n\n[pertanyaan]\n\nApakah jumlah kedua jenis batu bata tersebut cukup untuk membuat kedua pagar?\n\nTentukan Benar atau Salah pada setiap pernyataan berikut!",
+   "options": {
+    "statements": [
+     "Diperlukan tambahan 15 batu bata segitiga.",
+     "Diperlukan tambahan 28 batu bata persegi panjang.",
+     "Diperlukan tambahan total sebanyak 43 batu bata baik segitiga maupun persegi panjang."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "butuh 90 segitiga, 108 persegi panjang; tambahan 30 dan 28"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Garis AB dan garis PQ berpotongan di titik Q seperti gambar berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s16_0.jpg]\n\n[pertanyaan]\n\nNilai $x$ yang tepat adalah ....",
+   "options": {
+    "choices": [
+     "15°",
+     "24°",
+     "69°",
+     "96°"
+    ]
+   },
+   "correct_answer": "24°",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "72+(4x+12)=180"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Perhatikan gambar berikut ini!\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s17_0.jpg]\n\n[pertanyaan]\n\nBerdasarkan gambar tersebut, berapa nilai $b$?",
+   "options": {
+    "choices": [
+     "46°",
+     "68°",
+     "112°",
+     "134°"
+    ]
+   },
+   "correct_answer": "46°",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Perhatikan gambar jaring-jaring prisma segitiga berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s18_0.jpg]\n\nSisi tutup pada prisma tersebut adalah sisi ABC.\n\n[pertanyaan]\n\nRusuk AC pada sisi tutup akan berhimpit dengan salah satu rusuk pada sisi tegak prisma nomor ....",
+   "options": {
+    "choices": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ]
+   },
+   "correct_answer": "3",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Pagar Tangga\n\nPak Anton baru saja membangun rumah. Ada beberapa bagian dalam rumahnya yang belum terpasang. Salah satunya adalah pagar tangga. Pagar tangga berfungsi untuk pegangan saat naik maupun turun tangga. Berikut adalah gambar tangga Pak Anton.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s19_0.jpg]\n\nGambar garis putus-putus merupakan rancangan pagar tangga. Setiap anak tangga memiliki tinggi yang sama yaitu 25 cm. Suatu hari, Pak Anton ke toko untuk membeli bahan pagar tangga. Tersedia 4 jenis bahan pagar tangga yakni:\n\n- pagar bahan kayu jati sepanjang 6 meter\n- pagar bahan kayu meranti sepanjang 4 meter\n- pagar bahan besi sepanjang 5,5 meter\n- pagar bahan aluminium sepanjang 4,5 meter\n\n[pertanyaan]\n\nJenis bahan apa yang harus dipilih Pak Anton agar cukup untuk membuat pagar tangga dan memiliki sisa paling sedikit?",
+   "options": {
+    "choices": [
+     "Pagar kayu jati",
+     "Pagar kayu meranti",
+     "Pagar besi",
+     "Pagar aluminium"
+    ]
+   },
+   "correct_answer": "Pagar besi",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Perhatikan dua segitiga kongruen pada koordinat kartesius berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s20_0.jpg]\n\nDiketahui titik Q = titik K. Segitiga PQR akan ditranslasikan oleh $T = (-4, -2)$.\n\n[pertanyaan]\n\nBayangan segitiga PQR dan segitiga KLM akan saling ....",
+   "options": {
+    "choices": [
+     "tegak lurus",
+     "berpotongan",
+     "sejajar",
+     "berhimpit"
+    ]
+   },
+   "correct_answer": "sejajar",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "KLM = PQR digeser (6,-2); sesudah T(-4,-2) tetap hasil pergeseran sehingga sisi-sisinya sejajar"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Perhatikan gambar juring pada lingkaran di bawah ini!\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s21_0.jpg]\n\n[pertanyaan]\n\nManakah pernyataan yang benar di bawah ini terkait luas juring A, B, dan C?",
+   "options": {
+    "choices": [
+     "Luas juring B dua kali dari luas juring C",
+     "Luas juring C setengah dari luas juring A",
+     "Luas juring A tiga kali dari luas juring B",
+     "Luas juring B dua kali dari luas juring A"
+    ]
+   },
+   "correct_answer": "Luas juring C setengah dari luas juring A",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "A 70, B 90, C 35"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Perhatikan dua persegi panjang berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s22_0.jpg]\n\nDiketahui luas persegi panjang yang lebih besar adalah 320 cm² dan kedua persegi panjang tersebut sebangun.\n\n[pertanyaan]\n\nBerapakah keliling persegi panjang yang lebih kecil?",
+   "options": {
+    "choices": [
+     "9 cm",
+     "18 cm",
+     "20 cm",
+     "72 cm"
+    ]
+   },
+   "correct_answer": "18 cm",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "skala 4, luas kecil 20, sisi 5 x 4"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Pak Dodi adalah pemasok minyak goreng curah di Pasar Maju. Minyak goreng curah adalah minyak goreng tanpa kemasan khusus dan tidak memiliki label atau merek. Terdapat dua jenis minyak goreng curah yang dijual Pak Dodi yakni jenis A dan jenis B. Masing-masing jenis minyak goreng dimasukkan dalam tangki berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s23_0.jpg]\n\nMinyak jenis B pada tangki yang berisi penuh akan dikemas di botol dan di jeriken. Sebanyak 300 botol berukuran 2 liter sudah diisi minyak curah jenis B dari tangki tersebut. Sisa minyak akan dikemas ke dalam jeriken berukuran 5 liter.\n\n[pertanyaan]\n\nBagaimana perbandingan banyak kemasan botol dan jeriken? Pilihlah semua jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Jumlah kemasan botol lebih banyak dari pada jeriken.",
+     "Total kemasan botol dan jeriken yang terisi adalah 532.",
+     "Sisa minyak di tangki cukup untuk mengisi 1 kemasan botol.",
+     "Banyak kemasan jeriken yang terisi minyak adalah 332."
+    ]
+   },
+   "correct_answer": [
+    "Jumlah kemasan botol lebih banyak dari pada jeriken.",
+    "Total kemasan botol dan jeriken yang terisi adalah 532."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "B=1.760 L; 600 L botol; sisa 1.160 L = 232 jeriken"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Pak Dodi adalah pemasok minyak goreng curah di Pasar Maju. Minyak goreng curah adalah minyak goreng tanpa kemasan khusus dan tidak memiliki label atau merek. Terdapat dua jenis minyak goreng curah yang dijual Pak Dodi yakni jenis A dan jenis B. Masing-masing jenis minyak goreng dimasukkan dalam tangki berikut.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s23_0.jpg]\n\nHari ini di toko Pak Dodi kedatangan dua pelanggan minyak curah yakni Pak Angga dan Bu Susi. Pak Angga dan Bu Susi membawa jeriken untuk wadah minyak dalam jumlah banyak. Jeriken minyak Pak Angga berukuran 25 liter, jeriken minyak milik Bu Susi berukuran 30 liter. Pak Dodi memiliki persediaan 1 tangki minyak jenis A dan 1 tangki minyak jenis B. Pak Angga dan Bu Susi membeli seluruh minyak tersebut sehingga tidak ada lagi sisa minyak di tangki. Seluruh jeriken yang dibawa berisi penuh dan masing-masing mendapatkan kedua jenis minyak.\n\n[pertanyaan]\n\nBagaimana kemungkinan perbandingan banyaknya jeriken Pak Angga dan Bu Susi?\n\nTentukan mungkin atau tidak mungkin setiap pernyataan berikut! Klik pada kolom yang sesuai.",
+   "options": {
+    "statements": [
+     "Bu Susi membawa pulang sebanyak 32 jeriken minyak jenis A dan 22 jeriken minyak jenis B.",
+     "Pak Angga membawa pulang minyak 24 jeriken minyak jenis A dan 44 jeriken minyak jenis B.",
+     "Bu Susi membawa pulang 21 jeriken minyak jenis A dan Pak Angga membawa 40 jeriken minyak jenis B."
+    ],
+    "answer_labels": [
+     "Mungkin",
+     "Tidak Mungkin"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "A=960 L, B=1.760 L"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Karet dan kelapa sangat penting bagi banyak industri di dunia, mulai dari ban hingga makanan. Indonesia adalah penghasil utama keduanya, dan meskipun ada tantangan dalam produksi, kedua komoditas ini tetap penting untuk ekonomi Indonesia dan pasokan global. Berikut adalah data produksi karet dan kelapa di Indonesia.\n\nProduksi Karet dan Kelapa tahun 2018-2024 (dalam juta ton)\n\n| Tahun | Karet | Kelapa |\n| --- | --- | --- |\n| 2018 | 3,68 | 2,83 |\n| 2019 | 3,50 | 2,83 |\n| 2020 | 3,30 | 2,81 |\n| 2021 | 3,12 | 2,85 |\n| 2022 | 2,95 | 2,86 |\n| 2023 | 2,75 | 2,90 |\n| 2024 | 2,60 | 2,89 |\n\n[pertanyaan]\n\nBerdasarkan data di atas, diagram garis manakah yang menunjukkan penyajian data dari salah satu hasil produksi karet atau kelapa di Indonesia?",
+   "options": {
+    "choices": [
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no25-A.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no25-B.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no25-C.png]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no25-D.png]"
+    ],
+    "columns": 2
+   },
+   "correct_answer": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/opsi-no25-D.png]",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Tory suka sekali bermain game online. Dia selalu mengabaikan batasan waktu dalam bermain game online. Belakangan ini Tory sering merasa gelisah dan mudah marah apabila tidak diizinkan bermain. Dia juga sering merasakan sakit mata dan pusing. Dokter mengatakan bahwa Tory telah kecanduan bermain game online. Tory harus berusaha perlahan-lahan mengontrol waktu bermainnya. Dokter mengatakan bahwa batas waktu maksimal Tory diperbolehkan bermain adalah 7 jam dalam satu minggu. Selama 12 minggu, waktu bermain game Tory terus dipantau oleh kedua orang tuanya dan dilaporkan ke dokter.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s26_0.jpg]\n\n[pertanyaan]\n\nDalam 12 minggu terakhir, Tory paling sering menghabiskan waktu untuk bermain game online setiap minggunya yaitu selama ... .",
+   "options": {
+    "choices": [
+     "10 jam",
+     "14 jam",
+     "20 jam",
+     "22 jam"
+    ]
+   },
+   "correct_answer": "14 jam",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Tory suka sekali bermain game online. Dia selalu mengabaikan batasan waktu dalam bermain game online. Belakangan ini Tory sering merasa gelisah dan mudah marah apabila tidak diizinkan bermain. Dia juga sering merasakan sakit mata dan pusing. Dokter mengatakan bahwa Tory telah kecanduan bermain game online. Tory harus berusaha perlahan-lahan mengontrol waktu bermainnya. Dokter mengatakan bahwa batas waktu maksimal Tory diperbolehkan bermain adalah 7 jam dalam satu minggu. Selama 12 minggu, waktu bermain game Tory terus dipantau oleh kedua orang tuanya dan dilaporkan ke dokter.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s26_0.jpg]\n\nDokter dan orang tua Tory memahami bahwa tidak mudah menghilangkan kecanduan bermain game online, namun mereka ingin terus memantau bagaimana perkembangan Tory. Dokter membuat skema sebagai berikut:\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s27_1.jpg]\n\nDokter memantau dan membandingkan rata-rata jam bermain game online setiap 4 minggu dan menyebutnya sebagai fase. Fase pertama membandingkan rata-rata jam bermain pada 4 minggu pertama dengan rata-rata jam bermain pada 4 minggu kedua. Fase kedua membandingkan rata-rata jam bermain pada 4 minggu kedua dengan rata-rata jam bermain pada 4 minggu ketiga. Fase akhir membandingkan rata-rata jam bermain pada 4 minggu ketiga dengan batas waktu maksimal yang disarankan. Hal tersebut dilakukan untuk melihat perkembangan kebiasaan Tory dalam bermain game online.\n\n[pertanyaan]\n\nApakah yang terjadi pada Tory selama fase penyembuhan? Pilihlah semua jawaban yang benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Fase pertama berkurang 5,5 jam.",
+     "Fase kedua berkurang 2,25 jam.",
+     "Fase akhir berkurang 5,25 jam.",
+     "Fase penyembuhan berkurang 8 jam."
+    ]
+   },
+   "correct_answer": [
+    "Fase pertama berkurang 5,5 jam.",
+    "Fase penyembuhan berkurang 8 jam."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "rata-rata 20; 14,5; 12"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Suatu paket terdiri dari 20 kotak misteri. Kotak misteri tersebut berisi patung figur karakter yang bernama Saka dan Kirana. Berikut ini banyak paket figur karakter yang tersedia dalam satu paket.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s28_0.jpg]\n\nRiana mengambil 3 kotak misteri secara acak dari dalam paket tersebut dan ternyata ia mendapatkan 1 buah Saka dan 2 buah Kirana. Kemudian, Santi akan mengambil 1 kotak misteri.\n\n[pertanyaan]\n\nBerapakah peluang Santi mendapatkan Saka?",
+   "options": {
+    "choices": [
+     "$\\dfrac{7}{20}$",
+     "$\\dfrac{8}{20}$",
+     "$\\dfrac{8}{17}$",
+     "$\\dfrac{7}{17}$"
+    ]
+   },
+   "correct_answer": "$\\dfrac{7}{17}$",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Mesin Tetas Telur\n\nMesin tetas telur adalah sebuah alat yang digunakan untuk membantu proses penetasan telur. Cara kerja alat atau mesin ini adalah melakukan proses pengeraman tanpa induk dengan menggunakan sebuah lampu pijar. Mesin ini dilengkapi dengan motor yang berfungsi untuk meratakan proses pemanasan telur agar telur dapat menetas secara maksimal. Mesin ini umumnya hanya bisa digunakan untuk menetaskan telur unggas seperti telur ayam, puyuh, bebek, dan entok.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-smp-mat/s29_0b.jpg]\n\nPenetasan berlangsung selama 18 hari terhitung dari awal masuknya telur ke dalam mesin tetas. Dilakukan pengamatan terhadap beberapa telur puyuh dengan usia yang berbeda-beda. Berikut rincian usia telur di mesin tetas tersebut saat ini.\n\n| Usia Telur di Dalam Mesin | Banyak Telur |\n| --- | --- |\n| 2 hari | 20 |\n| 4 hari | 35 |\n| 6 hari | 30 |\n| 8 hari | 15 |\n\nDiketahui telur-telur tersebut diletakkan secara acak di dalam mesin.\n\n[pertanyaan]\n\nJika dilakukan pengamatan khusus pada satu telur yang dipilih secara acak, berapakah peluang telur tersebut akan menetas dalam 10 hari ke depan?",
+   "options": {
+    "choices": [
+     "$\\dfrac{3}{20}$",
+     "$\\dfrac{1}{15}$",
+     "$\\dfrac{1}{10}$",
+     "$\\dfrac{1}{8}$"
+    ]
+   },
+   "correct_answer": "$\\dfrac{3}{20}$",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "hanya telur usia 8 hari (15 dari 100) menetas dalam 10 hari"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Seorang guru menyiapkan sejumlah kertas soal ujian yang digulung dan dimasukkan ke dalam sebuah kotak. Setiap kertas berisi kode soal A, B, atau C. Diketahui bahwa jumlah kertas berkode A lebih sedikit daripada kertas berkode B. Guru kemudian mengambil 3 kertas dengan kode yang sama dari dalam kotak. Setelah pengambilan, jumlah seluruh kertas yang tersisa di dalam kotak menjadi 28 lembar dan jumlah kertas berkode B lebih banyak daripada kertas berkode C. Jika kemudian diambil satu kertas secara acak dari kotak tersebut, diketahui bahwa peluang terambilnya kertas berkode C yaitu $\\dfrac{2}{7}$.\n\n[pertanyaan]\n\nBerdasarkan informasi tersebut, berapakah kemungkinan jumlah kertas soal ujian kode B mula-mula? Pilihlah semua jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "10 lembar",
+     "11 lembar",
+     "12 lembar",
+     "14 lembar"
+    ]
+   },
+   "correct_answer": [
+    "11 lembar",
+    "12 lembar",
+    "14 lembar"
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "awal 31 lembar; C tersisa 8"
+  }
+ ]
+}
