@@ -94,6 +94,13 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <p className="mt-5 text-center text-sm text-gray-500">
+          Peserta try out?{' '}
+          <a href="/masuk-kode" className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
+            Masuk dengan kode
+          </a>
+        </p>
+
         {/* Tidak ada reset password mandiri: siapa pun yang tahu sebuah email bisa
             mengembalikan password pemiliknya. Yang lupa menghubungi admin, yang
             mereset dari panel admin. Emailnya ikut terisi di pesan bila sudah diketik. */}

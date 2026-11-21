@@ -56,7 +56,7 @@ export default async function LanggananMandiri() {
       <div>
         <h1 className="text-xl font-bold tracking-tight text-gray-900">Langganan</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {produk.sora ? 'SORA sudah aktif untuk akunmu.' : 'SORA belum aktif untuk akunmu.'}
+          {produk.sora ? 'Latihan Soal sudah aktif untuk akunmu.' : 'Latihan Soal belum aktif untuk akunmu.'}
         </p>
       </div>
 

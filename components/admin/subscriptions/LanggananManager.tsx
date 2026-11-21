@@ -132,7 +132,7 @@ export default function LanggananManager({
                   <label className="text-sm">
                     <span className="block text-xs text-gray-500 mb-1">Produk</span>
                     <select name="product" defaultValue="sora" className="w-full rounded-lg border-slate-200 text-sm">
-                      <option value="sora">SORA</option>
+                      <option value="sora">Latihan Soal (SORA)</option>
                       <option value="gama">GAMA</option>
                     </select>
                   </label>

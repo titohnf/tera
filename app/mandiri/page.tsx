@@ -1,5 +1,5 @@
 import { mandiriContext } from '@/lib/mandiri'
-import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda pelanggan langganan: kartu produk yang sadar hak pakai.
@@ -32,7 +32,7 @@ export default async function BerandaMandiri() {
       </div>
 
       <KartuAplikasi
-        nama="SORA"
+        nama="Latihan Soal"
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
@@ -73,6 +73,16 @@ export default async function BerandaMandiri() {
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
         warna={produk.sora ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}
         ikon={IKON_MATERI}
+      />
+
+      {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi
+          yang baru mencoba; tiga kartu lain tetap mengikuti hak pakai. */}
+      <KartuAplikasi
+        nama="Try Out"
+        teks="Kerjakan try out TKA dan lihat hasilnya."
+        href="/mandiri/tryout"
+        warna="bg-violet-50 text-violet-600"
+        ikon={IKON_TRYOUT}
       />
     </div>
   )
