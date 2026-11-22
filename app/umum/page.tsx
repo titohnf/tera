@@ -31,7 +31,7 @@ export default async function BerandaUmum() {
           <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
         </>
       )}
-      <KartuAplikasi nama="Try Out" teks="Kerjakan try out TKA dan lihat hasilnya." href="/umum/tryout" warna="bg-violet-50 text-violet-600" ikon={IKON_TRYOUT} />
+      <KartuAplikasi nama="Try Out" teks="Uji kemampuanmu dengan try out TKA dan lihat hasilnya." href="/umum/tryout" warna="bg-violet-50 text-violet-600" ikon={IKON_TRYOUT} />
 
       {punyaAkun ? (
         <p className="pt-2 text-center text-sm text-gray-500">

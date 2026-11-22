@@ -66,7 +66,7 @@ export default async function BerandaMandiri() {
           yang baru mencoba; dua kartu lain tetap mengikuti hak pakai. */}
       <KartuAplikasi
         nama="Try Out"
-        teks="Kerjakan try out TKA dan lihat hasilnya."
+        teks="Uji kemampuanmu dengan try out TKA dan lihat hasilnya."
         href="/mandiri/tryout"
         warna="bg-violet-50 text-violet-600"
         ikon={IKON_TRYOUT}
