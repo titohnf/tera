@@ -39,7 +39,7 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Paket latihan bertingkat per topik, dari dasar sampai Tantangan Akhir.'
+            ? 'Naik level topik demi topik dan kumpulkan bintangnya.'
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
@@ -54,7 +54,7 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Belajar konsep lewat halaman interaktif, mulai dari bilangan sampai 100.'
+            ? 'Pelajari konsep lewat halaman interaktif yang seru.'
             : 'Aktifkan langganan untuk membuka Materi.'
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
