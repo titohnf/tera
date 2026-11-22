@@ -76,8 +76,6 @@ export default async function TryOutKeluargaPage({
       judul: data.judul,
       jenjang: data.jenjang,
       mapel: data.mapel,
-      info: data.info,
-      hasilDibuka: data.hasilDibuka,
       urut: data.urut,
       dikirim: p.dikirim,
       attemptId: p.attemptId,

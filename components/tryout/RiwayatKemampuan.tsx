@@ -3,7 +3,6 @@ import IsiSoal from '@/components/belajar/IsiSoal'
 import { RincianJawaban } from '@/components/belajar/TinjauanSesi'
 import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
-import { hariWib, jamWib, tanggalWib } from '@/lib/tryout/paket'
 
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const bulat = (n: number) => n.toLocaleString('id-ID', { maximumFractionDigits: 0 })
@@ -19,60 +18,6 @@ const TANDA: Record<StatusButir, { teks: string; kelas: string; sr: string }> = 
   benar: { teks: '✓', kelas: 'bg-green-100 text-green-800', sr: 'benar' },
   sebagian: { teks: '◐', kelas: 'bg-amber-100 text-amber-800', sr: 'sebagian benar' },
   salah: { teks: '✗', kelas: 'bg-red-100 text-red-700', sr: 'salah' },
-}
-
-type TryOutKartu = RiwayatMapel['tryOut'][number]
-
-/** Jadwal try out ("Minggu, 22 November · 10.00–11.30 WIB"); bila belum dijadwalkan, tanggal anak mengerjakannya. */
-function tanggalPengerjaan(to: TryOutKartu): string {
-  const { bukaPada, tutupPada } = to.info
-  if (!bukaPada) return tanggalPanjang(to.dikirim)
-  if (!tutupPada) return `${hariWib(bukaPada)} · ${jamWib(bukaPada)} WIB`
-  if (tanggalWib(bukaPada) === tanggalWib(tutupPada)) return `${hariWib(bukaPada)} · ${jamWib(bukaPada)}–${jamWib(tutupPada)} WIB`
-  return `${hariWib(bukaPada)} ${jamWib(bukaPada)} – ${hariWib(tutupPada)} ${jamWib(tutupPada)} WIB`
-}
-
-function Baris({ label, isi }: { label: string; isi: string }) {
-  return (
-    <div className="flex gap-3 text-sm">
-      <dt className="w-32 shrink-0 text-gray-500">{label}</dt>
-      <dd className="min-w-0 flex-1 text-gray-900">{isi}</dd>
-    </div>
-  )
-}
-
-/** Satu try out sebagai kegiatan berjadwal: judul, target siswa, mapel, tanggal pengerjaan, status, nilai. */
-function KartuTryOut({ to }: { to: TryOutKartu }) {
-  const { jenjang, kelas, mapel } = to.info
-  return (
-    <div id={`hasil-${to.quizId}`} className="scroll-mt-4 rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-gray-500">{to.label}</p>
-          <p className="font-semibold tracking-tight text-gray-900">{to.judul}</p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-2xl font-semibold tabular-nums text-gray-900">{to.nilai !== null ? fmt(to.nilai) : '—'}</p>
-          <p className="text-[11px] text-gray-400">nilai dari 100</p>
-        </div>
-      </div>
-      <dl className="mt-3 space-y-1.5">
-        <Baris label="Target siswa" isi={`${jenjang}${kelas ? ` · Kelas ${kelas}` : ''}`} />
-        <Baris label="Mata pelajaran" isi={mapel} />
-        <Baris label="Tanggal pengerjaan" isi={tanggalPengerjaan(to)} />
-        <div className="flex gap-3 text-sm">
-          <dt className="w-32 shrink-0 text-gray-500">Status</dt>
-          <dd className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-            <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sudah dikerjakan</span>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${to.hasilDibuka ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'}`}>
-              {to.hasilDibuka ? 'Hasil dibuka' : 'Hasil belum dibuka'}
-            </span>
-          </dd>
-        </div>
-        {to.info.bukaPada && <Baris label="Dikerjakan pada" isi={tanggalPanjang(to.dikirim)} />}
-      </dl>
-    </div>
-  )
 }
 
 /** Satu nomor soal: baris yang bisa dibuka untuk membaca soalnya. */
@@ -146,9 +91,13 @@ export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] 
           <section key={m.kunci} className="space-y-4 rounded-xl bg-white p-4 shadow-kartu">
             <div>
               <h3 className="font-semibold tracking-tight text-gray-900">{m.judul}</h3>
-              <div className="mt-3 space-y-3">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {m.tryOut.map((to) => (
-                  <KartuTryOut key={to.quizId} to={to} />
+                  <div key={to.quizId} id={`hasil-${to.quizId}`} className="scroll-mt-4 rounded-lg bg-slate-50 px-3 py-2">
+                    <p className="text-xs text-gray-500">{to.label}</p>
+                    <p className="text-xl font-semibold tabular-nums text-gray-900">{to.nilai !== null ? fmt(to.nilai) : '—'}</p>
+                    <p className="text-[11px] text-gray-400">{tanggalPanjang(to.dikirim)}</p>
+                  </div>
                 ))}
               </div>
             </div>

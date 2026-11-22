@@ -1,5 +1,4 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { infoPaket, type InfoPaket } from '@/lib/tryout/paket'
 import { bersihkanPembahasan } from '@/lib/tryout/bersihkan-pembahasan'
 import type { PetaKompetensi, SkorAnalisis, SoalAnalisis } from '@/lib/reports/kompetensi-tryout'
 import { skorJawaban } from '@/lib/reports/kompetensi-tryout'
@@ -52,9 +51,6 @@ export interface DataTryOut {
   judul: string
   jenjang: string | null
   mapel: string | null
-  /** Target siswa, mapel, dan jadwal try out ini. */
-  info: InfoPaket
-  hasilDibuka: boolean
   /** Pengurut try out dalam satu mata pelajaran: jam buka, atau waktu dibuat bila belum dijadwalkan. */
   urut: string
   bobotTotal: number
@@ -173,8 +169,6 @@ export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean; a
   return {
     id: quizId,
     judul: (kuis as { title: string }).title,
-    info: infoPaket((kuis as { title: string }).title, (kuis as { settings: Record<string, unknown> | null }).settings),
-    hasilDibuka: (kuis as { settings: { hasil_dibuka?: boolean } | null }).settings?.hasil_dibuka === true,
     jenjang: (kuis as { settings: { jenjang?: string } | null }).settings?.jenjang ?? null,
     mapel: (kuis as { settings: { mapel?: string } | null }).settings?.mapel ?? null,
     urut: (kuis as { settings: { opens_at?: string } | null }).settings?.opens_at ?? (kuis as { created_at: string }).created_at,
