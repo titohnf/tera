@@ -128,7 +128,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}
-            href={p.to ? p.to(studentId) : `/keluarga/${studentId}/${p.ke}`}
+            href={`/keluarga/${studentId}/${p.ke}`}
             className="flex flex-col items-center gap-1.5 rounded-lg py-1 active:bg-slate-50 transition-colors"
           >
             {/* Lingkaran, bukan petak bersudut: ikonnya sendiri sudah penuh
