@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { umumContext } from '@/lib/umum'
 import { buatAkunDariKode } from '@/lib/actions/umum'
 
@@ -18,7 +19,8 @@ const PESAN: Record<string, string> = {
  * tersimpan karena orangnya sama; kodenya juga tetap bisa dipakai.
  */
 export default async function AkunUmumPage({ searchParams }: { searchParams: Promise<{ galat?: string }> }) {
-  const { nama } = await umumContext()
+  const { nama, punyaAkun } = await umumContext()
+  if (punyaAkun) redirect('/umum')
   const { galat } = await searchParams
   return (
     <div className="space-y-5">

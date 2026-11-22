@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
-import { tambahPesertaTryOut, tautkanPesertaKeSiswa } from '@/lib/actions/admin/peserta-tryout'
+import { buatKodeSiswaBimbel, tambahPesertaTryOut, tautkanPesertaKeSiswa } from '@/lib/actions/admin/peserta-tryout'
 import { TRYOUT_URL_PUBLIK } from '@/lib/tryout/alamat'
 
 export const metadata = { title: 'Peserta Try Out' }
@@ -61,6 +61,29 @@ export default async function PesertaTryOutPage() {
     .in('role', ['student', 'mandiri'])
     .order('full_name')
   const siswa = ((siswaMentah ?? []) as { id: string; full_name: string | null }[]).filter((s) => s.full_name)
+
+  // Siswa bimbel: masuk dengan email, dan boleh juga dengan kode. Kodenya ada di baris `learners` milik mereka.
+  const { data: bimbelMentah } = await admin
+    .from('profiles')
+    .select('id, full_name, grade, parent_phone')
+    .eq('role', 'student')
+    .eq('is_active', true)
+    .order('full_name')
+  const bimbel = (bimbelMentah ?? []) as { id: string; full_name: string | null; grade: string | number | null; parent_phone: string | null }[]
+  const kodeBimbel = new Map<string, { id: string; kode: string | null }>()
+  if (bimbel.length > 0) {
+    const { data: lr } = await admin.from('learners').select('id, profile_id, access_code').in('profile_id', bimbel.map((b) => b.id))
+    for (const l of (lr ?? []) as { id: string; profile_id: string; access_code: string | null }[]) kodeBimbel.set(l.profile_id, { id: l.id, kode: l.access_code })
+  }
+  const adaTanpaKode = bimbel.some((b) => !kodeBimbel.get(b.id)?.kode)
+  const alamatMasuk = `${new URL(SORA_URL).origin}/login?tab=kode`
+  const waBimbel = (b: { full_name: string | null; parent_phone: string | null }, kode: string) => {
+    const angka = (b.parent_phone ?? '').replace(/\D/g, '')
+    if (angka.length < 8) return null
+    const nomor = angka.startsWith('62') ? angka : angka.startsWith('0') ? '62' + angka.slice(1) : '62' + angka
+    const pesan = `Assalamu'alaikum Bapak/Ibu. Kode Try Out TKA Bimbel Tera untuk ${b.full_name ?? 'putra/putri Anda'}: *${kode}*. Buka ${alamatMasuk}, pilih tab "Kode", lalu masukkan kode tersebut. Kode ini juga dipakai untuk try out berikutnya. Terima kasih.`
+    return `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`
+  }
 
   const { data: paket } = await admin
     .from('quizzes')
@@ -197,6 +220,64 @@ export default async function PesertaTryOutPage() {
           })}
         </div>
       )}
+
+      <section className="space-y-3 pt-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Siswa bimbel</h2>
+            <p className="mt-1 max-w-xl text-sm text-gray-500">
+              Siswa bimbel boleh masuk dengan email atau dengan kode, jadi try out bersama bisa dikerjakan tanpa mengingat password.
+              Hasilnya langsung tersimpan di akun siswa (tidak perlu ditautkan).
+            </p>
+          </div>
+          {adaTanpaKode && (
+            <form action={buatKodeSiswaBimbel}>
+              <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                Buat kode untuk semua yang belum
+              </button>
+            </form>
+          )}
+        </div>
+        {bimbel.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-gray-500">Belum ada siswa bimbel aktif.</p>
+        ) : (
+          <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+            {bimbel.map((b) => {
+              const kode = kodeBimbel.get(b.id)?.kode ?? null
+              const wa = kode ? waBimbel(b, kode) : null
+              return (
+                <div key={b.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900">{b.full_name ?? '(tanpa nama)'}</p>
+                    {b.grade && <p className="text-xs text-gray-500">Kelas {b.grade}</p>}
+                  </div>
+                  <div className="flex items-center gap-4 text-right">
+                    {kode ? (
+                      <>
+                        <span className="font-mono text-base font-semibold tracking-widest text-gray-900">{kode}</span>
+                        {wa ? (
+                          <a href={wa} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 hover:underline">
+                            Kirim lewat WhatsApp
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400">nomor WA orang tua belum diisi</span>
+                        )}
+                      </>
+                    ) : (
+                      <form action={buatKodeSiswaBimbel}>
+                        <input type="hidden" name="student_id" value={b.id} />
+                        <button type="submit" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-slate-50">
+                          Buat kode
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

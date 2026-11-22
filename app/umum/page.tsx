@@ -9,7 +9,7 @@ import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@
  * yang bisa didapat.
  */
 export default async function BerandaUmum() {
-  const { namaPendek } = await umumContext()
+  const { namaPendek, punyaAkun } = await umumContext()
   return (
     <div className="space-y-4">
       <div>
@@ -17,17 +17,27 @@ export default async function BerandaUmum() {
         <p className="text-sm text-gray-500 mt-0.5">Pilih yang mau kamu kerjakan hari ini.</p>
       </div>
 
-      <KartuAplikasi nama="Latihan Soal" keterangan="Belum aktif" teks="Aktifkan langganan untuk mulai berlatih." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
-      <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
-      <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
+      {!punyaAkun && (
+        <>
+          <KartuAplikasi nama="Latihan Soal" keterangan="Belum aktif" teks="Aktifkan langganan untuk mulai berlatih." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
+          <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
+          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
+        </>
+      )}
       <KartuAplikasi nama="Try Out" teks="Kerjakan try out TKA dan lihat hasilnya." href="/umum/tryout" warna="bg-violet-50 text-violet-600" ikon={IKON_TRYOUT} />
 
-      <p className="pt-2 text-center text-sm text-gray-500">
-        Mau akunmu lebih aman dan siap berlangganan?{' '}
-        <Link href="/umum/akun" className="font-medium text-blue-600 hover:underline">
-          Tambahkan email dan password
-        </Link>
-      </p>
+      {punyaAkun ? (
+        <p className="pt-2 text-center text-sm text-gray-500">
+          Untuk Latihan Soal, Misi, dan Materi, masuk dengan email dan passwordmu di halaman login.
+        </p>
+      ) : (
+        <p className="pt-2 text-center text-sm text-gray-500">
+          Mau akunmu lebih aman dan siap berlangganan?{' '}
+          <Link href="/umum/akun" className="font-medium text-blue-600 hover:underline">
+            Tambahkan email dan password
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { namaPendek } from '@/lib/nama'
 
 /**
@@ -19,13 +20,21 @@ export interface KonteksUmum {
   kode: string
   nama: string
   namaPendek: string
+  /**
+   * Kode ini milik orang yang SUDAH punya akun Tera (siswa bimbel atau pelanggan): barisnya
+   * `learners` terpaut ke profil. Mereka tidak perlu diajak berlangganan atau membuat akun,
+   * dan Latihan, Misi, serta Materi dibuka dengan masuk lewat email.
+   */
+  punyaAkun: boolean
 }
 
 export async function umumContext(): Promise<KonteksUmum> {
   const kode = (await cookies()).get(COOKIE_KODE)?.value
-  if (!kode) redirect('/login?tab=umum')
+  if (!kode) redirect('/login?tab=kode')
   const supabase = await createClient()
   const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
-  if (!nama) redirect('/login?tab=umum&galat=1')
-  return { kode, nama: nama as string, namaPendek: namaPendek({ full_name: nama as string, nickname: null }) }
+  if (!nama) redirect('/login?tab=kode&galat=1')
+  const { data: baris } = await createAdminClient().from('learners').select('profile_id').eq('access_code', kode).maybeSingle()
+  const punyaAkun = !!(baris as { profile_id: string | null } | null)?.profile_id
+  return { kode, nama: nama as string, namaPendek: namaPendek({ full_name: nama as string, nickname: null }), punyaAkun }
 }

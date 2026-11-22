@@ -118,3 +118,35 @@ export async function aturJadwalTryOut(formData: FormData): Promise<void> {
   revalidatePath('/umum/tryout')
   revalidatePath('/mandiri/tryout')
 }
+
+/**
+ * Kode try out untuk siswa bimbel. Mereka sudah punya akun (email + password), dan kini boleh
+ * masuk dengan kode juga, seperti peserta dari luar. Kodenya disimpan di baris `learners`
+ * MILIK siswa itu (`profile_id` terisi; dibuat bila belum ada), jadi percobaan try out lewat
+ * kode otomatis tersimpan di akunnya dan muncul di akun keluarga dan halaman admin, tanpa
+ * penautan manual. `student_id` kosong = semua siswa bimbel aktif yang belum punya kode.
+ * Kode yang sudah ada tidak pernah diganti.
+ */
+export async function buatKodeSiswaBimbel(formData: FormData): Promise<void> {
+  const ctx = await verifyAdmin()
+  if (!ctx) return
+  const satu = String(formData.get('student_id') ?? '')
+  let q = ctx.admin.from('profiles').select('id, full_name').eq('role', 'student').eq('is_active', true)
+  if (satu) q = q.eq('id', satu)
+  const { data: siswa } = await q
+  for (const s of (siswa ?? []) as { id: string; full_name: string | null }[]) {
+    const { data: ada } = await ctx.admin.from('learners').select('id, access_code').eq('profile_id', s.id).maybeSingle()
+    const baris = ada as { id: string; access_code: string | null } | null
+    if (baris?.access_code) continue
+    // Kode bertabrakan jarang sekali (31^6), tetapi indeks unik yang memutuskan.
+    for (let percobaan = 0; percobaan < 6; percobaan++) {
+      const kode = buatKode()
+      const { error } = baris
+        ? await ctx.admin.from('learners').update({ access_code: kode }).eq('id', baris.id).is('access_code', null)
+        : await ctx.admin.from('learners').insert({ profile_id: s.id, name: s.full_name ?? 'Murid', access_code: kode })
+      if (!error) break
+      if (!error.message.includes('learners_access_code_key')) break
+    }
+  }
+  revalidatePath('/admin/peserta-tryout')
+}

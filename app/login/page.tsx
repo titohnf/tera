@@ -27,11 +27,12 @@ function FormLogin() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Dua pintu: siswa bimbel (akun) dan umum (kode). Tab awal dan pesan galat
-  // kode datang dari alamat (?tab=umum&galat=1), jadi redirect dari tindakan
-  // masuk dengan kode kembali ke tab yang benar.
+  // Dua cara masuk, untuk siapa pun (siswa bimbel, pelanggan, peserta umum): email dan password,
+  // atau kode peserta. Tab awal dan pesan galat kode datang dari alamat (?tab=kode&galat=1), jadi
+  // redirect dari tindakan masuk dengan kode kembali ke tab yang benar. `?tab=umum` (tautan lama)
+  // tetap dibaca sebagai tab kode.
   const params = useSearchParams()
-  const [tab, setTab] = useState<'bimbel' | 'umum'>(params.get('tab') === 'umum' ? 'umum' : 'bimbel')
+  const [tab, setTab] = useState<'email' | 'kode'>(params.get('tab') === 'kode' || params.get('tab') === 'umum' ? 'kode' : 'email')
   const galatKode = params.get('galat') === '1'
   const akunBaru = params.get('info') === 'akun'
   const supabase = createClient()
@@ -63,14 +64,14 @@ function FormLogin() {
             <h1 className="text-2xl font-bold text-gray-900">Bimbel Tera</h1>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {tab === 'bimbel' ? 'Masuk dengan email dan password (siswa bimbel dan pelanggan)' : 'Masuk dengan kode peserta'}
+            {tab === 'email' ? 'Masuk dengan email dan password' : 'Masuk dengan kode peserta'}
           </p>
         </div>
 
         <div className="mb-5 grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1 text-sm font-medium" role="tablist">
           {([
-            ['bimbel', 'Siswa Bimbel'],
-            ['umum', 'Umum'],
+            ['email', 'Email'],
+            ['kode', 'Kode'],
           ] as const).map(([k, label]) => (
             <button
               key={k}
@@ -85,7 +86,7 @@ function FormLogin() {
           ))}
         </div>
 
-        {tab === 'umum' ? (
+        {tab === 'kode' ? (
           <form action={masukDenganKode} className="space-y-4">
             <div>
               <label htmlFor="kode" className="block text-sm font-medium text-gray-700 mb-1">Kode peserta</label>
@@ -98,7 +99,7 @@ function FormLogin() {
                 placeholder="Contoh: Q6G484"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="mt-1 text-xs text-gray-500">Kode dikirim tutor lewat WhatsApp.</p>
+              <p className="mt-1 text-xs text-gray-500">Kode dikirim tutor lewat WhatsApp. Berlaku untuk siswa bimbel maupun peserta dari luar bimbel.</p>
             </div>
             {galatKode && (
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Kode tidak dikenal. Periksa lagi kodenya, atau tanya tutor.</p>

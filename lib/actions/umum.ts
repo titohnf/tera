@@ -9,10 +9,10 @@ import { COOKIE_KODE } from '@/lib/umum'
 /** Masuk dengan kode peserta: kode benar -> cookie httpOnly 30 hari, lalu ke beranda umum. */
 export async function masukDenganKode(formData: FormData): Promise<void> {
   const kode = String(formData.get('kode') ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-  if (!kode) redirect('/login?tab=umum&galat=1')
+  if (!kode) redirect('/login?tab=kode&galat=1')
   const supabase = await createClient()
   const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
-  if (!nama) redirect('/login?tab=umum&galat=1')
+  if (!nama) redirect('/login?tab=kode&galat=1')
   ;(await cookies()).set(COOKIE_KODE, kode, {
     httpOnly: true,
     secure: true,
@@ -25,7 +25,7 @@ export async function masukDenganKode(formData: FormData): Promise<void> {
 
 export async function keluarUmum(): Promise<void> {
   ;(await cookies()).delete(COOKIE_KODE)
-  redirect('/login?tab=umum')
+  redirect('/login?tab=kode')
 }
 
 /**
@@ -40,7 +40,7 @@ export async function keluarUmum(): Promise<void> {
  */
 export async function buatAkunDariKode(formData: FormData): Promise<void> {
   const kode = (await cookies()).get(COOKIE_KODE)?.value
-  if (!kode) redirect('/login?tab=umum')
+  if (!kode) redirect('/login?tab=kode')
 
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
   const password = String(formData.get('password') ?? '')
@@ -51,7 +51,7 @@ export async function buatAkunDariKode(formData: FormData): Promise<void> {
 
   const admin = createAdminClient()
   const { data: learner } = await admin.from('learners').select('id, name, profile_id').eq('access_code', kode).maybeSingle()
-  if (!learner) redirect('/login?tab=umum&galat=1')
+  if (!learner) redirect('/login?tab=kode&galat=1')
   if ((learner as { profile_id: string | null }).profile_id) redirect('/umum/akun?galat=sudah')
 
   const { data: baru, error } = await admin.auth.admin.createUser({
