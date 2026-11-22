@@ -36,7 +36,7 @@ import { golonganMapel, type GolonganMapel } from '@/lib/belajar/ikon-mapel'
  * layar.
  */
 
-const IKON: Record<GolonganMapel, LucideIcon> = {
+export const IKON: Record<GolonganMapel, LucideIcon> = {
   bahasa: BookOpen,
   matematika: Pi,
   sains: Microscope,
@@ -58,7 +58,7 @@ const IKON: Record<GolonganMapel, LucideIcon> = {
   umum: GraduationCap,
 }
 
-const WARNA: Record<GolonganMapel, string> = {
+export const WARNA: Record<GolonganMapel, string> = {
   bahasa: 'bg-sky-50 text-sky-600',
   matematika: 'bg-indigo-50 text-indigo-600',
   sains: 'bg-teal-50 text-teal-600',

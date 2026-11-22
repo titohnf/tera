@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import TombolMulai from '@/components/tryout/TombolMulai'
+import { IKON, WARNA } from '@/components/belajar/IkonMapel'
+import { golonganMapel } from '@/lib/belajar/ikon-mapel'
 import { hariWib, jamWib, tanggalWib, urutJenjang, urutMapel } from '@/lib/tryout/paket'
 
 export interface ItemBerjadwal {
@@ -60,41 +62,6 @@ function status(p: ItemBerjadwal): { teks: string; kelas: string } {
 
 function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
-}
-
-/** Warna blok thumbnail menurut mata pelajaran: warna muda (bukan solid), agar tidak mirip chip filter yang solid. */
-function warnaThumbnail(mapel: string): string {
-  const m = mapel.toLowerCase()
-  if (m.includes('matematika')) return 'bg-blue-50 text-blue-700'
-  if (m.includes('indonesia')) return 'bg-emerald-50 text-emerald-700'
-  return 'bg-slate-100 text-slate-700'
-}
-
-/** Ikon sederhana (garis putih) di atas teks thumbnail, menurut mata pelajaran. */
-function IkonMapel({ mapel }: { mapel: string }) {
-  const m = mapel.toLowerCase()
-  const sifat = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', className: 'h-9 w-9', 'aria-hidden': true } as const
-  if (m.includes('matematika'))
-    return (
-      <svg {...sifat}>
-        <rect x="5" y="3" width="14" height="18" rx="2.5" />
-        <path d="M8.5 7.5h7" />
-        <path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" strokeWidth={2.4} />
-      </svg>
-    )
-  if (m.includes('indonesia'))
-    return (
-      <svg {...sifat}>
-        <path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2Z" />
-        <path d="M12 6.5v13" />
-      </svg>
-    )
-  return (
-    <svg {...sifat}>
-      <rect x="5.5" y="4.5" width="13" height="17" rx="2.5" />
-      <path d="M9.5 4.5V3h5v1.5M9 13l2.2 2.2L15.5 11" />
-    </svg>
-  )
 }
 
 /** Tahun ajaran dimulai Juli: Juli–Desember 2026 = 2026/2027, Januari–Juni 2027 = 2026/2027 (WIB). */
@@ -176,11 +143,12 @@ export default function DaftarBerjadwal({
         <div className="space-y-2.5">
           {isi.map((p) => {
             const st = status(p)
+            const Ikon = IKON[golonganMapel(p.mapel)]
             return (
               <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                 <div className="flex">
-                  <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:w-36 ${warnaThumbnail(p.mapel)}`} aria-hidden>
-                    <IkonMapel mapel={p.mapel} />
+                  <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:w-36 ${WARNA[golonganMapel(p.mapel)]}`} aria-hidden>
+                    <Ikon size={36} strokeWidth={1.75} />
                     <span className="mt-1 text-xs font-semibold tracking-widest opacity-70">TO TKA</span>
                     <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
