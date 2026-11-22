@@ -53,10 +53,10 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
 }
 
 /** Satu try out beserta soal, jawaban anak, kunci, dan pembahasan; null bila belum dikerjakan atau hasilnya belum dibuka. */
-export async function muatDetailAnak(studentId: string, quizId: string): Promise<{ data: DataTryOut; attemptId: string; nilai: number | null } | null> {
+export async function muatDetailAnak(studentId: string, quizId: string): Promise<{ data: DataTryOut; attemptId: string; nilai: number | null; dikirim: string } | null> {
   const p = (await percobaanTerbaru(studentId)).get(quizId)
   if (!p) return null
   const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
   if (!data) return null
-  return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId) }
+  return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim }
 }
