@@ -160,7 +160,7 @@ export default function DetailPembahasan({
       <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">Detail dan Pembahasan</span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Detail dan Pembahasan</p>
             <h1 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
             {dikirim && <p className="mt-0.5 text-sm text-gray-500">Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</p>}
           </div>
