@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
+import type { Dari } from '@/lib/belajar/permukaan'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { dasarBagiKelas, sebutPrasyarat } from '@/lib/belajar/fringe'
@@ -32,6 +33,7 @@ export default function SheetTopik({
   namaTopik,
   kelas,
   anak,
+  dari,
   hariIni,
   onTutup,
 }: {
@@ -41,6 +43,7 @@ export default function SheetTopik({
   namaTopik: Map<string, string>
   kelas: number | null
   anak: string | undefined
+  dari?: Dari
   hariIni: string
   onTutup: () => void
 }) {
@@ -67,6 +70,7 @@ export default function SheetTopik({
               namaTopik={namaTopik}
               kelas={kelas}
               anak={anak}
+              dari={dari}
               hariIni={hariIni}
               galat={galat}
               sibuk={sibuk}
@@ -86,6 +90,7 @@ function Isi({
   namaTopik,
   kelas,
   anak,
+  dari,
   hariIni,
   galat,
   sibuk,
@@ -97,6 +102,7 @@ function Isi({
   namaTopik: Map<string, string>
   kelas: number | null
   anak: string | undefined
+  dari?: Dari
   hariIni: string
   galat: string | null
   sibuk: boolean
@@ -104,7 +110,7 @@ function Isi({
 }) {
   const g = gayaTema(t.elemen)
   const langsung = langkah != null && langkah.paketId != null && !langkah.terkunci
-  const alamat = alamatMisi(anak, t.id)
+  const alamat = alamatMisi(anak, t.id, dari)
   const kabar = ringkasKartu(t, langkah, paket, hariIni)
   const bintang = hitungBintang(t, paket)
 

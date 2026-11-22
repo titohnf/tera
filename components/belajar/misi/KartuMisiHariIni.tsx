@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
+import type { Dari } from '@/lib/belajar/permukaan'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { Maskot } from './Gambar'
@@ -27,18 +28,20 @@ export default function KartuMisiHariIni({
   langkah,
   paket,
   anak,
+  dari,
   hariIni,
 }: {
   topik: TopikPeta
   langkah?: LangkahTopik
   paket: PaketRingkas[]
   anak: string | undefined
+  dari?: Dari
   hariIni: string
 }) {
   const g = gayaTema(t.elemen)
   const { galat, sibuk, mulai } = useMulaiLangkah(anak)
   const langsung = langkah != null && langkah.paketId != null && !langkah.terkunci
-  const alamat = alamatMisi(anak, t.id)
+  const alamat = alamatMisi(anak, t.id, dari)
   const kabar = ringkasKartu(t, langkah, paket, hariIni)
 
   return (

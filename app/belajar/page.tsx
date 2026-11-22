@@ -4,6 +4,7 @@ import { mapelLatihan } from '@/lib/belajar/sesi'
 import { keluargaContext } from '@/lib/keluarga'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
 import PulangKe from '@/components/belajar/PulangKe'
+import { dariSaatIni } from '@/lib/belajar/permukaan'
 import TugasKelas from '@/components/belajar/TugasKelas'
 import { asesmenAnak } from '@/lib/belajar/asesmen'
 
@@ -91,13 +92,15 @@ export default async function BelajarBeranda({
   // melewati kueri ini sama sekali; `keluargaContext()` bahkan akan
   // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
   const [keluarga, tugas] = keluargaP ? await keluargaP : [null, []]
+  // Siswa (masuk dengan kode) pulang ke beranda siswa, tanpa pemilih anak keluarga.
+  const dari = await dariSaatIni()
 
   return (
     <div className="space-y-4">
       {studentId && keluarga && (
         <PulangKe
-          href={`/keluarga/${studentId}`}
-          anak={keluarga.anak}
+          href={dari === 'siswa' ? `/siswa/${studentId}` : `/keluarga/${studentId}`}
+          anak={dari === 'siswa' ? undefined : keluarga.anak}
           aktif={studentId}
         />
       )}

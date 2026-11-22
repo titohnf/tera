@@ -1,4 +1,5 @@
 import { belajarContext } from '@/lib/belajar/konteks'
+import type { Dari } from '@/lib/belajar/permukaan'
 import { petaTopik } from '@/lib/belajar/topik-peta'
 import { langkahSeluruhTopik, paketRingkasSeluruhTopik } from '@/lib/belajar/langkah'
 import PetaTopik from '@/components/belajar/PetaTopik'
@@ -44,7 +45,7 @@ import { todayWib } from '@/lib/daily-message'
  * dipakai permukaan belajar, dan `belajarContext` yang memeriksa anak ini
  * benar milik keluarga yang sedang masuk.
  */
-export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
+export default async function IsiMisi({ anak: studentId, dari }: { anak?: string; dari?: Dari }) {
   const { learnerId, kelas } = await belajarContext(studentId)
 
   // `catatKunjungan` MENULIS, jadi ia berdiri sendiri dan hanya di sini:
@@ -83,6 +84,7 @@ export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
           alasan yang sama dengan `sekarangIso` di `lib/waktu.ts`. */}
       <PetaTopik
         anak={studentId}
+        dari={dari}
         kelas={kelas}
         topik={peta}
         langkah={langkah}

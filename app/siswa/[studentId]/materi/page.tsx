@@ -18,7 +18,7 @@ export default async function MateriSiswaPage({ params }: { params: Promise<{ st
       <ul className="space-y-2">
         {daftarMateriInteraktif.map((m) => (
           <li key={m.kode}>
-            <Link href={alamatMateri(studentId, m.kode)} className="block rounded-xl bg-white p-4 shadow-kartu transition hover:bg-slate-50">
+            <Link href={alamatMateri(studentId, m.kode, 'siswa')} className="block rounded-xl bg-white p-4 shadow-kartu transition hover:bg-slate-50">
               <span className="block text-xs text-gray-400">{m.kode}</span>
               <span className="block text-base font-semibold tracking-tight text-gray-900">{m.judul}</span>
               <span className="block text-sm text-gray-500">{m.ringkas}</span>
