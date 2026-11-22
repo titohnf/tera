@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
+import { alamatMateri } from '@/lib/belajar/alamat-materi'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { Maskot } from './Gambar'
@@ -28,12 +29,15 @@ export default function KartuMisiHariIni({
   paket,
   anak,
   hariIni,
+  adaMateri = false,
 }: {
   topik: TopikPeta
   langkah?: LangkahTopik
   paket: PaketRingkas[]
   anak: string | undefined
   hariIni: string
+  /** Topik ini punya materi interaktif: tombol "Lihat materi" tampil di atas tombol mulai. */
+  adaMateri?: boolean
 }) {
   const g = gayaTema(t.elemen)
   const { galat, sibuk, mulai } = useMulaiLangkah(anak)
@@ -75,7 +79,15 @@ export default function KartuMisiHariIni({
           </p>
         )}
 
-        <div className="mt-5">
+        <div className="mt-5 space-y-3">
+          {adaMateri && (
+            <Link
+              href={alamatMateri(anak, t.id)}
+              className="block w-full rounded-2xl bg-white/20 px-5 py-3 text-center text-base font-extrabold text-white transition active:bg-white/30"
+            >
+              Lihat materi
+            </Link>
+          )}
           {langsung ? (
             <button
               type="button"

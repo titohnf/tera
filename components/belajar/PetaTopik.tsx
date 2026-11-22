@@ -56,6 +56,7 @@ export default function PetaTopik({
   langkah,
   paket,
   hariIni,
+  topikBerMateri = [],
 }: {
   anak: string | undefined
   /**
@@ -82,6 +83,8 @@ export default function PetaTopik({
    * (`lib/waktu.ts`).
    */
   hariIni: string
+  /** Kode topik yang punya materi interaktif (dihitung server; lihat `IsiMisi`). */
+  topikBerMateri?: string[]
 }) {
   const { siap, diAtas, belum, tuntas } = useMemo(
     () => kelompokkanPeta(topik, kelas),
@@ -118,10 +121,11 @@ export default function PetaTopik({
     return siap.find(bisa) ?? siap[0] ?? null
   }, [siap, perTopik])
 
-  // Rute "Ikuti urutan" membentangkan SEMUA topik yang belum tuntas menurut urutan
-  // server, tanpa pembagian siap / belum siap: yang bukan giliran sekarang cuma
-  // terkunci. Tuntas pindah ke koleksi bintang.
-  const urutanLengkap = useMemo(() => topik.filter(t => t.status !== 'tuntas'), [topik])
+  // Rute "Ikuti urutan" membentangkan SEMUA topik menurut urutan server, tanpa pembagian
+  // siap / belum siap: yang bukan giliran sekarang cuma terkunci. Yang sudah tuntas TETAP di
+  // jalurnya (bertanda centang, bisa diketuk lagi), tidak lagi dipindah ke koleksi: topik yang
+  // lenyap dari jalur setelah selesai membuat anak kehilangan jejak dan tidak bisa mengulangnya.
+  const urutanLengkap = topik
 
   // CHECKPOINT = kelas penguasaan (`kelasKuasai`), ukuran yang sama dengan "setara
   // kelas Y" di laporan orang tua, dan pangkatnya tidak pernah turun. Urutan server TIDAK
@@ -284,6 +288,7 @@ export default function PetaTopik({
           paket={paketTopik.get(sekarang.id) ?? []}
           anak={anak}
           hariIni={hariIni}
+          adaMateri={topikBerMateri.includes(sekarang.id)}
         />
       )}
 
@@ -409,7 +414,7 @@ export default function PetaTopik({
       <div className="space-y-3">
         <Lipatan
           judul="Koleksi bintangmu"
-          jumlah={tuntasTampil.length}
+          jumlah={rute === 'urutan' ? 0 : tuntasTampil.length}
           terbuka={lihatTuntas || kata !== ''}
           onKetuk={() => setLihatTuntas(!lihatTuntas)}
         >

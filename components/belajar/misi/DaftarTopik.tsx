@@ -64,18 +64,22 @@ export default function DaftarTopik({
           {bernomor && (
             <span
               className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ring-4 ring-slate-50 ${
-                t.id === sekarangId ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-600'
+                t.id === sekarangId
+                  ? 'bg-amber-400 text-amber-950'
+                  : t.status === 'tuntas'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 text-slate-600'
               }`}
               aria-hidden
             >
-              {nomorAwal + i + 1}
+              {t.status === 'tuntas' ? '✓' : nomorAwal + i + 1}
             </span>
           )}
           <Baris
             topik={t}
             paket={paketTopik.get(t.id) ?? []}
             giliran={t.id === sekarangId}
-            terkunci={kunci && t.id !== sekarangId}
+            terkunci={kunci && t.id !== sekarangId && t.status !== 'tuntas'}
             onKetuk={() => onBuka(t)}
           />
         </li>
@@ -136,7 +140,7 @@ function Baris({
         <span className="flex shrink-0 flex-col items-end gap-1">
           <TigaBintang jumlah={bintang} ukuran={14} />
           <span className="text-xs font-bold text-slate-400">
-            {giliran ? 'Lanjut' : total > 0 ? `${lolos}/${total}` : ''}
+            {giliran ? 'Lanjut' : t.status === 'tuntas' ? 'Tuntas' : total > 0 ? `${lolos}/${total}` : ''}
           </span>
         </span>
       )}

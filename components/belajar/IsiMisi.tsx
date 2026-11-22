@@ -9,6 +9,7 @@ import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
 import { catatKunjungan, sapaanKunjungan } from '@/lib/belajar/kunjungan'
 import { todayWib } from '@/lib/daily-message'
+import { materiInteraktif } from '@/lib/materi-interaktif'
 
 /**
  * Misi: peta kompetensi per topik pengukuran, satu-satunya rumahnya.
@@ -89,6 +90,10 @@ export default async function IsiMisi({
     : undefined
   const petaTampil = mapelAktif ? peta.filter(t => mapelDari(t.id) === mapelAktif) : peta
 
+  // Topik yang punya materi interaktif: dihitung di server karena isi materinya (HTML besar) tidak
+  // boleh ikut terkirim ke browser hanya untuk tahu ada-tidaknya tombol "Lihat materi".
+  const topikBerMateri = petaTampil.filter(t => materiInteraktif(t.id) != null).map(t => t.id)
+
   return (
     <div className="space-y-4">
       {/* Di ATAS petanya, bukan di bawah: yang jatuh tempo adalah satu-satunya
@@ -114,6 +119,7 @@ export default async function IsiMisi({
         langkah={langkah}
         paket={paket}
         hariIni={todayWib()}
+        topikBerMateri={topikBerMateri}
       />
     </div>
   )
