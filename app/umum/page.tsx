@@ -1,6 +1,6 @@
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { tautanWaAdmin } from '@/lib/kontak'
-import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda peserta umum (masuk dengan kode): empat kartu yang sama dengan
@@ -22,13 +22,11 @@ export default async function BerandaUmum() {
         // Siswa bimbel yang masuk dengan kode: kartunya sama, tetapi mereka sudah berlangganan, jadi
         // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
         <>
-          <KartuAplikasi nama="Latihan Soal" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
           <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
           <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
         </>
       ) : (
         <>
-          <KartuAplikasi nama="Latihan Soal" keterangan="Belum aktif" teks="Aktifkan langganan untuk mulai berlatih." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
           <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
           <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
         </>
@@ -41,7 +39,7 @@ export default async function BerandaUmum() {
         </p>
       ) : (
         <p className="pt-2 text-center text-sm text-gray-500">
-          Mau berlangganan Latihan Soal, Misi, dan Materi?{' '}
+          Mau berlangganan Misi dan Materi?{' '}
           <a
             href={tautanWaAdmin(`Halo Bimbel Tera, saya ${nama} (kode peserta ${kode}). Saya ingin berlangganan Tera.`)}
             target="_blank"

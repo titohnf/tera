@@ -14,7 +14,6 @@ export default async function LanggananUmum() {
         <p className="mt-0.5 text-sm text-gray-500">Buka semua yang terkunci di berandamu.</p>
       </div>
       <div className="rounded-xl bg-white p-5 shadow ring-1 ring-gray-900/5 space-y-3 text-sm text-gray-700">
-        <p><b>Latihan Soal</b> — latihan per topik, dengan pembahasan langsung.</p>
         <p><b>Misi</b> — paket latihan bertingkat per topik, dari dasar sampai Tantangan Akhir.</p>
         <p><b>Materi</b> — belajar konsep lewat halaman interaktif.</p>
         <p className="text-gray-500">Seluruh riwayat try out yang sudah kamu kerjakan ikut tersimpan di akunmu.</p>

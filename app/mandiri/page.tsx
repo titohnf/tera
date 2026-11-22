@@ -1,5 +1,5 @@
 import { mandiriContext } from '@/lib/mandiri'
-import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda pelanggan langganan: kartu produk yang sadar hak pakai.
@@ -31,22 +31,9 @@ export default async function BerandaMandiri() {
         <p className="text-sm text-gray-500 mt-0.5">Pilih yang mau kamu kerjakan hari ini.</p>
       </div>
 
-      <KartuAplikasi
-        nama="Latihan Soal"
-        keterangan={produk.sora ? undefined : 'Belum aktif'}
-        teks={
-          produk.sora
-            ? 'Latihan soal per topik, dengan pembahasan langsung.'
-            : 'Aktifkan langganan untuk mulai berlatih.'
-        }
-        href={produk.sora ? '/belajar' : '/mandiri/langganan'}
-        warna={produk.sora ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}
-        ikon={IKON_SORA}
-      />
-
-      {/* Misi: peta kompetensi Matematika, bagian dari langganan SORA yang
-          sama — bukan produk ketiga, jadi ia ikut aktif/tidaknya `produk.sora`.
-          Rutenya `/belajar/misi`, komponen yang sama dengan Misi keluarga. */}
+      {/* Misi: peta kompetensi Matematika, bagian dari langganan; ikut aktif/tidaknya `produk.sora`.
+          Latihan Soal sengaja tidak ditawarkan di langganan (isinya belum rapi). Rutenya
+          `/belajar/misi`, komponen yang sama dengan Misi keluarga. */}
       <KartuAplikasi
         nama="Misi"
         keterangan={produk.sora ? undefined : 'Belum aktif'}
@@ -76,7 +63,7 @@ export default async function BerandaMandiri() {
       />
 
       {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi
-          yang baru mencoba; tiga kartu lain tetap mengikuti hak pakai. */}
+          yang baru mencoba; dua kartu lain tetap mengikuti hak pakai. */}
       <KartuAplikasi
         nama="Try Out"
         teks="Kerjakan try out TKA dan lihat hasilnya."

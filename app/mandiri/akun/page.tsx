@@ -26,7 +26,7 @@ export default async function AkunMandiri() {
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-gray-900">Langganan</span>
           <span className="block text-xs text-gray-500 mt-0.5">
-            {produk.sora ? 'Latihan Soal aktif' : 'Latihan Soal belum aktif'}
+            {produk.sora ? 'Misi dan Materi aktif' : 'Misi dan Materi belum aktif'}
           </span>
         </span>
         <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
