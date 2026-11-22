@@ -94,6 +94,11 @@ const nav: NavEntry[] = [
         icon: <ChartBarIcon className="w-5 h-5" />,
       },
       {
+        href: '/admin/rekap-tryout',
+        label: 'Rekap Skor',
+        icon: <DocumentChartBarIcon className="w-5 h-5" />,
+      },
+      {
         href: '/admin/peserta-tryout',
         label: 'Peserta Try Out',
         icon: <UserGroupIcon className="w-5 h-5" />,

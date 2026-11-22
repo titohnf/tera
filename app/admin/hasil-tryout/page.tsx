@@ -48,6 +48,11 @@ export default async function HasilTryOutAdminPage({
             Pilih try out untuk melihat capaian kelas per kompetensi dan hasil tiap siswa.
           </p>
         </div>
+        <p className="text-sm">
+          <Link href="/admin/rekap-tryout" className="font-medium text-blue-700 hover:underline">
+            Lihat rekap skor seluruh peserta (bisa diunduh sebagai Excel) →
+          </Link>
+        </p>
         {daftar.length === 0 ? (
           <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-gray-500">Belum ada try out yang terbit.</p>
         ) : (
