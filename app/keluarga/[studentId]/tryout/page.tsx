@@ -5,14 +5,11 @@ import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOu
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
 import { learnerAnak } from '@/lib/belajar/sesi'
-import KemampuanBidang, { topikPerluLatihan } from '@/components/tryout/KemampuanBidang'
+import RiwayatKemampuan from '@/components/tryout/RiwayatKemampuan'
+import { susunRiwayat, type MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
 import { muatTryOut, tryOutSiswa } from '@/lib/reports/tryout-data'
-import { susunPohon } from '@/lib/reports/kompetensi-tryout'
-import { tanggalPanjang } from '@/lib/waktu-relatif'
 
 export const metadata = { title: 'Try Out' }
-
-const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 /**
  * Hasil Try Out seorang anak untuk orang tua: nilainya, dan kemampuannya per bidang dalam kata
@@ -64,22 +61,32 @@ export default async function TryOutKeluargaPage({
     />
   )
 
-  // Satu kartu per try out, memakai percobaan TERBARU anak ini di try out itu.
+  // Satu percobaan per try out, memakai percobaan TERBARU anak ini di try out itu.
   const terbaruPerKuis = new Map<string, { attemptId: string; dikirim: string }>()
   for (const r of riwayat) if (!terbaruPerKuis.has(r.quizId)) terbaruPerKuis.set(r.quizId, { attemptId: r.attemptId, dikirim: r.dikirim })
 
-  const kartu = []
+  const masukan: MasukanTryOut[] = []
   for (const [quizId, p] of terbaruPerKuis) {
     const data = await muatTryOut(quizId)
     if (!data) continue
     const saya = data.percobaan.find((x) => x.id === p.attemptId)
     if (!saya) continue
-    const nilai = data.bobotTotal > 0 && saya.skor !== null ? (saya.skor / data.bobotTotal) * 100 : null
-    const pohonAnak = susunPohon(data.soal, data.skor, [p.attemptId])
-    kartu.push({ data, dikirim: p.dikirim, nilai, pohonAnak, terlemah: topikPerluLatihan(pohonAnak, 3) })
+    masukan.push({
+      quizId,
+      judul: data.judul,
+      jenjang: data.jenjang,
+      mapel: data.mapel,
+      urut: data.urut,
+      dikirim: p.dikirim,
+      attemptId: p.attemptId,
+      nilai: data.bobotTotal > 0 && saya.skor !== null ? (saya.skor / data.bobotTotal) * 100 : null,
+      soal: data.soal,
+      skor: data.skor,
+    })
   }
+  const seri = susunRiwayat(masukan)
 
-  if (kartu.length === 0) {
+  if (seri.length === 0) {
     return (
       <div className="space-y-6">
       {daftar}
@@ -97,46 +104,7 @@ export default async function TryOutKeluargaPage({
     <div className="space-y-6">
       {daftar}
       <h2 className="text-base font-semibold text-gray-900">Hasil</h2>
-      <div className="space-y-4">
-      {kartu.map((k) => (
-        <div key={k.data.id} id={`hasil-${k.data.id}`} className="space-y-4 rounded-xl bg-white p-4 shadow-kartu scroll-mt-4">
-          <div>
-            <p className="font-semibold tracking-tight text-gray-900">{k.data.judul}</p>
-            <p className="mt-0.5 text-xs text-gray-400">Dikerjakan {tanggalPanjang(k.dikirim)}</p>
-          </div>
-
-          <div className="flex items-end gap-6">
-            <div>
-              <p className="text-3xl font-semibold tabular-nums text-gray-900">{k.nilai !== null ? fmt(k.nilai) : '—'}</p>
-              <p className="text-xs text-gray-400">nilai dari 100</p>
-            </div>
-          </div>
-
-          {k.data.tanpaKolomKompetensi || k.pohonAnak.length === 0 ? (
-            <p className="text-sm text-gray-400">Rincian per kompetensi belum tersedia untuk try out ini.</p>
-          ) : (
-            <>
-              {k.terlemah.length > 0 && (
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <p className="text-sm font-medium text-gray-800">Perlu dilatih lebih banyak</p>
-                  <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-gray-600">
-                    {k.terlemah.map((t) => (
-                      <li key={t.kunci}>{t.nama}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium text-gray-800">Kemampuan per bidang</p>
-                <div className="mt-3">
-                  <KemampuanBidang pohon={k.pohonAnak} />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      ))}
-      </div>
+      <RiwayatKemampuan riwayat={seri} />
     </div>
   )
 }

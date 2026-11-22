@@ -37,6 +37,10 @@ export interface PercobaanTryOut {
 export interface DataTryOut {
   id: string
   judul: string
+  jenjang: string | null
+  mapel: string | null
+  /** Pengurut try out dalam satu mata pelajaran: jam buka, atau waktu dibuat bila belum dijadwalkan. */
+  urut: string
   bobotTotal: number
   soal: SoalAnalisis[]
   percobaan: PercobaanTryOut[]
@@ -81,7 +85,7 @@ export async function daftarTryOut(): Promise<RingkasTryOut[]> {
 /** Seluruh data satu try out, atau null bila bukan try out yang terbit. */
 export async function muatTryOut(quizId: string): Promise<DataTryOut | null> {
   const admin = createAdminClient()
-  const { data: kuis } = await admin.from('quizzes').select('id, title, kind').eq('id', quizId).maybeSingle()
+  const { data: kuis } = await admin.from('quizzes').select('id, title, kind, created_at, settings').eq('id', quizId).maybeSingle()
   if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return null
 
   // `kompetensi` ada sejak migrasi 224. Bila belum, soal dibaca tanpanya dan laporan memberi tahu.
@@ -139,6 +143,9 @@ export async function muatTryOut(quizId: string): Promise<DataTryOut | null> {
   return {
     id: quizId,
     judul: (kuis as { title: string }).title,
+    jenjang: (kuis as { settings: { jenjang?: string } | null }).settings?.jenjang ?? null,
+    mapel: (kuis as { settings: { mapel?: string } | null }).settings?.mapel ?? null,
+    urut: (kuis as { settings: { opens_at?: string } | null }).settings?.opens_at ?? (kuis as { created_at: string }).created_at,
     bobotTotal: soal.reduce((n, s) => n + s.bobot, 0),
     soal,
     percobaan: percobaanMentah.map((p) => ({
