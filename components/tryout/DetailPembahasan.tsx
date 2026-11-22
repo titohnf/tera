@@ -154,20 +154,18 @@ export default function DetailPembahasan({
       }
     })
 
-  const total = items.length
-  const segmen: { kunci: HasilButir; n: number; batang: string; titik: string }[] = [
-    { kunci: 'benar', n: hitung.benar, batang: 'bg-emerald-500', titik: 'bg-emerald-500' },
-    { kunci: 'sebagian', n: hitung.sebagian, batang: 'bg-amber-400', titik: 'bg-amber-400' },
-    { kunci: 'salah', n: hitung.salah, batang: 'bg-rose-400', titik: 'bg-rose-400' },
-    { kunci: 'belum', n: hitung.belum, batang: 'bg-gray-300', titik: 'bg-gray-300' },
+  const ringkas: { kunci: HasilButir; n: number; kelas: string }[] = [
+    { kunci: 'benar', n: hitung.benar, kelas: 'bg-emerald-50 text-emerald-700' },
+    { kunci: 'sebagian', n: hitung.sebagian, kelas: 'bg-amber-50 text-amber-700' },
+    { kunci: 'salah', n: hitung.salah, kelas: 'bg-rose-50 text-rose-700' },
+    { kunci: 'belum', n: hitung.belum, kelas: 'bg-gray-100 text-gray-600' },
   ]
 
   return (
     <div className="space-y-4">
       <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 sm:p-5">
-        <div className="flex items-center gap-4 sm:gap-5">
-          <CincinSkor nilai={nilai} />
-          <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Detail dan Pembahasan</p>
             <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900 sm:text-xl">{data.judul}</h1>
             {dikirim && (
@@ -183,57 +181,23 @@ export default function DetailPembahasan({
               </p>
             )}
           </div>
+          <div className="shrink-0 text-right">
+            <p className="text-xs text-gray-500">Skor akhir</p>
+            <p className="text-4xl font-semibold tabular-nums leading-none tracking-tight text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</p>
+          </div>
         </div>
 
-        {total > 0 && (
-          <div className="mt-5 border-t border-gray-100 pt-4">
-            <div
-              role="img"
-              aria-label={segmen.map((x) => `${LABEL_HASIL[x.kunci]} ${x.n}`).join(', ')}
-              className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-gray-100"
-            >
-              {segmen.filter((x) => x.n > 0).map((x) => (
-                <span key={x.kunci} className={`h-full first:rounded-l-full last:rounded-r-full ${x.batang}`} style={{ width: `${(x.n / total) * 100}%` }} />
-              ))}
-            </div>
-            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
-              {segmen.map((x) => (
-                <li key={x.kunci} className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${x.titik}`} aria-hidden />
-                  <span className="text-gray-600">{LABEL_HASIL[x.kunci]}</span>
-                  <span className="ml-auto font-semibold tabular-nums text-gray-900 sm:ml-0">{x.n}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <ul className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {ringkas.map((r) => (
+            <li key={r.kunci} className={`flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 ${r.kelas}`}>
+              <span className="text-sm font-medium">{LABEL_HASIL[r.kunci]}</span>
+              <span className="text-xl font-semibold tabular-nums leading-none">{r.n}</span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <PenelusurSoal items={items} />
-    </div>
-  )
-}
-
-/** Skor akhir sebagai cincin: terisi sebanyak skornya, berwarna menurut tingkatnya. */
-function CincinSkor({ nilai }: { nilai: number | null }) {
-  const ukuran = 88
-  const tebal = 8
-  const r = (ukuran - tebal) / 2
-  const keliling = 2 * Math.PI * r
-  const persen = nilai === null ? 0 : Math.min(100, Math.max(0, nilai))
-  const warna = nilai === null ? 'text-gray-300' : persen >= 75 ? 'text-emerald-500' : persen >= 50 ? 'text-amber-500' : 'text-rose-500'
-  return (
-    <div className="relative shrink-0" style={{ width: ukuran, height: ukuran }} role="img" aria-label={nilai !== null ? `Skor akhir ${fmt(nilai)} dari 100` : 'Skor akhir belum tersedia'}>
-      <svg width={ukuran} height={ukuran} viewBox={`0 0 ${ukuran} ${ukuran}`} className={`-rotate-90 ${warna}`} aria-hidden>
-        <circle cx={ukuran / 2} cy={ukuran / 2} r={r} fill="none" strokeWidth={tebal} className="stroke-gray-100" />
-        {persen > 0 && (
-          <circle cx={ukuran / 2} cy={ukuran / 2} r={r} fill="none" stroke="currentColor" strokeWidth={tebal} strokeLinecap="round" strokeDasharray={`${(persen / 100) * keliling} ${keliling}`} />
-        )}
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-semibold tabular-nums leading-none text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</span>
-        <span className="mt-1 text-[11px] text-gray-500">skor akhir</span>
-      </div>
     </div>
   )
 }
