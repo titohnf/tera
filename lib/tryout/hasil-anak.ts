@@ -34,12 +34,13 @@ export async function muatNilaiAnak(studentId: string): Promise<Record<string, n
 /** Bahan analisis per topik untuk halaman Laporan Try Out (akun keluarga saja). */
 export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[]> {
   const masukan: MasukanTryOut[] = []
+  const judulSeri = await judulTampilan(createAdminClient())
   for (const [quizId, p] of await percobaanTerbaru(studentId)) {
     const data = await muatTryOut(quizId)
     if (!data || !data.percobaan.some((x) => x.id === p.attemptId)) continue
     masukan.push({
       quizId,
-      judul: data.judul,
+      judul: judulSeri.get(quizId) ?? data.judul,
       jenjang: data.jenjang,
       mapel: data.mapel,
       urut: data.urut,
@@ -54,6 +55,19 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
   return masukan
 }
 
+/** Judul tampilan "Try Out I TKA Matematika" tiap try out terbit (id → judul), menurut urutan seri sejenjang dan semapel. */
+async function judulTampilan(admin: ReturnType<typeof createAdminClient>): Promise<Map<string, string>> {
+  const { data: semua } = await admin.from('quizzes').select('id, title, settings').eq('kind', 'tryout').eq('status', 'published').order('created_at')
+  const daftar = (semua ?? []) as { id: string; title: string; settings: Record<string, unknown> | null }[]
+  const seri = nomorSeri(
+    daftar.map((q, i) => {
+      const info = infoPaket(q.title, q.settings)
+      return { id: q.id, jenjang: info.jenjang, mapel: info.mapel, bukaPada: info.bukaPada, dibuat: i }
+    }),
+  )
+  return new Map(daftar.map((q) => [q.id, judulDenganSeri(q.title, seri.get(q.id) ?? 1)]))
+}
+
 /** Satu try out beserta soal, jawaban, kunci, dan pembahasan milik seorang learner; null bila belum dikerjakan atau hasilnya belum dibuka. */
 export async function muatDetailLearner(learnerId: string | null, quizId: string): Promise<DetailTryOut | null> {
   const p = (await percobaanTerbaruLearner(learnerId)).get(quizId)
@@ -65,15 +79,7 @@ export async function muatDetailLearner(learnerId: string | null, quizId: string
   const { data: percobaan } = await admin.from('attempts').select('started_at').eq('id', p.attemptId).maybeSingle()
   const mulai = (percobaan as { started_at: string | null } | null)?.started_at ?? null
 
-  // Judul tampilan "Try Out I TKA Matematika": urutan di antara try out sejenjang dan semapel.
-  const { data: semua } = await admin.from('quizzes').select('id, title, settings').eq('kind', 'tryout').eq('status', 'published').order('created_at')
-  const seri = nomorSeri(
-    ((semua ?? []) as { id: string; title: string; settings: Record<string, unknown> | null }[]).map((q, i) => {
-      const info = infoPaket(q.title, q.settings)
-      return { id: q.id, jenjang: info.jenjang, mapel: info.mapel, bukaPada: info.bukaPada, dibuat: i }
-    }),
-  )
-  const judul = judulDenganSeri(data.judul, seri.get(quizId) ?? 1)
+  const judul = (await judulTampilan(admin)).get(quizId) ?? data.judul
   return { data: { ...data, judul }, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim, mulai }
 }
 

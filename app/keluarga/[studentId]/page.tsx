@@ -1,13 +1,11 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import { ringkasanTagihan, sesiBerikutnya } from '@/lib/keluarga-anak'
-import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
 import { sekarangIso } from '@/lib/waktu'
 import { todayWib } from '@/lib/daily-message'
 import BannerPromosi from '@/components/keluarga/BannerPromosi'
 import KartuSaran from '@/components/keluarga/KartuSaran'
 import PintasanKeluarga from '@/components/keluarga/PintasanKeluarga'
 import KartuJadwal from '@/components/keluarga/beranda/KartuJadwal'
-import KartuLatihan from '@/components/keluarga/beranda/KartuLatihan'
 import KartuTagihan from '@/components/keluarga/beranda/KartuTagihan'
 
 /**
@@ -59,15 +57,10 @@ export default async function AnakBeranda({
   // yang berbeda sehari di pagi buta berujung telepon yang tidak perlu. Kartu
   // jadwal memakainya juga, untuk memutuskan "Hari ini" atau "Besok".
   const hariIni = todayWib()
-  const [sesi, tagihan, learnerId] = await Promise.all([
+  const [sesi, tagihan] = await Promise.all([
     sesiBerikutnya(studentId, sekarang),
     ringkasanTagihan(studentId, hariIni),
-    learnerAnak(studentId),
   ])
-  // Menyusul, bukan sebarisan: id pelajarnya baru diketahui dari kueri di atas.
-  // Anak yang belum pernah berlatih tidak punya baris `learners`, dan tidak
-  // punya apa-apa untuk dilanjutkan — kueri keduanya dilewati sama sekali.
-  const tertunda = learnerId ? await sesiTertunda(learnerId) : null
 
   return (
     <div className="space-y-4">
@@ -79,18 +72,6 @@ export default async function AnakBeranda({
       />
 
       {tagihan.tampil && <KartuTagihan studentId={studentId} tagihan={tagihan} />}
-
-      {tertunda && (
-        <KartuLatihan
-          sesiId={tertunda.sesiId}
-          jumlahSoal={tertunda.jumlahSoal}
-          sudahDijawab={tertunda.sudahDijawab}
-          tinggalHasil={tertunda.tinggalHasil}
-          mapel={tertunda.mapel}
-          jenjang={tertunda.jenjang}
-          topik={tertunda.topik}
-        />
-      )}
 
       <PintasanKeluarga studentId={studentId} />
 

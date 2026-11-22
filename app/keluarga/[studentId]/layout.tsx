@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { sesiMasukDenganKode } from '@/lib/akses-siswa'
 import { keluargaContext } from '@/lib/keluarga'
 import { notifikasiAnak } from '@/lib/keluarga-notifikasi'
 import RangkaAnak from '@/components/keluarga/RangkaAnak'
@@ -48,6 +49,8 @@ export default async function AnakLayout({
   params: Promise<{ studentId: string }>
 }) {
   const { studentId } = await params
+  // Siswa yang masuk dengan kode memakai tampilan siswa; tampilan keluarga hanya untuk yang masuk dengan password.
+  if (await sesiMasukDenganKode()) redirect(`/siswa/${studentId}`)
   // Konteks keluarga dan notifikasi dimulai bersamaan: `notifikasiAnak` hanya butuh id dari URL,
   // dan kueri-kuerinya berjalan lewat klien ber-RLS, jadi id yang bukan milik keluarga ini pulang
   // kosong dan dibuang di bawah. Beruntun, dua perjalanan database menumpuk sebelum layar pertama.

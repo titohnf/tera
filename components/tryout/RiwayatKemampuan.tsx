@@ -125,7 +125,7 @@ export function IsiHasil({ m, hrefDetail }: { m: RiwayatMapel; hrefDetail?: stri
                     </div>
                   )
                 })}
-                <p className="text-xs text-gray-400">✓ benar · ◐ benar sebagian · ✗ salah · ketuk nomor untuk membuka soal dan pembahasannya</p>
+                <p className="text-xs text-gray-400">✓ benar · ◐ benar sebagian · ✗ salah</p>
               </div>
             )}
     </div>

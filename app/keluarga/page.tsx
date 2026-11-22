@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { sesiMasukDenganKode } from '@/lib/akses-siswa'
 import { keluargaContext } from '@/lib/keluarga'
 import KartuAkun from '@/components/apps/KartuAkun'
 
@@ -26,7 +27,7 @@ import KartuAkun from '@/components/apps/KartuAkun'
 export default async function KeluargaHome() {
   const { anak, namaKeluarga, user } = await keluargaContext()
 
-  if (anak.length > 0) redirect(`/keluarga/${anak[0].id}`)
+  if (anak.length > 0) redirect((await sesiMasukDenganKode()) ? `/siswa/${anak[0].id}` : `/keluarga/${anak[0].id}`)
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">

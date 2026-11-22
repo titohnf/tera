@@ -1,11 +1,7 @@
-import IsiTopikMisi from '@/components/belajar/IsiTopikMisi'
+import { redirect } from 'next/navigation'
 
-/** Satu topik Misi seorang anak keluarga. Isinya di `components/belajar/IsiTopikMisi`. */
-export default async function TopikMisiPage({
-  params,
-}: {
-  params: Promise<{ studentId: string; topikId: string }>
-}) {
-  const { studentId, topikId } = await params
-  return <IsiTopikMisi anak={studentId} topikId={topikId} />
+/** Lihat `../page.tsx`: Misi kini hanya ada di tampilan siswa. */
+export default async function TopikMisiKeluargaLama({ params }: { params: Promise<{ studentId: string }> }) {
+  const { studentId } = await params
+  redirect(`/keluarga/${studentId}`)
 }

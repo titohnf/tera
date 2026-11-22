@@ -535,15 +535,6 @@ export default async function RincianGrup({
           </span>
         </Link>
       )}
-
-      {!admin && (
-        <Link
-          href={`/belajar?anak=${studentId}&topik=${groupId}`}
-          className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          Buka Topik Ini di Latihan
-        </Link>
-      )}
     </div>
   )
 }

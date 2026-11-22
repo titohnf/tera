@@ -326,17 +326,6 @@ export default async function RincianMisi({
           ))}
         </div>
       )}
-
-      {/* Ke Misi, BUKAN ke `/belajar?topik=`. Yang terakhir berkunci grup
-          kurikulum dan tidak bisa menampilkan topik ini sama sekali. */}
-      {!admin && (
-        <Link
-          href={`/keluarga/${studentId}/misi`}
-          className="block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          Buka di Misi
-        </Link>
-      )}
     </div>
   )
 }

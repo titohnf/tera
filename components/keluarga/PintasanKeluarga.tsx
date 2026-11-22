@@ -84,20 +84,6 @@ import Link from 'next/link'
 
 const PINTASAN = [
   {
-    ke: 'belajar',
-    judul: 'Belajar',
-    /* Bukan sub-path portal: permukaan belajar dipakai bersama pelanggan
-       langganan, jadi jalannya keluar lewat `?anak=`. */
-    to: (id: string) => `/belajar?anak=${id}`,
-    ikon: (
-      <>
-        <path fill="#026bf5" d="M24 1.516c-6.41 0-10.991.254-13.976.51c-3.297.281-5.791 2.858-6.032 6.135c-.24 3.267-.492 8.455-.492 15.855s.252 12.587.492 15.855c.24 3.276 2.735 5.853 6.032 6.135c2.985.255 7.567.51 13.976.51s10.991-.255 13.976-.51c3.297-.282 5.791-2.859 6.032-6.135c.24-3.268.492-8.456.492-15.855s-.252-12.588-.492-15.855c-.24-3.277-2.735-5.854-6.032-6.136c-2.985-.255-7.567-.51-13.976-.51"/>
-        <path fill="#cce1fd" fillRule="evenodd" d="M22 10a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4zm-2 11a2 2 0 0 1 2-2h6a2 2 0 1 1 0 4h-6a2 2 0 0 1-2-2" clipRule="evenodd"/>
-        <path fill="#cce1fd" d="M14 1.755v44.52a121 121 0 0 1-3.976-.27c-3.297-.281-5.791-2.858-6.032-6.134c-.24-3.268-.492-8.456-.492-15.855s.252-12.588.492-15.856c.24-3.276 2.735-5.853 6.032-6.135c1.103-.094 2.425-.188 3.976-.27"/>
-      </>
-    ),
-  },
-  {
     ke: 'rapor',
     judul: 'Laporan',
     ikon: (
@@ -149,7 +135,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
        dan membungkusnya lagi dengan kartu berbayang berarti dua bingkai untuk
        satu benda. Yang tersisa cuma jaraknya. */
     <div className="px-1 py-1">
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-4 gap-1.5">
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}

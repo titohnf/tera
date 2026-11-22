@@ -1,11 +1,7 @@
-import IsiMisi from '@/components/belajar/IsiMisi'
+import { redirect } from 'next/navigation'
 
-/** Misi seorang anak keluarga. Isinya di `components/belajar/IsiMisi`. */
-export default async function PaketTopikPage({
-  params,
-}: {
-  params: Promise<{ studentId: string }>
-}) {
+/** Misi kini hanya ada di tampilan siswa; tampilan keluarga memantau. Tautan lama dialihkan ke beranda keluarga. */
+export default async function MisiKeluargaLama({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params
-  return <IsiMisi anak={studentId} />
+  redirect(`/keluarga/${studentId}`)
 }
