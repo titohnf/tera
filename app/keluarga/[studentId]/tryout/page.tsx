@@ -5,29 +5,21 @@ import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOu
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
 import { learnerAnak } from '@/lib/belajar/sesi'
-import PohonKompetensi from '@/components/laporan/PohonKompetensi'
+import KemampuanBidang, { topikPerluLatihan } from '@/components/tryout/KemampuanBidang'
 import { muatTryOut, tryOutSiswa } from '@/lib/reports/tryout-data'
-import { indikatorTerlemah, sisipkanPembanding, susunPohon } from '@/lib/reports/kompetensi-tryout'
+import { susunPohon } from '@/lib/reports/kompetensi-tryout'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 
 export const metadata = { title: 'Try Out' }
 
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-/** Pembanding rata-rata kelas hanya ditampilkan bila pesertanya cukup banyak sehingga tidak menunjuk satu anak. */
-const MIN_PESERTA_PEMBANDING = 3
-
 /**
- * Hasil Try Out seorang anak: nilainya, dan di kompetensi mana ia kuat dan perlu
- * dilatih, dibandingkan dengan capaian nasional dan rata-rata teman try out yang
- * sama. Susunannya mengikuti halaman daya serap Pusmendik.
+ * Hasil Try Out seorang anak untuk orang tua: nilainya, dan kemampuannya per bidang dalam kata
+ * (sudah kuat, cukup, perlu dilatih). Tanpa pembanding nasional atau rata-rata peserta dan tanpa
+ * rincian indikator; itu untuk admin bimbel (Panel admin → Hasil Try Out).
  *
- * Yang tampil HANYA angka anak ini dan rata-rata kelas — tidak ada nama atau
- * nilai anak lain. Data kelas dibaca lewat klien admin setelah `anakOrRedirect`
- * memastikan keluarga ini memang berhak atas anak ini.
- *
- * Hasil muncul di sini setelah admin menautkan percobaan ke siswa
- * (Panel admin → Hasil Try Out).
+ * Hasil muncul di sini setelah admin membuka hasilnya.
  */
 export default async function TryOutKeluargaPage({
   params,
@@ -80,20 +72,11 @@ export default async function TryOutKeluargaPage({
   for (const [quizId, p] of terbaruPerKuis) {
     const data = await muatTryOut(quizId)
     if (!data) continue
-    const semuaId = data.percobaan.map((x) => x.id)
     const saya = data.percobaan.find((x) => x.id === p.attemptId)
     if (!saya) continue
     const nilai = data.bobotTotal > 0 && saya.skor !== null ? (saya.skor / data.bobotTotal) * 100 : null
-    const rataKelas =
-      semuaId.length >= MIN_PESERTA_PEMBANDING && data.bobotTotal > 0
-        ? (data.percobaan.reduce((n, x) => n + (x.skor ?? 0), 0) / semuaId.length / data.bobotTotal) * 100
-        : null
-    const pohonKelas = susunPohon(data.soal, data.skor, semuaId)
-    const pohonAnak = sisipkanPembanding(
-      susunPohon(data.soal, data.skor, [p.attemptId]),
-      semuaId.length >= MIN_PESERTA_PEMBANDING ? pohonKelas : [],
-    )
-    kartu.push({ data, dikirim: p.dikirim, nilai, rataKelas, pohonAnak, terlemah: indikatorTerlemah(pohonAnak, 3) })
+    const pohonAnak = susunPohon(data.soal, data.skor, [p.attemptId])
+    kartu.push({ data, dikirim: p.dikirim, nilai, pohonAnak, terlemah: topikPerluLatihan(pohonAnak, 3) })
   }
 
   if (kartu.length === 0) {
@@ -127,12 +110,6 @@ export default async function TryOutKeluargaPage({
               <p className="text-3xl font-semibold tabular-nums text-gray-900">{k.nilai !== null ? fmt(k.nilai) : '—'}</p>
               <p className="text-xs text-gray-400">nilai dari 100</p>
             </div>
-            {k.rataKelas !== null && (
-              <div>
-                <p className="text-lg font-medium tabular-nums text-gray-600">{fmt(k.rataKelas)}</p>
-                <p className="text-xs text-gray-400">rata-rata peserta</p>
-              </div>
-            )}
           </div>
 
           {k.data.tanpaKolomKompetensi || k.pohonAnak.length === 0 ? (
@@ -150,12 +127,9 @@ export default async function TryOutKeluargaPage({
                 </div>
               )}
               <div>
-                <p className="text-sm font-medium text-gray-800">Capaian per kompetensi</p>
-                <p className="mt-0.5 text-xs text-gray-400">
-                  Bilah biru adalah capaian anak. Garis hitam adalah capaian nasional peserta TKA. Ketuk satu baris untuk melihat rinciannya.
-                </p>
-                <div className="mt-2">
-                  <PohonKompetensi pohon={k.pohonAnak} labelPembanding={k.rataKelas !== null ? 'Rata-rata peserta' : undefined} />
+                <p className="text-sm font-medium text-gray-800">Kemampuan per bidang</p>
+                <div className="mt-3">
+                  <KemampuanBidang pohon={k.pohonAnak} />
                 </div>
               </div>
             </>
