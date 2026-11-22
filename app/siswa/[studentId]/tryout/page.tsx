@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { anakOrRedirect } from '@/lib/keluarga'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
@@ -41,7 +41,7 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
 
   return (
     <div className="space-y-5">
-      <Link href={`/siswa/${studentId}`} className="text-sm text-gray-500 underline">← Beranda</Link>
+      <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Try Out' }]} />
       <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
       <DaftarTryOut
         paket={paket}
