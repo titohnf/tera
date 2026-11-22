@@ -84,7 +84,6 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
             <Image src="/logo-icon.png" alt="Bimbel Tera" width={32} height={32} />
             <h1 className="text-2xl font-bold text-gray-900">Bimbel Tera</h1>
           </div>
-          {tab === 'email' && <p className="text-sm text-gray-500 mt-1">Masuk dengan email dan password</p>}
         </div>
 
         {tab === 'kode' ? (
