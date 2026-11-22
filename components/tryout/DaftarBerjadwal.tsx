@@ -51,11 +51,11 @@ function tanggalPengerjaan(p: ItemBerjadwal): string {
   return `${hariWib(b)} ${jamWib(b)} – ${hariWib(t)} ${jamWib(t)} WIB`
 }
 
-/** Hanya dua keadaan: sudah dikerjakan atau belum. */
+/** Tiga keadaan: belum dikerjakan, menunggu hasil (sudah dikirim, hasil belum dibuka), sudah dikerjakan. */
 function status(p: ItemBerjadwal): { teks: string; kelas: string } {
-  return p.keadaan === 'belum'
-    ? { teks: 'Belum dikerjakan', kelas: 'bg-amber-100 text-amber-800' }
-    : { teks: 'Sudah dikerjakan', kelas: 'bg-green-100 text-green-800' }
+  if (p.keadaan === 'belum') return { teks: 'Belum dikerjakan', kelas: 'bg-amber-100 text-amber-800' }
+  if (p.keadaan === 'menunggu') return { teks: 'Menunggu hasil', kelas: 'bg-slate-200 text-slate-700' }
+  return { teks: 'Sudah dikerjakan', kelas: 'bg-green-100 text-green-800' }
 }
 
 function Kapsul({ children }: { children: React.ReactNode }) {
@@ -163,14 +163,6 @@ export default function DaftarBerjadwal({
                     >
                       {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
                     </button>
-                  )}
-                  {p.keadaan === 'menunggu' && (
-                    <div className="text-right">
-                      <button type="button" disabled className="cursor-not-allowed rounded-full bg-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-500">
-                        Lihat hasil
-                      </button>
-                      <p className="mt-1 text-xs text-gray-500">Hasil belum dibuka</p>
-                    </div>
                   )}
                 </div>
                 {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="mt-3 border-t border-gray-100 pt-3">{p.hasil}</div>}
