@@ -161,21 +161,24 @@ export default function DaftarBerjadwal({
                     </p>
                   </div>
                   {(p.keadaan === 'belum' || p.keadaan === 'selesai') && (
-                    // Di ujung kanan, di tengah antara sisi atas dan bawah kartu; di layar sempit turun ke bawah, tetap di kanan.
-                    <div className="ml-auto flex shrink-0 flex-col items-center justify-center gap-2 px-4 py-3">
+                    // Tiga kelompok dipisah garis: judul | skor | tombol. Di layar lebar berada di ujung kanan kartu,
+                    // di layar sempit menjadi baris sendiri di dasar kartu.
+                    <div className="flex w-full items-stretch border-t border-gray-100 sm:w-auto sm:border-l sm:border-t-0">
                       {p.keadaan === 'selesai' && p.nilai != null && (
-                        <div className="text-center">
+                        <div className="flex flex-1 flex-col items-center justify-center px-5 py-3 text-center sm:flex-none">
                           <p className="text-xs text-gray-500">Skor akhir</p>
                           <p className="text-2xl font-semibold tabular-nums leading-tight text-gray-900">{fmtNilai(p.nilai as number)}</p>
                         </div>
                       )}
-                      {p.keadaan === 'belum' ? (
-                        <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
-                      ) : (
-                        <Link href={p.hrefHasil} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
-                          Cek Detail dan Pembahasan
-                        </Link>
-                      )}
+                      <div className={`flex flex-1 items-center justify-center px-5 py-3 sm:flex-none ${p.keadaan === 'selesai' && p.nilai != null ? 'border-l border-gray-100' : ''}`}>
+                        {p.keadaan === 'belum' ? (
+                          <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
+                        ) : (
+                          <Link href={p.hrefHasil} className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+                            Cek Pembahasan
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
