@@ -17,7 +17,15 @@ export default async function BerandaUmum() {
         <p className="text-sm text-gray-500 mt-0.5">Pilih yang mau kamu kerjakan hari ini.</p>
       </div>
 
-      {!punyaAkun && (
+      {punyaAkun ? (
+        // Siswa bimbel yang masuk dengan kode: kartunya sama, tetapi mereka sudah berlangganan, jadi
+        // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
+        <>
+          <KartuAplikasi nama="Latihan Soal" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
+          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
+          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
+        </>
+      ) : (
         <>
           <KartuAplikasi nama="Latihan Soal" keterangan="Belum aktif" teks="Aktifkan langganan untuk mulai berlatih." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_SORA} />
           <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
@@ -28,7 +36,7 @@ export default async function BerandaUmum() {
 
       {punyaAkun ? (
         <p className="pt-2 text-center text-sm text-gray-500">
-          Untuk Latihan Soal, Misi, dan Materi, masuk dengan email dan passwordmu di halaman login.
+          Masuk dengan kode hanya membuka Try Out. Untuk yang lain, masuk dengan email dan passwordmu.
         </p>
       ) : (
         <p className="pt-2 text-center text-sm text-gray-500">
