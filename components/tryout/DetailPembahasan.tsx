@@ -38,6 +38,23 @@ const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b =
 /** Apakah pilihan `p` termasuk dalam `nilai` (satu teks, atau daftar teks untuk pilihan jamak). */
 const termasuk = (nilai: unknown, p: string) => (Array.isArray(nilai) ? nilai.some((v) => teksSama(v, p)) : teksSama(nilai, p))
 
+/**
+ * Prompt soal. Butir hasil impor memisahkan bacaan dan pertanyaannya dengan baris `[pertanyaan]`;
+ * penanda itu bukan bagian soal, jadi diganti garis pemisah.
+ */
+function Prompt({ teks }: { teks: string }) {
+  const bagian = teks.split(/^[ \t]*\[pertanyaan\][ \t]*$/im).map((b) => b.trim()).filter(Boolean)
+  return (
+    <div>
+      {bagian.map((b, i) => (
+        <div key={i} className={i > 0 ? 'mt-4 border-t border-gray-100 pt-4' : ''}>
+          <IsiSoal text={b} className={`text-[15px] leading-relaxed text-gray-900 ${GAMBAR_SOAL}`} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Pembahasan({ teks }: { teks: string | null }) {
   if (!teks) return null
   return (
@@ -77,7 +94,7 @@ function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButi
 
   return (
     <div>
-      <IsiSoal text={teks.prompt} className={`text-[15px] leading-relaxed text-gray-900 ${GAMBAR_SOAL}`} />
+      <Prompt teks={teks.prompt} />
 
       {kisi ? (
         <>
@@ -217,7 +234,8 @@ export default function DetailPembahasan({
                 </span>
                 {mulai && new Date(dikirim) > new Date(mulai) && (
                   <span>
-                    Waktu pengerjaan <b className="font-semibold text-gray-900">{lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</b> ({jamWib(mulai)}–{jamWib(dikirim)} WIB)
+                    Waktu pengerjaan <b className="font-semibold text-gray-900">{lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</b>{' '}
+                    <span className="whitespace-nowrap">({jamWib(mulai)}–{jamWib(dikirim)} WIB)</span>
                   </span>
                 )}
               </p>

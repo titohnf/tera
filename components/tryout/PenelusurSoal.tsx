@@ -75,11 +75,11 @@ export default function PenelusurSoal({ items }: { items: ItemSoal[] }) {
             <button
               key={it.nomor}
               type="button"
-              onClick={() => pilih(i)}
+              onClick={() => pilih(i, true)}
               aria-current={i === aktif ? 'true' : undefined}
               aria-label={`Soal ${it.nomor}: ${LABEL_HASIL[it.hasil]}`}
               className={`h-10 rounded-xl text-sm font-semibold tabular-nums ring-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${PETAK[it.hasil]} ${
-                i === aktif ? 'ring-2 ring-gray-900 ring-offset-2' : ''
+                i === aktif ? 'outline-2 outline-offset-2 outline-gray-900' : ''
               }`}
             >
               {it.nomor}
