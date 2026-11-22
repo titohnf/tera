@@ -62,6 +62,14 @@ function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
 }
 
+/** Thumbnail menurut mata pelajaran: ilustrasi spot Seragam (public/ilustrasi). */
+function thumbnail(mapel: string): string {
+  const m = mapel.toLowerCase()
+  if (m.includes('matematika')) return '/ilustrasi/img-calculator-math.svg'
+  if (m.includes('indonesia')) return '/ilustrasi/img-book-literature.svg'
+  return '/ilustrasi/img-clipboard-check.svg'
+}
+
 function IkonKalender() {
   return (
     <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
@@ -136,33 +144,39 @@ export default function DaftarBerjadwal({
             const st = status(p)
             return (
               <div key={p.id} id={`hasil-${p.id}`} className={`scroll-mt-4 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5`}>
-                <div className="flex items-start justify-between gap-3">
-                  <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
-                  <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
-                  <Kapsul>{p.mapel}</Kapsul>
-                  {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
-                </div>
-                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                  <p className="flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
-                    <IkonKalender />
-                    <span className="min-w-0">{tanggalPengerjaan(p)}</span>
-                  </p>
-                  {p.keadaan === 'belum' && (
-                    <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
-                  )}
-                  {p.keadaan === 'selesai' && p.hasil && (
-                    <button
-                      type="button"
-                      onClick={() => alih(p.id)}
-                      aria-expanded={terbuka.has(p.id)}
-                      className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
-                    >
-                      {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
-                    </button>
-                  )}
+                <div className="flex gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={thumbnail(p.mapel)} alt="" width={64} height={64} className="h-16 w-16 shrink-0 rounded-xl bg-slate-50 p-1" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
+                      <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
+                      <Kapsul>{p.mapel}</Kapsul>
+                      {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                      <p className="flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
+                        <IkonKalender />
+                        <span className="min-w-0">{tanggalPengerjaan(p)}</span>
+                      </p>
+                      {p.keadaan === 'belum' && (
+                        <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
+                      )}
+                      {p.keadaan === 'selesai' && p.hasil && (
+                        <button
+                          type="button"
+                          onClick={() => alih(p.id)}
+                          aria-expanded={terbuka.has(p.id)}
+                          className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+                        >
+                          {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="mt-3 border-t border-gray-100 pt-3">{p.hasil}</div>}
               </div>
