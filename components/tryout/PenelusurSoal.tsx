@@ -58,7 +58,11 @@ export default function PenelusurSoal({ items }: { items: ItemSoal[] }) {
 
   return (
     <div className="space-y-3">
-      <nav aria-label="Nomor soal" className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
+      <nav aria-label="Nomor soal" className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold text-gray-900">Nomor Soal</h2>
+          <p className="text-xs text-gray-500">Ketuk nomor untuk membuka soalnya</p>
+        </div>
         <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-10">
           {items.map((it, i) => (
             <button

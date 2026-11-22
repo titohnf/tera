@@ -16,7 +16,7 @@ export default async function DetailTryOutKeluarga({ params }: { params: Promise
   return (
     <div className="space-y-4">
       <RemahRoti item={[{ label: 'Try Out', href: `/keluarga/${studentId}/tryout` }, { label: d.data.judul }]} />
-      <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} />
+      <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} mulai={d.mulai} />
     </div>
   )
 }

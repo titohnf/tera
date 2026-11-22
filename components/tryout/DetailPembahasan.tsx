@@ -18,6 +18,19 @@ const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1,
 const GAMBAR_SOAL = '[&>button]:max-w-full [&_button>img]:w-auto [&_button>img]:max-w-full [&_button>img]:max-h-[32rem]'
 const GAMBAR_PILIHAN = '[&>button]:max-w-full [&_button>img]:w-auto [&_button>img]:max-w-full [&_button>img]:max-h-72'
 
+/** "1 jam 5 menit", "42 menit 10 detik", atau "35 detik". */
+function lamaTeks(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000))
+  const j = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const d = total % 60
+  if (j > 0) return m > 0 ? `${j} jam ${m} menit` : `${j} jam`
+  if (m > 0) return d > 0 ? `${m} menit ${d} detik` : `${m} menit`
+  return `${d} detik`
+}
+
+const jamWib = (iso: string) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })
+
 const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim()
 
 function Pembahasan({ teks }: { teks: string | null }) {
@@ -107,11 +120,14 @@ export default function DetailPembahasan({
   attemptId,
   nilai,
   dikirim,
+  mulai,
 }: {
   data: DataTryOut
   attemptId: string
   nilai: number | null
   dikirim?: string
+  /** Saat anak mulai mengerjakan; bersama `dikirim` memberi lama pengerjaan. */
+  mulai?: string | null
 }) {
   const skorSoal = new Map<string, number>()
   for (const s of data.skor) if (s.attemptId === attemptId) skorSoal.set(s.questionId, (skorSoal.get(s.questionId) ?? 0) + s.skor)
@@ -144,8 +160,8 @@ export default function DetailPembahasan({
       <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-500">Detail dan Pembahasan</p>
-            <h1 className="mt-0.5 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
+            <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">Detail dan Pembahasan</span>
+            <h1 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
             {dikirim && <p className="mt-0.5 text-sm text-gray-500">Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</p>}
           </div>
           <div className="shrink-0 text-right">
@@ -153,6 +169,15 @@ export default function DetailPembahasan({
             <p className="text-3xl font-semibold tabular-nums leading-tight text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</p>
           </div>
         </div>
+        {dikirim && mulai && new Date(dikirim) > new Date(mulai) && (
+          <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-slate-50 px-3 py-2 text-sm text-gray-600">
+            <span className="font-medium text-gray-900">Waktu pengerjaan {lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</span>
+            <span className="text-gray-400">·</span>
+            <span>
+              {jamWib(mulai)}–{jamWib(dikirim)} WIB
+            </span>
+          </p>
+        )}
         <ul className="mt-3 grid grid-cols-4 gap-2">
           {ringkas.map((r) => (
             <li key={r.label} className={`rounded-lg px-2 py-1.5 text-center ${r.kelas}`}>

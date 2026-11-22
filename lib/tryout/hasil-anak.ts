@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { learnerAnak } from '@/lib/belajar/sesi'
 import { muatTryOut, tryOutSiswa, type DataTryOut } from '@/lib/reports/tryout-data'
 import type { MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
@@ -53,10 +54,13 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
 }
 
 /** Satu try out beserta soal, jawaban anak, kunci, dan pembahasan; null bila belum dikerjakan atau hasilnya belum dibuka. */
-export async function muatDetailAnak(studentId: string, quizId: string): Promise<{ data: DataTryOut; attemptId: string; nilai: number | null; dikirim: string } | null> {
+export async function muatDetailAnak(studentId: string, quizId: string): Promise<{ data: DataTryOut; attemptId: string; nilai: number | null; dikirim: string; mulai: string | null } | null> {
   const p = (await percobaanTerbaru(studentId)).get(quizId)
   if (!p) return null
   const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
   if (!data) return null
-  return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim }
+  // Waktu mulai mengerjakan; lama pengerjaannya = dikirim − mulai.
+  const { data: percobaan } = await createAdminClient().from('attempts').select('started_at').eq('id', p.attemptId).maybeSingle()
+  const mulai = (percobaan as { started_at: string | null } | null)?.started_at ?? null
+  return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim, mulai }
 }
