@@ -21,7 +21,7 @@ import BottomNav from '@/components/keluarga/BottomNav'
  * "saya sedang di mana", bukan sekadar jalan pulang.
  *
  * Keputusannya diambil di sini, bukan di dalam `BottomNav`, karena ruang bawah
- * (`pb-20`) harus ikut hilang bersama bilahnya; `BottomNav` yang memulangkan
+ * (`pb-28`) harus ikut hilang bersama bilahnya; `BottomNav` yang memulangkan
  * null sendiri akan meninggalkan 80px kosong di dasar layar. Satu tempat yang
  * tahu, satu daftar yang menentukan.
  */
@@ -71,7 +71,7 @@ export default function RangkaAnak({
        di `app/keluarga/layout.tsx`. */
     <div className={`flex flex-1 flex-col ${beranda ? LATAR_BERANDA : LATAR_LAYAR}`}>
       <main
-        /* `pb-20` menyisakan ruang untuk bilah yang melayang di dasar layar;
+        /* `pb-28` menyisakan ruang untuk bilah yang melayang di dasar layar;
            tanpa itu kartu terakhir tertutup olehnya. Ia ikut hilang di layar
            yang tidak berbilah — ruang kosong tanpa apa-apa di bawahnya cuma
            membuat halaman tampak belum selesai dimuat. */
@@ -80,7 +80,7 @@ export default function RangkaAnak({
            `stretch`: tanpa lebar eksplisit, `main` menyusut seukuran isinya
            lalu dipusatkan — seluruh halaman jadi lebih sempit dari layarnya
            tanpa satu pun kelas yang menyebut lebar. */
-        className={`w-full max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 ${berbilah ? 'pb-20' : ''}`}
+        className={`w-full max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 ${berbilah ? 'pb-28' : ''}`}
       >
         {children}
       </main>
