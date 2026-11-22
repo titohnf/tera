@@ -22,7 +22,7 @@ export default async function MisiSiswaPage({
     return (
       <div className="space-y-4">
         <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Misi' }]} />
-        <PilihMisiMapel alamat={alamat} />
+        <PilihMisiMapel anak={studentId} alamat={alamat} />
       </div>
     )
   }
