@@ -1,4 +1,5 @@
 import type { TeksSoal } from '@/lib/reports/tryout-data'
+import type { InfoPaket } from '@/lib/tryout/paket'
 import type { SkorAnalisis, SoalAnalisis } from '@/lib/reports/kompetensi-tryout'
 
 /**
@@ -49,6 +50,8 @@ export interface MasukanTryOut {
   judul: string
   jenjang: string | null
   mapel: string | null
+  info: InfoPaket
+  hasilDibuka: boolean
   /** Pengurut try out dalam satu mata pelajaran (jam buka, atau waktu dibuat). */
   urut: string
   dikirim: string
@@ -62,7 +65,7 @@ export interface MasukanTryOut {
 export interface RiwayatMapel {
   kunci: string
   judul: string
-  tryOut: { quizId: string; label: string; judul: string; dikirim: string; nilai: number | null }[]
+  tryOut: { quizId: string; label: string; judul: string; dikirim: string; nilai: number | null; info: InfoPaket; hasilDibuka: boolean }[]
   bidang: BidangRiwayat[]
 }
 
@@ -134,7 +137,7 @@ export function susunRiwayat(masukan: MasukanTryOut[]): RiwayatMapel[] {
     hasil.push({
       kunci,
       judul: contoh.jenjang && contoh.mapel ? `${contoh.mapel} · ${contoh.jenjang}` : contoh.judul,
-      tryOut: urut.map((to, i) => ({ quizId: to.quizId, label: `Try Out ${i + 1}`, judul: to.judul, dikirim: to.dikirim, nilai: to.nilai })),
+      tryOut: urut.map((to, i) => ({ quizId: to.quizId, label: `Try Out ${i + 1}`, judul: to.judul, dikirim: to.dikirim, nilai: to.nilai, info: to.info, hasilDibuka: to.hasilDibuka })),
       bidang: daftarBidang,
     })
   }
