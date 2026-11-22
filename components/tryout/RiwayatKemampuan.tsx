@@ -1,4 +1,5 @@
-import type { RiwayatMapel, TopikPerTryOut } from '@/lib/tryout/riwayat-kemampuan'
+import type { ButirRiwayat, RiwayatMapel, StatusButir, TopikPerTryOut } from '@/lib/tryout/riwayat-kemampuan'
+import IsiSoal from '@/components/belajar/IsiSoal'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -9,6 +10,57 @@ function tingkat(p: number | null): { label: string; warna: string; batang: stri
   if (p >= 75) return { label: 'Sudah kuat', warna: 'text-green-700', batang: 'bg-green-600' }
   if (p >= 50) return { label: 'Cukup', warna: 'text-amber-700', batang: 'bg-amber-500' }
   return { label: 'Perlu dilatih', warna: 'text-red-700', batang: 'bg-red-500' }
+}
+
+const TANDA: Record<StatusButir, { teks: string; kelas: string; sr: string }> = {
+  benar: { teks: '✓', kelas: 'bg-green-100 text-green-800', sr: 'benar' },
+  sebagian: { teks: '◐', kelas: 'bg-amber-100 text-amber-800', sr: 'sebagian benar' },
+  salah: { teks: '✗', kelas: 'bg-red-100 text-red-700', sr: 'salah' },
+}
+
+/** Satu nomor soal: baris yang bisa dibuka untuk membaca soalnya. */
+function Butir({ butir }: { butir: ButirRiwayat }) {
+  const t = TANDA[butir.status]
+  const teks = butir.teks
+  return (
+    <details className="group py-0.5">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-md px-1 py-1.5 hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+        <span className="inline-block w-3 shrink-0 text-gray-400 transition-transform group-open:rotate-90" aria-hidden>
+          ▸
+        </span>
+        <span className="flex-1 text-sm font-medium text-gray-800">Soal nomor {butir.nomor}</span>
+        <span className={`inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${t.kelas}`} aria-label={t.sr} title={t.sr}>
+          {t.teks}
+        </span>
+      </summary>
+      <div className="mb-2 ml-6 mt-1 rounded-lg bg-slate-50 p-3">
+        {teks ? (
+          <>
+            <IsiSoal text={teks.prompt} className="text-sm leading-relaxed text-gray-900" />
+            {teks.pilihan.length > 0 &&
+              (teks.jenis === 'pilihan' ? (
+                <ol className="mt-2 space-y-1 text-sm text-gray-700">
+                  {teks.pilihan.map((p, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
+                      <span className="min-w-0 flex-1">{p}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                  {teks.pilihan.map((p, i) => (
+                    <li key={i}>{p}</li>
+                  ))}
+                </ul>
+              ))}
+          </>
+        ) : (
+          <p className="text-sm text-gray-400">Soal ini tidak dapat ditampilkan.</p>
+        )}
+      </div>
+    </details>
+  )
 }
 
 function RingkasTopik({ sel }: { sel: TopikPerTryOut }) {
@@ -86,6 +138,11 @@ export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] 
                                           {x.benar} dari {x.total} soal benar
                                         </span>
                                       </p>
+                                      <div className="mt-1 divide-y divide-gray-50">
+                                        {x.butir.map((bt) => (
+                                          <Butir key={bt.nomor} butir={bt} />
+                                        ))}
+                                      </div>
                                     </div>
                                   ) : null,
                                 )}
@@ -97,6 +154,7 @@ export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] 
                     </div>
                   )
                 })}
+                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk melihat soalnya</p>
               </div>
             )}
           </section>

@@ -34,6 +34,15 @@ export interface PercobaanTryOut {
   skor: number | null
 }
 
+/** Teks soal untuk ditampilkan ke orang tua. Tanpa kunci dan pembahasan. */
+export interface TeksSoal {
+  prompt: string
+  /** Pilihan atau pernyataan, sudah diratakan menjadi daftar teks (kosong bila tidak ada). */
+  pilihan: string[]
+  /** 'pilihan' untuk daftar huruf A, B, C; 'pernyataan' untuk daftar butir. */
+  jenis: 'pilihan' | 'pernyataan'
+}
+
 export interface DataTryOut {
   id: string
   judul: string
@@ -43,6 +52,8 @@ export interface DataTryOut {
   urut: string
   bobotTotal: number
   soal: SoalAnalisis[]
+  /** Terisi hanya bila `muatTryOut` dipanggil dengan `denganTeks`. Kunci: id soal. */
+  teks: Record<string, TeksSoal>
   percobaan: PercobaanTryOut[]
   skor: SkorAnalisis[]
   /** True bila kolom `kompetensi` belum ada (migrasi 224 belum dijalankan). */
@@ -83,7 +94,7 @@ export async function daftarTryOut(): Promise<RingkasTryOut[]> {
 }
 
 /** Seluruh data satu try out, atau null bila bukan try out yang terbit. */
-export async function muatTryOut(quizId: string): Promise<DataTryOut | null> {
+export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean } = {}): Promise<DataTryOut | null> {
   const admin = createAdminClient()
   const { data: kuis } = await admin.from('quizzes').select('id, title, kind, created_at, settings').eq('id', quizId).maybeSingle()
   if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return null
@@ -99,6 +110,16 @@ export async function muatTryOut(quizId: string): Promise<DataTryOut | null> {
       soalMentah = (r2.data ?? []) as typeof soalMentah
     } else {
       soalMentah = (r.data ?? []) as typeof soalMentah
+    }
+  }
+  const teks: Record<string, TeksSoal> = {}
+  if (opsi.denganTeks) {
+    const r = await admin.from('questions').select('id, prompt, options').eq('quiz_id', quizId)
+    for (const q of (r.data ?? []) as { id: string; prompt: string; options: unknown }[]) {
+      const o = q.options as { choices?: unknown; statements?: unknown } | null
+      const daftar = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string') : [])
+      const jenis = o && Array.isArray(o.statements) ? 'pernyataan' : 'pilihan'
+      teks[q.id] = { prompt: q.prompt, pilihan: daftar(jenis === 'pernyataan' ? o?.statements : o?.choices), jenis }
     }
   }
   const soal: SoalAnalisis[] = soalMentah.map((s) => ({
@@ -148,6 +169,7 @@ export async function muatTryOut(quizId: string): Promise<DataTryOut | null> {
     urut: (kuis as { settings: { opens_at?: string } | null }).settings?.opens_at ?? (kuis as { created_at: string }).created_at,
     bobotTotal: soal.reduce((n, s) => n + s.bobot, 0),
     soal,
+    teks,
     percobaan: percobaanMentah.map((p) => ({
       id: p.id,
       nama: p.guest_name,

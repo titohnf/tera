@@ -67,7 +67,7 @@ export default async function TryOutKeluargaPage({
 
   const masukan: MasukanTryOut[] = []
   for (const [quizId, p] of terbaruPerKuis) {
-    const data = await muatTryOut(quizId)
+    const data = await muatTryOut(quizId, { denganTeks: true })
     if (!data) continue
     const saya = data.percobaan.find((x) => x.id === p.attemptId)
     if (!saya) continue
@@ -82,6 +82,7 @@ export default async function TryOutKeluargaPage({
       nilai: data.bobotTotal > 0 && saya.skor !== null ? (saya.skor / data.bobotTotal) * 100 : null,
       soal: data.soal,
       skor: data.skor,
+      teks: data.teks,
     })
   }
   const seri = susunRiwayat(masukan)

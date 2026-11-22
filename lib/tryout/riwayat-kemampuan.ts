@@ -1,3 +1,4 @@
+import type { TeksSoal } from '@/lib/reports/tryout-data'
 import type { SkorAnalisis, SoalAnalisis } from '@/lib/reports/kompetensi-tryout'
 
 /**
@@ -8,16 +9,17 @@ import type { SkorAnalisis, SoalAnalisis } from '@/lib/reports/kompetensi-tryout
  * topik terbaca dari atas ke bawah. Hanya milik anak itu sendiri: tanpa pembanding nasional atau
  * rata-rata peserta (itu untuk admin).
  *
- * Susunannya: bidang (elemen) → topik (kompetensi) → butir (indikator, dengan nomor soal dan
- * hasilnya: benar, sebagian, atau salah). Tingkat sub-elemen tidak ditampilkan.
+ * Susunannya: bidang (elemen) → topik (kompetensi) → butir (nomor soal, hasilnya: benar,
+ * sebagian, atau salah, dan soalnya). Sub-elemen dan indikator tidak ditampilkan.
  */
 
 export type StatusButir = 'benar' | 'sebagian' | 'salah'
 
 export interface ButirRiwayat {
   nomor: number
-  indikator: string
   status: StatusButir
+  /** Soalnya, bila dimuat. */
+  teks: TeksSoal | null
 }
 
 export interface TopikPerTryOut {
@@ -54,6 +56,7 @@ export interface MasukanTryOut {
   nilai: number | null
   soal: SoalAnalisis[]
   skor: SkorAnalisis[]
+  teks: Record<string, TeksSoal>
 }
 
 export interface RiwayatMapel {
@@ -107,7 +110,7 @@ export function susunRiwayat(masukan: MasukanTryOut[]): RiwayatMapel[] {
         const sel =
           t.perTryOut[i] ?? (t.perTryOut[i] = { butir: [], benar: 0, total: 0, persen: null })
         const status = statusDari(skor, s.bobot)
-        sel.butir.push({ nomor: s.nomor, indikator: k.indikator.nama, status })
+        sel.butir.push({ nomor: s.nomor, status, teks: to.teks[s.id] ?? null })
         sel.total += 1
         if (status === 'benar') sel.benar += 1
         // Persen sementara disimpan sebagai jumlah skor; dibagi bobot di bawah.
