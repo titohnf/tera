@@ -1,5 +1,6 @@
 import { Check, Lightbulb, X } from 'lucide-react'
 import IsiSoal from '@/components/belajar/IsiSoal'
+import RumusTeks from '@/components/belajar/RumusTeks'
 import { RincianJawaban } from '@/components/belajar/TinjauanSesi'
 import PenelusurSoal, { LABEL_HASIL, type HasilButir, type ItemSoal } from '@/components/tryout/PenelusurSoal'
 import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
@@ -33,6 +34,8 @@ function lamaTeks(ms: number): string {
 const jamWib = (iso: string) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })
 
 const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim()
+/** Apakah pilihan `p` termasuk dalam `nilai` (satu teks, atau daftar teks untuk pilihan jamak). */
+const termasuk = (nilai: unknown, p: string) => (Array.isArray(nilai) ? nilai.some((v) => teksSama(v, p)) : teksSama(nilai, p))
 
 function Pembahasan({ teks }: { teks: string | null }) {
   if (!teks) return null
@@ -51,19 +54,56 @@ function Pembahasan({ teks }: { teks: string | null }) {
 function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButir; id: string; bobot: number }) {
   const pilihan = (teks.opsi as { choices?: unknown } | null)?.choices
   const daftar = Array.isArray(pilihan) ? pilihan.filter((v): v is string => typeof v === 'string') : []
-  const bisaDitandai = teks.tipe === 'mcq_single' && daftar.length > 0 && daftar.some((p) => teksSama(p, teks.kunci))
+  const bisaDitandai = (teks.tipe === 'mcq_single' || teks.tipe === 'mcq_multi') && daftar.length > 0 && daftar.some((p) => termasuk(teks.kunci, p))
   const bergambar = daftar.some((p) => /\[gambar:/i.test(p))
+
+  // Kisi pernyataan: tiap pernyataan dengan jawaban anak dan kuncinya (Benar/Salah menurut `answer_labels`).
+  const kisi = (() => {
+    if (teks.tipe !== 'statement_grid') return null
+    const o = teks.opsi as { statements?: unknown; answer_labels?: unknown } | null
+    const pernyataan = Array.isArray(o?.statements) ? (o.statements as unknown[]).filter((v): v is string => typeof v === 'string') : []
+    const label = Array.isArray(o?.answer_labels) && o.answer_labels.length >= 2 ? (o.answer_labels as string[]) : ['Benar', 'Salah']
+    const kunciBaris = (teks.kunci as { answers?: unknown } | null)?.answers
+    if (pernyataan.length === 0 || !Array.isArray(kunciBaris) || !Array.isArray(teks.jawaban)) return null
+    const nama = (v: unknown) => (v === true ? label[0] : v === false ? label[1] : '—')
+    return pernyataan.map((pernyataan, i) => ({
+      pernyataan,
+      anak: nama((teks.jawaban as unknown[])[i]),
+      kunci: nama(kunciBaris[i]),
+      cocok: (teks.jawaban as unknown[])[i] === kunciBaris[i],
+    }))
+  })()
 
   return (
     <div>
       <IsiSoal text={teks.prompt} className={`text-[15px] leading-relaxed text-gray-900 ${GAMBAR_SOAL}`} />
 
-      {bisaDitandai ? (
+      {kisi ? (
+        <>
+          <ul className="mt-4 space-y-2">
+            {kisi.map((r, i) => (
+              <li key={i} className={`rounded-xl border p-3 ${r.cocok ? 'border-emerald-300 bg-emerald-50/70' : 'border-rose-300 bg-rose-50/70'}`}>
+                <div className="flex items-start gap-3">
+                  <p className="min-w-0 flex-1 text-[15px] leading-relaxed text-gray-800">
+                    <RumusTeks text={r.pernyataan} />
+                  </p>
+                  {r.cocok ? <Check size={20} strokeWidth={2.5} className="mt-0.5 shrink-0 text-emerald-600" aria-label="Benar" /> : <X size={20} strokeWidth={2.5} className="mt-0.5 shrink-0 text-rose-600" aria-label="Salah" />}
+                </div>
+                <p className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-200">Jawaban anak: {r.anak}</span>
+                  {!r.cocok && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">Jawaban benar: {r.kunci}</span>}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Pembahasan teks={teks.pembahasan} />
+        </>
+      ) : bisaDitandai ? (
         <>
           <ol className={`mt-4 grid gap-2 ${bergambar ? 'sm:grid-cols-2' : ''}`}>
             {daftar.map((p, i) => {
-              const anak = teksSama(p, teks.jawaban)
-              const kunci = teksSama(p, teks.kunci)
+              const anak = termasuk(teks.jawaban, p)
+              const kunci = termasuk(teks.kunci, p)
               const bingkai = kunci ? 'border-emerald-300 bg-emerald-50/70' : anak ? 'border-rose-300 bg-rose-50/70' : 'border-gray-200 bg-white'
               const huruf = kunci ? 'bg-emerald-600 text-white' : anak ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600'
               return (
@@ -84,6 +124,7 @@ function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButi
               )
             })}
           </ol>
+          {teks.tipe === 'mcq_multi' && <p className="mt-3 text-xs text-gray-500">Soal ini punya lebih dari satu jawaban benar.</p>}
           {hasil === 'belum' && <p className="mt-3 text-sm text-gray-500">Anak melewati soal ini.</p>}
           <Pembahasan teks={teks.pembahasan} />
         </>
