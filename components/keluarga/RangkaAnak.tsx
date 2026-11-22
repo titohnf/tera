@@ -25,7 +25,7 @@ import BottomNav from '@/components/keluarga/BottomNav'
  * null sendiri akan meninggalkan 80px kosong di dasar layar. Satu tempat yang
  * tahu, satu daftar yang menentukan.
  */
-const TANPA_BILAH = ['/tagihan', '/rapor', '/laporan', '/jadwal', '/penguasaan', '/ketuntasan']
+const TANPA_BILAH = ['/tagihan', '/rapor', '/laporan', '/jadwal', '/penguasaan', '/ketuntasan', '/tryout']
 
 /**
  * Latar layar: putih HANYA di beranda, abu paling muda di semua layar lain.

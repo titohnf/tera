@@ -106,17 +106,6 @@ const PINTASAN = [
     ),
   },
   {
-    ke: 'tryout',
-    judul: 'Try Out',
-    ikon: (
-      <>
-        <path fill="#026bf5" d="M24 1.531c-7.401 0-12.593.278-15.864.544c-3.288.267-5.825 2.804-6.092 6.092C1.778 11.439 1.5 16.63 1.5 24.03s.278 12.593.544 15.865c.267 3.287 2.804 5.824 6.092 6.091c3.271.266 8.463.544 15.864.544s12.593-.278 15.864-.544c3.288-.267 5.825-2.804 6.092-6.092c.266-3.271.544-8.462.544-15.864c0-7.401-.278-12.592-.544-15.864c-.267-3.288-2.804-5.825-6.092-6.092C36.593 1.808 31.402 1.53 24 1.53"/>
-        <path fill="#cce1fd" fillRule="evenodd" d="M33.06 14.94a2 2 0 0 1 0 2.828l-12 12a2 2 0 0 1-2.828 0l-5.5-5.5a2 2 0 1 1 2.828-2.828l4.086 4.086l10.586-10.586a2 2 0 0 1 2.828 0" clipRule="evenodd"/>
-        <path fill="#cce1fd" d="M12 36a2 2 0 1 0 0 4h24a2 2 0 1 0 0-4z"/>
-      </>
-    ),
-  },
-  {
     ke: 'tagihan',
     judul: 'Tagihan',
     ikon: (
@@ -135,7 +124,7 @@ export default function PintasanKeluarga({ studentId }: { studentId: string }) {
        dan membungkusnya lagi dengan kartu berbayang berarti dua bingkai untuk
        satu benda. Yang tersisa cuma jaraknya. */
     <div className="px-1 py-1">
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-3 gap-1.5">
         {PINTASAN.map((p) => (
           <Link
             key={p.ke}

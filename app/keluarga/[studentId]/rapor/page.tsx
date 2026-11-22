@@ -116,7 +116,7 @@ export default async function RaporPage({
 
       <KartuLaporan
         judul="Hasil Try Out"
-        keterangan="Nilai try out dan capaian per kompetensi, dibandingkan dengan capaian nasional"
+        keterangan="Skor try out dan kemampuan anak per bidang dan topik"
         href={`/keluarga/${studentId}/tryout`}
       >
         {riwayatTryOut.length === 0 ? (
