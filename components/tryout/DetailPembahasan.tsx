@@ -6,6 +6,7 @@ import { LABEL_HASIL, type HasilButir } from '@/components/tryout/hasil-butir'
 import PenelusurSoal, { type ItemSoal } from '@/components/tryout/PenelusurSoal'
 import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
 import type { DataTryOut, TeksSoal } from '@/lib/reports/tryout-data'
+import { tahunAjaran } from '@/lib/tryout/judul'
 import { tanggalWib } from '@/lib/tryout/paket'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 
@@ -227,8 +228,15 @@ export default function DetailPembahasan({
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Detail dan Pembahasan</p>
             <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900 sm:text-xl">{data.judul}</h1>
+            <p className="mt-2 flex flex-wrap gap-1.5">
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                {data.info.jenjang}
+                {data.info.kelas ? ` · Kelas ${data.info.kelas}` : ''}
+              </span>
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">TA {tahunAjaran(data.info.bukaPada ?? dikirim ?? Date.now())}</span>
+            </p>
             {dikirim && (
-              <p className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+              <p className="mt-2.5 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
                 <span>
                   Dikerjakan <b className="font-semibold text-gray-900">{tanggalPanjang(tanggalWib(dikirim))}</b>
                 </span>

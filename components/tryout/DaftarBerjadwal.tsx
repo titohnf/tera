@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import TombolMulai from '@/components/tryout/TombolMulai'
 import { IKON, WARNA } from '@/components/belajar/IkonMapel'
+import { tahunAjaran } from '@/lib/tryout/judul'
 import { golonganMapel } from '@/lib/belajar/ikon-mapel'
 import { hariWib, jamWib, tanggalWib, urutJenjang, urutMapel } from '@/lib/tryout/paket'
 
@@ -65,13 +66,6 @@ const fmtNilai = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigit
 
 function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
-}
-
-/** Tahun ajaran dimulai Juli: Juli–Desember 2026 = 2026/2027, Januari–Juni 2027 = 2026/2027 (WIB). */
-function tahunAjaran(iso: string | number): string {
-  const [th, bln] = tanggalWib(iso).split('-').map(Number)
-  const awal = bln >= 7 ? th : th - 1
-  return `${awal}/${awal + 1}`
 }
 
 function IkonKalender() {
@@ -150,9 +144,10 @@ export default function DaftarBerjadwal({
                   </div>
                   <div className="min-w-[12rem] flex-1 px-4 py-3">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
-                    <p className="mt-1.5 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</p>
+                    <p className="mt-1.5 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
+                      <Kapsul>TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</Kapsul>
                       {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
                     </div>
                     <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-sm text-gray-700">

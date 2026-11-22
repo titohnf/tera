@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { learnerAnak } from '@/lib/belajar/sesi'
+import { infoPaket } from '@/lib/tryout/paket'
+import { judulDenganSeri, nomorSeri } from '@/lib/tryout/judul'
 import { muatTryOut, tryOutSiswa, type DataTryOut } from '@/lib/reports/tryout-data'
 import type { MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
 
@@ -61,9 +63,20 @@ export async function muatDetailLearner(learnerId: string | null, quizId: string
   const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
   if (!data) return null
   // Waktu mulai mengerjakan; lama pengerjaannya = dikirim − mulai.
-  const { data: percobaan } = await createAdminClient().from('attempts').select('started_at').eq('id', p.attemptId).maybeSingle()
+  const admin = createAdminClient()
+  const { data: percobaan } = await admin.from('attempts').select('started_at').eq('id', p.attemptId).maybeSingle()
   const mulai = (percobaan as { started_at: string | null } | null)?.started_at ?? null
-  return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim, mulai }
+
+  // Judul tampilan "Try Out I TKA Matematika": urutan di antara try out sejenjang dan semapel.
+  const { data: semua } = await admin.from('quizzes').select('id, title, settings').eq('kind', 'tryout').eq('status', 'published').order('created_at')
+  const seri = nomorSeri(
+    ((semua ?? []) as { id: string; title: string; settings: Record<string, unknown> | null }[]).map((q, i) => {
+      const info = infoPaket(q.title, q.settings)
+      return { id: q.id, jenjang: info.jenjang, mapel: info.mapel, bukaPada: info.bukaPada, dibuat: i }
+    }),
+  )
+  const judul = judulDenganSeri(data.judul, seri.get(quizId) ?? 1)
+  return { data: { ...data, judul }, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim, mulai }
 }
 
 export interface DetailTryOut {

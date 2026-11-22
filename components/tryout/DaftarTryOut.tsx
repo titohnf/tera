@@ -1,6 +1,7 @@
 import { TRYOUT_PATH } from '@/lib/tryout/alamat'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import DaftarBerjadwal, { type ItemBerjadwal } from '@/components/tryout/DaftarBerjadwal'
+import { judulDenganSeri, nomorSeri } from '@/lib/tryout/judul'
 import { infoPaket, type InfoPaket } from '@/lib/tryout/paket'
 
 export interface PaketTersedia extends InfoPaket {
@@ -55,9 +56,12 @@ export default function DaftarTryOut({
   const sekarang = Date.now()
   const awal = (p: PaketTersedia) => `${TRYOUT_PATH}/q/${p.kode}${kode ? `?kode=${encodeURIComponent(kode)}` : '?akun=1'}`
 
+  // `paket` terurut dari yang terbaru dibuat; seri (Try Out I, II, ...) dihitung dari jam buka, lalu waktu dibuat.
+  const seri = nomorSeri(paket.map((p, i) => ({ id: p.id, jenjang: p.jenjang, mapel: p.mapel, bukaPada: p.bukaPada, dibuat: paket.length - 1 - i })))
+
   const item: ItemBerjadwal[] = paket.map((p) => ({
     id: p.id,
-    judul: p.judul,
+    judul: judulDenganSeri(p.judul, seri.get(p.id) ?? 1),
     jenjang: p.jenjang,
     kelas: p.kelas,
     mapel: p.mapel,
