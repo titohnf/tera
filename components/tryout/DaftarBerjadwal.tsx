@@ -62,12 +62,12 @@ function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
 }
 
-/** Warna blok thumbnail menurut mata pelajaran. */
+/** Warna blok thumbnail menurut mata pelajaran: warna muda (bukan solid), agar tidak mirip chip filter yang solid. */
 function warnaThumbnail(mapel: string): string {
   const m = mapel.toLowerCase()
-  if (m.includes('matematika')) return 'bg-blue-600'
-  if (m.includes('indonesia')) return 'bg-emerald-600'
-  return 'bg-slate-600'
+  if (m.includes('matematika')) return 'bg-blue-50 text-blue-700'
+  if (m.includes('indonesia')) return 'bg-emerald-50 text-emerald-700'
+  return 'bg-slate-100 text-slate-700'
 }
 
 /** Ikon sederhana (garis putih) di atas teks thumbnail, menurut mata pelajaran. */
@@ -179,9 +179,9 @@ export default function DaftarBerjadwal({
             return (
               <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                 <div className="flex">
-                  <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center text-white sm:w-36 ${warnaThumbnail(p.mapel)}`} aria-hidden>
+                  <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:w-36 ${warnaThumbnail(p.mapel)}`} aria-hidden>
                     <IkonMapel mapel={p.mapel} />
-                    <span className="mt-1 text-xs font-semibold tracking-widest text-white/80">TO TKA</span>
+                    <span className="mt-1 text-xs font-semibold tracking-widest opacity-70">TO TKA</span>
                     <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
                   <div className="min-w-0 flex-1 px-4 py-3">
