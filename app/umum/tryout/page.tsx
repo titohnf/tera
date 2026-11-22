@@ -23,7 +23,7 @@ export default async function TryOutUmum() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
-        petunjukMasuk={`Di layar masuk, pilih "Kode peserta" lalu masukkan ${kode}.`}
+        petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/umum/tryout/${id}`}
         kode={kode}
       />
