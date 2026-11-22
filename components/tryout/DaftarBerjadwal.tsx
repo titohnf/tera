@@ -51,14 +51,11 @@ function tanggalPengerjaan(p: ItemBerjadwal): string {
   return `${hariWib(b)} ${jamWib(b)} – ${hariWib(t)} ${jamWib(t)} WIB`
 }
 
-function status(p: ItemBerjadwal, sekarang: number): { teks: string; kelas: string } {
-  if (p.keadaan === 'selesai') return { teks: 'Sudah dikerjakan · hasil dibuka', kelas: 'bg-green-100 text-green-800' }
-  if (p.keadaan === 'menunggu') return { teks: 'Sudah dikerjakan · hasil belum dibuka', kelas: 'bg-green-100 text-green-800' }
-  const buka = p.bukaPada ? new Date(p.bukaPada).getTime() : null
-  const tutup = p.tutupPada ? new Date(p.tutupPada).getTime() : null
-  if (tutup !== null && sekarang >= tutup) return { teks: 'Tidak dikerjakan', kelas: 'bg-slate-200 text-slate-600' }
-  if (buka !== null && sekarang < buka) return { teks: 'Akan dibuka', kelas: 'bg-amber-100 text-amber-800' }
-  return { teks: buka !== null ? 'Sedang dibuka' : 'Belum dikerjakan', kelas: 'bg-blue-100 text-blue-800' }
+/** Hanya dua keadaan: sudah dikerjakan atau belum. */
+function status(p: ItemBerjadwal): { teks: string; kelas: string } {
+  return p.keadaan === 'belum'
+    ? { teks: 'Belum dikerjakan', kelas: 'bg-amber-100 text-amber-800' }
+    : { teks: 'Sudah dikerjakan', kelas: 'bg-green-100 text-green-800' }
 }
 
 function Kapsul({ children }: { children: React.ReactNode }) {
@@ -136,7 +133,7 @@ export default function DaftarBerjadwal({
       ) : (
         <div className="space-y-2.5">
           {isi.map((p) => {
-            const st = status(p, sekarangServer)
+            const st = status(p)
             const aksen = urutMapel(p.mapel) === 0 ? 'border-l-blue-600' : urutMapel(p.mapel) === 1 ? 'border-l-amber-500' : 'border-l-slate-400'
             return (
               <div key={p.id} id={`hasil-${p.id}`} className={`scroll-mt-4 rounded-xl border-l-4 bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5 ${aksen}`}>
@@ -168,9 +165,12 @@ export default function DaftarBerjadwal({
                     </button>
                   )}
                   {p.keadaan === 'menunggu' && (
-                    <span className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500" title="Hasil dibuka setelah semua sesi try out selesai">
-                      Hasil belum dibuka
-                    </span>
+                    <div className="text-right">
+                      <button type="button" disabled className="cursor-not-allowed rounded-full bg-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-500">
+                        Lihat hasil
+                      </button>
+                      <p className="mt-1 text-xs text-gray-500">Hasil belum dibuka</p>
+                    </div>
                   )}
                 </div>
                 {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="mt-3 border-t border-gray-100 pt-3">{p.hasil}</div>}

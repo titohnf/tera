@@ -55,7 +55,7 @@ export default function TombolMulai({
     return (
       <div className="text-right">
         <button type="button" disabled className="cursor-not-allowed rounded-full bg-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-500">
-          Mulai
+          Kerjakan Sekarang
         </button>
         <p className="mt-1 text-xs font-medium text-amber-700">
           Dibuka {hari}pukul {jamWib(bukaPada as string)} WIB · {hitung}
@@ -73,7 +73,7 @@ export default function TombolMulai({
       className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold text-white ${membuka ? 'pointer-events-none bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
     >
       {membuka && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
-      {membuka ? 'Membuka…' : 'Mulai'}
+      {membuka ? 'Membuka…' : 'Kerjakan Sekarang'}
     </a>
   )
 }
