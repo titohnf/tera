@@ -62,12 +62,19 @@ function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
 }
 
-/** Thumbnail menurut mata pelajaran: ilustrasi spot Seragam (public/ilustrasi). */
-function thumbnail(mapel: string): string {
+/** Warna blok thumbnail menurut mata pelajaran. */
+function warnaThumbnail(mapel: string): string {
   const m = mapel.toLowerCase()
-  if (m.includes('matematika')) return '/ilustrasi/img-calculator-math.svg'
-  if (m.includes('indonesia')) return '/ilustrasi/img-book-literature.svg'
-  return '/ilustrasi/img-clipboard-check.svg'
+  if (m.includes('matematika')) return 'bg-blue-600'
+  if (m.includes('indonesia')) return 'bg-emerald-600'
+  return 'bg-slate-600'
+}
+
+/** Tahun ajaran dimulai Juli: Juli–Desember 2026 = 2026/2027, Januari–Juni 2027 = 2026/2027 (WIB). */
+function tahunAjaran(iso: string | number): string {
+  const [th, bln] = tanggalWib(iso).split('-').map(Number)
+  const awal = bln >= 7 ? th : th - 1
+  return `${awal}/${awal + 1}`
 }
 
 function IkonKalender() {
@@ -143,18 +150,19 @@ export default function DaftarBerjadwal({
           {isi.map((p) => {
             const st = status(p)
             return (
-              <div key={p.id} id={`hasil-${p.id}`} className={`scroll-mt-4 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5`}>
-                <div className="flex gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={thumbnail(p.mapel)} alt="" width={64} height={64} className="h-16 w-16 shrink-0 rounded-xl bg-slate-50 p-1" />
-                  <div className="min-w-0 flex-1">
+              <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+                <div className="flex">
+                  <div className={`flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-3 text-center text-white ${warnaThumbnail(p.mapel)}`} aria-hidden>
+                    <span className="text-[11px] font-semibold tracking-widest text-white/80">TO TKA</span>
+                    <span className="break-words text-sm font-bold leading-tight">{p.mapel}</span>
+                  </div>
+                  <div className="min-w-0 flex-1 px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
+                      <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</p>
                       <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
-                      <Kapsul>{p.mapel}</Kapsul>
                       {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
                     </div>
                     <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -178,7 +186,7 @@ export default function DaftarBerjadwal({
                     </div>
                   </div>
                 </div>
-                {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="mt-3 border-t border-gray-100 pt-3">{p.hasil}</div>}
+                {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="border-t border-gray-100 px-4 py-3">{p.hasil}</div>}
               </div>
             )
           })}
