@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { tampilanDariHost } from '@/lib/tampilan'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -77,7 +78,8 @@ export async function updateSession(request: NextRequest) {
   // Tab Kode tetap terbuka bagi yang sedang punya sesi: peramban bersama (HP orang tua yang
   // pernah masuk dengan email) tidak boleh melempar anak ke beranda akun lama sebelum sempat
   // mengetik kodenya. Masuk dengan kode menggantikan sesi lama.
-  const tabKode = pathname.startsWith('/login') && request.nextUrl.searchParams.get('tab') === 'kode'
+  const diSora = tampilanDariHost(request.headers.get('x-forwarded-host') ?? request.headers.get('host')) === 'sora'
+  const tabKode = pathname.startsWith('/login') && (diSora || request.nextUrl.searchParams.get('tab') === 'kode')
   if (user && isAuthPage && !tabKode) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
