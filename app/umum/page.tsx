@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
+import { tautanWaAdmin } from '@/lib/kontak'
 import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
@@ -9,7 +9,7 @@ import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@
  * yang bisa didapat.
  */
 export default async function BerandaUmum() {
-  const { namaPendek, punyaAkun, studentId } = await umumContext()
+  const { namaPendek, punyaAkun, studentId, kode, nama } = await umumContext()
   await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}`)
   return (
     <div className="space-y-4">
@@ -41,10 +41,15 @@ export default async function BerandaUmum() {
         </p>
       ) : (
         <p className="pt-2 text-center text-sm text-gray-500">
-          Mau akunmu lebih aman dan siap berlangganan?{' '}
-          <Link href="/umum/akun" className="font-medium text-blue-600 hover:underline">
-            Tambahkan email dan password
-          </Link>
+          Mau berlangganan Latihan Soal, Misi, dan Materi?{' '}
+          <a
+            href={tautanWaAdmin(`Halo Bimbel Tera, saya ${nama} (kode peserta ${kode}). Saya ingin berlangganan Tera.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-green-700 hover:underline"
+          >
+            Chat admin lewat WhatsApp
+          </a>
         </p>
       )}
     </div>
