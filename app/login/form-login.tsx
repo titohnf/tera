@@ -188,12 +188,17 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
         </>
         )}
         {hrefLawan && (
-          <p className="mt-6 border-t border-gray-100 pt-4 text-center text-sm text-gray-500">
-            {tampilan === 'sora' ? 'Orang tua atau wali? ' : 'Siswa? '}
-            <a href={hrefLawan} className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
+          <div className="mt-6 border-t border-gray-100 pt-4">
+            <p className="mb-2 text-center text-sm text-gray-500">
+              {tampilan === 'sora' ? 'Orang tua atau wali?' : 'Siswa?'}
+            </p>
+            <a
+              href={hrefLawan}
+              className="block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-center text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            >
               {tampilan === 'sora' ? 'Masuk dengan email' : 'Masuk dengan kode'}
             </a>
-          </p>
+          </div>
         )}
       </div>
     </div>
