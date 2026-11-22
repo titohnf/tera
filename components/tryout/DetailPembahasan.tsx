@@ -9,9 +9,14 @@ import { tanggalPanjang } from '@/lib/waktu-relatif'
 const EPS = 1e-6
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-/** Gambar dibatasi ukurannya (masih bisa diperbesar bila diketuk): soal bergambar tidak boleh memenuhi layar. */
-const GAMBAR_SOAL = '[&_button]:max-w-xl [&_img]:max-h-96 [&_img]:object-contain'
-const GAMBAR_PILIHAN = '[&_button]:max-w-[20rem] [&_img]:max-h-64 [&_img]:object-contain'
+/**
+ * Batas ukuran gambar di dalam soal. Pemilihnya sengaja sempit (`&>button`, `button>img`) supaya
+ * tidak mengenai jendela perbesar milik IsiSoal; pemilih `_img` yang lebar ikut membatasi gambar
+ * yang diperbesar sehingga ia tampak sama saja. Tanpa `w-full`, gambar tegak tidak dilebarkan
+ * mengikuti kotaknya (kotak kosong di kiri-kanan gambar).
+ */
+const GAMBAR_SOAL = '[&>button]:max-w-full [&_button>img]:w-auto [&_button>img]:max-w-full [&_button>img]:max-h-[32rem]'
+const GAMBAR_PILIHAN = '[&>button]:max-w-full [&_button>img]:w-auto [&_button>img]:max-w-full [&_button>img]:max-h-72'
 
 const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim()
 
@@ -47,8 +52,8 @@ function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButi
               return (
                 <li key={i} className={`flex items-start gap-3 rounded-lg border p-3 ${bingkai}`}>
                   <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${huruf}`}>{String.fromCharCode(65 + i)}</span>
-                  <span className={`min-w-0 flex-1 text-sm text-gray-800 ${GAMBAR_PILIHAN}`}>
-                    <IsiSoal text={p} />
+                  <span className="min-w-0 flex-1 text-sm text-gray-800">
+                    <IsiSoal text={p} className={GAMBAR_PILIHAN} />
                     {(anak || kunci) && (
                       <span className="mt-1.5 flex flex-wrap gap-1.5">
                         {anak && <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-gray-700 ring-1 ring-gray-200">Jawaban anak</span>}
@@ -66,18 +71,18 @@ function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButi
       ) : (
         <>
           {daftar.length > 0 && (
-            <ol className={`mt-3 space-y-1.5 text-sm text-gray-700 ${GAMBAR_PILIHAN}`}>
+            <ol className="mt-3 space-y-1.5 text-sm text-gray-700">
               {daftar.map((p, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
                   <span className="min-w-0 flex-1">
-                    <IsiSoal text={p} />
+                    <IsiSoal text={p} className={GAMBAR_PILIHAN} />
                   </span>
                 </li>
               ))}
             </ol>
           )}
-          <div className={GAMBAR_PILIHAN}>
+          <div>
             <RincianJawaban
               soal={{ id, tipe: teks.tipe as TipeSoal, prompt: teks.prompt, opsi: teks.opsi as OpsiSoal, bobot }}
               jawaban={teks.jawaban}
