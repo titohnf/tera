@@ -1,4 +1,5 @@
 import IsiMisi from '@/components/belajar/IsiMisi'
+import PilihMisiMapel from '@/components/belajar/PilihMisiMapel'
 
 /**
  * Misi untuk pelanggan langganan (`mandiri`) — tanpa anak. Keluarga bimbel
@@ -6,5 +7,7 @@ import IsiMisi from '@/components/belajar/IsiMisi'
  */
 export default async function MisiPelangganPage({ searchParams }: { searchParams: Promise<{ mapel?: string }> }) {
   const { mapel } = await searchParams
-  return <IsiMisi pilihMapel={{ dipilih: mapel, alamat: (m) => `/belajar/misi?mapel=${encodeURIComponent(m)}` }} />
+  const alamat = (m: string) => `/belajar/misi?mapel=${encodeURIComponent(m)}`
+  if (!mapel) return <PilihMisiMapel alamat={alamat} />
+  return <IsiMisi pilihMapel={{ dipilih: mapel, alamat }} />
 }

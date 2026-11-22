@@ -11,5 +11,7 @@
  */
 export function alamatMisi(anak: string | undefined | null, topikId?: string): string {
   const dasar = anak ? `/siswa/${anak}/misi` : '/belajar/misi'
-  return topikId ? `${dasar}/${topikId}` : dasar
+  // Tanpa topik = "kembali ke peta". Peta Matematika dibuka langsung; kartu pilihan mapel
+  // (`PilihMisiMapel`) hanya dicapai dari pintu Misi di beranda dan remah roti.
+  return topikId ? `${dasar}/${topikId}` : `${dasar}?mapel=Matematika`
 }
