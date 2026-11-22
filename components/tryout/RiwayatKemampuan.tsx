@@ -15,7 +15,7 @@ function tingkat(p: number | null): { label: string; warna: string; batang: stri
 
 const TANDA: Record<StatusButir, { teks: string; kelas: string; sr: string }> = {
   benar: { teks: '✓', kelas: 'bg-green-100 text-green-800', sr: 'benar' },
-  sebagian: { teks: '◐', kelas: 'bg-amber-100 text-amber-800', sr: 'sebagian benar' },
+  sebagian: { teks: '◐', kelas: 'bg-amber-100 text-amber-800', sr: 'benar sebagian' },
   salah: { teks: '✗', kelas: 'bg-red-100 text-red-700', sr: 'salah' },
 }
 
@@ -125,7 +125,7 @@ export function IsiHasil({ m, hrefDetail }: { m: RiwayatMapel; hrefDetail?: stri
                     </div>
                   )
                 })}
-                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk membuka soal dan pembahasannya</p>
+                <p className="text-xs text-gray-400">✓ benar · ◐ benar sebagian · ✗ salah · ketuk nomor untuk membuka soal dan pembahasannya</p>
               </div>
             )}
     </div>

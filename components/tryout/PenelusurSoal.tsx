@@ -18,7 +18,7 @@ const PETAK: Record<HasilButir, string> = {
   belum: 'bg-gray-50 text-gray-500 ring-gray-200 hover:bg-gray-100',
 }
 
-const LABEL: Record<HasilButir, string> = { benar: 'Benar', sebagian: 'Sebagian benar', salah: 'Belum tepat', belum: 'Dilewati' }
+const LABEL: Record<HasilButir, string> = { benar: 'Benar', sebagian: 'Benar sebagian', salah: 'Belum tepat', belum: 'Dilewati' }
 const PILL: Record<HasilButir, string> = {
   benar: 'bg-emerald-100 text-emerald-800',
   sebagian: 'bg-amber-100 text-amber-800',
@@ -79,7 +79,7 @@ export default function PenelusurSoal({ items }: { items: ItemSoal[] }) {
         </div>
         <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
           <Legenda warna="bg-emerald-400" teks="Benar" />
-          <Legenda warna="bg-amber-400" teks="Sebagian benar" />
+          <Legenda warna="bg-amber-400" teks="Benar sebagian" />
           <Legenda warna="bg-rose-400" teks="Belum tepat" />
           <Legenda warna="bg-gray-300" teks="Dilewati" />
         </p>

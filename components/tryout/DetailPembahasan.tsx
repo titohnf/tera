@@ -150,7 +150,7 @@ export default function DetailPembahasan({
 
   const ringkas: { label: string; n: number; kelas: string }[] = [
     { label: 'Benar', n: hitung.benar, kelas: 'bg-emerald-50 text-emerald-700' },
-    { label: 'Sebagian', n: hitung.sebagian, kelas: 'bg-amber-50 text-amber-700' },
+    { label: 'Benar sebagian', n: hitung.sebagian, kelas: 'bg-amber-50 text-amber-700' },
     { label: 'Salah', n: hitung.salah, kelas: 'bg-rose-50 text-rose-700' },
     { label: 'Dilewati', n: hitung.belum, kelas: 'bg-gray-100 text-gray-600' },
   ]
