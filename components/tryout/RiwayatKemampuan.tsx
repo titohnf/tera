@@ -1,7 +1,6 @@
 import type { ButirRiwayat, RiwayatMapel, StatusButir, TopikPerTryOut } from '@/lib/tryout/riwayat-kemampuan'
-import IsiSoal from '@/components/belajar/IsiSoal'
-import { RincianJawaban } from '@/components/belajar/TinjauanSesi'
-import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
+import Link from 'next/link'
+import { tanggalWib } from '@/lib/tryout/paket'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -20,51 +19,24 @@ const TANDA: Record<StatusButir, { teks: string; kelas: string; sr: string }> = 
   salah: { teks: '✗', kelas: 'bg-red-100 text-red-700', sr: 'salah' },
 }
 
-/** Satu nomor soal: baris yang bisa dibuka untuk membaca soalnya. */
-function Butir({ butir }: { butir: ButirRiwayat }) {
+/** Satu nomor soal sebagai tanda kecil; mengetuknya membuka soal itu di halaman detail dan pembahasan. */
+function Butir({ butir, hrefDetail }: { butir: ButirRiwayat; hrefDetail?: string }) {
   const t = TANDA[butir.status]
-  const teks = butir.teks
-  const pilihan = (teks?.opsi as { choices?: unknown } | null)?.choices
-  const daftarPilihan = Array.isArray(pilihan) ? pilihan.filter((v): v is string => typeof v === 'string') : []
-  return (
-    <details className="group py-0.5">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-md px-1 py-1.5 hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
-        <span className="inline-block w-3 shrink-0 text-gray-400 transition-transform group-open:rotate-90" aria-hidden>
-          ▸
-        </span>
-        <span className="flex-1 text-sm font-medium text-gray-800">Soal nomor {butir.nomor}</span>
-        <span className={`inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${t.kelas}`} aria-label={t.sr} title={t.sr}>
-          {t.teks}
-        </span>
-      </summary>
-      <div className="mb-2 ml-6 mt-1 rounded-lg bg-slate-50 p-3">
-        {teks ? (
-          <>
-            <IsiSoal text={teks.prompt} className="text-sm leading-relaxed text-gray-900" />
-            {daftarPilihan.length > 0 && (
-              <ol className="mt-2 space-y-1 text-sm text-gray-700">
-                {daftarPilihan.map((p, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
-                    <span className="min-w-0 flex-1">{p}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <RincianJawaban
-              soal={{ id: String(butir.nomor), tipe: teks.tipe as TipeSoal, prompt: teks.prompt, opsi: teks.opsi as OpsiSoal, bobot: 1 }}
-              jawaban={teks.jawaban}
-              kunci={teks.kunci}
-              pembahasan={teks.pembahasan}
-              hasil={teks.jawaban === null || teks.jawaban === undefined ? 'belum' : butir.status}
-              nama="anak"
-            />
-          </>
-        ) : (
-          <p className="text-sm text-gray-400">Soal ini tidak dapat ditampilkan.</p>
-        )}
-      </div>
-    </details>
+  const isi = (
+    <>
+      <span className="font-medium tabular-nums text-gray-800">No. {butir.nomor}</span>
+      <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold ${t.kelas}`} aria-label={t.sr} title={t.sr}>
+        {t.teks}
+      </span>
+    </>
+  )
+  const kelas = 'inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-xs ring-1 ring-gray-200'
+  return hrefDetail ? (
+    <Link href={`${hrefDetail}#soal-${butir.nomor}`} className={`${kelas} hover:bg-gray-50`}>
+      {isi}
+    </Link>
+  ) : (
+    <span className={kelas}>{isi}</span>
   )
 }
 
@@ -81,14 +53,14 @@ function RingkasTopik({ sel }: { sel: TopikPerTryOut }) {
  * Hasil satu try out untuk orang tua dan anak, dipasang di dalam kartu try out itu: nilai, lalu
  * kemampuan per bidang dan per topik. Tanpa pembanding nasional atau rata-rata peserta (itu untuk admin).
  */
-export function IsiHasil({ m }: { m: RiwayatMapel }) {
+export function IsiHasil({ m, hrefDetail }: { m: RiwayatMapel; hrefDetail?: string }) {
   const terakhir = m.tryOut.length - 1
   const to = m.tryOut[terakhir]
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5">
         <div>
-          <p className="text-xs text-gray-500">Dikerjakan {tanggalPanjang(to.dikirim)}</p>
+          <p className="text-xs text-gray-500">Dikerjakan {tanggalPanjang(tanggalWib(to.dikirim))}</p>
         </div>
         <div className="text-right">
           <span className="text-2xl font-semibold tabular-nums text-gray-900">{to.nilai !== null ? fmt(to.nilai) : '—'}</span>
@@ -137,9 +109,9 @@ export function IsiHasil({ m }: { m: RiwayatMapel }) {
                                           {x.benar} dari {x.total} soal benar
                                         </span>
                                       </p>
-                                      <div className="mt-1 divide-y divide-gray-50">
+                                      <div className="mt-1.5 flex flex-wrap gap-1.5">
                                         {x.butir.map((bt) => (
-                                          <Butir key={bt.nomor} butir={bt} />
+                                          <Butir key={bt.nomor} butir={bt} hrefDetail={hrefDetail} />
                                         ))}
                                       </div>
                                     </div>
@@ -153,7 +125,7 @@ export function IsiHasil({ m }: { m: RiwayatMapel }) {
                     </div>
                   )
                 })}
-                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk melihat soal, jawaban, dan pembahasan</p>
+                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk membuka soal dan pembahasannya</p>
               </div>
             )}
     </div>

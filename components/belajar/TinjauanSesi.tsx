@@ -160,7 +160,7 @@ export function RincianJawaban({
         )}
       </div>
       {pembahasan && (
-        <div className="mt-3 rounded-lg bg-white p-3">
+        <div className="mt-3 rounded-lg bg-slate-50 p-3">
           <p className="text-xs font-semibold text-gray-500">Pembahasan</p>
           <IsiSoal text={pembahasan} className="mt-1 text-sm leading-relaxed text-gray-700" />
         </div>

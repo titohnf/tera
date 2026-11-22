@@ -4,7 +4,8 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
-import { muatIsiHasil } from '@/components/tryout/hasil-anak'
+import Link from 'next/link'
+import { muatNilaiAnak } from '@/lib/tryout/hasil-anak'
 import { jenjangAnak } from '@/lib/tryout/jenjang-anak'
 
 export const metadata = { title: 'Try Out' }
@@ -53,11 +54,26 @@ export default async function TryOutKeluargaPage({
       paket={paket}
       hasil={hasilRingkas}
       petunjukMasuk="Tekan Mulai, periksa data, lalu kerjakan."
-      hrefHasil={(id) => `#hasil-${id}`}
+      hrefHasil={(id) => `/keluarga/${studentId}/tryout/${id}`}
       kode={kode?.kode}
-      isiHasil={await muatIsiHasil(studentId)}
+      nilai={await muatNilaiAnak(studentId)}
     />
   )
 
-  return daftar
+  return (
+    <div className="space-y-4">
+      {[...selesai.values()].some(Boolean) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
+          <div className="min-w-0">
+            <p className="font-semibold tracking-tight text-gray-900">Laporan Try Out</p>
+            <p className="mt-0.5 text-sm text-gray-500">Kemampuan anak per bidang dan topik dari try out yang sudah dikerjakan.</p>
+          </div>
+          <Link href={`/keluarga/${studentId}/tryout/laporan`} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+            Lihat Laporan
+          </Link>
+        </div>
+      )}
+      {daftar}
+    </div>
+  )
 }

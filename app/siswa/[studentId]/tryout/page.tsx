@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
-import { muatIsiHasil } from '@/components/tryout/hasil-anak'
+import { muatNilaiAnak } from '@/lib/tryout/hasil-anak'
 import { jenjangAnak } from '@/lib/tryout/jenjang-anak'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
 
@@ -47,9 +47,9 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
         paket={paket}
         hasil={hasil}
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
-        hrefHasil={(id) => `#hasil-${id}`}
+        hrefHasil={(id) => `/siswa/${studentId}/tryout/${id}`}
         kode={kode?.kode}
-        isiHasil={await muatIsiHasil(studentId)}
+        nilai={await muatNilaiAnak(studentId)}
       />
     </div>
   )

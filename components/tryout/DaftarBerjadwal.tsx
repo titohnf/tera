@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import TombolMulai from '@/components/tryout/TombolMulai'
 import { IKON, WARNA } from '@/components/belajar/IkonMapel'
@@ -19,8 +20,6 @@ export interface ItemBerjadwal {
   keadaan: 'belum' | 'menunggu' | 'selesai'
   hrefMulai: string
   hrefHasil: string
-  /** Hasil yang sudah dirender di server; hanya ada bila hasilnya sudah dibuka. */
-  hasil?: React.ReactNode
   /** Skor akhir (0–100), bila hasilnya sudah dibuka. */
   nilai?: number | null
 }
@@ -108,13 +107,6 @@ export default function DaftarBerjadwal({
   // Tab awal: yang pertama berisi, supaya orang tidak mendarat di daftar kosong.
   const awal = TAB.find((t) => bagi[t.kunci].length > 0)?.kunci ?? 'hari-ini'
   const [aktif, setAktif] = useState<Saring>(awal)
-  const [terbuka, setTerbuka] = useState<Set<string>>(() => new Set())
-  const alih = (id: string) =>
-    setTerbuka((s) => {
-      const n = new Set(s)
-      if (!n.delete(id)) n.add(id)
-      return n
-    })
   const isi = bagi[aktif]
 
   return (
@@ -168,31 +160,25 @@ export default function DaftarBerjadwal({
                       <span className="min-w-0">{tanggalPengerjaan(p)}</span>
                     </p>
                   </div>
-                  {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
+                  {(p.keadaan === 'belum' || p.keadaan === 'selesai') && (
                     // Di ujung kanan, di tengah antara sisi atas dan bawah kartu; di layar sempit turun ke bawah, tetap di kanan.
                     <div className="ml-auto flex shrink-0 flex-col items-center justify-center gap-2 px-4 py-3">
-                      {p.keadaan === 'selesai' && (
+                      {p.keadaan === 'selesai' && p.nilai != null && (
                         <div className="text-center">
                           <p className="text-xs text-gray-500">Skor akhir</p>
-                          <p className="text-2xl font-semibold tabular-nums leading-tight text-gray-900">{p.nilai != null ? fmtNilai(p.nilai) : '—'}</p>
+                          <p className="text-2xl font-semibold tabular-nums leading-tight text-gray-900">{fmtNilai(p.nilai as number)}</p>
                         </div>
                       )}
                       {p.keadaan === 'belum' ? (
                         <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => alih(p.id)}
-                          aria-expanded={terbuka.has(p.id)}
-                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                        >
-                          {terbuka.has(p.id) ? 'Tutup Detail' : 'Cek Detail dan Pembahasan'}
-                        </button>
+                        <Link href={p.hrefHasil} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+                          Cek Detail dan Pembahasan
+                        </Link>
                       )}
                     </div>
                   )}
                 </div>
-                {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="border-t border-gray-100 px-4 py-3">{p.hasil}</div>}
               </div>
             )
           })}
