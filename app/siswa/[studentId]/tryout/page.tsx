@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
-import HasilAnak from '@/components/tryout/HasilAnak'
+import { muatIsiHasil } from '@/components/tryout/hasil-anak'
+import { jenjangAnak } from '@/lib/tryout/jenjang-anak'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
 
 export const metadata = { title: 'Try Out' }
@@ -14,7 +15,9 @@ export const dynamic = 'force-dynamic'
 export default async function TryOutSiswaPage({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params
   await anakOrRedirect(studentId)
-  const paket = await paketTryOutTerbit(await createClient())
+  const jenjang = await jenjangAnak(studentId)
+  // Hanya try out yang ditujukan untuk jenjang anak ini; kelas yang belum diisi menampilkan semuanya.
+  const paket = (await paketTryOutTerbit(await createClient())).filter((p) => !jenjang || p.jenjang === jenjang || p.jenjang === 'Lainnya')
   const kode = await kodeAnak(studentId)
 
   // Yang sudah dikirim ditandai "sudah mengerjakan"; hasilnya dibuka admin kemudian.
@@ -46,8 +49,8 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `#hasil-${id}`}
         kode={kode?.kode}
+        isiHasil={await muatIsiHasil(studentId)}
       />
-      <HasilAnak studentId={studentId} />
     </div>
   )
 }

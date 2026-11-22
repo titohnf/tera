@@ -78,29 +78,23 @@ function RingkasTopik({ sel }: { sel: TopikPerTryOut }) {
 }
 
 /**
- * Kemampuan anak per mata pelajaran, untuk orang tua dan anak. Tiap try out menambah satu bagian di
- * bawah topik yang sama, jadi perkembangan terbaca dari atas ke bawah (Try Out 1, 2, 3 ...). Hanya
- * milik anak itu sendiri: tanpa pembanding nasional atau rata-rata peserta (itu untuk admin).
+ * Hasil satu try out untuk orang tua dan anak, dipasang di dalam kartu try out itu: nilai, lalu
+ * kemampuan per bidang dan per topik. Tanpa pembanding nasional atau rata-rata peserta (itu untuk admin).
  */
-export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] }) {
+export function IsiHasil({ m }: { m: RiwayatMapel }) {
+  const terakhir = m.tryOut.length - 1
+  const to = m.tryOut[terakhir]
   return (
-    <div className="space-y-5">
-      {riwayat.map((m) => {
-        const terakhir = m.tryOut.length - 1
-        return (
-          <section key={m.kunci} className="space-y-4 rounded-xl bg-white p-4 shadow-kartu">
-            <div>
-              <h3 className="font-semibold tracking-tight text-gray-900">{m.judul}</h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {m.tryOut.map((to) => (
-                  <div key={to.quizId} id={`hasil-${to.quizId}`} className="scroll-mt-4 rounded-lg bg-slate-50 px-3 py-2">
-                    <p className="text-xs text-gray-500">{to.label}</p>
-                    <p className="text-xl font-semibold tabular-nums text-gray-900">{to.nilai !== null ? fmt(to.nilai) : '—'}</p>
-                    <p className="text-[11px] text-gray-400">{tanggalPanjang(to.dikirim)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="space-y-4">
+      <div className="flex items-end justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5">
+        <div>
+          <p className="text-xs text-gray-500">Dikerjakan {tanggalPanjang(to.dikirim)}</p>
+        </div>
+        <div className="text-right">
+          <span className="text-2xl font-semibold tabular-nums text-gray-900">{to.nilai !== null ? fmt(to.nilai) : '—'}</span>
+          <span className="ml-1 text-xs text-gray-400">/ 100</span>
+        </div>
+      </div>
 
             {m.bidang.length === 0 ? (
               <p className="text-sm text-gray-400">Rincian per topik belum tersedia untuk try out ini.</p>
@@ -162,9 +156,6 @@ export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] 
                 <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk melihat soal, jawaban, dan pembahasan</p>
               </div>
             )}
-          </section>
-        )
-      })}
     </div>
   )
 }

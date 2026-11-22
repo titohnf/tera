@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import TombolMulai from '@/components/tryout/TombolMulai'
 import { hariWib, jamWib, tanggalWib, urutJenjang, urutMapel } from '@/lib/tryout/paket'
@@ -18,6 +17,8 @@ export interface ItemBerjadwal {
   keadaan: 'belum' | 'menunggu' | 'selesai'
   hrefMulai: string
   hrefHasil: string
+  /** Hasil yang sudah dirender di server; hanya ada bila hasilnya sudah dibuka. */
+  hasil?: React.ReactNode
 }
 
 type Saring = 'hari-ini' | 'lewat' | 'akan-datang'
@@ -97,6 +98,13 @@ export default function DaftarBerjadwal({
   // Tab awal: yang pertama berisi, supaya orang tidak mendarat di daftar kosong.
   const awal = TAB.find((t) => bagi[t.kunci].length > 0)?.kunci ?? 'hari-ini'
   const [aktif, setAktif] = useState<Saring>(awal)
+  const [terbuka, setTerbuka] = useState<Set<string>>(() => new Set())
+  const alih = (id: string) =>
+    setTerbuka((s) => {
+      const n = new Set(s)
+      if (!n.delete(id)) n.add(id)
+      return n
+    })
   const isi = bagi[aktif]
 
   return (
@@ -131,7 +139,7 @@ export default function DaftarBerjadwal({
             const st = status(p, sekarangServer)
             const aksen = urutMapel(p.mapel) === 0 ? 'border-l-blue-600' : urutMapel(p.mapel) === 1 ? 'border-l-amber-500' : 'border-l-slate-400'
             return (
-              <div key={p.id} className={`rounded-xl border-l-4 bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5 ${aksen}`}>
+              <div key={p.id} id={`hasil-${p.id}`} className={`scroll-mt-4 rounded-xl border-l-4 bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5 ${aksen}`}>
                 <div className="flex items-start justify-between gap-3">
                   <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
                   <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
@@ -149,12 +157,23 @@ export default function DaftarBerjadwal({
                   {p.keadaan === 'belum' && (
                     <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                   )}
-                  {p.keadaan === 'selesai' && (
-                    <Link href={p.hrefHasil} className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700">
-                      Lihat hasil
-                    </Link>
+                  {p.keadaan === 'selesai' && p.hasil && (
+                    <button
+                      type="button"
+                      onClick={() => alih(p.id)}
+                      aria-expanded={terbuka.has(p.id)}
+                      className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
+                    </button>
+                  )}
+                  {p.keadaan === 'menunggu' && (
+                    <span className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500" title="Hasil dibuka setelah semua sesi try out selesai">
+                      Hasil belum dibuka
+                    </span>
                   )}
                 </div>
+                {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="mt-3 border-t border-gray-100 pt-3">{p.hasil}</div>}
               </div>
             )
           })}

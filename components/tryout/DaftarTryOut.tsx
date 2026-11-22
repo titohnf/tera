@@ -35,6 +35,7 @@ export default function DaftarTryOut({
   hrefHasil,
   kode,
   lewatiJadwal = false,
+  isiHasil,
 }: {
   paket: PaketTersedia[]
   hasil: HasilTryOut | null
@@ -44,6 +45,8 @@ export default function DaftarTryOut({
   kode?: string
   /** Akun penguji: tombol Mulai tidak menunggu jadwal. */
   lewatiJadwal?: boolean
+  /** Hasil tiap try out yang sudah dikerjakan (kunci: id try out), dipasang di dalam kartunya. */
+  isiHasil?: Record<string, React.ReactNode>
 }) {
   const selesaiBuka = new Set((hasil?.paket ?? []).map((p) => p.quiz_id))
   const selesaiTunggu = new Set((hasil?.menunggu ?? []).map((m) => m.quiz_id).filter(Boolean) as string[])
@@ -64,6 +67,7 @@ export default function DaftarTryOut({
     keadaan: selesaiBuka.has(p.id) ? 'selesai' : selesaiTunggu.has(p.id) || judulTunggu.has(p.judul) ? 'menunggu' : 'belum',
     hrefMulai: awal(p),
     hrefHasil: hrefHasil(p.id),
+    hasil: selesaiBuka.has(p.id) ? isiHasil?.[p.id] : undefined,
   }))
 
   return paket.length === 0 ? (

@@ -1,13 +1,14 @@
-import RiwayatKemampuan from '@/components/tryout/RiwayatKemampuan'
+import type { ReactNode } from 'react'
+import { IsiHasil } from '@/components/tryout/RiwayatKemampuan'
 import { learnerAnak } from '@/lib/belajar/sesi'
 import { muatTryOut, tryOutSiswa } from '@/lib/reports/tryout-data'
 import { susunRiwayat, type MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
 
 /**
- * Hasil Try Out seorang anak: nilai dan kemampuan per bidang, dipakai di halaman akun keluarga
- * dan akun siswa (masuk dengan kode), supaya keduanya tetap di akunnya sendiri.
+ * Isi hasil tiap try out yang sudah dikerjakan seorang anak (kunci: id try out), untuk dipasang
+ * di dalam kartu try out itu, baik di akun keluarga maupun akun siswa.
  */
-export default async function HasilAnak({ studentId }: { studentId: string }) {
+export async function muatIsiHasil(studentId: string): Promise<Record<string, ReactNode>> {
   const learnerId = await learnerAnak(studentId)
   const riwayat = learnerId ? await tryOutSiswa(learnerId) : []
 
@@ -35,23 +36,10 @@ export default async function HasilAnak({ studentId }: { studentId: string }) {
       teks: data.teks,
     })
   }
-  const seri = susunRiwayat(masukan)
-
-  if (seri.length === 0) {
-    return (
-      <div className="rounded-xl bg-white p-4 shadow-kartu">
-        <p className="font-semibold tracking-tight text-gray-900">Belum ada hasil try out</p>
-        <p className="mt-1 text-sm text-gray-500">
-          Hasil try out muncul di sini setelah anak mengerjakan try out dan hasilnya dibuka oleh admin Bimbel Tera, biasanya setelah semua sesi try out selesai.
-        </p>
-      </div>
-    )
+  const hasil: Record<string, ReactNode> = {}
+  for (const m of masukan) {
+    const [mapel] = susunRiwayat([m])
+    if (mapel) hasil[m.quizId] = <IsiHasil m={mapel} />
   }
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold text-gray-900">Hasil</h2>
-      <RiwayatKemampuan riwayat={seri} />
-    </div>
-  )
+  return hasil
 }
