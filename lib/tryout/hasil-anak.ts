@@ -42,8 +42,6 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
       judul: data.judul,
       jenjang: data.jenjang,
       mapel: data.mapel,
-      info: data.info,
-      hasilDibuka: data.hasilDibuka,
       urut: data.urut,
       dikirim: p.dikirim,
       attemptId: p.attemptId,
