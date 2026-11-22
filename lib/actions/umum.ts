@@ -5,14 +5,67 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { COOKIE_KODE } from '@/lib/umum'
+import { catatSalah, terlaluBanyakSalah } from '@/lib/tryout/batas-kode'
 
-/** Masuk dengan kode peserta: kode benar -> cookie httpOnly 30 hari, lalu ke beranda umum. */
+/**
+ * Membuka sesi akun sungguhan untuk pemilik kode yang SUDAH punya akun, tanpa email dan password.
+ *
+ * Siswa bimbel: kodenya milik anak (`learners.profile_id` = profil siswa), dan siswa tidak login
+ * sendiri; yang login adalah akun keluarga yang tertaut padanya (`family_students`). Jadi kode
+ * membuka sesi akun keluarga itu, dan tampilannya sama persis dengan masuk lewat email. Pelanggan
+ * mandiri membuka akunnya sendiri. Sesinya dibuat dari tautan masuk sekali pakai (`generateLink`
+ * dan `verifyOtp` di server; tidak ada email yang dikirim). Mengembalikan alamat tujuan, atau
+ * null bila kode ini bukan milik orang yang punya akun.
+ */
+async function masukSebagaiAkun(kode: string): Promise<string | null> {
+  const admin = createAdminClient()
+  const { data: l } = await admin.from('learners').select('profile_id').eq('access_code', kode).maybeSingle()
+  const profilId = (l as { profile_id: string | null } | null)?.profile_id
+  if (!profilId) return null
+  const { data: profil } = await admin.from('profiles').select('role').eq('id', profilId).single()
+  const peran = (profil as { role: string } | null)?.role
+
+  let akunId: string | null = null
+  let tujuan: string | null = null
+  if (peran === 'student') {
+    const { data: keluarga } = await admin.from('family_students').select('family_id').eq('student_id', profilId).order('created_at').limit(1)
+    akunId = (keluarga as { family_id: string }[] | null)?.[0]?.family_id ?? null
+    tujuan = `/keluarga/${profilId}`
+  } else if (peran === 'mandiri') {
+    akunId = profilId
+    tujuan = '/mandiri'
+  }
+  if (!akunId || !tujuan) return null
+
+  const { data: pengguna } = await admin.auth.admin.getUserById(akunId)
+  const email = pengguna?.user?.email
+  if (!email) return null
+  const { data: tautan, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
+  const hash = tautan?.properties?.hashed_token
+  if (error || !hash) return null
+  const supabase = await createClient()
+  const { error: galatMasuk } = await supabase.auth.verifyOtp({ type: 'magiclink', token_hash: hash })
+  if (galatMasuk) return null
+  return tujuan
+}
+
+/**
+ * Masuk dengan kode peserta. Pemilik kode yang sudah punya akun (siswa bimbel, pelanggan) dimasukkan
+ * ke akunnya dan melihat tampilan yang sama dengan masuk lewat email. Peserta dari luar bimbel, yang
+ * belum punya akun, mendapat cookie httpOnly 30 hari dan beranda umum.
+ */
 export async function masukDenganKode(formData: FormData): Promise<void> {
   const kode = String(formData.get('kode') ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
   if (!kode) redirect('/login?tab=kode&galat=1')
+  if (await terlaluBanyakSalah()) redirect('/login?tab=kode&galat=2')
   const supabase = await createClient()
   const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
-  if (!nama) redirect('/login?tab=kode&galat=1')
+  if (!nama) {
+    await catatSalah()
+    redirect('/login?tab=kode&galat=1')
+  }
+  const tujuanAkun = await masukSebagaiAkun(kode)
+  if (tujuanAkun) redirect(tujuanAkun)
   ;(await cookies()).set(COOKIE_KODE, kode, {
     httpOnly: true,
     secure: true,

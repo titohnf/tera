@@ -34,6 +34,7 @@ function FormLogin() {
   const params = useSearchParams()
   const [tab, setTab] = useState<'email' | 'kode'>(params.get('tab') === 'kode' || params.get('tab') === 'umum' ? 'kode' : 'email')
   const galatKode = params.get('galat') === '1'
+  const terlaluSering = params.get('galat') === '2'
   const akunBaru = params.get('info') === 'akun'
   const supabase = createClient()
 
@@ -101,6 +102,9 @@ function FormLogin() {
               />
               <p className="mt-1 text-xs text-gray-500">Kode dikirim tutor lewat WhatsApp. Berlaku untuk siswa bimbel maupun peserta dari luar bimbel.</p>
             </div>
+            {terlaluSering && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Terlalu banyak percobaan. Tunggu beberapa menit, lalu coba lagi.</p>
+            )}
             {galatKode && (
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Kode tidak dikenal. Periksa lagi kodenya, atau tanya tutor.</p>
             )}
