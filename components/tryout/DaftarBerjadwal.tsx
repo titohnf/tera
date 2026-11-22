@@ -70,6 +70,33 @@ function warnaThumbnail(mapel: string): string {
   return 'bg-slate-600'
 }
 
+/** Ikon sederhana (garis putih) di atas teks thumbnail, menurut mata pelajaran. */
+function IkonMapel({ mapel }: { mapel: string }) {
+  const m = mapel.toLowerCase()
+  const sifat = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', className: 'h-9 w-9', 'aria-hidden': true } as const
+  if (m.includes('matematika'))
+    return (
+      <svg {...sifat}>
+        <rect x="5" y="3" width="14" height="18" rx="2.5" />
+        <path d="M8.5 7.5h7" />
+        <path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" strokeWidth={2.4} />
+      </svg>
+    )
+  if (m.includes('indonesia'))
+    return (
+      <svg {...sifat}>
+        <path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2Z" />
+        <path d="M12 6.5v13" />
+      </svg>
+    )
+  return (
+    <svg {...sifat}>
+      <rect x="5.5" y="4.5" width="13" height="17" rx="2.5" />
+      <path d="M9.5 4.5V3h5v1.5M9 13l2.2 2.2L15.5 11" />
+    </svg>
+  )
+}
+
 /** Tahun ajaran dimulai Juli: Juli–Desember 2026 = 2026/2027, Januari–Juni 2027 = 2026/2027 (WIB). */
 function tahunAjaran(iso: string | number): string {
   const [th, bln] = tanggalWib(iso).split('-').map(Number)
@@ -152,9 +179,10 @@ export default function DaftarBerjadwal({
             return (
               <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                 <div className="flex">
-                  <div className={`flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-3 text-center text-white ${warnaThumbnail(p.mapel)}`} aria-hidden>
-                    <span className="text-[11px] font-semibold tracking-widest text-white/80">TO TKA</span>
-                    <span className="break-words text-sm font-bold leading-tight">{p.mapel}</span>
+                  <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center text-white sm:w-36 ${warnaThumbnail(p.mapel)}`} aria-hidden>
+                    <IkonMapel mapel={p.mapel} />
+                    <span className="mt-1 text-xs font-semibold tracking-widest text-white/80">TO TKA</span>
+                    <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
                   <div className="min-w-0 flex-1 px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
