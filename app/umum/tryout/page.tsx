@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
+import { jenjangPeserta } from '@/lib/tryout/jenjang-anak'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { createClient } from '@/lib/supabase/server'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
@@ -11,16 +12,13 @@ export default async function TryOutUmum() {
   const { kode, studentId } = await umumContext()
   await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}/tryout`)
   const supabase = await createClient()
-  const [paket, { data }, { data: penguji }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode }), supabase.rpc('peserta_penguji', { p_kode: kode })])
+  const [semuaPaket, { data }, { data: penguji }, jenjang] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode }), supabase.rpc('peserta_penguji', { p_kode: kode }), jenjangPeserta(kode)])
+  // Hanya try out yang ditujukan untuk jenjang peserta; jenjang yang belum diisi menampilkan semuanya.
+  const paket = semuaPaket.filter((p) => !jenjang || p.jenjang === jenjang || p.jenjang === 'Lainnya')
   return (
     <div className="space-y-5">
-      <Link href="/umum" className="text-sm text-gray-500 underline">← Beranda</Link>
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
-          Kode pesertamu: <span className="font-mono font-semibold tracking-widest text-gray-900">{kode}</span>
-        </p>
-      </div>
+      <RemahRoti item={[{ label: 'Beranda', href: '/umum' }, { label: 'Try Out' }]} />
+      <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}

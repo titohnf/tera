@@ -14,3 +14,10 @@ export async function jenjangAnak(studentId: string): Promise<string | null> {
   if (kelas >= 10 && kelas <= 12) return 'SMA'
   return null
 }
+
+/** Jenjang peserta umum menurut kodenya (`learners.jenjang`, diisi admin), atau null bila belum diisi. */
+export async function jenjangPeserta(kode: string): Promise<string | null> {
+  const { data } = await createAdminClient().from('learners').select('jenjang').eq('access_code', kode).maybeSingle()
+  const j = String((data as { jenjang: string | null } | null)?.jenjang ?? '').trim().toUpperCase()
+  return ['SD', 'SMP', 'SMA'].includes(j) ? j : null
+}

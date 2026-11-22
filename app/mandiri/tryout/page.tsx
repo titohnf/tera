@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { mandiriContext } from '@/lib/mandiri'
 import { createClient } from '@/lib/supabase/server'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
@@ -14,7 +14,7 @@ export default async function TryOutMandiri() {
   const [paket, { data }, { data: penguji }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_tryout_saya'), supabase.rpc('akun_penguji')])
   return (
     <div className="space-y-5">
-      <Link href="/mandiri" className="text-sm text-gray-500 underline">← Beranda</Link>
+      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Try Out' }]} />
       <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
       <DaftarTryOut
         paket={paket}
