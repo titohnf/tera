@@ -105,7 +105,7 @@ export default function BottomNav({
          geser iPhone; tanpa itu label paling bawah tertutup separuh. */
       className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="max-w-5xl mx-auto grid grid-cols-4">
+      <div className="max-w-5xl mx-auto grid grid-cols-3">
         {ITEMS.map((it) => {
           /* `diPortal` menjaga agar di luar portal TIDAK ada yang menyala
              lewat `cocok`: `sisa` di sana kosong, dan "Beranda" cocok dengan
