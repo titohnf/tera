@@ -34,13 +34,15 @@ export interface PercobaanTryOut {
   skor: number | null
 }
 
-/** Teks soal untuk ditampilkan ke orang tua. Tanpa kunci dan pembahasan. */
+/** Soal beserta jawaban anak, kunci, dan pembahasannya, untuk halaman orang tua. */
 export interface TeksSoal {
+  tipe: string
   prompt: string
-  /** Pilihan atau pernyataan, sudah diratakan menjadi daftar teks (kosong bila tidak ada). */
-  pilihan: string[]
-  /** 'pilihan' untuk daftar huruf A, B, C; 'pernyataan' untuk daftar butir. */
-  jenis: 'pilihan' | 'pernyataan'
+  opsi: unknown
+  kunci: unknown
+  pembahasan: string | null
+  /** Yang dikirim anak pada percobaan yang dimaksud; null bila dilewati. */
+  jawaban: unknown
 }
 
 export interface DataTryOut {
@@ -94,7 +96,7 @@ export async function daftarTryOut(): Promise<RingkasTryOut[]> {
 }
 
 /** Seluruh data satu try out, atau null bila bukan try out yang terbit. */
-export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean } = {}): Promise<DataTryOut | null> {
+export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean; attemptId?: string } = {}): Promise<DataTryOut | null> {
   const admin = createAdminClient()
   const { data: kuis } = await admin.from('quizzes').select('id, title, kind, created_at, settings').eq('id', quizId).maybeSingle()
   if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return null
@@ -114,12 +116,14 @@ export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean } 
   }
   const teks: Record<string, TeksSoal> = {}
   if (opsi.denganTeks) {
-    const r = await admin.from('questions').select('id, prompt, options').eq('quiz_id', quizId)
-    for (const q of (r.data ?? []) as { id: string; prompt: string; options: unknown }[]) {
-      const o = q.options as { choices?: unknown; statements?: unknown } | null
-      const daftar = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string') : [])
-      const jenis = o && Array.isArray(o.statements) ? 'pernyataan' : 'pilihan'
-      teks[q.id] = { prompt: q.prompt, pilihan: daftar(jenis === 'pernyataan' ? o?.statements : o?.choices), jenis }
+    const r = await admin.from('questions').select('id, type, prompt, options, correct_answer, explanation').eq('quiz_id', quizId)
+    const jawab = new Map<string, unknown>()
+    if (opsi.attemptId) {
+      const j = await admin.from('answers').select('question_id, response').eq('attempt_id', opsi.attemptId)
+      for (const x of (j.data ?? []) as { question_id: string; response: unknown }[]) jawab.set(x.question_id, x.response)
+    }
+    for (const q of (r.data ?? []) as { id: string; type: string; prompt: string; options: unknown; correct_answer: unknown; explanation: string | null }[]) {
+      teks[q.id] = { tipe: q.type, prompt: q.prompt, opsi: q.options, kunci: q.correct_answer, pembahasan: q.explanation, jawaban: jawab.get(q.id) ?? null }
     }
   }
   const soal: SoalAnalisis[] = soalMentah.map((s) => ({

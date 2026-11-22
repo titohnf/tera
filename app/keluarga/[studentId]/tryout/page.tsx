@@ -67,7 +67,7 @@ export default async function TryOutKeluargaPage({
 
   const masukan: MasukanTryOut[] = []
   for (const [quizId, p] of terbaruPerKuis) {
-    const data = await muatTryOut(quizId, { denganTeks: true })
+    const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
     if (!data) continue
     const saya = data.percobaan.find((x) => x.id === p.attemptId)
     if (!saya) continue

@@ -123,6 +123,53 @@ export default function TinjauanSesi({
 }
 
 /**
+ * Jawaban anak, jawaban yang benar, dan pembahasan untuk SATU soal, dipakai juga
+ * oleh hasil try out. Isinya sama dengan badan kartu di `TinjauanSesi`.
+ */
+export function RincianJawaban({
+  soal,
+  jawaban: jawabanMentah,
+  kunci: kunciMentah,
+  pembahasan,
+  hasil,
+  nama,
+}: {
+  soal: SoalLatihan
+  jawaban: unknown
+  kunci: unknown
+  pembahasan: string | null
+  hasil: HasilSoal
+  nama: string
+}) {
+  const jawaban = bacaJawaban(soal, jawabanMentah)
+  const kunci = bacaKunci(soal, kunciMentah)
+  return (
+    <>
+      <div className="mt-3 space-y-2">
+        {jawaban && kunci && sejajar(jawaban, kunci) ? (
+          <Perbandingan jawaban={jawaban} kunci={kunci} />
+        ) : (
+          <>
+            {jawaban ? (
+              <Jawaban judul={`Jawaban ${nama}`} baris={jawaban} nada={NADA[hasil]} />
+            ) : (
+              <p className="text-sm text-gray-400">Soal ini dilewati.</p>
+            )}
+            {hasil !== 'benar' && kunci && <Jawaban judul="Jawaban benar" baris={kunci} nada={NADA.benar} />}
+          </>
+        )}
+      </div>
+      {pembahasan && (
+        <div className="mt-3 rounded-lg bg-white p-3">
+          <p className="text-xs font-semibold text-gray-500">Pembahasan</p>
+          <IsiSoal text={pembahasan} className="mt-1 text-sm leading-relaxed text-gray-700" />
+        </div>
+      )}
+    </>
+  )
+}
+
+/**
  * Warna tiap keadaan. Sekeluarga dengan umpan balik yang dilihat anaknya saat
  * mengerjakan (`PelariSesi`) — layar ini menceritakan ulang momen itu, jadi
  * warnanya tidak boleh jadi bahasa kedua.

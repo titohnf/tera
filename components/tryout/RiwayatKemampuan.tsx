@@ -1,5 +1,7 @@
 import type { ButirRiwayat, RiwayatMapel, StatusButir, TopikPerTryOut } from '@/lib/tryout/riwayat-kemampuan'
 import IsiSoal from '@/components/belajar/IsiSoal'
+import { RincianJawaban } from '@/components/belajar/TinjauanSesi'
+import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
 import { tanggalPanjang } from '@/lib/waktu-relatif'
 
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -22,6 +24,8 @@ const TANDA: Record<StatusButir, { teks: string; kelas: string; sr: string }> = 
 function Butir({ butir }: { butir: ButirRiwayat }) {
   const t = TANDA[butir.status]
   const teks = butir.teks
+  const pilihan = (teks?.opsi as { choices?: unknown } | null)?.choices
+  const daftarPilihan = Array.isArray(pilihan) ? pilihan.filter((v): v is string => typeof v === 'string') : []
   return (
     <details className="group py-0.5">
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-md px-1 py-1.5 hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
@@ -37,23 +41,24 @@ function Butir({ butir }: { butir: ButirRiwayat }) {
         {teks ? (
           <>
             <IsiSoal text={teks.prompt} className="text-sm leading-relaxed text-gray-900" />
-            {teks.pilihan.length > 0 &&
-              (teks.jenis === 'pilihan' ? (
-                <ol className="mt-2 space-y-1 text-sm text-gray-700">
-                  {teks.pilihan.map((p, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
-                      <span className="min-w-0 flex-1">{p}</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-                  {teks.pilihan.map((p, i) => (
-                    <li key={i}>{p}</li>
-                  ))}
-                </ul>
-              ))}
+            {daftarPilihan.length > 0 && (
+              <ol className="mt-2 space-y-1 text-sm text-gray-700">
+                {daftarPilihan.map((p, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
+                    <span className="min-w-0 flex-1">{p}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <RincianJawaban
+              soal={{ id: String(butir.nomor), tipe: teks.tipe as TipeSoal, prompt: teks.prompt, opsi: teks.opsi as OpsiSoal, bobot: 1 }}
+              jawaban={teks.jawaban}
+              kunci={teks.kunci}
+              pembahasan={teks.pembahasan}
+              hasil={teks.jawaban === null || teks.jawaban === undefined ? 'belum' : butir.status}
+              nama="anak"
+            />
           </>
         ) : (
           <p className="text-sm text-gray-400">Soal ini tidak dapat ditampilkan.</p>
@@ -154,7 +159,7 @@ export default function RiwayatKemampuan({ riwayat }: { riwayat: RiwayatMapel[] 
                     </div>
                   )
                 })}
-                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk melihat soalnya</p>
+                <p className="text-xs text-gray-400">✓ benar · ◐ sebagian benar · ✗ salah · ketuk nomor untuk melihat soal, jawaban, dan pembahasan</p>
               </div>
             )}
           </section>
