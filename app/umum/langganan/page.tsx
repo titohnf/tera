@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { umumContext } from '@/lib/umum'
 import { tautanWaAdmin } from '@/lib/kontak'
 
@@ -8,7 +8,7 @@ export default async function LanggananUmum() {
   const { kode, nama } = await umumContext()
   return (
     <div className="space-y-5">
-      <Link href="/umum" className="text-sm text-gray-500 underline">← Beranda</Link>
+      <RemahRoti item={[{ label: 'Beranda', href: '/umum' }, { label: 'Langganan' }]} />
       <div>
         <h1 className="text-xl font-bold tracking-tight text-gray-900">Berlangganan Tera</h1>
         <p className="mt-0.5 text-sm text-gray-500">Buka semua yang terkunci di berandamu.</p>

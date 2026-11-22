@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { createClient } from '@/lib/supabase/server'
 import { mandiriContext } from '@/lib/mandiri'
 
@@ -53,6 +53,7 @@ export default async function LanggananMandiri() {
 
   return (
     <div className="space-y-4">
+      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Akun', href: '/mandiri/akun' }, { label: 'Langganan' }]} />
       <div>
         <h1 className="text-xl font-bold tracking-tight text-gray-900">Langganan</h1>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -123,12 +124,6 @@ export default async function LanggananMandiri() {
         </div>
       )}
 
-      <Link
-        href="/mandiri"
-        className="block text-center text-sm font-medium text-blue-600 py-2"
-      >
-        Kembali ke beranda
-      </Link>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { anakOrRedirect } from '@/lib/keluarga'
 import { alamatMateri } from '@/lib/belajar/alamat-materi'
 import { daftarMateriInteraktif } from '@/lib/materi-interaktif'
@@ -10,10 +11,8 @@ export default async function MateriSiswaPage({ params }: { params: Promise<{ st
   return (
     <div className="space-y-3">
       <div>
-        <Link href={`/siswa/${studentId}`} className="text-sm text-gray-500 hover:text-gray-900">
-          ← Beranda
-        </Link>
-        <h1 className="mt-1 text-xl font-bold tracking-tight text-gray-900">Materi</h1>
+        <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Materi' }]} />
+        <h1 className="mt-3 text-xl font-bold tracking-tight text-gray-900">Materi</h1>
         <p className="text-sm text-gray-500 mt-0.5">Belajar dulu, baru berlatih.</p>
       </div>
       <ul className="space-y-2">

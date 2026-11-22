@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RemahRoti from '@/components/siswa/RemahRoti'
 import { redirect } from 'next/navigation'
 import { umumContext } from '@/lib/umum'
 import { buatAkunDariKode } from '@/lib/actions/umum'
@@ -24,7 +24,7 @@ export default async function AkunUmumPage({ searchParams }: { searchParams: Pro
   const { galat } = await searchParams
   return (
     <div className="space-y-5">
-      <Link href="/umum" className="text-sm text-gray-500 underline">← Beranda</Link>
+      <RemahRoti item={[{ label: 'Beranda', href: '/umum' }, { label: 'Akun' }]} />
       <div>
         <h1 className="text-xl font-bold tracking-tight text-gray-900">Amankan akunmu</h1>
         <p className="mt-0.5 text-sm text-gray-500">
