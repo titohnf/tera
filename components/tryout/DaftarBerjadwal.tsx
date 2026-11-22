@@ -146,43 +146,42 @@ export default function DaftarBerjadwal({
             const Ikon = IKON[golonganMapel(p.mapel)]
             return (
               <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
-                <div className="flex">
+                <div className="flex flex-wrap items-stretch">
                   <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:w-36 ${WARNA[golonganMapel(p.mapel)]}`} aria-hidden>
                     <Ikon size={36} strokeWidth={1.75} />
                     <span className="mt-1 text-xs font-semibold tracking-widest opacity-70">TO TKA</span>
                     <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
-                  <div className="min-w-0 flex-1 px-4 py-3">
-                    <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  <div className="min-w-[12rem] flex-1 px-4 py-3">
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
+                    <p className="mt-1.5 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
                       {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
-                    </div>
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</p>
-                      <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
                     </div>
                     <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
                       <IkonKalender />
                       <span className="min-w-0">{tanggalPengerjaan(p)}</span>
                     </p>
                   </div>
+                  {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
+                    // Di ujung kanan, di tengah antara sisi atas dan bawah kartu; di layar sempit turun ke bawah, tetap di kanan.
+                    <div className="ml-auto flex shrink-0 items-center px-4 py-3">
+                      {p.keadaan === 'belum' ? (
+                        <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => alih(p.id)}
+                          aria-expanded={terbuka.has(p.id)}
+                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                        >
+                          {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
-                  <div className="flex justify-center border-t border-gray-100 px-4 py-3">
-                    {p.keadaan === 'belum' ? (
-                      <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => alih(p.id)}
-                        aria-expanded={terbuka.has(p.id)}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                      >
-                        {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
-                      </button>
-                    )}
-                  </div>
-                )}
                 {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="border-t border-gray-100 px-4 py-3">{p.hasil}</div>}
               </div>
             )
