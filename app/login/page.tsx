@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Suspense, useState } from 'react'
+import { useFormStatus } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { tautanWaAdmin } from '@/lib/kontak'
@@ -20,6 +21,22 @@ function tujuanAman(next: string | null): string {
   if (!next) return '/'
   if (!next.startsWith('/') || next.startsWith('//')) return '/'
   return next
+}
+
+/** Tombol kirim form-aksi: menyala dengan putaran dan tulisan "Memproses..." selama aksi server berjalan. */
+function TombolMasukKode() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-blue-400"
+    >
+      {pending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
+      {pending ? 'Memproses...' : 'Masuk'}
+    </button>
+  )
 }
 
 function FormLogin() {
@@ -52,6 +69,7 @@ function FormLogin() {
       // sana, bukan ke berandanya.
       const next = new URLSearchParams(window.location.search).get('next')
       window.location.href = tujuanAman(next)
+      return // tombol tetap "Memproses..." sampai halaman berpindah
     }
     setLoading(false)
   }
@@ -108,9 +126,7 @@ function FormLogin() {
             {galatKode && (
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Kode tidak dikenal. Periksa lagi kodenya, atau tanya tutor.</p>
             )}
-            <button type="submit" className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-              Masuk
-            </button>
+            <TombolMasukKode />
           </form>
         ) : (
         <>
@@ -151,8 +167,10 @@ function FormLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
+            aria-busy={loading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed transition-colors disabled:bg-blue-400"
           >
+            {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
