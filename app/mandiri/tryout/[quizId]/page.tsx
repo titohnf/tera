@@ -1,23 +1,22 @@
+import { notFound } from 'next/navigation'
 import { mandiriContext } from '@/lib/mandiri'
-import { createClient } from '@/lib/supabase/server'
-import HalamanHasil from '@/components/tryout/HalamanHasil'
-import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
+import DetailPembahasan from '@/components/tryout/DetailPembahasan'
+import RemahRoti from '@/components/siswa/RemahRoti'
+import { muatDetailAkun } from '@/lib/tryout/hasil-anak'
 
-export const metadata = { title: 'Hasil Try Out' }
+export const metadata = { title: 'Detail dan Pembahasan Try Out' }
 export const dynamic = 'force-dynamic'
 
-export default async function HasilTryOutMandiri({ params }: { params: Promise<{ quizId: string }> }) {
+/** Akun mandiri (langganan): soal berurutan nomor dengan jawaban, kunci, dan pembahasan. */
+export default async function PembahasanTryOutMandiri({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId } = await params
-  const { nama } = await mandiriContext()
-  const supabase = await createClient()
-  const { data } = await supabase.rpc('hasil_tryout_saya')
+  const { user } = await mandiriContext()
+  const d = await muatDetailAkun(user.id, quizId)
+  if (!d) notFound()
   return (
-    <HalamanHasil
-      hasil={(data as HasilTryOut | null) ?? null}
-      quizId={quizId}
-      nama={nama}
-      ctaHref="/mandiri/langganan"
-      kembaliHref="/mandiri/tryout"
-    />
+    <div className="space-y-4">
+      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Try Out', href: '/mandiri/tryout' }, { label: 'Pembahasan' }]} />
+      <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} mulai={d.mulai} />
+    </div>
   )
 }

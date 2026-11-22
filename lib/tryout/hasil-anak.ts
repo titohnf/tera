@@ -4,13 +4,14 @@ import { muatTryOut, tryOutSiswa, type DataTryOut } from '@/lib/reports/tryout-d
 import type { MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
 
 /** Percobaan TERBARU seorang anak pada tiap try out yang hasilnya sudah dibuka admin (quizId → percobaan). */
-async function percobaanTerbaru(studentId: string): Promise<Map<string, { attemptId: string; dikirim: string }>> {
-  const learnerId = await learnerAnak(studentId)
+async function percobaanTerbaruLearner(learnerId: string | null): Promise<Map<string, { attemptId: string; dikirim: string }>> {
   const riwayat = learnerId ? await tryOutSiswa(learnerId) : []
   const terbaru = new Map<string, { attemptId: string; dikirim: string }>()
   for (const r of riwayat) if (!terbaru.has(r.quizId)) terbaru.set(r.quizId, { attemptId: r.attemptId, dikirim: r.dikirim })
   return terbaru
 }
+
+const percobaanTerbaru = async (studentId: string) => percobaanTerbaruLearner(await learnerAnak(studentId))
 
 function nilaiDari(data: DataTryOut, attemptId: string): number | null {
   const saya = data.percobaan.find((x) => x.id === attemptId)
@@ -53,9 +54,9 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
   return masukan
 }
 
-/** Satu try out beserta soal, jawaban anak, kunci, dan pembahasan; null bila belum dikerjakan atau hasilnya belum dibuka. */
-export async function muatDetailAnak(studentId: string, quizId: string): Promise<{ data: DataTryOut; attemptId: string; nilai: number | null; dikirim: string; mulai: string | null } | null> {
-  const p = (await percobaanTerbaru(studentId)).get(quizId)
+/** Satu try out beserta soal, jawaban, kunci, dan pembahasan milik seorang learner; null bila belum dikerjakan atau hasilnya belum dibuka. */
+export async function muatDetailLearner(learnerId: string | null, quizId: string): Promise<DetailTryOut | null> {
+  const p = (await percobaanTerbaruLearner(learnerId)).get(quizId)
   if (!p) return null
   const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
   if (!data) return null
@@ -63,4 +64,29 @@ export async function muatDetailAnak(studentId: string, quizId: string): Promise
   const { data: percobaan } = await createAdminClient().from('attempts').select('started_at').eq('id', p.attemptId).maybeSingle()
   const mulai = (percobaan as { started_at: string | null } | null)?.started_at ?? null
   return { data, attemptId: p.attemptId, nilai: nilaiDari(data, p.attemptId), dikirim: p.dikirim, mulai }
+}
+
+export interface DetailTryOut {
+  data: DataTryOut
+  attemptId: string
+  nilai: number | null
+  dikirim: string
+  mulai: string | null
+}
+
+/** Untuk akun keluarga dan siswa (kode): learner-nya dicari lewat anak. */
+export async function muatDetailAnak(studentId: string, quizId: string): Promise<DetailTryOut | null> {
+  return muatDetailLearner(await learnerAnak(studentId), quizId)
+}
+
+/** Untuk peserta umum: learner-nya dicari lewat kode peserta (yang sudah divalidasi pemanggil). */
+export async function muatDetailPesertaKode(kode: string, quizId: string): Promise<DetailTryOut | null> {
+  const { data } = await createAdminClient().from('learners').select('id').eq('access_code', kode).maybeSingle()
+  return muatDetailLearner((data as { id: string } | null)?.id ?? null, quizId)
+}
+
+/** Untuk akun mandiri: learner-nya adalah yang terpaut ke profil akun itu. */
+export async function muatDetailAkun(profileId: string, quizId: string): Promise<DetailTryOut | null> {
+  const { data } = await createAdminClient().from('learners').select('id').eq('profile_id', profileId).maybeSingle()
+  return muatDetailLearner((data as { id: string } | null)?.id ?? null, quizId)
 }

@@ -1,25 +1,23 @@
+import { notFound } from 'next/navigation'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
-import { createClient } from '@/lib/supabase/server'
-import HalamanHasil from '@/components/tryout/HalamanHasil'
-import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
+import DetailPembahasan from '@/components/tryout/DetailPembahasan'
+import RemahRoti from '@/components/siswa/RemahRoti'
+import { muatDetailPesertaKode } from '@/lib/tryout/hasil-anak'
 
-export const metadata = { title: 'Hasil Try Out' }
+export const metadata = { title: 'Detail dan Pembahasan Try Out' }
 export const dynamic = 'force-dynamic'
 
-export default async function HasilTryOutUmum({ params }: { params: Promise<{ quizId: string }> }) {
+/** Peserta umum (masuk dengan kode): soal berurutan nomor dengan jawaban, kunci, dan pembahasan. */
+export default async function PembahasanTryOutUmum({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId } = await params
-  const { kode, nama, studentId } = await umumContext()
-  await alihkanKeTampilanSiswa(studentId, (id) => `/keluarga/${id}/tryout#hasil-${quizId}`)
-  const supabase = await createClient()
-  const { data } = await supabase.rpc('hasil_peserta_tryout', { p_kode: kode })
+  const { kode, studentId } = await umumContext()
+  await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}/tryout/${quizId}`)
+  const d = await muatDetailPesertaKode(kode, quizId)
+  if (!d) notFound()
   return (
-    <HalamanHasil
-      hasil={(data as HasilTryOut | null) ?? null}
-      quizId={quizId}
-      nama={nama}
-      ctaHref="/umum/langganan"
-      kode={kode}
-      kembaliHref="/umum/tryout"
-    />
+    <div className="space-y-4">
+      <RemahRoti item={[{ label: 'Beranda', href: '/umum' }, { label: 'Try Out', href: '/umum/tryout' }, { label: 'Pembahasan' }]} />
+      <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} mulai={d.mulai} />
+    </div>
   )
 }
