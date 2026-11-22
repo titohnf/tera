@@ -11,7 +11,7 @@ export default async function TryOutUmum() {
   const { kode, studentId } = await umumContext()
   await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}/tryout`)
   const supabase = await createClient()
-  const [paket, { data }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode })])
+  const [paket, { data }, { data: penguji }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode }), supabase.rpc('peserta_penguji', { p_kode: kode })])
   return (
     <div className="space-y-5">
       <Link href="/umum" className="text-sm text-gray-500 underline">← Beranda</Link>
@@ -27,6 +27,7 @@ export default async function TryOutUmum() {
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/umum/tryout/${id}`}
         kode={kode}
+        lewatiJadwal={penguji === true}
       />
     </div>
   )

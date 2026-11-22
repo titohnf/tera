@@ -35,6 +35,7 @@ export default function DaftarTryOut({
   petunjukMasuk,
   hrefHasil,
   kode,
+  lewatiJadwal = false,
 }: {
   paket: PaketTersedia[]
   hasil: HasilTryOut | null
@@ -42,6 +43,8 @@ export default function DaftarTryOut({
   /** Halaman hasil satu try out (di Tera, tanpa kode atau login lagi). */
   hrefHasil: (quizId: string) => string
   kode?: string
+  /** Akun penguji: tombol Mulai tidak menunggu jadwal. */
+  lewatiJadwal?: boolean
 }) {
   const selesaiBuka = new Set((hasil?.paket ?? []).map((p) => p.quiz_id))
   const selesaiTunggu = new Set((hasil?.menunggu ?? []).map((m) => m.quiz_id).filter(Boolean) as string[])
@@ -91,7 +94,7 @@ export default function DaftarTryOut({
                     {!sudah && (
                       // Satu alamat: Sora ada di bawah /tryout. Peserta berkode dibawa dengan `?kode=`,
                       // akun dengan `?akun=1` (sesinya sudah dibagi), jadi layar Selamat Datang dilewati.
-                      <TombolMulai href={awal(p)} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarang} />
+                      <TombolMulai href={awal(p)} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarang} lewati={lewatiJadwal} />
                     )}
                     {sudah && buka && (
                       <Link href={hrefHasil(p.id)} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">

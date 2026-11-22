@@ -16,17 +16,20 @@ export default function TombolMulai({
   bukaPada,
   tutupPada,
   sekarangServer,
+  lewati = false,
 }: {
   href: string
   bukaPada: string | null
   tutupPada: string | null
   sekarangServer: number
+  /** Penguji (akun uji pemilik): jadwal diabaikan, tombol selalu menyala. */
+  lewati?: boolean
 }) {
   const [selisih] = useState(() => sekarangServer - Date.now())
   const [now, setNow] = useState(sekarangServer)
   const [membuka, setMembuka] = useState(false)
-  const buka = bukaPada ? new Date(bukaPada).getTime() : null
-  const tutup = tutupPada ? new Date(tutupPada).getTime() : null
+  const buka = !lewati && bukaPada ? new Date(bukaPada).getTime() : null
+  const tutup = !lewati && tutupPada ? new Date(tutupPada).getTime() : null
 
   useEffect(() => {
     if (buka === null || Date.now() + selisih >= buka) return

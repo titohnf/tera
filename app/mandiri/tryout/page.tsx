@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export default async function TryOutMandiri() {
   await mandiriContext()
   const supabase = await createClient()
-  const [paket, { data }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_tryout_saya')])
+  const [paket, { data }, { data: penguji }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_tryout_saya'), supabase.rpc('akun_penguji')])
   return (
     <div className="space-y-5">
       <Link href="/mandiri" className="text-sm text-gray-500 underline">← Beranda</Link>
@@ -21,6 +21,7 @@ export default async function TryOutMandiri() {
         hasil={(data as HasilTryOut | null) ?? null}
         petunjukMasuk='Di layar masuk, pilih "Akun Tera" lalu masuk dengan email dan password akunmu.'
         hrefHasil={(id) => `/mandiri/tryout/${id}`}
+        lewatiJadwal={penguji === true}
       />
     </div>
   )
