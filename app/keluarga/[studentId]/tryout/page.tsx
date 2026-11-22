@@ -4,10 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
-import { learnerAnak } from '@/lib/belajar/sesi'
-import RiwayatKemampuan from '@/components/tryout/RiwayatKemampuan'
-import { susunRiwayat, type MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan'
-import { muatTryOut, tryOutSiswa } from '@/lib/reports/tryout-data'
+import HasilAnak from '@/components/tryout/HasilAnak'
 
 export const metadata = { title: 'Try Out' }
 
@@ -25,9 +22,6 @@ export default async function TryOutKeluargaPage({
 }) {
   const { studentId } = await params
   await anakOrRedirect(studentId)
-
-  const learnerId = await learnerAnak(studentId)
-  const riwayat = learnerId ? await tryOutSiswa(learnerId) : []
 
   // Try out yang bisa dikerjakan: tombol Mulai membawa anak ke Sora dengan kodenya sendiri
   // (dibuatkan bila belum ada), jadi tidak perlu mengetik apa pun. Yang sudah dikirim ditandai
@@ -61,51 +55,10 @@ export default async function TryOutKeluargaPage({
     />
   )
 
-  // Satu percobaan per try out, memakai percobaan TERBARU anak ini di try out itu.
-  const terbaruPerKuis = new Map<string, { attemptId: string; dikirim: string }>()
-  for (const r of riwayat) if (!terbaruPerKuis.has(r.quizId)) terbaruPerKuis.set(r.quizId, { attemptId: r.attemptId, dikirim: r.dikirim })
-
-  const masukan: MasukanTryOut[] = []
-  for (const [quizId, p] of terbaruPerKuis) {
-    const data = await muatTryOut(quizId, { denganTeks: true, attemptId: p.attemptId })
-    if (!data) continue
-    const saya = data.percobaan.find((x) => x.id === p.attemptId)
-    if (!saya) continue
-    masukan.push({
-      quizId,
-      judul: data.judul,
-      jenjang: data.jenjang,
-      mapel: data.mapel,
-      urut: data.urut,
-      dikirim: p.dikirim,
-      attemptId: p.attemptId,
-      nilai: data.bobotTotal > 0 && saya.skor !== null ? (saya.skor / data.bobotTotal) * 100 : null,
-      soal: data.soal,
-      skor: data.skor,
-      teks: data.teks,
-    })
-  }
-  const seri = susunRiwayat(masukan)
-
-  if (seri.length === 0) {
-    return (
-      <div className="space-y-6">
-      {daftar}
-      <div className="rounded-xl bg-white p-4 shadow-kartu">
-        <p className="font-semibold tracking-tight text-gray-900">Belum ada hasil try out</p>
-        <p className="mt-1 text-sm text-gray-500">
-          Hasil try out muncul di sini setelah anak mengerjakan try out dan hasilnya dibuka oleh admin Bimbel Tera, biasanya setelah semua sesi try out selesai.
-        </p>
-      </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       {daftar}
-      <h2 className="text-base font-semibold text-gray-900">Hasil</h2>
-      <RiwayatKemampuan riwayat={seri} />
+      <HasilAnak studentId={studentId} />
     </div>
   )
 }

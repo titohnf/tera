@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
+import HasilAnak from '@/components/tryout/HasilAnak'
 import { kodeAnak } from '@/lib/tryout/kode-anak'
 
 export const metadata = { title: 'Try Out' }
@@ -43,9 +44,10 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
         paket={paket}
         hasil={hasil}
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
-        hrefHasil={(id) => `/keluarga/${studentId}/tryout#hasil-${id}`}
+        hrefHasil={(id) => `#hasil-${id}`}
         kode={kode?.kode}
       />
+      <HasilAnak studentId={studentId} />
     </div>
   )
 }

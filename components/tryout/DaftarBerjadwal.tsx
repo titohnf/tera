@@ -60,12 +60,16 @@ function status(p: ItemBerjadwal, sekarang: number): { teks: string; kelas: stri
   return { teks: buka !== null ? 'Sedang dibuka' : 'Belum dikerjakan', kelas: 'bg-blue-100 text-blue-800' }
 }
 
-function Baris({ label, isi }: { label: string; isi: string }) {
+function Kapsul({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
+}
+
+function IkonKalender() {
   return (
-    <div className="flex gap-3 text-sm">
-      <dt className="w-32 shrink-0 text-gray-500">{label}</dt>
-      <dd className="min-w-0 flex-1 text-gray-900">{isi}</dd>
-    </div>
+    <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <rect x="3" y="4.5" width="14" height="12" rx="2" />
+      <path d="M3 8.5h14M7 3v3M13 3v3" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -113,6 +117,8 @@ export default function DaftarBerjadwal({
         ))}
       </div>
 
+      {paket.some((p) => p.keadaan === 'belum') && <p className="text-xs text-gray-500">{petunjukMasuk}</p>}
+
       {isi.length === 0 ? (
         <p className="rounded-xl bg-white p-5 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
           {aktif === 'hari-ini' && 'Tidak ada try out hari ini.'}
@@ -120,35 +126,33 @@ export default function DaftarBerjadwal({
           {aktif === 'akan-datang' && 'Belum ada try out yang akan datang.'}
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {isi.map((p) => {
             const st = status(p, sekarangServer)
+            const aksen = urutMapel(p.mapel) === 0 ? 'border-l-blue-600' : urutMapel(p.mapel) === 1 ? 'border-l-amber-500' : 'border-l-slate-400'
             return (
-              <div key={p.id} className="rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="min-w-0 text-base font-semibold tracking-tight text-gray-900">{p.judul}</p>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.kelas}`}>{st.teks}</span>
+              <div key={p.id} className={`rounded-xl border-l-4 bg-white px-4 py-3 shadow-sm ring-1 ring-gray-900/5 ${aksen}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
+                  <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
                 </div>
-                <dl className="mt-3 space-y-1.5">
-                  <Baris label="Target siswa" isi={`${p.jenjang}${p.kelas ? ` · Kelas ${p.kelas}` : ''}`} />
-                  <Baris label="Mata pelajaran" isi={p.mapel} />
-                  <Baris label="Tanggal pengerjaan" isi={tanggalPengerjaan(p)} />
-                  {p.menit ? <Baris label="Durasi" isi={`${p.menit} menit`} /> : null}
-                </dl>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs text-gray-500">{p.keadaan === 'belum' ? petunjukMasuk : 'Kamu sudah mengerjakan try out ini'}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
+                  <Kapsul>{p.mapel}</Kapsul>
+                  {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <p className="flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
+                    <IkonKalender />
+                    <span className="min-w-0">{tanggalPengerjaan(p)}</span>
+                  </p>
                   {p.keadaan === 'belum' && (
                     <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                   )}
                   {p.keadaan === 'selesai' && (
-                    <Link href={p.hrefHasil} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                    <Link href={p.hrefHasil} className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700">
                       Lihat hasil
                     </Link>
-                  )}
-                  {p.keadaan === 'menunggu' && (
-                    <span className="rounded-full bg-slate-100 px-5 py-2 text-sm font-medium text-slate-500" title="Hasil dibuka setelah semua sesi try out selesai">
-                      Hasil belum dibuka
-                    </span>
                   )}
                 </div>
               </div>
