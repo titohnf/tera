@@ -153,13 +153,13 @@ export default function DaftarBerjadwal({
                     <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
                   <div className="min-w-0 flex-1 px-4 py-3">
+                    <div className="mb-1.5 flex flex-wrap gap-1.5">
+                      <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
+                      {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
+                    </div>
                     <div className="flex items-start justify-between gap-3">
                       <p className="min-w-0 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</p>
                       <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
-                      {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
                     </div>
                     <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
                       <IkonKalender />
@@ -168,7 +168,7 @@ export default function DaftarBerjadwal({
                   </div>
                 </div>
                 {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
-                  <div className="flex justify-end border-t border-gray-100 px-4 py-3">
+                  <div className="flex justify-center border-t border-gray-100 px-4 py-3">
                     {p.keadaan === 'belum' ? (
                       <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                     ) : (
