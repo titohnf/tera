@@ -32,7 +32,7 @@ export interface Rekap {
   jenjang: string[]
   baris: BarisRekap[]
   /** Per paket: jumlah peserta dan rata-rata nilai. */
-  paket: { judul: string; jenjang: string; mapel: string; peserta: number; rata: number | null }[]
+  paket: { judul: string; jenjang: string; mapel: string; peserta: number; rata: number | null; sedang: number }[]
 }
 
 async function semua<T>(ambil: (dari: number, sampai: number) => PromiseLike<{ data: T[] | null }>): Promise<T[]> {
@@ -80,6 +80,13 @@ export async function muatRekap(): Promise<Rekap> {
       .order('submitted_at')
       .range(a, b),
   )
+
+  // Yang sedang mengerjakan: percobaan sudah dimulai tetapi belum dikirim.
+  const berjalan = await semua<{ quiz_id: string }>((a, b) =>
+    admin.from('attempts').select('quiz_id').in('quiz_id', idPaket).is('submitted_at', null).order('id').range(a, b),
+  )
+  const sedangPerKuis = new Map<string, number>()
+  for (const x of berjalan) sedangPerKuis.set(x.quiz_id, (sedangPerKuis.get(x.quiz_id) ?? 0) + 1)
 
   const idLearner = [...new Set(percobaan.map((p) => p.learner_id).filter((x): x is string => !!x))]
   const learner = new Map<string, { name: string; sekolah: string | null; profile_id: string | null }>()
@@ -140,7 +147,8 @@ export async function muatRekap(): Promise<Rekap> {
     const isi = baris.filter((b) => b.jenjang === m.jenjang && b.nilai[m.nama])
     const v = isi.map((b) => b.nilai[m.nama].nilai).filter((x): x is number => x !== null)
     const judul = paket.filter((p) => p.jenjang === m.jenjang && p.mapel === m.nama).map((p) => p.judul).join(' + ')
-    return { judul, jenjang: m.jenjang, mapel: m.nama, peserta: isi.length, rata: v.length ? v.reduce((a, c) => a + c, 0) / v.length : null }
+    const sedang = paket.filter((p) => p.jenjang === m.jenjang && p.mapel === m.nama).reduce((n, p) => n + (sedangPerKuis.get(p.id) ?? 0), 0)
+    return { judul, jenjang: m.jenjang, mapel: m.nama, peserta: isi.length, rata: v.length ? v.reduce((a, c) => a + c, 0) / v.length : null, sedang }
   })
   return { mapel, jenjang: [...new Set(mapel.map((m) => m.jenjang))].sort((a, b) => urutJenjang(a) - urutJenjang(b)), baris, paket: ringkasPaket }
 }

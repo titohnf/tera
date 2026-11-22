@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { muatRekap, saring } from '@/lib/reports/rekap-tryout'
 import { urutMapel } from '@/lib/tryout/paket'
+import SegarkanOtomatis from '@/components/admin/SegarkanOtomatis'
 
 export const metadata = { title: 'Rekap Skor Try Out' }
 export const dynamic = 'force-dynamic'
@@ -57,6 +58,10 @@ export default async function RekapTryOutPage({
         </a>
       </div>
 
+      <SegarkanOtomatis
+        diperbaruiPada={new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      />
+
       {/* Ringkasan per paket */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {rekap.paket
@@ -67,7 +72,8 @@ export default async function RekapTryOutPage({
                 {p.jenjang} · {p.mapel}
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">{fmt(p.rata)}</p>
-              <p className="text-xs text-gray-500">rata-rata nilai · {p.peserta} peserta</p>
+              <p className="text-xs text-gray-500">rata-rata nilai · {p.peserta} sudah kirim</p>
+              {p.sedang > 0 && <p className="mt-0.5 text-xs font-medium text-amber-700">{p.sedang} sedang mengerjakan</p>}
             </div>
           ))}
       </div>
@@ -84,7 +90,7 @@ export default async function RekapTryOutPage({
             {j ?? 'Semua'}
           </Link>
         ))}
-        <span className="ml-auto text-xs text-gray-500">{baris.length} peserta</span>
+        <span className="ml-auto text-xs text-gray-500">{baris.length} peserta sudah mengirim</span>
       </div>
 
       {baris.length === 0 ? (
