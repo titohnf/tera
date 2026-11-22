@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Tautan try out lama yang beredar di alamat Sora ("sora.bimbeltera.com/q/<kode>"): alamat itu
+      // kini dilayani Tera, dan Sora tinggal di bawah /tryout (lihat rewrites di atas).
+      { source: '/q/:path*', destination: '/tryout/q/:path*', permanent: false },
+      { source: '/hasil', destination: '/tryout/hasil', permanent: false },
+      { source: '/hasil/:path*', destination: '/tryout/hasil/:path*', permanent: false },
+      { source: '/dashboard/:path*', destination: '/tryout/dashboard/:path*', permanent: false },
       {
         source: '/admin/materi-bank-soal',
         destination: '/admin/materi-latihan-soal',
