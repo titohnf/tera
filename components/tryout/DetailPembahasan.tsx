@@ -160,24 +160,24 @@ export default function DetailPembahasan({
       <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Detail dan Pembahasan</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Detail dan Pembahasan</p>
             <h1 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
-            {dikirim && <p className="mt-0.5 text-sm text-gray-500">Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</p>}
+            {dikirim && (
+              <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-500">
+                <span>Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</span>
+                {mulai && new Date(dikirim) > new Date(mulai) && (
+                  <span>
+                    Waktu pengerjaan {lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())} ({jamWib(mulai)}–{jamWib(dikirim)} WIB)
+                  </span>
+                )}
+              </p>
+            )}
           </div>
           <div className="shrink-0 text-right">
             <p className="text-xs text-gray-500">Skor akhir</p>
             <p className="text-3xl font-semibold tabular-nums leading-tight text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</p>
           </div>
         </div>
-        {dikirim && mulai && new Date(dikirim) > new Date(mulai) && (
-          <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-slate-50 px-3 py-2 text-sm text-gray-600">
-            <span className="font-medium text-gray-900">Waktu pengerjaan {lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</span>
-            <span className="text-gray-400">·</span>
-            <span>
-              {jamWib(mulai)}–{jamWib(dikirim)} WIB
-            </span>
-          </p>
-        )}
         <ul className="mt-3 grid grid-cols-4 gap-2">
           {ringkas.map((r) => (
             <li key={r.label} className={`rounded-lg px-2 py-1.5 text-center ${r.kelas}`}>
