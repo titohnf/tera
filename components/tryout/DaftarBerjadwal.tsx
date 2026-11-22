@@ -161,27 +161,28 @@ export default function DaftarBerjadwal({
                       <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
                       {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
                     </div>
-                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                      <p className="flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
-                        <IkonKalender />
-                        <span className="min-w-0">{tanggalPengerjaan(p)}</span>
-                      </p>
-                      {p.keadaan === 'belum' && (
-                        <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
-                      )}
-                      {p.keadaan === 'selesai' && p.hasil && (
-                        <button
-                          type="button"
-                          onClick={() => alih(p.id)}
-                          aria-expanded={terbuka.has(p.id)}
-                          className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
-                        >
-                          {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
-                        </button>
-                      )}
-                    </div>
+                    <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
+                      <IkonKalender />
+                      <span className="min-w-0">{tanggalPengerjaan(p)}</span>
+                    </p>
                   </div>
                 </div>
+                {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
+                  <div className="flex justify-end border-t border-gray-100 px-4 py-3">
+                    {p.keadaan === 'belum' ? (
+                      <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => alih(p.id)}
+                        aria-expanded={terbuka.has(p.id)}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                      >
+                        {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {p.keadaan === 'selesai' && p.hasil && terbuka.has(p.id) && <div className="border-t border-gray-100 px-4 py-3">{p.hasil}</div>}
               </div>
             )
