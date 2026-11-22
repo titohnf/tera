@@ -1,6 +1,7 @@
+import { Check, Lightbulb, X } from 'lucide-react'
 import IsiSoal from '@/components/belajar/IsiSoal'
 import { RincianJawaban } from '@/components/belajar/TinjauanSesi'
-import PenelusurSoal, { type HasilButir, type ItemSoal } from '@/components/tryout/PenelusurSoal'
+import PenelusurSoal, { LABEL_HASIL, type HasilButir, type ItemSoal } from '@/components/tryout/PenelusurSoal'
 import type { OpsiSoal, TipeSoal } from '@/lib/belajar/tipe-soal'
 import type { DataTryOut, TeksSoal } from '@/lib/reports/tryout-data'
 import { tanggalWib } from '@/lib/tryout/paket'
@@ -36,9 +37,12 @@ const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b =
 function Pembahasan({ teks }: { teks: string | null }) {
   if (!teks) return null
   return (
-    <div className="mt-4 rounded-lg bg-slate-50 p-3">
-      <p className="text-xs font-semibold text-gray-500">Pembahasan</p>
-      <IsiSoal text={teks} className="mt-1 text-sm leading-relaxed text-gray-700" />
+    <div className="mt-5 rounded-xl border-l-4 border-slate-300 bg-slate-50 p-4">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+        <Lightbulb size={16} className="text-slate-500" aria-hidden />
+        Pembahasan
+      </p>
+      <IsiSoal text={teks} className="mt-2 text-[15px] leading-7 text-gray-700" />
     </div>
   )
 }
@@ -60,25 +64,27 @@ function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButi
             {daftar.map((p, i) => {
               const anak = teksSama(p, teks.jawaban)
               const kunci = teksSama(p, teks.kunci)
-              const bingkai = kunci ? 'border-emerald-300 bg-emerald-50' : anak ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-white'
+              const bingkai = kunci ? 'border-emerald-300 bg-emerald-50/70' : anak ? 'border-rose-300 bg-rose-50/70' : 'border-gray-200 bg-white'
               const huruf = kunci ? 'bg-emerald-600 text-white' : anak ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600'
               return (
-                <li key={i} className={`flex items-start gap-3 rounded-lg border p-3 ${bingkai}`}>
-                  <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${huruf}`}>{String.fromCharCode(65 + i)}</span>
-                  <span className="min-w-0 flex-1 text-sm text-gray-800">
+                <li key={i} className={`flex items-start gap-3 rounded-xl border p-3 ${bingkai}`}>
+                  <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${huruf}`}>{String.fromCharCode(65 + i)}</span>
+                  <span className="min-w-0 flex-1 text-[15px] leading-relaxed text-gray-800">
                     <IsiSoal text={p} className={GAMBAR_PILIHAN} />
                     {(anak || kunci) && (
-                      <span className="mt-1.5 flex flex-wrap gap-1.5">
-                        {anak && <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-gray-700 ring-1 ring-gray-200">Jawaban anak</span>}
-                        {kunci && <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">Jawaban benar</span>}
+                      <span className="mt-2 flex flex-wrap gap-1.5">
+                        {anak && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-200">Jawaban anak</span>}
+                        {kunci && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">Jawaban benar</span>}
                       </span>
                     )}
                   </span>
+                  {kunci && <Check size={20} strokeWidth={2.5} className="mt-1 shrink-0 text-emerald-600" aria-label="Jawaban benar" />}
+                  {!kunci && anak && <X size={20} strokeWidth={2.5} className="mt-1 shrink-0 text-rose-600" aria-label="Jawaban anak, salah" />}
                 </li>
               )
             })}
           </ol>
-          {hasil === 'belum' && <p className="mt-3 text-sm text-gray-500">Soal ini dilewati.</p>}
+          {hasil === 'belum' && <p className="mt-3 text-sm text-gray-500">Anak melewati soal ini.</p>}
           <Pembahasan teks={teks.pembahasan} />
         </>
       ) : (
@@ -148,23 +154,27 @@ export default function DetailPembahasan({
       }
     })
 
-  const ringkas: { label: string; n: number; kelas: string }[] = [
-    { label: 'Benar', n: hitung.benar, kelas: 'bg-emerald-50 text-emerald-700' },
-    { label: 'Benar sebagian', n: hitung.sebagian, kelas: 'bg-amber-50 text-amber-700' },
-    { label: 'Salah', n: hitung.salah, kelas: 'bg-rose-50 text-rose-700' },
-    { label: 'Dilewati', n: hitung.belum, kelas: 'bg-gray-100 text-gray-600' },
+  const total = items.length
+  const segmen: { kunci: HasilButir; n: number; batang: string; titik: string }[] = [
+    { kunci: 'benar', n: hitung.benar, batang: 'bg-emerald-500', titik: 'bg-emerald-500' },
+    { kunci: 'sebagian', n: hitung.sebagian, batang: 'bg-amber-400', titik: 'bg-amber-400' },
+    { kunci: 'salah', n: hitung.salah, batang: 'bg-rose-400', titik: 'bg-rose-400' },
+    { kunci: 'belum', n: hitung.belum, batang: 'bg-gray-300', titik: 'bg-gray-300' },
   ]
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
+    <div className="space-y-4">
+      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 sm:p-5">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <CincinSkor nilai={nilai} />
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Detail dan Pembahasan</p>
-            <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
+            <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900 sm:text-xl">{data.judul}</h1>
             {dikirim && (
               <p className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
-                <span>Dikerjakan <b className="font-semibold text-gray-900">{tanggalPanjang(tanggalWib(dikirim))}</b></span>
+                <span>
+                  Dikerjakan <b className="font-semibold text-gray-900">{tanggalPanjang(tanggalWib(dikirim))}</b>
+                </span>
                 {mulai && new Date(dikirim) > new Date(mulai) && (
                   <span>
                     Waktu pengerjaan <b className="font-semibold text-gray-900">{lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</b> ({jamWib(mulai)}–{jamWib(dikirim)} WIB)
@@ -173,22 +183,57 @@ export default function DetailPembahasan({
               </p>
             )}
           </div>
-          <div className="shrink-0 text-right">
-            <p className="text-xs text-gray-500">Skor akhir</p>
-            <p className="text-3xl font-semibold tabular-nums leading-tight text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</p>
-          </div>
         </div>
-        <ul className="mt-3 grid grid-cols-4 gap-2">
-          {ringkas.map((r) => (
-            <li key={r.label} className={`rounded-lg px-2 py-1.5 text-center ${r.kelas}`}>
-              <p className="text-lg font-semibold tabular-nums leading-tight">{r.n}</p>
-              <p className="text-[11px] font-medium">{r.label}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
+
+        {total > 0 && (
+          <div className="mt-5 border-t border-gray-100 pt-4">
+            <div
+              role="img"
+              aria-label={segmen.map((x) => `${LABEL_HASIL[x.kunci]} ${x.n}`).join(', ')}
+              className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-gray-100"
+            >
+              {segmen.filter((x) => x.n > 0).map((x) => (
+                <span key={x.kunci} className={`h-full first:rounded-l-full last:rounded-r-full ${x.batang}`} style={{ width: `${(x.n / total) * 100}%` }} />
+              ))}
+            </div>
+            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+              {segmen.map((x) => (
+                <li key={x.kunci} className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${x.titik}`} aria-hidden />
+                  <span className="text-gray-600">{LABEL_HASIL[x.kunci]}</span>
+                  <span className="ml-auto font-semibold tabular-nums text-gray-900 sm:ml-0">{x.n}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <PenelusurSoal items={items} />
+    </div>
+  )
+}
+
+/** Skor akhir sebagai cincin: terisi sebanyak skornya, berwarna menurut tingkatnya. */
+function CincinSkor({ nilai }: { nilai: number | null }) {
+  const ukuran = 88
+  const tebal = 8
+  const r = (ukuran - tebal) / 2
+  const keliling = 2 * Math.PI * r
+  const persen = nilai === null ? 0 : Math.min(100, Math.max(0, nilai))
+  const warna = nilai === null ? 'text-gray-300' : persen >= 75 ? 'text-emerald-500' : persen >= 50 ? 'text-amber-500' : 'text-rose-500'
+  return (
+    <div className="relative shrink-0" style={{ width: ukuran, height: ukuran }} role="img" aria-label={nilai !== null ? `Skor akhir ${fmt(nilai)} dari 100` : 'Skor akhir belum tersedia'}>
+      <svg width={ukuran} height={ukuran} viewBox={`0 0 ${ukuran} ${ukuran}`} className={`-rotate-90 ${warna}`} aria-hidden>
+        <circle cx={ukuran / 2} cy={ukuran / 2} r={r} fill="none" strokeWidth={tebal} className="stroke-gray-100" />
+        {persen > 0 && (
+          <circle cx={ukuran / 2} cy={ukuran / 2} r={r} fill="none" stroke="currentColor" strokeWidth={tebal} strokeLinecap="round" strokeDasharray={`${(persen / 100) * keliling} ${keliling}`} />
+        )}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-xl font-semibold tabular-nums leading-none text-gray-900">{nilai !== null ? fmt(nilai) : '—'}</span>
+        <span className="mt-1 text-[11px] text-gray-500">skor akhir</span>
+      </div>
     </div>
   )
 }
