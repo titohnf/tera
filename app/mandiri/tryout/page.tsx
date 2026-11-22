@@ -1,6 +1,7 @@
 import RemahRoti from '@/components/siswa/RemahRoti'
 import { mandiriContext } from '@/lib/mandiri'
 import { createClient } from '@/lib/supabase/server'
+import { nilaiDariHasil } from '@/lib/tryout/nilai-hasil'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 
@@ -19,6 +20,7 @@ export default async function TryOutMandiri() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
+        nilai={nilaiDariHasil((data as HasilTryOut | null) ?? null)}
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/mandiri/tryout/${id}`}
         lewatiJadwal={penguji === true}

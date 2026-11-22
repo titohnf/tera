@@ -2,6 +2,7 @@ import RemahRoti from '@/components/siswa/RemahRoti'
 import { jenjangPeserta } from '@/lib/tryout/jenjang-anak'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { createClient } from '@/lib/supabase/server'
+import { nilaiDariHasil } from '@/lib/tryout/nilai-hasil'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 
@@ -22,6 +23,7 @@ export default async function TryOutUmum() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
+        nilai={nilaiDariHasil((data as HasilTryOut | null) ?? null)}
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/umum/tryout/${id}`}
         kode={kode}
