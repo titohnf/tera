@@ -24,7 +24,7 @@
     "Tepat"
    ],
    "alasan": "Istilah (navigasi otonom, LiDAR, Fleet Management System) dijelaskan dan ada glosarium; istilahnya teknis, bukan istilah yang familiar.",
-   "periksa": false
+   "periksa": true
   },
   "4": {
    "tipe": "mcq_multi",
@@ -188,21 +188,21 @@
   "23": {
    "tipe": "statement_grid",
    "jawaban": [
-    "Tepat",
+    "Tidak Tepat",
     "Tepat",
     "Tidak Tepat"
    ],
-   "alasan": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah, timbul tenggelam. Bukan keputusasaan.",
+   "alasan": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah. Bukan hilang begitu saja (kenangan di puisi bertahan: \"masih kudengar\") dan bukan keputusasaan.",
    "periksa": true
   },
   "24": {
    "tipe": "statement_grid",
    "jawaban": [
-    "Benar",
+    "Salah",
     "Salah",
     "Benar"
    ],
-   "alasan": "Puisi merenungkan kenangan dan rindu lewat suara dan gerak alam. \"Ketulusan meski tak sesuai harapan\" tidak ada di puisi.",
+   "alasan": "Pesan puisi: merenungi kehidupan dan kenangan lewat suara dan gerak di sekitar. \"Dijadikan pelajaran\" melebihi isi puisi; \"ketulusan meski tak sesuai harapan\" tidak ada di puisi.",
    "periksa": true
   },
   "25": {

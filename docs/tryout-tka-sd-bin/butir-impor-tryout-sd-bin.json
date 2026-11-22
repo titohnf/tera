@@ -1,0 +1,600 @@
+{
+ "format": "tera/butir-impor@1",
+ "catatan": "Try out TKA SD Bahasa Indonesia, 30 contoh soal resmi Pusat Asesmen Pendidikan (daya serap TKA 2025/2026), nomor soal = nomor indikator. Kunci dibuat Claude (kebanyakan hasil hitungan) dan WAJIB ditinjau manusia, terutama yang bertanda PERIKSA.",
+ "butir": [
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_s0.jpg]\n\n[pertanyaan]\n\nBagan manakah yang sesuai untuk menggambarkan hutan mangrove pada teks?",
+   "options": {
+    "choices": [
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o0.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o1.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o2.jpg]",
+     "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o3.jpg]"
+    ]
+   },
+   "correct_answer": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o1.jpg]",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: lokasi dekat Pantai Congot; zona menarik Pasir Mendit, Jembatan Api-Api, Pantai Kadilangu; satwa burung kuntul, kepiting, udang, biawak. Hanya bagan kedua yang semuanya sesuai (ayunan, gazebo, dan menara pandang adalah spot foto, bukan zona). [Kunci buatan Claude.] Sumber: https://yogyakarta.kompas.com/read/2022/10/28/200908878/hutan-mangrove-kulon-progo-daya-tarik-harga-tiket-dan-jam-buka | https://www.detik.com/jogja/plesir/d-7385076/hutan-mangrove-kulon-progo-tempat-wisata-alam-dan-edukasi-yang-mempesona | https://www.kompasiana.com/riska23771/65f52118de948f04c90694b3/eksplorasi-keindahan-mangrove-kulon-progo"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s09_s0.jpg]\n\n[pertanyaan]\n\nApa maksud istilah “permata tersembunyi” dalam teks?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Letak yang tidak mudah dijangkau, tetapi ramai dikunjungi.",
+     "Tempat yang indah, tetapi belum dikenal banyak orang.",
+     "Lokasi yang jarang diketahui, tetapi memiliki banyak spot menarik."
+    ]
+   },
+   "correct_answer": [
+    "Tempat yang indah, tetapi belum dikenal banyak orang.",
+    "Lokasi yang jarang diketahui, tetapi memiliki banyak spot menarik."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "\"Permata tersembunyi\" = tempat indah yang belum banyak dikenal, tetapi punya banyak spot menarik. \"Tidak mudah dijangkau\" tidak disebut di teks. [Kunci buatan Claude; PERIKSA.] Sumber: https://yogyakarta.kompas.com/read/2022/10/28/200908878/hutan-mangrove-kulon-progo-daya-tarik-harga-tiket-dan-jam-buka | https://www.detik.com/jogja/plesir/d-7385076/hutan-mangrove-kulon-progo-tempat-wisata-alam-dan-edukasi-yang-mempesona | https://www.kompasiana.com/riska23771/65f52118de948f04c90694b3/eksplorasi-keindahan-mangrove-kulon-progo"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s23_s0.jpg]\n\nAmara : “Menurutku, judul Indahnya Hutan-Hutan Mangrove di Indonesia kurang tepat. Teksnya hanya fokus membahas hutan mangrove di Kulon Progo, bukan seluruh Indonesia.\"\n\nBima : “Setuju. Kalau mau pakai judul itu, isi teks seharusnya membahas beberapa hutan mangrove di daerah lain juga. Bukan satu tempat saja.”\n\nJena : “Tapi, judul itu menurutku masih cocok, kok. Soalnya, Hutan Kulon Progo juga bagian dari hutan-hutan mangrove di Indonesia. Jadi, tetap mewakili.”\n\n[pertanyaan]\n\nPendapat siapa yang tepat dalam menggambarkan kesesuaian judul dengan isi teks tersebut?\n\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Amara karena isi teks hanya fokus membahas Hutan Mangrove Kulon Progo.",
+     "Bima karena judul lebih cocok jika membahas beberapa hutan mangrove lain juga.",
+     "Jena karena Hutan Kulon Progo dapat mewakili seluruh hutan mangrove di Indonesia."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks hanya membahas hutan mangrove Kulon Progo, jadi Amara dan Bima tepat. Satu hutan tidak mewakili seluruh hutan mangrove Indonesia, jadi Jena kurang tepat. [Kunci buatan Claude.] Sumber: https://yogyakarta.kompas.com/read/2022/10/28/200908878/hutan-mangrove-kulon-progo-daya-tarik-harga-tiket-dan-jam-buka | https://www.detik.com/jogja/plesir/d-7385076/hutan-mangrove-kulon-progo-tempat-wisata-alam-dan-edukasi-yang-mempesona | https://www.kompasiana.com/riska23771/65f52118de948f04c90694b3/eksplorasi-keindahan-mangrove-kulon-progo"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s12_s0.jpg]\n\nBakwan merupakan makanan unik yang banyak disukai. Bakwan muncul karena pengaruh dari berbagai budaya, seperti Cina, Jepang, bahkan Eropa (Portugis).\n\nAwalnya, bakwan terbuat dari daging dan tepung yang digoreng. Di Jepang, sayur yang digoreng tepung disebut \"tempura\". Makanan tersebut bisa jadi ikut mempengaruhi berkembangnya bakwan di Indonesia.\n\nKini, bakwan berisi aneka sayuran, seperti taoge, kol, dan wortel, yang dicampur dengan adonan tepung berbumbu rempah. Bisa juga ditambahkan isian udang, sosis, atau bakso.\n\nNama bakwan berbeda di tiap daerah. Jakarta, Yogyakarta, Manado, dan Lampung menyebutnya bakwan. Di banyak kota di Jawa Timur disebut ote-ote atau weci. Di Bandung disebut bala-bala. Sementara, di Semarang dan Pekalongan disebut badak.\n\n[pertanyaan]\n\nMengapa bakwan dikatakan sebagai makanan yang unik?\n\nKlik pada setiap jawaban benar. Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Memiliki isi yang sama dengan makanan Jepang.",
+     "Perkembangannya dipengaruhi budaya negara lain.",
+     "Ditemukan di berbagai daerah dengan sebutan berbeda."
+    ]
+   },
+   "correct_answer": [
+    "Perkembangannya dipengaruhi budaya negara lain.",
+    "Ditemukan di berbagai daerah dengan sebutan berbeda."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Bakwan unik karena dipengaruhi berbagai budaya (Cina, Jepang, Portugis) dan punya nama berbeda di tiap daerah. Isinya tidak sama dengan makanan Jepang (tempura). [Kunci buatan Claude.] Sumber: Terinspirasi dari tulisan: | https://www.idntimes.com/food/dining-guide/putriana-cahya/10-nama-lain-bakwan-sejumlah-kota-di-indonesia-1?page=all | https://www.rri.co.id/kuliner/507308/sejarah-bakwan-gorengan-yang-disukai-orang-indonesia | https://www.idntimes.com/food/dining-guide/putriana-cahya/10-nama-lain-bakwan-sejumlah-kota-di-indonesia-1?page=all"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s20_s0.jpg]\n\nBakwan merupakan makanan unik yang banyak disukai. Bakwan muncul karena pengaruh dari berbagai budaya, seperti Cina, Jepang, bahkan Eropa (Portugis).\n\nAwalnya, bakwan terbuat dari daging dan tepung yang digoreng. Di Jepang, sayur yang digoreng tepung disebut \"tempura\". Makanan tersebut bisa jadi ikut mempengaruhi berkembangnya bakwan di Indonesia.\n\nKini, bakwan berisi aneka sayuran, seperti taoge, kol, dan wortel, yang dicampur dengan adonan tepung berbumbu rempah. Bisa juga ditambahkan isian udang, sosis, atau bakso.\n\nNama bakwan berbeda di tiap daerah. Jakarta, Yogyakarta, Manado, dan Lampung menyebutnya bakwan. Di banyak kota di Jawa Timur disebut ote-ote atau weci. Di Bandung disebut bala-bala. Sementara, di Semarang dan Pekalongan disebut badak.\n\n[pertanyaan]\n\nApa perbedaan bakwan sebelum dan sesudah terpengaruh budaya Jepang?\n\nKlik pada pilihan Sebelum atau Sesudah untuk setiap pernyataan berdasarkan isi teks.",
+   "options": {
+    "statements": [
+     "Berisi aneka sayuran.",
+     "Isi hanya daging.",
+     "Isinya ditambahkan udang"
+    ],
+    "answer_labels": [
+     "Sebelum",
+     "Sesudah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     false
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Awalnya bakwan dari daging dan tepung digoreng (Sebelum). Kini berisi aneka sayuran dan bisa ditambah udang, sosis, atau bakso (Sesudah). [Kunci buatan Claude.] Sumber: Terinspirasi dari tulisan: | https://www.idntimes.com/food/dining-guide/putriana-cahya/10-nama-lain-bakwan-sejumlah-kota-di-indonesia-1?page=all | https://www.rri.co.id/kuliner/507308/sejarah-bakwan-gorengan-yang-disukai-orang-indonesia | https://www.idntimes.com/food/dining-guide/putriana-cahya/10-nama-lain-bakwan-sejumlah-kota-di-indonesia-1?page=all"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Salma, Alvin, dan Siva sedang menikmati waktu istirahat.\n\nSalma : (memeluk botol minumnya) “Minum dulu, ah! Botolku ini hadiah dari Ibu waktu ulang tahun. Aku beri nama dia Si Biru.\"\n\nAlvin : “Hah? Botol aja dikasih nama? Aneh banget, Sal!”\n\nSiva : “Ih, botol minum Salma lucu banget. Kamu tiap hari bawa Si Biru, ya?”\n\nSalma : “Iya, dong. Si Biru sudah menemani aku setahun ini. Aku jadi nggak pernah beli minuman kemasan lagi!”\n\nAlvin : “Ah, ribet. Aku sih, tinggal beli aja. Kalau sudah habis tinggal buang.” (mengejek Salma)\n\nSalma : “Vin, tahu, nggak? Plastik yang kamu buang itu bisa jadi sampah lingkungan bertahun-tahun. Bisa mencemari tanah dan air juga, lho.”\n\nSiva : “Benar, Vin. Aku juga sekarang bawa botol. Nih, gambar dinosaurus!”\n\nSalma : “Kita nggak bisa terus tutup mata soal sampah plastik. Kita harus peduli. Mulai dari hal kecil, seperti bawa botol sendiri.”\n\nAlvin : “Hmm, kalau aku punya botol keren, mungkin aku jadi ingin bawa botol.”\n\nSalma : “Benar sekali. Kita bantu cari botol yang cocok buat kamu, deh.”\n\nAlvin : “Oke, setuju! Aku mau botol warna oranye, biar beda dari yang lain!”\n\nSiva : “Siap, nanti kita cari bersama, ya!”\n\n[pertanyaan]\n\nNilai moral apa saja yang diperoleh dari cerita tersebut?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Bebas memilih gaya hidup.",
+     "Peduli lingkungan itu penting.",
+     "Hal kecil bisa jadi langkah baik."
+    ]
+   },
+   "correct_answer": [
+    "Peduli lingkungan itu penting.",
+    "Hal kecil bisa jadi langkah baik."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Salma mengajak peduli lingkungan dimulai dari hal kecil seperti membawa botol sendiri. \"Bebas memilih gaya hidup\" bukan pesan cerita. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Salma, Alvin, dan Siva sedang menikmati waktu istirahat.\n\nSalma : (memeluk botol minumnya) “Minum dulu, ah! Botolku ini hadiah dari Ibu waktu ulang tahun. Aku beri nama dia Si Biru.\"\n\nAlvin : “Hah? Botol aja dikasih nama? Aneh banget, Sal!”\n\nSiva : “Ih, botol minum Salma lucu banget. Kamu tiap hari bawa Si Biru, ya?”\n\nSalma : “Iya, dong. Si Biru sudah menemani aku setahun ini. Aku jadi nggak pernah beli minuman kemasan lagi!”\n\nAlvin : “Ah, ribet. Aku sih, tinggal beli aja. Kalau sudah habis tinggal buang.” (mengejek Salma)\n\nSalma : “Vin, tahu, nggak? Plastik yang kamu buang itu bisa jadi sampah lingkungan bertahun-tahun. Bisa mencemari tanah dan air juga, lho.”\n\nSiva : “Benar, Vin. Aku juga sekarang bawa botol. Nih, gambar dinosaurus!”\n\nSalma : “Kita nggak bisa terus tutup mata soal sampah plastik. Kita harus peduli. Mulai dari hal kecil, seperti bawa botol sendiri.”\n\nAlvin : “Hmm, kalau aku punya botol keren, mungkin aku jadi ingin bawa botol.”\n\nSalma : “Benar sekali. Kita bantu cari botol yang cocok buat kamu, deh.”\n\nAlvin : “Oke, setuju! Aku mau botol warna oranye, biar beda dari yang lain!”\n\nSiva : “Siap, nanti kita cari bersama, ya!”\n\n[pertanyaan]\n\nMakna ungkapan tutup mata berdasarkan dialog yang diucapkan Salma dalam wacana tersebut adalah ....",
+   "options": {
+    "choices": [
+     "mengabaikan masalah sampah di sekitar",
+     "melupakan berbagai isu lingkungan",
+     "menumpuk plastik-plastik sisa pakai",
+     "meningkatkan kasus pencemaran tanah"
+    ]
+   },
+   "correct_answer": "mengabaikan masalah sampah di sekitar",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "\"Kita nggak bisa terus tutup mata soal sampah plastik\": tutup mata = mengabaikan masalah sampah. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Salma, Alvin, dan Siva sedang menikmati waktu istirahat.\n\nSalma : (memeluk botol minumnya) “Minum dulu, ah! Botolku ini hadiah dari Ibu waktu ulang tahun. Aku beri nama dia Si Biru.\"\n\nAlvin : “Hah? Botol aja dikasih nama? Aneh banget, Sal!”\n\nSiva : “Ih, botol minum Salma lucu banget. Kamu tiap hari bawa Si Biru, ya?”\n\nSalma : “Iya, dong. Si Biru sudah menemani aku setahun ini. Aku jadi nggak pernah beli minuman kemasan lagi!”\n\nAlvin : “Ah, ribet. Aku sih, tinggal beli aja. Kalau sudah habis tinggal buang.” (mengejek Salma)\n\nSalma : “Vin, tahu, nggak? Plastik yang kamu buang itu bisa jadi sampah lingkungan bertahun-tahun. Bisa mencemari tanah dan air juga, lho.”\n\nSiva : “Benar, Vin. Aku juga sekarang bawa botol. Nih, gambar dinosaurus!”\n\nSalma : “Kita nggak bisa terus tutup mata soal sampah plastik. Kita harus peduli. Mulai dari hal kecil, seperti bawa botol sendiri.”\n\nAlvin : “Hmm, kalau aku punya botol keren, mungkin aku jadi ingin bawa botol.”\n\nSalma : “Benar sekali. Kita bantu cari botol yang cocok buat kamu, deh.”\n\nAlvin : “Oke, setuju! Aku mau botol warna oranye, biar beda dari yang lain!”\n\nSiva : “Siap, nanti kita cari bersama, ya!”\n\nRania telah membaca cerita Si Biru Kesayangan. Ia tersadar untuk memulai aksi peduli lingkungan seperti Alvin.\n\n[pertanyaan]\n\nApa yang sebaiknya Rania lakukan untuk memulai aksinya berdasarkan cerita tersebut?\n\nKlik pada pilihan Sesuai atau Tidak Sesuai untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Menggunakan botol minum isi ulang setiap hari.",
+     "Membeli botol minum isi ulang untuk teman-temannya.",
+     "Mengajak teman-teman membatasi pembelian minuman kemasan."
+    ],
+    "answer_labels": [
+     "Sesuai",
+     "Tidak Sesuai"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Dalam cerita teman-teman membawa botol minum sendiri dan Salma mengajak peduli sampah plastik. Menggunakan botol isi ulang dan mengajak membatasi minuman kemasan sesuai. Membeli botol untuk teman-teman tidak ada di cerita (mereka hanya membantu mencarikan botol untuk Alvin). [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s02_s0.jpg]\n\nBuku harianku,\n\nAyah akan mengajakku melihat hujan meteor. Meteor adalah batu atau debu antar-planet. Ketika meteor jatuh ke bumi, meteor terbakar karena gesekan lapisan udara bumi. Itu sebabnya, meteor terlihat seperti bintang jatuh atau bintang berpindah.\n\nAku berdoa supaya hari itu tidak hujan. Meteor tampak lebih jelas jika langit cerah. Jika aku beruntung, aku dapat melihat belasan meteor per jam.\n\nAwalnya aku khawatir kalau bintang jatuh dapat menimpaku. Untunglah, ayah sudah menenangkanku. Hujan meteor tidak berbahaya, kok. Jangan takut, meteor ini akan habis terbakar di langit.\n\nDuh, rasanya tidak sabar. Aku senang sekali menghabiskan waktu dengan ayah!\n\n[pertanyaan]\n\nMengapa hujan meteor tidak berbahaya?",
+   "options": {
+    "choices": [
+     "Meteor dapat berpindah.",
+     "Hanya muncul saat langit cerah.",
+     "Hanya muncul saat hujan.",
+     "Akan habis terbakar di langit."
+    ]
+   },
+   "correct_answer": "Akan habis terbakar di langit.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: meteor akan habis terbakar di langit. [Kunci buatan Claude.] Sumber: Referensi : https://www.brin.go.id/akhir-juli-2022-hujan-meteor-hiasi-langit-malam/, dengan perubahan | Ilustrasi Gambar oleh Sonny."
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s14_s0.jpg]\n\nBuku harianku,\n\nAyah akan mengajakku melihat hujan meteor. Meteor adalah batu atau debu antar-planet. Ketika meteor jatuh ke bumi, meteor terbakar karena gesekan lapisan udara bumi. Itu sebabnya, meteor terlihat seperti bintang jatuh atau bintang berpindah.\n\nAku berdoa supaya hari itu tidak hujan. Meteor tampak lebih jelas jika langit cerah. Jika aku beruntung, aku dapat melihat belasan meteor per jam.\n\nAwalnya aku khawatir kalau bintang jatuh dapat menimpaku. Untunglah, ayah sudah menenangkanku. Hujan meteor tidak berbahaya, kok. Jangan takut, meteor ini akan habis terbakar di langit.\n\nDuh, rasanya tidak sabar. Aku senang sekali menghabiskan waktu dengan ayah!\n\n[pertanyaan]\n\nBerdasarkan cerita di atas, hal apa saja yang dapat membuat tokoh \"Aku\" senang?\n\nKlik pada setiap pernyataan yang benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Menonton hujan meteor dengan ayahnya.",
+     "Menulis buku harian sambil melihat meteor.",
+     "Langit cerah ketika menonton hujan meteor."
+    ]
+   },
+   "correct_answer": [
+    "Menonton hujan meteor dengan ayahnya.",
+    "Langit cerah ketika menonton hujan meteor."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Tokoh Aku senang menghabiskan waktu dengan ayah menonton hujan meteor, dan ia berharap langit cerah supaya meteor jelas terlihat. Menulis buku harian sambil melihat meteor tidak disebutkan. [Kunci buatan Claude; PERIKSA.] Sumber: Referensi : https://www.brin.go.id/akhir-juli-2022-hujan-meteor-hiasi-langit-malam/, dengan perubahan | Ilustrasi Gambar oleh Sonny."
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Giga si Segitiga mempunyai banyak ide. Dia senang menirukan bentuk. Dia sering mengajak teman-temannya bermain bersama.\n\nBanyak bentuk yang bisa ditiru. Bentuk dan sudut yang sama membuat mereka selalu serasi. Contohnya pohon cemara, gunung, atap rumah, bendera, dan kipas angin.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s03_s0.jpg]\n\nGiga juga suka bermain dengan Pasukan Kotak. Banyak bentuk yang bisa ditirukan, seperti roket, ikan, dan menara.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s03_s1.jpg]\n\nSaat bermain dengan Heksagonal, dia menirukan bentuk bunga.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s03_s2.jpg]\n\nBentuk mereka memang berbeda. Namun, mereka memiliki sudut-sudut yang pas.\n\nGiga sedih Lingkaran tak mau bermain dengannya. Lingkaran takut pada sudut-sudut tajam milik Giga. Padahal, Giga bisa berhati-hati. Giga juga sudah membayangkan bentuk-bentuk yang bisa dibuat.\n\n[pertanyaan]\n\nBentuk apa yang bisa ditiru Giga saat bermain dengan Heksagonal?",
+   "options": {
+    "choices": [
+     "Bunga.",
+     "Pohon cemara.",
+     "Gunung.",
+     "Atap rumah."
+    ]
+   },
+   "correct_answer": "Bunga.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: saat bermain dengan Heksagonal, Giga menirukan bentuk bunga. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "Giga si Segitiga mempunyai banyak ide. Dia senang menirukan bentuk. Dia sering mengajak teman-temannya bermain bersama.\n\nBanyak bentuk yang bisa ditiru. Bentuk dan sudut yang sama membuat mereka selalu serasi. Contohnya pohon cemara, gunung, atap rumah, bendera, dan kipas angin.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s04_s0.jpg]\n\nGiga juga suka bermain dengan Pasukan Kotak. Banyak bentuk yang bisa ditirukan, seperti roket, ikan, dan menara.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s04_s1.jpg]\n\nSaat bermain dengan Heksagonal, dia menirukan bentuk bunga.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s04_s2.jpg]\n\nBentuk mereka memang berbeda. Namun, mereka memiliki sudut-sudut yang pas.\n\nGiga sedih Lingkaran tak mau bermain dengannya. Lingkaran takut pada sudut-sudut tajam milik Giga. Padahal, Giga bisa berhati-hati. Giga juga sudah membayangkan bentuk-bentuk yang bisa dibuat.\n\n[pertanyaan]\n\nApa yang dibuat Giga saat bermain bersama pasukan kotak?\nKlik pada pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Roket.",
+     "Menara.",
+     "Bendera."
+    ]
+   },
+   "correct_answer": [
+    "Roket.",
+    "Menara."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: bersama Pasukan Kotak, Giga menirukan roket, ikan, dan menara. Bendera termasuk bentuk segitiga. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s05_s0.jpg]\n\nOleh: Ayyubie Cantika Yuranda\n\nAdit dan Danu senang sekali hari ini karena Ibu dan Ayah akan mengajak mereka pergi melihat perayaan Cap Go Meh di Pulau Kemaro. Masyarakat Tionghoa di Kota Palembang merayakan Cap Go Meh, dan orangtuanya ingin mengenalkan perayaan tersebut kepada mereka.\n\nIni adalah kedua kalinya Adit dan Danu pergi ke Pulau Kemaro. Waktu itu, mereka naik kapal dari bawah jembatan Musi. Kali ini, mereka akan menyeberangi sungai Musi dengan berjalan kaki di atas jembatan ponton, yang dipasang khusus saat perayaan Imlek setiap tahunnya. Mereka berangkat setelah makan malam.\n\nMalam itu, banyak orang berjalan kaki melewati jembatan ponton ke Pulau Kemaro. Semua orang memakai baju merah, termasuk keluarga Adit dan Danu. Di Pulau Kemaro, mereka menyaksikan pertunjukkan barongsai dan penerbangan lampion. Acaranya sangat meriah. Adit dan Danu senang bisa mengenal kebudayaan Tionghoa melalui perayaan Cap Go Meh.\n\nNamun, ketika mereka tiba di Pulau Kemaro, mereka kecewa karena hujan deras turun. Pertunjukkan barongsai dan penerbangan lampion harus dibatalkan. Adit dan Danu merasa sedih karena tidak bisa melihat semua acara yang telah mereka nantikan. Meskipun begitu, mereka tetap berusaha menikmati perayaan Cap Go Meh dengan berkeliling pulau dan mencoba makanan khas Imlek. Mereka belajar bahwa tidak semua hal bisa berjalan sesuai rencana, dan yang terpenting adalah tetap bersyukur dan menjalani dengan baik apa yang ada.\n\n[pertanyaan]\n\nBagaimana cara Keluarga Adit dan Danu pergi ke Pulau Kemaro saat pertama kalinya?",
+   "options": {
+    "choices": [
+     "Menyeberangi jembatan ponton dengan mobil.",
+     "Melewati jembatan ponton dengan berjalan kaki.",
+     "Menggunakan kapal dari bawah jembatan Musi.",
+     "Melewati jembatan Musi dengan berjalan kaki."
+    ]
+   },
+   "correct_answer": "Menggunakan kapal dari bawah jembatan Musi.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: ini kedua kalinya ke Pulau Kemaro; pertama kali mereka naik kapal dari bawah jembatan Musi. [Kunci buatan Claude.] Sumber: Cap Go Meh di Pulau Kemaro: Sejarah, Keunikan, dan Makna Perayaan. https://www.detik.com/sumbagsel/budaya/d-7183649/cap-go-meh-di-pulau-kemaro-sejarah-keunikan-dan-makna-perayaan. | Perayaan Cap Go Meh di Pulau Kemaro Berhasil Menarik Wisatawan. https://sumatra.bisnis.com/read/20240224/533/1743729/perayaan-cap-go-meh-di-pulau-kemaro-berhasil-menarik-wisatawan. | Panitia fasilitasi jembatan rayakan Cap Go Meh di Pulau Kemaro. https://www.antaranews.com/berita/3977985/panitia-fasilitasi-jembatan-rayakan-cap-go-meh-di-pulau-kemaro | Perayaan Cap Go Meh di Pulau Kemaro Palembang 2024, Ini Jadwalnya. https://travel.tribunnews.com/2024/02/22/perayaan-cap-go-meh-di-pulau-kemaro-palembang-2024-ini-jadwalnya"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s15_s0.jpg]\n\nOleh: Ayyubie Cantika Yuranda\n\nAdit dan Danu senang sekali hari ini karena Ibu dan Ayah akan mengajak mereka pergi melihat perayaan Cap Go Meh di Pulau Kemaro. Masyarakat Tionghoa di Kota Palembang merayakan Cap Go Meh, dan orangtuanya ingin mengenalkan perayaan tersebut kepada mereka.\n\nIni adalah kedua kalinya Adit dan Danu pergi ke Pulau Kemaro. Waktu itu, mereka naik kapal dari bawah jembatan Musi. Kali ini, mereka akan menyeberangi sungai Musi dengan berjalan kaki di atas jembatan ponton, yang dipasang khusus saat perayaan Imlek setiap tahunnya. Mereka berangkat setelah makan malam.\n\nMalam itu, banyak orang berjalan kaki melewati jembatan ponton ke Pulau Kemaro. Semua orang memakai baju merah, termasuk keluarga Adit dan Danu. Di Pulau Kemaro, mereka menyaksikan pertunjukkan barongsai dan penerbangan lampion. Acaranya sangat meriah. Adit dan Danu senang bisa mengenal kebudayaan Tionghoa melalui perayaan Cap Go Meh.\n\nNamun, ketika mereka tiba di Pulau Kemaro, mereka kecewa karena hujan deras turun. Pertunjukkan barongsai dan penerbangan lampion harus dibatalkan. Adit dan Danu merasa sedih karena tidak bisa melihat semua acara yang telah mereka nantikan. Meskipun begitu, mereka tetap berusaha menikmati perayaan Cap Go Meh dengan berkeliling pulau dan mencoba makanan khas Imlek. Mereka belajar bahwa tidak semua hal bisa berjalan sesuai rencana, dan yang terpenting adalah tetap bersyukur dan menjalani dengan baik apa yang ada.\n\n[pertanyaan]\n\nApa peristiwa yang membuat Danu dan Adit berpikir bahwa bersyukur adalah hal yang penting di dalam hidup mereka?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Pertunjukan barongsai ditiadakan sehingga mereka memilih berkeliling pulau.",
+     "Keluarga Danu berjalan kaki melewati jembatan Ponton meskipun hujan turun.",
+     "Penerbangan lampion dihilangkan, mereka memilih makan makanan khas imlek."
+    ]
+   },
+   "correct_answer": [
+    "Pertunjukan barongsai ditiadakan sehingga mereka memilih berkeliling pulau.",
+    "Penerbangan lampion dihilangkan, mereka memilih makan makanan khas imlek."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Karena hujan, barongsai dan penerbangan lampion dibatalkan, namun mereka tetap menikmati dengan berkeliling pulau dan mencoba makanan khas Imlek. Berjalan di jembatan ponton terjadi sebelum hujan turun. [Kunci buatan Claude.] Sumber: Cap Go Meh di Pulau Kemaro: Sejarah, Keunikan, dan Makna Perayaan. https://www.detik.com/sumbagsel/budaya/d-7183649/cap-go-meh-di-pulau-kemaro-sejarah-keunikan-dan-makna-perayaan. | Perayaan Cap Go Meh di Pulau Kemaro Berhasil Menarik Wisatawan. https://sumatra.bisnis.com/read/20240224/533/1743729/perayaan-cap-go-meh-di-pulau-kemaro-berhasil-menarik-wisatawan. | Panitia fasilitasi jembatan rayakan Cap Go Meh di Pulau Kemaro. https://www.antaranews.com/berita/3977985/panitia-fasilitasi-jembatan-rayakan-cap-go-meh-di-pulau-kemaro | Perayaan Cap Go Meh di Pulau Kemaro Palembang 2024, Ini Jadwalnya. https://travel.tribunnews.com/2024/02/22/perayaan-cap-go-meh-di-pulau-kemaro-palembang-2024-ini-jadwalnya"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s26_s0.jpg]\n\nOleh: Ayyubie Cantika Yuranda\n\nAdit dan Danu senang sekali hari ini karena Ibu dan Ayah akan mengajak mereka pergi melihat perayaan Cap Go Meh di Pulau Kemaro. Masyarakat Tionghoa di Kota Palembang merayakan Cap Go Meh, dan orangtuanya ingin mengenalkan perayaan tersebut kepada mereka.\n\nIni adalah kedua kalinya Adit dan Danu pergi ke Pulau Kemaro. Waktu itu, mereka naik kapal dari bawah jembatan Musi. Kali ini, mereka akan menyeberangi sungai Musi dengan berjalan kaki di atas jembatan ponton, yang dipasang khusus saat perayaan Imlek setiap tahunnya. Mereka berangkat setelah makan malam.\n\nMalam itu, banyak orang berjalan kaki melewati jembatan ponton ke Pulau Kemaro. Semua orang memakai baju merah, termasuk keluarga Adit dan Danu. Di Pulau Kemaro, mereka menyaksikan pertunjukkan barongsai dan penerbangan lampion. Acaranya sangat meriah. Adit dan Danu senang bisa mengenal kebudayaan Tionghoa melalui perayaan Cap Go Meh.\n\nNamun, ketika mereka tiba di Pulau Kemaro, mereka kecewa karena hujan deras turun. Pertunjukkan barongsai dan penerbangan lampion harus dibatalkan. Adit dan Danu merasa sedih karena tidak bisa melihat semua acara yang telah mereka nantikan. Meskipun begitu, mereka tetap berusaha menikmati perayaan Cap Go Meh dengan berkeliling pulau dan mencoba makanan khas Imlek. Mereka belajar bahwa tidak semua hal bisa berjalan sesuai rencana, dan yang terpenting adalah tetap bersyukur dan menjalani dengan baik apa yang ada.\n\n[pertanyaan]\n\nBerdasarkan cerita, apa yang akan kamu lakukan jika rencana berlibur ke pantai batal akibat hujan?",
+   "options": {
+    "choices": [
+     "Berlapang dada dan memilih untuk menyusun rencana menyenangkan lain di rumah.",
+     "Merasa sedih sehingga memilih untuk melihat hujan dari jendela berharap hujan segera reda.",
+     "Bersikap biasa-biasa saja dan memilih untuk berdiam diri di rumah tanpa aktivitas apapun.",
+     "Memilih untuk melanjutkan tidur sembari berharap hujan bisa reda ketika sudah bangun nantinya."
+    ]
+   },
+   "correct_answer": "Berlapang dada dan memilih untuk menyusun rencana menyenangkan lain di rumah.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Cerita mengajarkan menerima rencana yang batal dan tetap menikmati: berlapang dada dan menyusun rencana lain. [Kunci buatan Claude.] Sumber: Cap Go Meh di Pulau Kemaro: Sejarah, Keunikan, dan Makna Perayaan. https://www.detik.com/sumbagsel/budaya/d-7183649/cap-go-meh-di-pulau-kemaro-sejarah-keunikan-dan-makna-perayaan. | Perayaan Cap Go Meh di Pulau Kemaro Berhasil Menarik Wisatawan. https://sumatra.bisnis.com/read/20240224/533/1743729/perayaan-cap-go-meh-di-pulau-kemaro-berhasil-menarik-wisatawan. | Panitia fasilitasi jembatan rayakan Cap Go Meh di Pulau Kemaro. https://www.antaranews.com/berita/3977985/panitia-fasilitasi-jembatan-rayakan-cap-go-meh-di-pulau-kemaro | Perayaan Cap Go Meh di Pulau Kemaro Palembang 2024, Ini Jadwalnya. https://travel.tribunnews.com/2024/02/22/perayaan-cap-go-meh-di-pulau-kemaro-palembang-2024-ini-jadwalnya"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s16_s0.jpg]\n\nPerubahan iklim, bencana alam, dan kesehatan manusia adalah masalah serius.\n\nUntuk mengatasinya, pemerintah berupaya membangun kota berkelanjutan.\n\nKita perlu tahu ciri-ciri kota yang nyaman dan sehat.\n\nKota berkelanjutan memiliki transportasi publik ramah lingkungan dan murah.\n\nBus dan kereta tidak mencemari udara serta terjangkau.\n\nKendaraan pribadi juga harus ramah lingkungan, seperti mobil listrik.\n\nKota ini menyediakan jalur khusus untuk pejalan kaki dan pesepeda.\n\nListrik di kota berkelanjutan berasal dari tenaga surya.\n\nGedung-gedung dirancang hemat energi dan ramah lingkungan.\n\nPenggunaan air pun dilakukan secara bijak dan efisien.\n\nFasilitas publik mudah diakses oleh semua orang.\n\nTaman, perpustakaan, dan rumah sakit tersedia di berbagai lokasi.\n\nKota juga memiliki ruang terbuka hijau yang nyaman dan asri.\n\nKota berkelanjutan memperhatikan produksi makanan ramah lingkungan.\n\nPengelolaan sampah dilakukan dengan baik, termasuk daur ulang sampah.\n\nDengan semua ciri-ciri ini, kota menjadi sehat, nyaman, dan ramah lingkungan.\n\nMari jaga kota kita agar tetap berkelanjutan!\n\n[pertanyaan]\n\nApa yang menjadi fokus utama dalam teks tersebut?",
+   "options": {
+    "choices": [
+     "Manfaat menggunakan kendaraan tenaga listrik.",
+     "Pentingnya kota berkelanjutan untuk masa depan.",
+     "Fasilitas publik yang tersedia di kota berkelanjutan.",
+     "Cara pengolahan sampah di kota berkelanjutan."
+    ]
+   },
+   "correct_answer": "Pentingnya kota berkelanjutan untuk masa depan.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Seluruh teks membahas ciri-ciri kota berkelanjutan dan mengajak menjaganya: fokus utama pentingnya kota berkelanjutan. Pilihan lain hanya sebagian rincian. [Kunci buatan Claude.] Sumber: https://www.kompas.com/properti/read/2021/10/29/195200321/berkenalan-dengan-konsep-kota-berkelanjutan-ramah-lingkungan-untuk-masa"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s17_s0.jpg]\n\nPerubahan iklim, bencana alam, dan kesehatan manusia adalah masalah serius.\n\nUntuk mengatasinya, pemerintah berupaya membangun kota berkelanjutan.\n\nKita perlu tahu ciri-ciri kota yang nyaman dan sehat.\n\nKota berkelanjutan memiliki transportasi publik ramah lingkungan dan murah.\n\nBus dan kereta tidak mencemari udara serta terjangkau.\n\nKendaraan pribadi juga harus ramah lingkungan, seperti mobil listrik.\n\nKota ini menyediakan jalur khusus untuk pejalan kaki dan pesepeda.\n\nListrik di kota berkelanjutan berasal dari tenaga surya.\n\nGedung-gedung dirancang hemat energi dan ramah lingkungan.\n\nPenggunaan air pun dilakukan secara bijak dan efisien.\n\nFasilitas publik mudah diakses oleh semua orang.\n\nTaman, perpustakaan, dan rumah sakit tersedia di berbagai lokasi.\n\nKota juga memiliki ruang terbuka hijau yang nyaman dan asri.\n\nKota berkelanjutan memperhatikan produksi makanan ramah lingkungan.\n\nPengelolaan sampah dilakukan dengan baik, termasuk daur ulang sampah.\n\nDengan semua ciri-ciri ini, kota menjadi sehat, nyaman, dan ramah lingkungan.\n\nMari jaga kota kita agar tetap berkelanjutan!\n\n[pertanyaan]\n\nHasil apa yang diharapkan dari sistem pengolahan sampah yang baik?",
+   "options": {
+    "choices": [
+     "Kota menjadi bersih.",
+     "Air menjadi melimpah.",
+     "Udara menjadi sejuk.",
+     "Waktu menjadi efisien."
+    ]
+   },
+   "correct_answer": "Kota menjadi bersih.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Pengelolaan sampah yang baik membuat kota bersih; pilihan lain tidak berkaitan dengan sampah. [Kunci buatan Claude.] Sumber: https://www.kompas.com/properti/read/2021/10/29/195200321/berkenalan-dengan-konsep-kota-berkelanjutan-ramah-lingkungan-untuk-masa"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s24_s0.jpg]\n\nPerubahan iklim, bencana alam, dan kesehatan manusia adalah masalah serius.\n\nUntuk mengatasinya, pemerintah berupaya membangun kota berkelanjutan.\n\nKita perlu tahu ciri-ciri kota yang nyaman dan sehat.\n\nKota berkelanjutan memiliki transportasi publik ramah lingkungan dan murah.\n\nBus dan kereta tidak mencemari udara serta terjangkau.\n\nKendaraan pribadi juga harus ramah lingkungan, seperti mobil listrik.\n\nKota ini menyediakan jalur khusus untuk pejalan kaki dan pesepeda.\n\nListrik di kota berkelanjutan berasal dari tenaga surya.\n\nGedung-gedung dirancang hemat energi dan ramah lingkungan.\n\nPenggunaan air pun dilakukan secara bijak dan efisien.\n\nFasilitas publik mudah diakses oleh semua orang.\n\nTaman, perpustakaan, dan rumah sakit tersedia di berbagai lokasi.\n\nKota juga memiliki ruang terbuka hijau yang nyaman dan asri.\n\nKota berkelanjutan memperhatikan produksi makanan ramah lingkungan.\n\nPengelolaan sampah dilakukan dengan baik, termasuk daur ulang sampah.\n\nDengan semua ciri-ciri ini, kota menjadi sehat, nyaman, dan ramah lingkungan.\n\nMari jaga kota kita agar tetap berkelanjutan!\n\n[pertanyaan]\n\nBerdasarkan isi teks, mengapa ciri-ciri kota berkelanjutan belum nampak dalam gambar?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Tidak ada gambar ruang terbuka hijau seperti taman dan lapangan.",
+     "Tidak ada gambar alat transportasi ramah lingkungan bertenaga listrik.",
+     "Tidak ada gambar manusia yang sedang melakukan aktivitas di jalan."
+    ]
+   },
+   "correct_answer": [
+    "Tidak ada gambar ruang terbuka hijau seperti taman dan lapangan.",
+    "Tidak ada gambar alat transportasi ramah lingkungan bertenaga listrik."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Gambar kota tidak menampilkan taman atau lapangan hijau dan tidak ada kendaraan listrik; keduanya ciri kota berkelanjutan di teks. Keberadaan manusia di jalan bukan ciri yang disebut teks. [Kunci buatan Claude; PERIKSA.] Sumber: https://www.kompas.com/properti/read/2021/10/29/195200321/berkenalan-dengan-konsep-kota-berkelanjutan-ramah-lingkungan-untuk-masa"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s06_s0.jpg]\n\n“Pokoknya Rara mau hp sebelum ruwatan!” Rengek Rara.\n\n“Maaf, Nak! Ibu belum bisa membelikannya!\" Terang Ibu.\n\n“Jadi Rara tidak bisa ikut tradisi ruwatan?” tanyanya kesal.\n\nIbu sedih mendengar pertanyaan Rara.\n\nAyah yang tidak sengaja lewat, ikut mendengar.\n\n“Rara! Kamu minta hp?\" Tanya Ayah\n\n“Iya!” Jawabnya\n\n“Kata ketua adat, Rara boleh minta satu permintaan ke ayah ibu.” Terang Rara.\n\n“Trus, permintaan Rara itu harus dipenuhi, baru Rara bisa ikut ruwatan, Yah!\" Lanjut Rara.\n\nAyah mengangguk, dan perlahan menjelaskan keadaan mereka.\n\nIbunya seorang pedagang kecil dan ayah hanya penjaga vila.\n\nJadi cukup berat untuk membelikan hp.\n\nRara sadar, dirinya tidak kaya dan meminta maaf ke Ayah dan Ibu.\n\nAkhirnya Rara hanya meminta dibelikan buku cerita di pasar.\n\nTibalah hari Ruwatan, saat rambut Rara akan dipotong.\n\nRara sudah bersiap dengan baju adat.\n\n“Wuah, bagus bajunya!” Kata Rara takjup.\n\n“Ayo, Nak! Kamu harus segera bergabung dengan teman lainnya!” Perintah Ibu.\n\n“Mau kemana, Bu?” Tanya Rara\n\nIbu menjelaskan kalau Rara akan dibawa ke tempat ritual ruwatan.\n\nDi sana Ketua adat akan memotong rambut gimbal Rara.\n\n“Setelah rambut Rara dipotong, Rara ngapain, Bu?”\n\n“Penyerahan permintaan dan larung rambut!” Jawab Ibu dan Rara menjadi bingung.\n\n“Ibu dan ayah akan memberikan barang yang kamu minta kemarin.” Jawab Ibu\n\n“Asik! Terima kasih, Bu!” ucap Rara.\n\n“Tapi kamu harus tetap ikut acara larung rambut, ya, di sungai dekat desa!”\n\n“Baik, Ibu!“ Sambil memberikan jempol.\n\nDaftar istilah:\n\nHP = Handphone/ponsel/telepon genggam\n\nTradisi Ruwatan adalah tradisi mencukur rambut anak gimbal untuk melepaskan seseorang dari keburukan.\n\n[pertanyaan]\n\nSiapa yang memotong rambut Rara saat ruwatan?",
+   "options": {
+    "choices": [
+     "Ketua adat",
+     "Ibu Rara",
+     "Ayah Rara",
+     "Tukang cukur"
+    ]
+   },
+   "correct_answer": "Ketua adat",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: ketua adat akan memotong rambut gimbal Rara. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s18_s0.jpg]\n\n“Pokoknya Rara mau hp sebelum ruwatan!” Rengek Rara.\n\n“Maaf, Nak! Ibu belum bisa membelikannya!\" Terang Ibu.\n\n“Jadi Rara tidak bisa ikut tradisi ruwatan?” tanyanya kesal.\n\nIbu sedih mendengar pertanyaan Rara.\n\nAyah yang tidak sengaja lewat, ikut mendengar.\n\n“Rara! Kamu minta hp?\" Tanya Ayah\n\n“Iya!” Jawabnya\n\n“Kata ketua adat, Rara boleh minta satu permintaan ke ayah ibu.” Terang Rara.\n\n“Trus, permintaan Rara itu harus dipenuhi, baru Rara bisa ikut ruwatan, Yah!\" Lanjut Rara.\n\nAyah mengangguk, dan perlahan menjelaskan keadaan mereka.\n\nIbunya seorang pedagang kecil dan ayah hanya penjaga vila.\n\nJadi cukup berat untuk membelikan hp.\n\nRara sadar, dirinya tidak kaya dan meminta maaf ke Ayah dan Ibu.\n\nAkhirnya Rara hanya meminta dibelikan buku cerita di pasar.\n\nTibalah hari Ruwatan, saat rambut Rara akan dipotong.\n\nRara sudah bersiap dengan baju adat.\n\n“Wuah, bagus bajunya!” Kata Rara takjup.\n\n“Ayo, Nak! Kamu harus segera bergabung dengan teman lainnya!” Perintah Ibu.\n\n“Mau kemana, Bu?” Tanya Rara\n\nIbu menjelaskan kalau Rara akan dibawa ke tempat ritual ruwatan.\n\nDi sana Ketua adat akan memotong rambut gimbal Rara.\n\n“Setelah rambut Rara dipotong, Rara ngapain, Bu?”\n\n“Penyerahan permintaan dan larung rambut!” Jawab Ibu dan Rara menjadi bingung.\n\n“Ibu dan ayah akan memberikan barang yang kamu minta kemarin.” Jawab Ibu\n\n“Asik! Terima kasih, Bu!” ucap Rara.\n\n“Tapi kamu harus tetap ikut acara larung rambut, ya, di sungai dekat desa!”\n\n“Baik, Ibu!“ Sambil memberikan jempol.\n\nDaftar istilah:\n\nHP = Handphone/ponsel/telepon genggam\n\nTradisi Ruwatan adalah tradisi mencukur rambut anak gimbal untuk melepaskan seseorang dari keburukan.\n\n[pertanyaan]\n\nBagaimana perasaan Rara setelah mendengar penjelasan Ayah?",
+   "options": {
+    "choices": [
+     "Lega.",
+     "Puas.",
+     "Ceria.",
+     "Ikhlas."
+    ]
+   },
+   "correct_answer": "Ikhlas.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Rara sadar keadaan orang tuanya, meminta maaf, dan menerima hanya meminta buku cerita: ikhlas. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s27_s0.jpg]\n\n“Pokoknya Rara mau hp sebelum ruwatan!” Rengek Rara.\n\n“Maaf, Nak! Ibu belum bisa membelikannya!\" Terang Ibu.\n\n“Jadi Rara tidak bisa ikut tradisi ruwatan?” tanyanya kesal.\n\nIbu sedih mendengar pertanyaan Rara.\n\nAyah yang tidak sengaja lewat, ikut mendengar.\n\n“Rara! Kamu minta hp?\" Tanya Ayah\n\n“Iya!” Jawabnya\n\n“Kata ketua adat, Rara boleh minta satu permintaan ke ayah ibu.” Terang Rara.\n\n“Trus, permintaan Rara itu harus dipenuhi, baru Rara bisa ikut ruwatan, Yah!\" Lanjut Rara.\n\nAyah mengangguk, dan perlahan menjelaskan keadaan mereka.\n\nIbunya seorang pedagang kecil dan ayah hanya penjaga vila.\n\nJadi cukup berat untuk membelikan hp.\n\nRara sadar, dirinya tidak kaya dan meminta maaf ke Ayah dan Ibu.\n\nAkhirnya Rara hanya meminta dibelikan buku cerita di pasar.\n\nTibalah hari Ruwatan, saat rambut Rara akan dipotong.\n\nRara sudah bersiap dengan baju adat.\n\n“Wuah, bagus bajunya!” Kata Rara takjup.\n\n“Ayo, Nak! Kamu harus segera bergabung dengan teman lainnya!” Perintah Ibu.\n\n“Mau kemana, Bu?” Tanya Rara\n\nIbu menjelaskan kalau Rara akan dibawa ke tempat ritual ruwatan.\n\nDi sana Ketua adat akan memotong rambut gimbal Rara.\n\n“Setelah rambut Rara dipotong, Rara ngapain, Bu?”\n\n“Penyerahan permintaan dan larung rambut!” Jawab Ibu dan Rara menjadi bingung.\n\n“Ibu dan ayah akan memberikan barang yang kamu minta kemarin.” Jawab Ibu\n\n“Asik! Terima kasih, Bu!” ucap Rara.\n\n“Tapi kamu harus tetap ikut acara larung rambut, ya, di sungai dekat desa!”\n\n“Baik, Ibu!“ Sambil memberikan jempol.\n\nDaftar istilah:\n\nHP = Handphone/ponsel/telepon genggam\n\nTradisi Ruwatan adalah tradisi mencukur rambut anak gimbal untuk melepaskan seseorang dari keburukan.\n\nSebelumnya kamu suka memaksa minta barang yang kamu inginkan kepada orang tua.\n\n[pertanyaan]\n\nSetelah membaca cerita tersebut, apa yang sebaiknya kamu lakukan jika suatu hari kamu ingin punya barang baru?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Bertanya kepada ayah dan ibu apakah punya uang atau tidak.",
+     "Meminta ayah dan ibu langsung membelikan barang itu.",
+     "Memikirkan apakah barang itu perlu atau tidak dimiliki saat ini."
+    ]
+   },
+   "correct_answer": [
+    "Bertanya kepada ayah dan ibu apakah punya uang atau tidak.",
+    "Memikirkan apakah barang itu perlu atau tidak dimiliki saat ini."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Pelajaran dari cerita: mempertimbangkan kemampuan orang tua dan perlu tidaknya barang, bukan memaksa meminta langsung dibelikan. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Nilai Arul selalu bagus sejak dulu. Padahal, dia tidak pernah belajar. Tapi, nilai Arul mulai menurun.\n\nDewi : “Arul, belajar bareng, yuk! Bareng Reno dan Erni.”\n\nArul : “Enggak mau, ah! Aku malas.”\n\nDewi : “Ya, sudah. Aku belajar bareng dulu, ya.”\n\nArul : “Belajar saja sana. Paling nilainya lebih bagus aku.”\n\nArul : “Mending aku main bola.”\n\nArul kembali bermain. Dia mengambil sepatunya. Dia berlari ke lapangan sambil membawa bola. Dia menendang bola ke gawang yang kosong.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s11_s0.jpg]\n\nKeesokan hari setelah ujian, Arul kaget saat melihat nilainya.\n\nArul : “Kok nilaiku jelek banget?”\n\nReno : “Emang apa yang kamu pelajari, Rul?”\n\nArul : “Buat apa aku belajar? Nilaiku loh selalu bagus.”\n\nErni : “Ya, enggak bisa begitu, Arul. Pelajaran kita kan semakin susah.”\n\nDewi : “Iya, kita sudah harus rajin belajar.”\n\nArul : “Dulu aku tidak belajar. Nilaiku juga selalu bagus, ‘kan?”\n\nReno : “Iya. Itu ‘kan dulu. Lihat nilaimu sekarang. Semakin lama semakin jelek, ‘kan?”\n\nArul hanya bisa memandangi nilainya.\n\nDewi : “Kamu harus belajar kalau mau nilai bagus.”\n\nErni : “Iya. Berakit-rakit ke hulu, berenang-renang kemudian. Bersakit-sakit dahulu, bersenang-senang kemudian.”\n\nDewi : “Betul. Harus berusaha kalau mau berhasil.”\n\nArul : “Apa itu?”\n\nReno : “Peribahasa, Rul. Ayo belajar bareng biar sama-sama tahu.”\n\nArul pun mengangguk.\n\nDalam cerita tersebut, Erni mengatakan “bersakit-sakit dahulu, bersenang-senang kemudian”.\n\n[pertanyaan]\n\nApa maksud Erni saat mengatakan itu?",
+   "options": {
+    "choices": [
+     "Menginformasikan kepada Arul bahwa ia harus lebih giat dan semangat lagi dalam belajar.",
+     "Memperjelas ucapan Erni bahwa Arul bisa mendapatkan nilai bagus kalau belajar bersama.",
+     "Menasihati Arul bahwa ia bisa mendapatkan nilai yang bagus kalau dia tidak sombong.",
+     "Memberitahukan kepada Arul bahwa ia harus mau belajar kalau ingin nilai ujiannya bagus lagi."
+    ]
+   },
+   "correct_answer": "Memberitahukan kepada Arul bahwa ia harus mau belajar kalau ingin nilai ujiannya bagus lagi.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Peribahasa \"bersakit-sakit dahulu, bersenang-senang kemudian\": Erni menasihati Arul bahwa ia harus mau belajar kalau ingin nilai ujiannya bagus lagi. Pilihan 1 menyiratkan Arul sudah belajar, padahal belum. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "Nilai Arul selalu bagus sejak dulu. Padahal, dia tidak pernah belajar. Tapi, nilai Arul mulai menurun.\n\nDewi : “Arul, belajar bareng, yuk! Bareng Reno dan Erni.”\n\nArul : “Enggak mau, ah! Aku malas.”\n\nDewi : “Ya, sudah. Aku belajar bareng dulu, ya.”\n\nArul : “Belajar saja sana. Paling nilainya lebih bagus aku.”\n\nArul : “Mending aku main bola.”\n\nArul kembali bermain. Dia mengambil sepatunya. Dia berlari ke lapangan sambil membawa bola. Dia menendang bola ke gawang yang kosong.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s21_s0.jpg]\n\nKeesokan hari setelah ujian, Arul kaget saat melihat nilainya.\n\nArul : “Kok nilaiku jelek banget?”\n\nReno : “Emang apa yang kamu pelajari, Rul?”\n\nArul : “Buat apa aku belajar? Nilaiku loh selalu bagus.”\n\nErni : “Ya, enggak bisa begitu, Arul. Pelajaran kita kan semakin susah.”\n\nDewi : “Iya, kita sudah harus rajin belajar.”\n\nArul : “Dulu aku tidak belajar. Nilaiku juga selalu bagus, ‘kan?”\n\nReno : “Iya. Itu ‘kan dulu. Lihat nilaimu sekarang. Semakin lama semakin jelek, ‘kan?”\n\nArul hanya bisa memandangi nilainya.\n\nDewi : “Kamu harus belajar kalau mau nilai bagus.”\n\nErni : “Iya. Berakit-rakit ke hulu, berenang-renang kemudian. Bersakit-sakit dahulu, bersenang-senang kemudian.”\n\nDewi : “Betul. Harus berusaha kalau mau berhasil.”\n\nArul : “Apa itu?”\n\nReno : “Peribahasa, Rul. Ayo belajar bareng biar sama-sama tahu.”\n\nArul pun mengangguk.\n\n[pertanyaan]\n\nBagaimana perubahan sikap Arul setelah menyadari nilainya jelek?",
+   "options": {
+    "choices": [
+     "Arul menjadi lebih giat untuk belajar sendiri di rumah.",
+     "Arul berjanji belajar lebih giat kepada teman-temannya.",
+     "Arul akhirnya mau belajar bersama teman-temanya.",
+     "Arul merasa akan lebih mudah dalam ujian jika dia belajar."
+    ]
+   },
+   "correct_answer": "Arul akhirnya mau belajar bersama teman-temanya.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Setelah diajak Reno dan teman-temannya, Arul mengangguk: ia akhirnya mau belajar bersama. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "Nilai Arul selalu bagus sejak dulu. Padahal, dia tidak pernah belajar. Tapi, nilai Arul mulai menurun.\n\nDewi : “Arul, belajar bareng, yuk! Bareng Reno dan Erni.”\n\nArul : “Enggak mau, ah! Aku malas.”\n\nDewi : “Ya, sudah. Aku belajar bareng dulu, ya.”\n\nArul : “Belajar saja sana. Paling nilainya lebih bagus aku.”\n\nArul : “Mending aku main bola.”\n\nArul kembali bermain. Dia mengambil sepatunya. Dia berlari ke lapangan sambil membawa bola. Dia menendang bola ke gawang yang kosong.\n\n[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s28_s0.jpg]\n\nKeesokan hari setelah ujian, Arul kaget saat melihat nilainya.\n\nArul : “Kok nilaiku jelek banget?”\n\nReno : “Emang apa yang kamu pelajari, Rul?”\n\nArul : “Buat apa aku belajar? Nilaiku loh selalu bagus.”\n\nErni : “Ya, enggak bisa begitu, Arul. Pelajaran kita kan semakin susah.”\n\nDewi : “Iya, kita sudah harus rajin belajar.”\n\nArul : “Dulu aku tidak belajar. Nilaiku juga selalu bagus, ‘kan?”\n\nReno : “Iya. Itu ‘kan dulu. Lihat nilaimu sekarang. Semakin lama semakin jelek, ‘kan?”\n\nArul hanya bisa memandangi nilainya.\n\nDewi : “Kamu harus belajar kalau mau nilai bagus.”\n\nErni : “Iya. Berakit-rakit ke hulu, berenang-renang kemudian. Bersakit-sakit dahulu, bersenang-senang kemudian.”\n\nDewi : “Betul. Harus berusaha kalau mau berhasil.”\n\nArul : “Apa itu?”\n\nReno : “Peribahasa, Rul. Ayo belajar bareng biar sama-sama tahu.”\n\nArul pun mengangguk.\n\nSetelah membaca cerita tersebut, Riza merasa bahwa dirinya memiliki kesamaan dengan Arul yang sama-sama nilainya semakin memburuk.\n\n[pertanyaan]\n\nApa yang bisa dilakukan Riza agar nilainya bisa bagus berdasarkan pengalaman cerita Arul?\n\nKlik pada pilihan Benar atau Salah untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Belajar kelompok bersama teman-teman agar ada yang mengajari materi sulit.",
+     "Meyakini kemampuan diri dan tetap menjalankan hobi bermain sepak bola di lapangan.",
+     "Bertanya ketika guru menjelaskan pelajaran agar lebih yakin menjawab pertanyaan saat ujian."
+    ],
+    "answer_labels": [
+     "Benar",
+     "Salah"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Arul berubah setelah belajar bersama teman (1 benar). Yakin pada kemampuan diri tanpa belajar sambil tetap bermain bola justru membuat nilainya jelek (2 salah). Bertanya saat guru menjelaskan tidak ada di cerita tetapi sejalan dengan pesan cerita (3 benar), sehingga layak dicek. [Kunci buatan Claude; PERIKSA.]"
+  },
+  {
+   "type": "mcq_multi",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s08_s0.jpg]\n\nSudah bertahun-tahun Yunus bekerja sebagai nelayan. Setiap hari ia mengarungi laut dan melempar jala. Asal tidak badai, Yunus pasti melaut.\n\nHal ini sangat berbeda dengan Kamal. Padahal keduanya sama-sama mencari hidup di laut. Tapi, Kamal sering bermalas-malasan.\n\nSuatu hari, Kamal datang ke rumah Yunus.\n\n“Yunus, bolehkah aku minta ikan?” kata Kamal.\n\n“Lho, kamu tidak dapat ikan?” tanya Yunus. “Padahal lagi musim ikan, lho.”\n\n“Ah, itu. Aku kemarin tidak melaut. Aku sibuk memperbaiki perahuku yang rusak.”\n\nMerasa kasihan, Yunus memberikan beberapa ikan. Yunus juga mengingatkan Kamal untuk segera melaut.\n\nBeberapa hari berlalu, Kamal masih belum melaut. Alasan Kamal seluas lautan. Tidak ada habisnya. Mulai dari ombak, perahu, sampai anak.\n\nSemuanya dijadikan alasan oleh Kamal. Yunus sampai kesal.\n\nSaat Kamal datang untuk meminta ikan lagi.\n\n“Kamal, ayo melaut. Ikut aku kalau perahumu masih rusak,” tegas Yunus.\n\n“Waduh, belum bisa,” tolak Kamal.\n\n“Ikut saja. Aku kesal melihatmu bermalas-malasan setiap hari,” kata Yunus.\n\n“Orang kampung juga malas denganmu,” kata Yunus. “Setiap hari hanya tiduran, lalu meminta ikan pada tetangga.”\n\nKamal hanya terdiam. Kamal memang sudah semakin susah meminta ikan. Dengan berat, Kamal melawan rasa malasnya. Ia ikut Yunus melaut. Setiap hari, Kamal ikut dengan Yunus.\n\nSekarang Kamal sudah melaut setiap hari. Kamal bahkan melaut dengan perahunya sendiri.\n\n[pertanyaan]\n\nApa frasa yang menunjukkan bahwa Yunus adalah seorang nelayan?\n\nKlik pada setiap pilihan jawaban benar! Jawaban benar lebih dari satu.",
+   "options": {
+    "choices": [
+     "Mengarungi laut.",
+     "Melempar jala.",
+     "Memperbaiki perahu."
+    ]
+   },
+   "correct_answer": [
+    "Mengarungi laut.",
+    "Melempar jala."
+   ],
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "\"Mengarungi laut\" dan \"melempar jala\" menunjukkan pekerjaan nelayan. Memperbaiki perahu adalah alasan Kamal. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s22_s0.jpg]\n\nSudah bertahun-tahun Yunus bekerja sebagai nelayan. Setiap hari ia mengarungi laut dan melempar jala. Asal tidak badai, Yunus pasti melaut.\n\nHal ini sangat berbeda dengan Kamal. Padahal keduanya sama-sama mencari hidup di laut. Tapi, Kamal sering bermalas-malasan.\n\nSuatu hari, Kamal datang ke rumah Yunus.\n\n“Yunus, bolehkah aku minta ikan?” kata Kamal.\n\n“Lho, kamu tidak dapat ikan?” tanya Yunus. “Padahal lagi musim ikan, lho.”\n\n“Ah, itu. Aku kemarin tidak melaut. Aku sibuk memperbaiki perahuku yang rusak.”\n\nMerasa kasihan, Yunus memberikan beberapa ikan. Yunus juga mengingatkan Kamal untuk segera melaut.\n\nBeberapa hari berlalu, Kamal masih belum melaut. Alasan Kamal seluas lautan. Tidak ada habisnya. Mulai dari ombak, perahu, sampai anak.\n\nSemuanya dijadikan alasan oleh Kamal. Yunus sampai kesal.\n\nSaat Kamal datang untuk meminta ikan lagi.\n\n“Kamal, ayo melaut. Ikut aku kalau perahumu masih rusak,” tegas Yunus.\n\n“Waduh, belum bisa,” tolak Kamal.\n\n“Ikut saja. Aku kesal melihatmu bermalas-malasan setiap hari,” kata Yunus.\n\n“Orang kampung juga malas denganmu,” kata Yunus. “Setiap hari hanya tiduran, lalu meminta ikan pada tetangga.”\n\nKamal hanya terdiam. Kamal memang sudah semakin susah meminta ikan. Dengan berat, Kamal melawan rasa malasnya. Ia ikut Yunus melaut. Setiap hari, Kamal ikut dengan Yunus.\n\nSekarang Kamal sudah melaut setiap hari. Kamal bahkan melaut dengan perahunya sendiri.\n\n[pertanyaan]\n\nBagaimana sikap Kamal setelah ia mendapat teguran dan dipaksa ikut melaut dengan Yunus?",
+   "options": {
+    "choices": [
+     "Tersadar untuk rajin melaut setiap hari.",
+     "Bersemangat melaut bersama para warga.",
+     "Tergerak untuk serius memperbaiki kapal.",
+     "Berusaha keras membuktikan pada warga."
+    ]
+   },
+   "correct_answer": "Tersadar untuk rajin melaut setiap hari.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Setelah ditegur, Kamal melawan rasa malasnya dan melaut setiap hari. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s29_s0.jpg]\n\nSudah bertahun-tahun Yunus bekerja sebagai nelayan. Setiap hari ia mengarungi laut dan melempar jala. Asal tidak badai, Yunus pasti melaut.\n\nHal ini sangat berbeda dengan Kamal. Padahal keduanya sama-sama mencari hidup di laut. Tapi, Kamal sering bermalas-malasan.\n\nSuatu hari, Kamal datang ke rumah Yunus.\n\n“Yunus, bolehkah aku minta ikan?” kata Kamal.\n\n“Lho, kamu tidak dapat ikan?” tanya Yunus. “Padahal lagi musim ikan, lho.”\n\n“Ah, itu. Aku kemarin tidak melaut. Aku sibuk memperbaiki perahuku yang rusak.”\n\nMerasa kasihan, Yunus memberikan beberapa ikan. Yunus juga mengingatkan Kamal untuk segera melaut.\n\nBeberapa hari berlalu, Kamal masih belum melaut. Alasan Kamal seluas lautan. Tidak ada habisnya. Mulai dari ombak, perahu, sampai anak.\n\nSemuanya dijadikan alasan oleh Kamal. Yunus sampai kesal.\n\nSaat Kamal datang untuk meminta ikan lagi.\n\n“Kamal, ayo melaut. Ikut aku kalau perahumu masih rusak,” tegas Yunus.\n\n“Waduh, belum bisa,” tolak Kamal.\n\n“Ikut saja. Aku kesal melihatmu bermalas-malasan setiap hari,” kata Yunus.\n\n“Orang kampung juga malas denganmu,” kata Yunus. “Setiap hari hanya tiduran, lalu meminta ikan pada tetangga.”\n\nKamal hanya terdiam. Kamal memang sudah semakin susah meminta ikan. Dengan berat, Kamal melawan rasa malasnya. Ia ikut Yunus melaut. Setiap hari, Kamal ikut dengan Yunus.\n\nSekarang Kamal sudah melaut setiap hari. Kamal bahkan melaut dengan perahunya sendiri.\n\nSetelah membaca cerita, Johan, Simon, dan Maria berpendapat sebagai berikut.\n\nSimon : “Aku kagum dengan sikap Yunus yang tetap mau menemani Kamal.\"\n\nJohan : \"Iya, tapi Yunus terlalu sabar dengan perilaku Kamal. Itu menjengkelkan.\"\n\nMaria : \"Aku pun geregetan karena Kamal memang pantas ditegur dengan keras.”\n\n[pertanyaan]\n\nPendapat siapa yang paling sesuai dengan bagian akhir cerita tersebut?\nKlik pada pilihan Sesuai atau Tidak Sesuai untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Johan karena Yunus memang terlalu baik hati pada Kamal dan tetangga.",
+     "Simon karena Yunus mau menemani Kamal sampai terbiasa melaut sendiri.",
+     "Maria karena Yunus menegur keras ketika perilaku Kamal sudah kelewatan."
+    ],
+    "answer_labels": [
+     "Sesuai",
+     "Tidak Sesuai"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     false,
+     true,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Yunus tidak hanya sabar: ia menegur keras dan akhirnya menemani Kamal sampai bisa melaut sendiri. Jadi Johan tidak sesuai; Simon dan Maria sesuai. [Kunci buatan Claude.]"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s07_s0.jpg]\n\nHalo! Namaku Lianne. Aku suka sekali menggambar. Ini teman-temanku. Ada Albert, Giffari, dan Amber. Kami sedang bermain bersama.\n\nSuatu hari, Albert memenangi lomba matematika. Sebagai temannya, aku sangat bangga kepadanya! Namun, saat aku pulang, Mama berkata, “Coba saja kamu pintar seperti Albert! Dia pintar matematika! Dia pasti rajin belajar!”\n\nAku tidak boleh mengecewakan Mama. Aku harus bisa seperti Albert. Namun, hasil belajarku semalam suntuk tetap saja tidak berhasil.\n\nSaat aku jalan bersama Mama, aku bertemu Giffari. Dia sedang bermain basket. Keren sekali. “Coba saja kamu pandai bermain basket seperti Giffari!” seru Mama.\n\nAku berlatih basket. Susah sekali ternyata. Aku tidak bisa.\n\nSaat pulang, aku melihat Amber sedang bernyanyi. Wah, merdu sekali! “Coba saja kamu pandai bernyanyi seperti Amber! Lihat! Bagus sekali, bukan?” seru Mama.\n\nAku mencoba menyanyi, “Bukan begitu!!! Nada kamu salah!!!” teriak Amber.\n\nUuuh! Aku kesal sekali. Lebih baik aku menggambar saja. Sebaiknya, aku melatih kemampuan menggambarku di luar. Bertemu dengan orang-orang. Berkeliling tempat berbeda. Mencari ide menarik. Menyenangkan sekali!\n\nWah, ada lomba menggambar! Aku pun mengirimkan gambarku. Beberapa hari kemudian, tiba-tiba Mama memberitahuku. Katanya, aku menang lomba menggambar! Mama bangga sekali denganku. Mama sadar bahwa setiap anak memiliki kelebihan masing-masing. Aku senang akhirnya Mama menerima bakatku apa adanya.\n\n[pertanyaan]\n\nSiapa yang sangat suka menggambar?",
+   "options": {
+    "choices": [
+     "Albert.",
+     "Giffari.",
+     "Lianne.",
+     "Amber."
+    ]
+   },
+   "correct_answer": "Lianne.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Teks: Lianne suka sekali menggambar. [Kunci buatan Claude.] Sumber: Sumber: https://budikemdikbud.id/bacabuku/mama-aku-bukan-dia"
+  },
+  {
+   "type": "mcq_single",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s19_s0.jpg]\n\nHalo! Namaku Lianne. Aku suka sekali menggambar. Ini teman-temanku. Ada Albert, Giffari, dan Amber. Kami sedang bermain bersama.\n\nSuatu hari, Albert memenangi lomba matematika. Sebagai temannya, aku sangat bangga kepadanya! Namun, saat aku pulang, Mama berkata, “Coba saja kamu pintar seperti Albert! Dia pintar matematika! Dia pasti rajin belajar!”\n\nAku tidak boleh mengecewakan Mama. Aku harus bisa seperti Albert. Namun, hasil belajarku semalam suntuk tetap saja tidak berhasil.\n\nSaat aku jalan bersama Mama, aku bertemu Giffari. Dia sedang bermain basket. Keren sekali. “Coba saja kamu pandai bermain basket seperti Giffari!” seru Mama.\n\nAku berlatih basket. Susah sekali ternyata. Aku tidak bisa.\n\nSaat pulang, aku melihat Amber sedang bernyanyi. Wah, merdu sekali! “Coba saja kamu pandai bernyanyi seperti Amber! Lihat! Bagus sekali, bukan?” seru Mama.\n\nAku mencoba menyanyi, “Bukan begitu!!! Nada kamu salah!!!” teriak Amber.\n\nUuuh! Aku kesal sekali. Lebih baik aku menggambar saja. Sebaiknya, aku melatih kemampuan menggambarku di luar. Bertemu dengan orang-orang. Berkeliling tempat berbeda. Mencari ide menarik. Menyenangkan sekali!\n\nWah, ada lomba menggambar! Aku pun mengirimkan gambarku. Beberapa hari kemudian, tiba-tiba Mama memberitahuku. Katanya, aku menang lomba menggambar! Mama bangga sekali denganku. Mama sadar bahwa setiap anak memiliki kelebihan masing-masing. Aku senang akhirnya Mama menerima bakatku apa adanya.\n\n[pertanyaan]\n\nBagaimana sifat yang ditunjukkan Lianne pada cerita tersebut?",
+   "options": {
+    "choices": [
+     "Rajin belajar, dibuktikan dengan ia yang berprestasi pada pelajaran matematika.",
+     "Gemar olah raga, dibuktikan dengan ia yang rajin berlatih olah raga basket.",
+     "Pantang menyerah, dibuktikan dengan Ia yang terus giat mengasah bakatnya.",
+     "Lapang dada, dibuktikan dengan ia yang dapat menerima kekurangan dirinya."
+    ]
+   },
+   "correct_answer": "Pantang menyerah, dibuktikan dengan Ia yang terus giat mengasah bakatnya.",
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Setelah gagal di matematika, basket, dan menyanyi, Lianne terus melatih gambarnya sampai menang lomba: pantang menyerah. \"Lapang dada\" lebih menggambarkan Mama yang akhirnya menerima. [Kunci buatan Claude; PERIKSA.] Sumber: Sumber: https://budikemdikbud.id/bacabuku/mama-aku-bukan-dia"
+  },
+  {
+   "type": "statement_grid",
+   "prompt": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s30_s0.jpg]\n\nHalo! Namaku Lianne. Aku suka sekali menggambar. Ini teman-temanku. Ada Albert, Giffari, dan Amber. Kami sedang bermain bersama.\n\nSuatu hari, Albert memenangi lomba matematika. Sebagai temannya, aku sangat bangga kepadanya! Namun, saat aku pulang, Mama berkata, “Coba saja kamu pintar seperti Albert! Dia pintar matematika! Dia pasti rajin belajar!”\n\nAku tidak boleh mengecewakan Mama. Aku harus bisa seperti Albert. Namun, hasil belajarku semalam suntuk tetap saja tidak berhasil.\n\nSaat aku jalan bersama Mama, aku bertemu Giffari. Dia sedang bermain basket. Keren sekali. “Coba saja kamu pandai bermain basket seperti Giffari!” seru Mama.\n\nAku berlatih basket. Susah sekali ternyata. Aku tidak bisa.\n\nSaat pulang, aku melihat Amber sedang bernyanyi. Wah, merdu sekali! “Coba saja kamu pandai bernyanyi seperti Amber! Lihat! Bagus sekali, bukan?” seru Mama.\n\nAku mencoba menyanyi, “Bukan begitu!!! Nada kamu salah!!!” teriak Amber.\n\nUuuh! Aku kesal sekali. Lebih baik aku menggambar saja. Sebaiknya, aku melatih kemampuan menggambarku di luar. Bertemu dengan orang-orang. Berkeliling tempat berbeda. Mencari ide menarik. Menyenangkan sekali!\n\nWah, ada lomba menggambar! Aku pun mengirimkan gambarku. Beberapa hari kemudian, tiba-tiba Mama memberitahuku. Katanya, aku menang lomba menggambar! Mama bangga sekali denganku. Mama sadar bahwa setiap anak memiliki kelebihan masing-masing. Aku senang akhirnya Mama menerima bakatku apa adanya.\n\nDinda selesai membaca cerita \"Mama, Aku Bukan Dia\". Dinda juga tidak suka dibanding-bandingkan dengan orang lain. Ia yakin, setiap orang memiliki keunggulan yang berbeda-beda.\n\n[pertanyaan]\n\nApa kemungkinan yang dirasakan oleh Dinda ketika Lianne selalu dibandingkan dengan teman-temannya oleh Mamanya?\n\nKlik pada pilihan Setuju atau Tidak Setuju untuk setiap pernyataan berdasarkan isi teks!",
+   "options": {
+    "statements": [
+     "Sedih, karena Lianne selalu tidak diakui keunikannya oleh mamanya.",
+     "Marah, karena teman-temannya selalu lebih unggul darinya.",
+     "Kecewa, karena ia tidak bisa menjadi dirinya sendiri di depan mamanya."
+    ],
+    "answer_labels": [
+     "Setuju",
+     "Tidak Setuju"
+    ],
+    "statement_label": "Pernyataan"
+   },
+   "correct_answer": {
+    "answers": [
+     true,
+     false,
+     true
+    ],
+    "grading_mode": "proportional"
+   },
+   "weight": 1,
+   "sumber_pembuatan": "manual",
+   "status_verifikasi": "draf",
+   "explanation": "Dinda bisa ikut sedih karena keunikan Lianne tidak diakui, dan kecewa karena Lianne harus menjadi orang lain di depan mamanya. Marahnya Lianne bukan karena teman-teman lebih unggul. [Kunci buatan Claude; PERIKSA.] Sumber: Sumber: https://budikemdikbud.id/bacabuku/mama-aku-bukan-dia"
+  }
+ ]
+}

@@ -1,0 +1,236 @@
+{
+ "catatan": "Kunci dikerjakan Claude dari soal contoh Pusat Asesmen (daya serap TKA SD Matematika 2025/2026); situs tidak menampilkan kunci. Bertanda periksa = bergantung penafsiran.",
+ "kunci": {
+  "1": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Potongan 1/6: objek utuh tersusun dari 6 potongan yang sama persis. Gambar 1 (6 persegi panjang sama) dan Gambar 3 (6 persegi panjang sama, disusun bergeser) benar. Gambar 2 salah karena dua kolom tengahnya lebih sempit sehingga potongannya tidak sama.",
+   "periksa": false
+  },
+  "2": {
+   "jenis": "mcq_single",
+   "jawaban": "PLTU",
+   "alasan": "PLTU 1/2 = 50%, PLTA 0,075 = 7,5%, PLTG 5%, PLTGU 30%, PLTD 3/40 = 7,5%. Terbesar: PLTU.",
+   "periksa": false
+  },
+  "3": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "30",
+    "25"
+   ],
+   "alasan": "Jumlah keluarga harus membagi 150 karung dan tiap keluarga mendapat lebih dari satu karung: 150 : 30 = 5 dan 150 : 25 = 6 (bisa); 150 : 20 = 7,5 (tidak bisa).",
+   "periksa": false
+  },
+  "4": {
+   "jenis": "mcq_single",
+   "jawaban": "50 karung.",
+   "alasan": "Karung jenis B = 3 kg. 1.500 : 3 = 500 karung. Dibagikan 450 karung, sisa 500 - 450 = 50 karung.",
+   "periksa": false
+  },
+  "5": {
+   "jenis": "mcq_single",
+   "jawaban": "(100 – 4) x 6 : 12",
+   "alasan": "Kentang yang dibuat keripik = 100 - 4 kg. Tiap kg menjadi 6 bungkus: (100 - 4) x 6. Tiap kardus 12 bungkus: dibagi 12. Jadi (100 - 4) x 6 : 12.",
+   "periksa": false
+  },
+  "6": {
+   "jenis": "mcq_single",
+   "jawaban": "$9\\frac{1}{2}$",
+   "alasan": "3 7/6 = 25/6. 3/25 x 25/6 = 1/2. 135 : 15 = 9. Hasil 9 1/2.",
+   "periksa": false
+  },
+  "7": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Salah",
+    "Benar",
+    "Benar"
+   ],
+   "alasan": "Diagram alir: bilangan + 5, lalu (dibagi 3 bila kelipatan 6, atau dikurangi 5), terakhir dikali 2. Hasil akhir selalu genap, jadi (1) salah. Masukan 0: 0 + 5 = 5, bukan kelipatan 6, 5 - 5 = 0, 0 x 2 = 0, jadi (2) benar. Hasil akhir selalu dikali 2 sehingga selalu kelipatan dua, jadi (3) benar.",
+   "periksa": false
+  },
+  "8": {
+   "jenis": "mcq_single",
+   "jawaban": "3 benda.",
+   "alasan": "Diamagnetik awal 25 - 12 - 7 = 6 benda. Menjadi 9 benda, berarti ditambah 9 - 6 = 3 benda.",
+   "periksa": false
+  },
+  "9": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Kincir B",
+    "Kincir C"
+   ],
+   "alasan": "Dua hari: A 2 x 94 = 188, B 2 x 82 = 164, C 2 x 96 = 192. Terpakai = dihasilkan - sisa: A 188 - 42 = 146, B 164 - 13 = 151, C 192 - 30 = 162. Lebih dari 150 watt: kincir B dan C.",
+   "periksa": false
+  },
+  "10": {
+   "jenis": "mcq_single",
+   "jawaban": "4 porsi.",
+   "alasan": "Satu porsi salmon mengandung sekitar 20 gram protein. 80 : 20 = 4 porsi.",
+   "periksa": false
+  },
+  "11": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Satu resep: 2 gelas susu = 400 ml, 4 sendok teh cuka = 20 ml, garam 4 gr. Lima resep: susu 2.000 ml, cuka 100 ml, garam 20 gr. (1) benar: garam 20 gr. (2) salah: cuka tersedia 140 ml, justru lebih 40 ml. (3) benar: susu 2.000 ml sudah cukup.",
+   "periksa": false
+  },
+  "12": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "3 September 2024",
+    "27 September 2024",
+    "21 October 2024"
+   ],
+   "alasan": "Linda tiap 8 hari, Vidya tiap 6 hari: bertemu lagi tiap KPK(8, 6) = 24 hari. 10 Agustus + 24 hari = 3 September; + 48 hari = 27 September; + 72 hari = 21 Oktober. Ketiga pilihan benar (jarang sebuah soal memuat semua pilihan benar, jadi layak dicek ulang).",
+   "periksa": true
+  },
+  "13": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Huruf E bangun datar bersudut 12: 12 sisi dan 12 titik sudut. Sudut siku-siku (90 derajat) ada 8; empat sudut lainnya 270 derajat. Jadi 10 sudut siku-siku salah.",
+   "periksa": false
+  },
+  "14": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Salah"
+   ],
+   "alasan": "Dari gambar berpetak: bagian tengah persegi panjang 6 x 3 satuan, ditambah 3 segitiga (atas, kanan, bawah). Jadi 3 segitiga dan 1 persegi panjang. Pilihan lain tidak sesuai susunan yang tergambar. Catatan: sebuah persegi panjang bisa dipotong menjadi segitiga dan trapesium, tetapi susunan yang digambar adalah 3 segitiga dan 1 persegi panjang.",
+   "periksa": true
+  },
+  "15": {
+   "jenis": "mcq_single",
+   "jawaban": "15",
+   "alasan": "Kubus terlihat ada 13 (menara 4, kubus belakang kanan 1, tumpukan kiri 2, deretan depan 6). Menara dan kubus belakang kanan berdiri di atas bagian yang tersembunyi, dan masing-masing minimal 1 kubus di bawahnya. Total minimal 13 + 2 = 15, satu-satunya pilihan yang mungkin.",
+   "periksa": true
+  },
+  "16": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Tinggi tiang bendera di sekolah adalah 8 meter.",
+    "Lebar buku tulis ini sekitar 20 centimeter."
+   ],
+   "alasan": "Tinggi tiang bendera 8 meter masuk akal. Jarak rumah ke sekolah 30 milimeter (3 cm) tidak masuk akal. Lebar buku tulis sekitar 20 cm masuk akal.",
+   "periksa": false
+  },
+  "17": {
+   "jenis": "mcq_single",
+   "jawaban": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-mat/s18_o1.jpg]",
+   "alasan": "Isi botol berurutan dari paling sedikit: A 450 ml, D 470 ml, B 530 ml, C 540 ml. Hanya gambar kedua yang urutannya A < D < B < C.",
+   "periksa": false
+  },
+  "18": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Bawang putih 250 g dan cabai 250 g: neraca seimbang (Gambar 1 benar). Tepung terigu 500 g lebih ringan dari ayam 1.500 g, tetapi Gambar 2 memperlihatkan terigu lebih berat (salah). Tepung tapioka 1.250 g lebih berat dari terigu 500 g, dan Gambar 3 memperlihatkan hal itu (benar).",
+   "periksa": false
+  },
+  "19": {
+   "jenis": "mcq_single",
+   "jawaban": "2 jam 10 menit.",
+   "alasan": "Mulai pukul 08.15 (jarum pendek di antara 8 dan 9, jarum panjang di 3). Selesai pukul 10.25 (jarum pendek di antara 10 dan 11, jarum panjang di 5). Lama memasak 10.25 - 08.15 = 2 jam 10 menit.",
+   "periksa": false
+  },
+  "20": {
+   "jenis": "mcq_single",
+   "jawaban": "60 cm",
+   "alasan": "Keliling = 12 + 10 + 4 + 20 + 4 + 10 = 60 cm (sisi miring 10 cm ada dua, sisi tegak 4 cm ada dua).",
+   "periksa": false
+  },
+  "21": {
+   "jenis": "mcq_single",
+   "jawaban": "160 cm².",
+   "alasan": "Segi banyak tersusun dari 10 segitiga yang sama (terlihat dari susunan petaknya; luas segi banyak kira-kira 9,8 kali luas satu segitiga). 10 x 16 = 160 cm persegi.",
+   "periksa": false
+  },
+  "22": {
+   "jenis": "mcq_single",
+   "jawaban": "Lukisan C dan Lukisan D",
+   "alasan": "Luas tempat 4.800 cm persegi. Luas lukisan: A 60 x 60 = 3.600, B 90 x 80 = 7.200, C 40 x 80 = 3.200, D 40 x 40 = 1.600, E 60 x 80 = 4.800. Lukisan C dan D: 3.200 + 1.600 = 4.800 cm persegi, pas.",
+   "periksa": false
+  },
+  "23": {
+   "jenis": "mcq_single",
+   "jawaban": "4 hiasan",
+   "alasan": "Keset jenis 2 berbentuk persegi panjang, jadi punya 4 sudut dan 4 hiasan.",
+   "periksa": false
+  },
+  "24": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Salah"
+   ],
+   "alasan": "Berat keset: jenis 1 = 800 g, jenis 2 = 1.200 g, jenis 3 = 1.500 g. Batas 10 kg = 10.000 g, memakai dua jenis berbeda dan jumlah dimaksimalkan. Jenis 1 + jenis 2: 11 x 800 + 1 x 1.200 = 10.000 g, jadi 12 keset. Jenis 1 + jenis 3 paling banyak 11 keset (10 x 800 + 1.500 = 9.500 g). 13 keset tidak mungkin. Jumlah maksimum 12, jadi hanya 12 yang benar; 7 dan 6 tidak maksimum.",
+   "periksa": true
+  },
+  "25": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "51°",
+    "63°"
+   ],
+   "alasan": "Gunting B terbuka lebih lebar daripada gunting A (35 derajat) dan masih sudut lancip (kurang dari 90 derajat). Maka 51 derajat dan 63 derajat mungkin; 29 derajat lebih kecil dari 35 derajat sehingga tidak mungkin. Dari gambar sudut B kira-kira 50 derajat.",
+   "periksa": true
+  },
+  "26": {
+   "jenis": "mcq_single",
+   "jawaban": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-mat/s26_o2.jpg]",
+   "alasan": "Jumlah dua cabang: Januari 500 + 500 = 1.000; Februari 1.000 + 500 = 1.500; Maret 750 + 1.500 = 2.250; April 1.200 + 2.000 = 3.200; Mei 1.500 + 2.500 = 4.000. Hanya gambar ketiga yang urutannya benar untuk Maret (2.250) dan Mei (4.000) dengan April sekitar 3.250 (terbaca dari grafik kira-kira 3.200). Gambar pertama Maret salah (2.100), kedua April 3.000 (jauh), keempat Mei 3.000 (lebih rendah dari April).",
+   "periksa": true
+  },
+  "27": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "6 jam",
+    "5 jam"
+   ],
+   "alasan": "Screen time hari sekolah: 1 + 0,5 + 1 + 2,5 + 2 = 7 jam. Batas 2 jam, jadi harus dikurangi paling sedikit 5 jam. Pengurangan 6 jam dan 5 jam memenuhi; 4 jam masih menyisakan 3 jam (melebihi batas).",
+   "periksa": false
+  },
+  "28": {
+   "jenis": "mcq_single",
+   "jawaban": "23",
+   "alasan": "Batang Telur Gulung berada di angka 23.",
+   "periksa": false
+  },
+  "29": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Tonga punya 9 gunung berapi aktif dengan 450 Mw, jadi tiap gunung paling sedikit 450 : 9 = 50 Mw. Rusia 27 gunung: 27 x 50 = 1.350 Mw (benar). Vanuatu 9 gunung: 9 x 50 = 450 Mw (benar). Papua Nugini 13 gunung: 13 x 50 = 650 Mw, bukan 550 Mw (salah). Pernyataan 3 bisa dibaca \"setidaknya 550 Mw\" yang secara harfiah benar, tetapi yang ditanyakan adalah nilai minimum yang tepat, yaitu 650 Mw.",
+   "periksa": true
+  },
+  "30": {
+   "jenis": "mcq_single",
+   "jawaban": "23 siswa.",
+   "alasan": "Bus penuh 72 siswa. 6A 25 siswa dan 6B 24 siswa: 72 - 25 - 24 = 23 siswa untuk 6C.",
+   "periksa": false
+  }
+ }
+}

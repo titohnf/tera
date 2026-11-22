@@ -1,0 +1,602 @@
+{
+ "1": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Menyusun kembali informasi dari teks dalam bentuk ikhtisar/bagan.",
+   "nasional": 54.51
+  },
+  "indikator": {
+   "nama": "Menentukan bagan kerangka isi/informasi dalam teks.",
+   "nomor": 1,
+   "nasional": 54.51
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "9": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat pada teks.",
+   "nomor": 9,
+   "nasional": 63.25
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "11": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat pada teks.",
+   "nomor": 11,
+   "nasional": 56.51
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "12": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat dalam teks.",
+   "nomor": 12,
+   "nasional": 64.43
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "13": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat pada teks.",
+   "nomor": 13,
+   "nasional": 59.2
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "19": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat pada teks.",
+   "nomor": 19,
+   "nasional": 63.36
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "28": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi informasi tersurat dalam teks.",
+   "nasional": 60.36
+  },
+  "indikator": {
+   "nama": "Menentukan informasi tersurat dalam teks.",
+   "nomor": 28,
+   "nasional": 55.41
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "25": {
+  "elemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "subelemen": {
+   "nama": "Pemahaman Tekstual",
+   "nasional": 59.47
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi objek berdasarkan kosakata yang digunakan dalam teks fiksi atau nonfiksi.",
+   "nasional": 59.1
+  },
+  "indikator": {
+   "nama": "Menentukan kosakata yang sesuai dengan objek dalam teks.",
+   "nomor": 25,
+   "nasional": 59.1
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "2": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menjelaskan makna ungkapan yang digunakan dalam teks.",
+   "nasional": 57.92
+  },
+  "indikator": {
+   "nama": "Menentukan makna ungkapan dalam teks.",
+   "nomor": 2,
+   "nasional": 58.46
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "7": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menjelaskan makna ungkapan yang digunakan dalam teks.",
+   "nasional": 57.92
+  },
+  "indikator": {
+   "nama": "Menjelaskan makna ungkapan atau idiom dalam teks.",
+   "nomor": 7,
+   "nasional": 54.55
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "22": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menjelaskan makna ungkapan yang digunakan dalam teks.",
+   "nasional": 57.92
+  },
+  "indikator": {
+   "nama": "Menentukan makna ungkapan/peribahasa sederhana dalam teks.",
+   "nomor": 22,
+   "nasional": 60.75
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "4": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyusun kesimpulan untuk menentukan relevansi isi dalam teks.",
+   "nomor": 4,
+   "nasional": 62.12
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "6": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyimpulkan nilai-nilai yang terdapat dalam teks.",
+   "nomor": 6,
+   "nasional": 64.56
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "10": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyusun inferensi atau kesimpulan isi dalam teks.",
+   "nomor": 10,
+   "nasional": 60.98
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "14": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyusun kesimpulan berdasarkan unsur intrinsik dalam teks.",
+   "nomor": 14,
+   "nasional": 59.25
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "16": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menjelaskan ide pokok atau fokus utama teks.",
+   "nomor": 16,
+   "nasional": 58.0
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "17": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyimpulkan isi atau substansi dalam teks.",
+   "nomor": 17,
+   "nasional": 59.84
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "20": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyimpulkan perasaan dan sifat tokoh dalam teks.",
+   "nomor": 20,
+   "nasional": 52.72
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "29": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan ide pokok, gagasan pendukung, amanat, tokoh, peristiwa, dan/atau nilai-nilai dalam teks.",
+   "nasional": 59.2
+  },
+  "indikator": {
+   "nama": "Menyimpulkan sifat atau karakter tokoh dalam teks.",
+   "nomor": 29,
+   "nasional": 56.16
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "5": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan perubahan sederhana pada objek, karakter, dan/atau latar dalam teks fiksi atau nonfiksi.",
+   "nasional": 58.74
+  },
+  "indikator": {
+   "nama": "Menyimpulkan perbedaan informasi dalam teks.",
+   "nomor": 5,
+   "nasional": 61.47
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "23": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan perubahan sederhana pada objek, karakter, dan/atau latar dalam teks fiksi atau nonfiksi.",
+   "nasional": 58.74
+  },
+  "indikator": {
+   "nama": "Menyimpulkan perubahan karakter atau watak tokoh dalam teks.",
+   "nomor": 23,
+   "nasional": 60.17
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "26": {
+  "elemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "subelemen": {
+   "nama": "Pemahaman Inferensial",
+   "nasional": 58.83
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan perubahan sederhana pada objek, karakter, dan/atau latar dalam teks fiksi atau nonfiksi.",
+   "nasional": 58.74
+  },
+  "indikator": {
+   "nama": "Menyimpulkan perubahan karakter tokoh dalam teks.",
+   "nomor": 26,
+   "nasional": 54.58
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "3": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai kesesuaian antarunsur dan/atau antarinformasi dalam teks.",
+   "nasional": 63.62
+  },
+  "indikator": {
+   "nama": "Menentukan kesesuaian antara judul dengan isi teks.",
+   "nomor": 3,
+   "nasional": 62.59
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "18": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai kesesuaian antarunsur dan/atau antarinformasi dalam teks.",
+   "nasional": 63.62
+  },
+  "indikator": {
+   "nama": "Menilai kesesuaian antara ilustrasi dengan isi teks.",
+   "nomor": 18,
+   "nasional": 64.66
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "8": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari berdasarkan pengalaman atau pengetahuan pribadi.",
+   "nasional": 62.37
+  },
+  "indikator": {
+   "nama": "Merefleksi peristiwa/kejadian dalam teks dengan kehidupan sehari-hari.",
+   "nomor": 8,
+   "nasional": 55.5
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "15": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari berdasarkan pengalaman atau pengetahuan pribadi.",
+   "nasional": 62.37
+  },
+  "indikator": {
+   "nama": "Merefleksikan pengetahuan baru dari teks dalam kehidupan sehari-hari.",
+   "nomor": 15,
+   "nasional": 61.99
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "21": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari berdasarkan pengalaman atau pengetahuan pribadi.",
+   "nasional": 62.37
+  },
+  "indikator": {
+   "nama": "Merefleksikan pengetahuan baru dari teks dengan kehidupan sehari-hari.",
+   "nomor": 21,
+   "nasional": 65.39
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "24": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari berdasarkan pengalaman atau pengetahuan pribadi.",
+   "nasional": 62.37
+  },
+  "indikator": {
+   "nama": "Merefleksikan nilai-nilai keteladanan dalam teks.",
+   "nomor": 24,
+   "nasional": 66.57
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "27": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan respons emosional terhadap unsur teks fiksi.",
+   "nasional": 63.47
+  },
+  "indikator": {
+   "nama": "Menentukan respons emosional terhadap peristiwa/konflik yang dialami tokoh dalam teks.",
+   "nomor": 27,
+   "nasional": 63.57
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ },
+ "30": {
+  "elemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "subelemen": {
+   "nama": "Evaluasi dan Apresiasi",
+   "nasional": 62.96
+  },
+  "kompetensi": {
+   "nama": "Menyimpulkan respons emosional terhadap unsur teks fiksi.",
+   "nasional": 63.47
+  },
+  "indikator": {
+   "nama": "Menentukan respons emosional dari peristiwa/konflik dalam teks.",
+   "nomor": 30,
+   "nasional": 63.37
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Bahasa Indonesia 2025/2026 (nasional)"
+ }
+}

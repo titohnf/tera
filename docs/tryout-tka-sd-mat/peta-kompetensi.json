@@ -1,0 +1,602 @@
+{
+ "1": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait pecahan senilai menggunakan gambar dan simbol matematika",
+   "nasional": 38.87
+  },
+  "indikator": {
+   "nama": "Menentukan representasi pecahan dari bagian suatu objek utuh.",
+   "nomor": 1,
+   "nasional": 38.87
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "2": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Mengurutkan beberapa bilangan yang dinyatakan dalam bentuk berbeda (bilangan cacah, pecahan, desimal, dan persentase)",
+   "nasional": 37.71
+  },
+  "indikator": {
+   "nama": "Mengurutkan beberapa bilangan yang dinyatakan dalam bentuk berbeda.",
+   "nomor": 2,
+   "nasional": 37.71
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "3": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menentukan faktor suatu bilangan cacah dan mengenal bilangan prima",
+   "nasional": 38.97
+  },
+  "indikator": {
+   "nama": "Membandingkan dan mengurutkan berbagai jenis bilangan yang meliputi pecahan, bilangan cacah, desimal, serta persentase.",
+   "nomor": 3,
+   "nasional": 38.97
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "4": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menggunakan penjumlahan/pengurangan/perkalian/pembagian dua bilangan cacah (bilangan dan hasil operasi maks. empat angka), termasuk mengestimasi hasil operasi",
+   "nasional": 44.44
+  },
+  "indikator": {
+   "nama": "Menggunakan operasi bilangan cacah (maks. empat angka) dan menyatakannya dalam berbagai bentuk.",
+   "nomor": 4,
+   "nasional": 44.44
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "5": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait operasi penjumlahan, pengurangan, perkalian, dan pembagian bilangan cacah",
+   "nasional": 42.37
+  },
+  "indikator": {
+   "nama": "Memodelkan masalah kontekstual ke dalam bentuk kalimat matematika yang melibatkan bilangan cacah.",
+   "nomor": 5,
+   "nasional": 44.51
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "7": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait operasi penjumlahan, pengurangan, perkalian, dan pembagian bilangan cacah",
+   "nasional": 42.37
+  },
+  "indikator": {
+   "nama": "Mengevaluasi kebenaran hasil operasi aritmetika bilangan cacah pada diagram alir.",
+   "nomor": 7,
+   "nasional": 40.23
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "6": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait operasi penjumlahan dan pengurangan bilangan pecahan, serta operasi perkalian dan pembagian bilangan pecahan dengan bilangan asli",
+   "nasional": 44.75
+  },
+  "indikator": {
+   "nama": "Menentukan hasil operasi hitung campuran yang melibatkan pecahan dan bilangan asli.",
+   "nomor": 6,
+   "nasional": 44.75
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "8": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan atau pengurangan (dalam bentuk sederhana)",
+   "nasional": 43.74
+  },
+  "indikator": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan atau pengurangan dalam bentuk sederhana (soal 1).",
+   "nomor": 8,
+   "nasional": 44.76
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "9": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan atau pengurangan (dalam bentuk sederhana)",
+   "nasional": 43.74
+  },
+  "indikator": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan atau pengurangan dalam bentuk sederhana (soal 2).",
+   "nomor": 9,
+   "nasional": 42.72
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "10": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan, pengurangan, perkalian, dan pembagian (dalam bentuk sederhana)",
+   "nasional": 45.92
+  },
+  "indikator": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan berbagai bentuk operasi bilangan (dalam bentuk sederhana).",
+   "nomor": 10,
+   "nasional": 44.43
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "11": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menyelesaikan persamaan sederhana menggunakan operasi penjumlahan, pengurangan, perkalian, dan pembagian (dalam bentuk sederhana)",
+   "nasional": 45.92
+  },
+  "indikator": {
+   "nama": "Mengevaluasi informasi dengan menggunakan persamaan sederhana dengan operasi penjumlahan, pengurangan, perkalian, dan pembagian.",
+   "nomor": 11,
+   "nasional": 47.41
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "12": {
+  "elemen": {
+   "nama": "Bilangan",
+   "nasional": 43.13
+  },
+  "subelemen": {
+   "nama": "Bilangan Rasional",
+   "nasional": 43.13
+  },
+  "kompetensi": {
+   "nama": "Menentukan KPK dan FPB",
+   "nasional": 48.77
+  },
+  "indikator": {
+   "nama": "Menentukan KPK dan FPB dari informasi.",
+   "nomor": 12,
+   "nasional": 48.77
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "13": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.74
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait bentuk bangun datar",
+   "nasional": 41.89
+  },
+  "indikator": {
+   "nama": "Membedakan ciri-ciri berbagai jenis bangun datar.",
+   "nomor": 13,
+   "nasional": 42.85
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "14": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.74
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait bentuk bangun datar",
+   "nasional": 41.89
+  },
+  "indikator": {
+   "nama": "Mengidentifikasi berbagai bangun datar penyusun suatu bangun segi banyak.",
+   "nomor": 14,
+   "nasional": 40.94
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "15": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.74
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait konstruksi bangun ruang dan visualisasi spasial (bagian depan, atas, dan samping)",
+   "nasional": 41.6
+  },
+  "indikator": {
+   "nama": "Menyelesaikan masalah terkait konstruksi bangun ruang dan visualisasi spasial.",
+   "nomor": 15,
+   "nasional": 41.6
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "23": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Objek Geometri",
+   "nasional": 41.74
+  },
+  "kompetensi": {
+   "nama": "Mengidentifikasi ciri-ciri dari segiempat, segitiga, segibanyak, dan lingkaran",
+   "nasional": 41.58
+  },
+  "indikator": {
+   "nama": "Mengidentifikasi bentuk gambar benda berdasarkan ciri-ciri dari segiempat, segitiga, segibanyak, dan lingkaran.",
+   "nomor": 23,
+   "nasional": 41.58
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "16": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait panjang benda menggunakan satuan baku",
+   "nasional": 39.85
+  },
+  "indikator": {
+   "nama": "Mengidentifikasi kelogisan penggunaan satuan baku panjang dalam masalah pengukuran.",
+   "nomor": 16,
+   "nasional": 39.85
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "17": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait volume benda menggunakan satuan baku",
+   "nasional": 42.3
+  },
+  "indikator": {
+   "nama": "Menentukan representasi visual dari volume benda menggunakan satuan baku.",
+   "nomor": 17,
+   "nasional": 42.3
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "18": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait berat benda menggunakan satuan baku",
+   "nasional": 41.34
+  },
+  "indikator": {
+   "nama": "Menentukan representasi kesetimbangan neraca berdasarkan perbandingan berat benda.",
+   "nomor": 18,
+   "nasional": 41.34
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "19": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait waktu",
+   "nasional": 47.76
+  },
+  "indikator": {
+   "nama": "Menentukan durasi suatu aktivitas berdasarkan keterangan waktu pada jam analog.",
+   "nomor": 19,
+   "nasional": 47.76
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "20": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait keliling dan luas bangun datar (segitiga, segiempat, dan segi banyak)",
+   "nasional": 43.57
+  },
+  "indikator": {
+   "nama": "Menghitung keliling bangun datar segi banyak tidak beraturan yang diketahui panjang semua sisinya.",
+   "nomor": 20,
+   "nasional": 43.88
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "21": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait keliling dan luas bangun datar (segitiga, segiempat, dan segi banyak)",
+   "nasional": 43.57
+  },
+  "indikator": {
+   "nama": "Menentukan luas bangun datar segi banyak yang terbentuk dari gabungan beberapa segitiga.",
+   "nomor": 21,
+   "nasional": 43.26
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "22": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Menghitung keliling dan luas persegi panjang bila diketahui panjang dan lebarnya, dan menghitung panjang atau lebar bila diketahui luas/keliling dan salah satu sisinya",
+   "nasional": 37.75
+  },
+  "indikator": {
+   "nama": "Menggunakan konsep keliling atau luas persegi/persegi panjang dalam menyelesaikan permasalahan.",
+   "nomor": 22,
+   "nasional": 37.75
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "24": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Menentukan panjang dan berat benda menggunakan satuan baku (termasuk menentukan satuan yang tepat)",
+   "nasional": 35.64
+  },
+  "indikator": {
+   "nama": "Menganalisis/mengevaluasi pernyataan berdasarkan konsep pengukuran panjang dan berat benda menggunakan satuan baku.",
+   "nomor": 24,
+   "nasional": 35.64
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "25": {
+  "elemen": {
+   "nama": "Geometri dan Pengukuran",
+   "nasional": 41.91
+  },
+  "subelemen": {
+   "nama": "Pengukuran",
+   "nasional": 41.98
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait besar sudut",
+   "nasional": 46.03
+  },
+  "indikator": {
+   "nama": "Menentukan besar sudut yang terbentuk dari ilustrasi masalah kontekstual berdasarkan jenis sudutnya.",
+   "nomor": 25,
+   "nasional": 46.03
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "26": {
+  "elemen": {
+   "nama": "Data dan Ketidakpastian",
+   "nasional": 47.07
+  },
+  "subelemen": {
+   "nama": "Penyajian dan Penggunaan Data",
+   "nasional": 47.07
+  },
+  "kompetensi": {
+   "nama": "Kemampuan memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait pengambilan informasi dan penggunaan data",
+   "nasional": 48.04
+  },
+  "indikator": {
+   "nama": "Mengidentifikasi kesalahan penyajian data dalam bentuk diagram batang.",
+   "nomor": 26,
+   "nasional": 48.04
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "27": {
+  "elemen": {
+   "nama": "Data dan Ketidakpastian",
+   "nasional": 47.07
+  },
+  "subelemen": {
+   "nama": "Penyajian dan Penggunaan Data",
+   "nasional": 47.07
+  },
+  "kompetensi": {
+   "nama": "Menyajikan, menganalisis, dan menginterpretasi data dalam bentuk diagram batang atau tabel",
+   "nasional": 46.82
+  },
+  "indikator": {
+   "nama": "Menginterpretasi informasi diagram atau tabel untuk menyelesaikan permasalahan yang disajikan.",
+   "nomor": 27,
+   "nasional": 48.87
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "28": {
+  "elemen": {
+   "nama": "Data dan Ketidakpastian",
+   "nasional": 47.07
+  },
+  "subelemen": {
+   "nama": "Penyajian dan Penggunaan Data",
+   "nasional": 47.07
+  },
+  "kompetensi": {
+   "nama": "Menyajikan, menganalisis, dan menginterpretasi data dalam bentuk diagram batang atau tabel",
+   "nasional": 46.82
+  },
+  "indikator": {
+   "nama": "Menginterpretasi data berdasarkan kategori tertentu.",
+   "nomor": 28,
+   "nasional": 48.66
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "29": {
+  "elemen": {
+   "nama": "Data dan Ketidakpastian",
+   "nasional": 47.07
+  },
+  "subelemen": {
+   "nama": "Penyajian dan Penggunaan Data",
+   "nasional": 47.07
+  },
+  "kompetensi": {
+   "nama": "Menyajikan, menganalisis, dan menginterpretasi data dalam bentuk diagram batang atau tabel",
+   "nasional": 46.82
+  },
+  "indikator": {
+   "nama": "Menyelesaikan permasalahan berkaitan dengan penyajian data dalam bentuk diagram batang atau tabel.",
+   "nomor": 29,
+   "nasional": 44.35
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ },
+ "30": {
+  "elemen": {
+   "nama": "Data dan Ketidakpastian",
+   "nasional": 47.07
+  },
+  "subelemen": {
+   "nama": "Penyajian dan Penggunaan Data",
+   "nasional": 47.07
+  },
+  "kompetensi": {
+   "nama": "Menyajikan, menganalisis, dan menginterpretasi data dalam bentuk diagram batang atau tabel",
+   "nasional": 46.82
+  },
+  "indikator": {
+   "nama": "Menginterpretasi data diagram batang atau tabel untuk menyelesaikan permasalahan.",
+   "nomor": 30,
+   "nasional": 45.4
+  },
+  "sumber": "Pusat Asesmen Pendidikan, daya serap TKA SD Matematika 2025/2026 (nasional)"
+ }
+}

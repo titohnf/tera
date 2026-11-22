@@ -65,7 +65,7 @@
    "weight": 1,
    "sumber_pembuatan": "manual",
    "status_verifikasi": "draf",
-   "explanation": "Istilah (navigasi otonom, LiDAR, Fleet Management System) dijelaskan dan ada glosarium; istilahnya teknis, bukan istilah yang familiar. [Kunci buatan Claude.] Sumber bacaan: https://www.kompas.id/artikel/heboh-robot-pelayan-restoran-pertama-di-kuba | https://food.detik.com/info-kuliner/d-7660919/bule-ini-girang-lihat-robot-antar-makanan-di-hotel-china | https://radarsampit.jawapos.com/featured/2345605645/robot-pengantar-makanan-mulai-populer-di-as-jadi-andalan-saat-musim-dingin | https://kumparan.com/kumparanfood/robot-pengantar-makanan-tersedia-di-hotel-beijing-selama-olimpiade-musim-dingin-1xR1I7m1m1L/full | https://voi.id/berita/410805/dubai-sustainable-city-luncurkan-program-robot-pengantar-waktu-tunggunya-kurang-dari-30-menit | www.robotrunner.com/en/indoor-delivery-service-robot.html"
+   "explanation": "Istilah (navigasi otonom, LiDAR, Fleet Management System) dijelaskan dan ada glosarium; istilahnya teknis, bukan istilah yang familiar. [Kunci buatan Claude; PERIKSA.] Sumber bacaan: https://www.kompas.id/artikel/heboh-robot-pelayan-restoran-pertama-di-kuba | https://food.detik.com/info-kuliner/d-7660919/bule-ini-girang-lihat-robot-antar-makanan-di-hotel-china | https://radarsampit.jawapos.com/featured/2345605645/robot-pengantar-makanan-mulai-populer-di-as-jadi-andalan-saat-musim-dingin | https://kumparan.com/kumparanfood/robot-pengantar-makanan-tersedia-di-hotel-beijing-selama-olimpiade-musim-dingin-1xR1I7m1m1L/full | https://voi.id/berita/410805/dubai-sustainable-city-luncurkan-program-robot-pengantar-waktu-tunggunya-kurang-dari-30-menit | www.robotrunner.com/en/indoor-delivery-service-robot.html"
   },
   {
    "type": "mcq_multi",
@@ -501,7 +501,7 @@
    },
    "correct_answer": {
     "answers": [
-     true,
+     false,
      true,
      false
     ],
@@ -510,7 +510,7 @@
    "weight": 1,
    "sumber_pembuatan": "manual",
    "status_verifikasi": "draf",
-   "explanation": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah, timbul tenggelam. Bukan keputusasaan. [Kunci buatan Claude; PERIKSA.]"
+   "explanation": "Belalang berloncatan di semak: rindu yang bergejolak/tidak tenang namun indah. Bukan hilang begitu saja (kenangan di puisi bertahan: \"masih kudengar\") dan bukan keputusasaan. [Kunci buatan Claude; PERIKSA.]"
   },
   {
    "type": "statement_grid",
@@ -529,7 +529,7 @@
    },
    "correct_answer": {
     "answers": [
-     true,
+     false,
      false,
      true
     ],
@@ -538,7 +538,7 @@
    "weight": 1,
    "sumber_pembuatan": "manual",
    "status_verifikasi": "draf",
-   "explanation": "Puisi merenungkan kenangan dan rindu lewat suara dan gerak alam. \"Ketulusan meski tak sesuai harapan\" tidak ada di puisi. [Kunci buatan Claude; PERIKSA.]"
+   "explanation": "Pesan puisi: merenungi kehidupan dan kenangan lewat suara dan gerak di sekitar. \"Dijadikan pelajaran\" melebihi isi puisi; \"ketulusan meski tak sesuai harapan\" tidak ada di puisi. [Kunci buatan Claude; PERIKSA.]"
   },
   {
    "type": "mcq_single",

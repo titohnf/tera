@@ -1,0 +1,236 @@
+{
+ "catatan": "Kunci dikerjakan Claude dari soal contoh Pusat Asesmen (daya serap TKA SD Bahasa Indonesia 2025/2026); situs tidak menampilkan kunci. Bertanda periksa = bergantung penafsiran.",
+ "kunci": {
+  "1": {
+   "jenis": "mcq_single",
+   "jawaban": "[gambar: https://fkieereilqfiqtjmpher.supabase.co/storage/v1/object/public/quiz-uploads/tka-sd-bin/s01_o1.jpg]",
+   "alasan": "Teks: lokasi dekat Pantai Congot; zona menarik Pasir Mendit, Jembatan Api-Api, Pantai Kadilangu; satwa burung kuntul, kepiting, udang, biawak. Hanya bagan kedua yang semuanya sesuai (ayunan, gazebo, dan menara pandang adalah spot foto, bukan zona).",
+   "periksa": false
+  },
+  "2": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Tempat yang indah, tetapi belum dikenal banyak orang.",
+    "Lokasi yang jarang diketahui, tetapi memiliki banyak spot menarik."
+   ],
+   "alasan": "\"Permata tersembunyi\" = tempat indah yang belum banyak dikenal, tetapi punya banyak spot menarik. \"Tidak mudah dijangkau\" tidak disebut di teks.",
+   "periksa": true
+  },
+  "3": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Benar",
+    "Salah"
+   ],
+   "alasan": "Teks hanya membahas hutan mangrove Kulon Progo, jadi Amara dan Bima tepat. Satu hutan tidak mewakili seluruh hutan mangrove Indonesia, jadi Jena kurang tepat.",
+   "periksa": false
+  },
+  "4": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Perkembangannya dipengaruhi budaya negara lain.",
+    "Ditemukan di berbagai daerah dengan sebutan berbeda."
+   ],
+   "alasan": "Bakwan unik karena dipengaruhi berbagai budaya (Cina, Jepang, Portugis) dan punya nama berbeda di tiap daerah. Isinya tidak sama dengan makanan Jepang (tempura).",
+   "periksa": false
+  },
+  "5": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Sesudah",
+    "Sebelum",
+    "Sesudah"
+   ],
+   "alasan": "Awalnya bakwan dari daging dan tepung digoreng (Sebelum). Kini berisi aneka sayuran dan bisa ditambah udang, sosis, atau bakso (Sesudah).",
+   "periksa": false
+  },
+  "6": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Peduli lingkungan itu penting.",
+    "Hal kecil bisa jadi langkah baik."
+   ],
+   "alasan": "Salma mengajak peduli lingkungan dimulai dari hal kecil seperti membawa botol sendiri. \"Bebas memilih gaya hidup\" bukan pesan cerita.",
+   "periksa": false
+  },
+  "7": {
+   "jenis": "mcq_single",
+   "jawaban": "mengabaikan masalah sampah di sekitar",
+   "alasan": "\"Kita nggak bisa terus tutup mata soal sampah plastik\": tutup mata = mengabaikan masalah sampah.",
+   "periksa": false
+  },
+  "8": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Sesuai",
+    "Tidak Sesuai",
+    "Sesuai"
+   ],
+   "alasan": "Dalam cerita teman-teman membawa botol minum sendiri dan Salma mengajak peduli sampah plastik. Menggunakan botol isi ulang dan mengajak membatasi minuman kemasan sesuai. Membeli botol untuk teman-teman tidak ada di cerita (mereka hanya membantu mencarikan botol untuk Alvin).",
+   "periksa": true
+  },
+  "9": {
+   "jenis": "mcq_single",
+   "jawaban": "Akan habis terbakar di langit.",
+   "alasan": "Teks: meteor akan habis terbakar di langit.",
+   "periksa": false
+  },
+  "10": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Menonton hujan meteor dengan ayahnya.",
+    "Langit cerah ketika menonton hujan meteor."
+   ],
+   "alasan": "Tokoh Aku senang menghabiskan waktu dengan ayah menonton hujan meteor, dan ia berharap langit cerah supaya meteor jelas terlihat. Menulis buku harian sambil melihat meteor tidak disebutkan.",
+   "periksa": true
+  },
+  "11": {
+   "jenis": "mcq_single",
+   "jawaban": "Bunga.",
+   "alasan": "Teks: saat bermain dengan Heksagonal, Giga menirukan bentuk bunga.",
+   "periksa": false
+  },
+  "12": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Roket.",
+    "Menara."
+   ],
+   "alasan": "Teks: bersama Pasukan Kotak, Giga menirukan roket, ikan, dan menara. Bendera termasuk bentuk segitiga.",
+   "periksa": false
+  },
+  "13": {
+   "jenis": "mcq_single",
+   "jawaban": "Menggunakan kapal dari bawah jembatan Musi.",
+   "alasan": "Teks: ini kedua kalinya ke Pulau Kemaro; pertama kali mereka naik kapal dari bawah jembatan Musi.",
+   "periksa": false
+  },
+  "14": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Pertunjukan barongsai ditiadakan sehingga mereka memilih berkeliling pulau.",
+    "Penerbangan lampion dihilangkan, mereka memilih makan makanan khas imlek."
+   ],
+   "alasan": "Karena hujan, barongsai dan penerbangan lampion dibatalkan, namun mereka tetap menikmati dengan berkeliling pulau dan mencoba makanan khas Imlek. Berjalan di jembatan ponton terjadi sebelum hujan turun.",
+   "periksa": false
+  },
+  "15": {
+   "jenis": "mcq_single",
+   "jawaban": "Berlapang dada dan memilih untuk menyusun rencana menyenangkan lain di rumah.",
+   "alasan": "Cerita mengajarkan menerima rencana yang batal dan tetap menikmati: berlapang dada dan menyusun rencana lain.",
+   "periksa": false
+  },
+  "16": {
+   "jenis": "mcq_single",
+   "jawaban": "Pentingnya kota berkelanjutan untuk masa depan.",
+   "alasan": "Seluruh teks membahas ciri-ciri kota berkelanjutan dan mengajak menjaganya: fokus utama pentingnya kota berkelanjutan. Pilihan lain hanya sebagian rincian.",
+   "periksa": false
+  },
+  "17": {
+   "jenis": "mcq_single",
+   "jawaban": "Kota menjadi bersih.",
+   "alasan": "Pengelolaan sampah yang baik membuat kota bersih; pilihan lain tidak berkaitan dengan sampah.",
+   "periksa": false
+  },
+  "18": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Tidak ada gambar ruang terbuka hijau seperti taman dan lapangan.",
+    "Tidak ada gambar alat transportasi ramah lingkungan bertenaga listrik."
+   ],
+   "alasan": "Gambar kota tidak menampilkan taman atau lapangan hijau dan tidak ada kendaraan listrik; keduanya ciri kota berkelanjutan di teks. Keberadaan manusia di jalan bukan ciri yang disebut teks.",
+   "periksa": true
+  },
+  "19": {
+   "jenis": "mcq_single",
+   "jawaban": "Ketua adat",
+   "alasan": "Teks: ketua adat akan memotong rambut gimbal Rara.",
+   "periksa": false
+  },
+  "20": {
+   "jenis": "mcq_single",
+   "jawaban": "Ikhlas.",
+   "alasan": "Rara sadar keadaan orang tuanya, meminta maaf, dan menerima hanya meminta buku cerita: ikhlas.",
+   "periksa": false
+  },
+  "21": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Bertanya kepada ayah dan ibu apakah punya uang atau tidak.",
+    "Memikirkan apakah barang itu perlu atau tidak dimiliki saat ini."
+   ],
+   "alasan": "Pelajaran dari cerita: mempertimbangkan kemampuan orang tua dan perlu tidaknya barang, bukan memaksa meminta langsung dibelikan.",
+   "periksa": true
+  },
+  "22": {
+   "jenis": "mcq_single",
+   "jawaban": "Memberitahukan kepada Arul bahwa ia harus mau belajar kalau ingin nilai ujiannya bagus lagi.",
+   "alasan": "Peribahasa \"bersakit-sakit dahulu, bersenang-senang kemudian\": Erni menasihati Arul bahwa ia harus mau belajar kalau ingin nilai ujiannya bagus lagi. Pilihan 1 menyiratkan Arul sudah belajar, padahal belum.",
+   "periksa": true
+  },
+  "23": {
+   "jenis": "mcq_single",
+   "jawaban": "Arul akhirnya mau belajar bersama teman-temanya.",
+   "alasan": "Setelah diajak Reno dan teman-temannya, Arul mengangguk: ia akhirnya mau belajar bersama.",
+   "periksa": false
+  },
+  "24": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Benar",
+    "Salah",
+    "Benar"
+   ],
+   "alasan": "Arul berubah setelah belajar bersama teman (1 benar). Yakin pada kemampuan diri tanpa belajar sambil tetap bermain bola justru membuat nilainya jelek (2 salah). Bertanya saat guru menjelaskan tidak ada di cerita tetapi sejalan dengan pesan cerita (3 benar), sehingga layak dicek.",
+   "periksa": true
+  },
+  "25": {
+   "jenis": "mcq_multi",
+   "jawaban": [
+    "Mengarungi laut.",
+    "Melempar jala."
+   ],
+   "alasan": "\"Mengarungi laut\" dan \"melempar jala\" menunjukkan pekerjaan nelayan. Memperbaiki perahu adalah alasan Kamal.",
+   "periksa": false
+  },
+  "26": {
+   "jenis": "mcq_single",
+   "jawaban": "Tersadar untuk rajin melaut setiap hari.",
+   "alasan": "Setelah ditegur, Kamal melawan rasa malasnya dan melaut setiap hari.",
+   "periksa": false
+  },
+  "27": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Tidak Sesuai",
+    "Sesuai",
+    "Sesuai"
+   ],
+   "alasan": "Yunus tidak hanya sabar: ia menegur keras dan akhirnya menemani Kamal sampai bisa melaut sendiri. Jadi Johan tidak sesuai; Simon dan Maria sesuai.",
+   "periksa": false
+  },
+  "28": {
+   "jenis": "mcq_single",
+   "jawaban": "Lianne.",
+   "alasan": "Teks: Lianne suka sekali menggambar.",
+   "periksa": false
+  },
+  "29": {
+   "jenis": "mcq_single",
+   "jawaban": "Pantang menyerah, dibuktikan dengan Ia yang terus giat mengasah bakatnya.",
+   "alasan": "Setelah gagal di matematika, basket, dan menyanyi, Lianne terus melatih gambarnya sampai menang lomba: pantang menyerah. \"Lapang dada\" lebih menggambarkan Mama yang akhirnya menerima.",
+   "periksa": true
+  },
+  "30": {
+   "jenis": "statement_grid",
+   "jawaban": [
+    "Setuju",
+    "Tidak Setuju",
+    "Setuju"
+   ],
+   "alasan": "Dinda bisa ikut sedih karena keunikan Lianne tidak diakui, dan kecewa karena Lianne harus menjadi orang lain di depan mamanya. Marahnya Lianne bukan karena teman-teman lebih unggul.",
+   "periksa": true
+  }
+ }
+}
