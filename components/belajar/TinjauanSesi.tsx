@@ -1,4 +1,5 @@
 import type { SoalTinjauan } from '@/lib/belajar/sesi'
+import type { SoalLatihan } from '@/lib/belajar/tipe-soal'
 import { bacaJawaban, bacaKunci, type BarisJawaban } from '@/lib/belajar/jawaban'
 import { angkaSkor } from '@/lib/belajar/penilaian'
 import { hasilSoal, PetakNomor, type HasilSoal } from './BilahJawaban'
