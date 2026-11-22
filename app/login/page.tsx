@@ -115,7 +115,7 @@ function FormLogin() {
                 required
                 autoComplete="off"
                 autoCapitalize="characters"
-                placeholder="Contoh: Q6G484"
+                placeholder="6 huruf dan angka"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="mt-1 text-xs text-gray-500">Kode dikirim tutor lewat WhatsApp. Berlaku untuk siswa bimbel maupun peserta dari luar bimbel.</p>

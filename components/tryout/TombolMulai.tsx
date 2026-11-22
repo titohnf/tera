@@ -24,6 +24,7 @@ export default function TombolMulai({
 }) {
   const [selisih] = useState(() => sekarangServer - Date.now())
   const [now, setNow] = useState(sekarangServer)
+  const [membuka, setMembuka] = useState(false)
   const buka = bukaPada ? new Date(bukaPada).getTime() : null
   const tutup = tutupPada ? new Date(tutupPada).getTime() : null
 
@@ -62,8 +63,14 @@ export default function TombolMulai({
 
   return (
     // `<a>`, bukan Link: Sora bukan rute Tera.
-    <a href={href} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-      Mulai
+    <a
+      href={href}
+      onClick={() => setMembuka(true)}
+      aria-busy={membuka}
+      className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white ${membuka ? 'pointer-events-none bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+    >
+      {membuka && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
+      {membuka ? 'Membuka…' : 'Mulai'}
     </a>
   )
 }
