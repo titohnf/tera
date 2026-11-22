@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { keluarUmum } from '@/lib/actions/umum'
 
 /** Keluar dari akun, lalu ke halaman login. Dipakai beranda siswa yang masuk dengan kode. */
 export default function TombolKeluar() {
@@ -10,7 +11,8 @@ export default function TombolKeluar() {
     if (keluar) return
     setKeluar(true)
     await createClient().auth.signOut()
-    window.location.href = '/login?tab=kode'
+    // Cookie kode (httpOnly) hanya bisa dihapus dari server; ia juga yang mengarahkan ke layar masuk.
+    await keluarUmum()
   }
   return (
     <button

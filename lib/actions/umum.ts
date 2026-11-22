@@ -17,7 +17,7 @@ import { catatSalah, terlaluBanyakSalah } from '@/lib/tryout/batas-kode'
  * dan `verifyOtp` di server; tidak ada email yang dikirim). Mengembalikan alamat tujuan, atau
  * null bila kode ini bukan milik orang yang punya akun.
  */
-async function masukSebagaiAkun(kode: string): Promise<string | null> {
+async function masukSebagaiAkunSekali(kode: string): Promise<string | null> {
   const admin = createAdminClient()
   const { data: l } = await admin.from('learners').select('profile_id').eq('access_code', kode).maybeSingle()
   const profilId = (l as { profile_id: string | null } | null)?.profile_id
@@ -50,6 +50,33 @@ async function masukSebagaiAkun(kode: string): Promise<string | null> {
 }
 
 /**
+ * Satu percobaan membuka sesi akun, diulang bila gagal. Puluhan anak mengetik kode pada detik yang
+ * sama, dan tiap masuk memanggil layanan auth beberapa kali (tautan, verifikasi); satu panggilan
+ * yang lambat atau ditolak sebentar tidak boleh membuat anak melihat layar galat. Galat apa pun
+ * dianggap "belum berhasil" lalu diulang; sesudah tiga kali, pemilik kode masuk lewat cookie kode.
+ */
+async function masukSebagaiAkun(kode: string): Promise<string | null> {
+  for (let percobaan = 0; percobaan < 3; percobaan++) {
+    try {
+      const tujuan = await masukSebagaiAkunSekali(kode)
+      if (tujuan) return tujuan
+    } catch (e) {
+      console.error('masukSebagaiAkun gagal', percobaan + 1, e instanceof Error ? e.message : e)
+    }
+    if (percobaan < 2) await new Promise((r) => setTimeout(r, 300 * (percobaan + 1) + Math.random() * 400))
+  }
+  return null
+}
+
+const opsiCookieKode = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: 60 * 60 * 24 * 30,
+}
+
+/**
  * Masuk dengan kode peserta. Siswa bimbel (kodenya milik siswa yang tertaut akun keluarga) dimasukkan
  * ke akun keluarganya dan mendarat di berandanya, tempat SEMUA kartu terbuka (Belajar, Laporan, Jadwal,
  * Try Out, Tagihan). Siswa mandiri ke /mandiri. Peserta dari luar bimbel, yang belum punya akun,
@@ -61,20 +88,23 @@ export async function masukDenganKode(formData: FormData): Promise<void> {
   if (!kode) redirect('/login?tab=kode&galat=1')
   if (await terlaluBanyakSalah()) redirect('/login?tab=kode&galat=2')
   const supabase = await createClient()
-  const { data: nama } = await supabase.rpc('masuk_peserta', { p_kode: kode })
+  let nama: unknown = null
+  for (let percobaan = 0; percobaan < 3 && !nama; percobaan++) {
+    const { data, error } = await supabase.rpc('masuk_peserta', { p_kode: kode })
+    nama = data
+    if (!error) break // jawaban sah (nama atau tidak dikenal); hanya galat jaringan yang diulang
+    await new Promise((r) => setTimeout(r, 300 * (percobaan + 1)))
+  }
   if (!nama) {
     await catatSalah()
     redirect('/login?tab=kode&galat=1')
   }
+  // Cookie kode disimpan di kedua jalur. Sora memakainya untuk melewati layar "Selamat Datang" dan
+  // untuk tombol Kembali ke Beranda Try Out; tanpanya anak yang masuk lewat akun keluarga bisa
+  // jatuh ke layar masuk Sora yang lama setelah selesai mengerjakan satu mata pelajaran.
+  ;(await cookies()).set(COOKIE_KODE, kode, opsiCookieKode)
   const tujuanAkun = await masukSebagaiAkun(kode)
   if (tujuanAkun) redirect(tujuanAkun)
-  ;(await cookies()).set(COOKIE_KODE, kode, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30,
-  })
   redirect('/umum')
 }
 

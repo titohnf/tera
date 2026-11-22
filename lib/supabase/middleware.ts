@@ -74,7 +74,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthPage) {
+  // Tab Kode tetap terbuka bagi yang sedang punya sesi: peramban bersama (HP orang tua yang
+  // pernah masuk dengan email) tidak boleh melempar anak ke beranda akun lama sebelum sempat
+  // mengetik kodenya. Masuk dengan kode menggantikan sesi lama.
+  const tabKode = pathname.startsWith('/login') && request.nextUrl.searchParams.get('tab') === 'kode'
+  if (user && isAuthPage && !tabKode) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
