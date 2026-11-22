@@ -21,6 +21,8 @@ export interface ItemBerjadwal {
   hrefHasil: string
   /** Hasil yang sudah dirender di server; hanya ada bila hasilnya sudah dibuka. */
   hasil?: React.ReactNode
+  /** Skor akhir (0–100), bila hasilnya sudah dibuka. */
+  nilai?: number | null
 }
 
 type Saring = 'hari-ini' | 'lewat' | 'akan-datang'
@@ -59,6 +61,8 @@ function status(p: ItemBerjadwal): { teks: string; kelas: string } {
   if (p.keadaan === 'menunggu') return { teks: 'Menunggu hasil', kelas: 'bg-slate-200 text-slate-700' }
   return { teks: 'Sudah dikerjakan', kelas: 'bg-green-100 text-green-800' }
 }
+
+const fmtNilai = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 function Kapsul({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{children}</span>
@@ -166,7 +170,13 @@ export default function DaftarBerjadwal({
                   </div>
                   {(p.keadaan === 'belum' || (p.keadaan === 'selesai' && p.hasil)) && (
                     // Di ujung kanan, di tengah antara sisi atas dan bawah kartu; di layar sempit turun ke bawah, tetap di kanan.
-                    <div className="ml-auto flex shrink-0 items-center px-4 py-3">
+                    <div className="ml-auto flex shrink-0 flex-col items-center justify-center gap-2 px-4 py-3">
+                      {p.keadaan === 'selesai' && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500">Skor akhir</p>
+                          <p className="text-2xl font-semibold tabular-nums leading-tight text-gray-900">{p.nilai != null ? fmtNilai(p.nilai) : '—'}</p>
+                        </div>
+                      )}
                       {p.keadaan === 'belum' ? (
                         <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                       ) : (
@@ -176,7 +186,7 @@ export default function DaftarBerjadwal({
                           aria-expanded={terbuka.has(p.id)}
                           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                         >
-                          {terbuka.has(p.id) ? 'Tutup hasil' : 'Lihat hasil'}
+                          {terbuka.has(p.id) ? 'Tutup Detail' : 'Cek Detail dan Pembahasan'}
                         </button>
                       )}
                     </div>

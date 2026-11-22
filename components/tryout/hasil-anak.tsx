@@ -8,7 +8,7 @@ import { susunRiwayat, type MasukanTryOut } from '@/lib/tryout/riwayat-kemampuan
  * Isi hasil tiap try out yang sudah dikerjakan seorang anak (kunci: id try out), untuk dipasang
  * di dalam kartu try out itu, baik di akun keluarga maupun akun siswa.
  */
-export async function muatIsiHasil(studentId: string): Promise<Record<string, ReactNode>> {
+export async function muatIsiHasil(studentId: string): Promise<Record<string, { nilai: number | null; isi: ReactNode }>> {
   const learnerId = await learnerAnak(studentId)
   const riwayat = learnerId ? await tryOutSiswa(learnerId) : []
 
@@ -36,10 +36,10 @@ export async function muatIsiHasil(studentId: string): Promise<Record<string, Re
       teks: data.teks,
     })
   }
-  const hasil: Record<string, ReactNode> = {}
+  const hasil: Record<string, { nilai: number | null; isi: ReactNode }> = {}
   for (const m of masukan) {
     const [mapel] = susunRiwayat([m])
-    if (mapel) hasil[m.quizId] = <IsiHasil m={mapel} />
+    if (mapel) hasil[m.quizId] = { nilai: m.nilai, isi: <IsiHasil m={mapel} /> }
   }
   return hasil
 }
