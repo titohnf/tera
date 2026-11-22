@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
+import { bersihkanPembahasan } from '@/lib/tryout/bersihkan-pembahasan'
 import type { PetaKompetensi, SkorAnalisis, SoalAnalisis } from '@/lib/reports/kompetensi-tryout'
 import { skorJawaban } from '@/lib/reports/kompetensi-tryout'
 
@@ -123,7 +124,7 @@ export async function muatTryOut(quizId: string, opsi: { denganTeks?: boolean; a
       for (const x of (j.data ?? []) as { question_id: string; response: unknown }[]) jawab.set(x.question_id, x.response)
     }
     for (const q of (r.data ?? []) as { id: string; type: string; prompt: string; options: unknown; correct_answer: unknown; explanation: string | null }[]) {
-      teks[q.id] = { tipe: q.type, prompt: q.prompt, opsi: q.options, kunci: q.correct_answer, pembahasan: q.explanation, jawaban: jawab.get(q.id) ?? null }
+      teks[q.id] = { tipe: q.type, prompt: q.prompt, opsi: q.options, kunci: q.correct_answer, pembahasan: bersihkanPembahasan(q.explanation), jawaban: jawab.get(q.id) ?? null }
     }
   }
   const soal: SoalAnalisis[] = soalMentah.map((s) => ({

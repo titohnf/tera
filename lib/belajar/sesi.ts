@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { bersihkanPembahasan } from '@/lib/tryout/bersihkan-pembahasan'
 import { getUserCepat } from '@/lib/supabase/get-user'
 import { adalahVideo } from './sematan'
 import { ALL_GRADES, SEMUA_KELAS } from '@/lib/curriculum-config'
@@ -1088,7 +1089,7 @@ export async function tinjauanSesi(sesiId: string): Promise<SoalTinjauan[]> {
       bobot: Number(baris.weight) || 1,
       jawaban: baris.response,
       kunci: baris.correct_answer,
-      pembahasan: baris.explanation,
+      pembahasan: bersihkanPembahasan(baris.explanation),
       sudahDijawab: baris.answered,
       skor: baris.score === null ? null : Number(baris.score),
       skorMaks: baris.max_score === null ? null : Number(baris.max_score),
