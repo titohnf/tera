@@ -11,7 +11,7 @@ export default async function TopikMisiSiswaPage({ params }: { params: Promise<{
   return (
     <div className="space-y-4">
       <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Misi', href: `/siswa/${studentId}/misi` }, { label: topikId }]} />
-      <IsiTopikMisi anak={studentId} topikId={topikId} dari="siswa" />
+      <IsiTopikMisi anak={studentId} topikId={topikId} />
     </div>
   )
 }

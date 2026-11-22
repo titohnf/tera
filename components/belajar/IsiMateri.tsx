@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
-import type { Dari } from '@/lib/belajar/permukaan'
 import { materiInteraktif } from '@/lib/materi-interaktif'
 import PenampilMateri from '@/components/belajar/PenampilMateri'
 
@@ -13,7 +12,7 @@ import PenampilMateri from '@/components/belajar/PenampilMateri'
  * memutuskan siapa boleh masuk — anak yang bukan milik keluarga, atau pelanggan
  * tanpa langganan aktif, dialihkan sebelum halaman ini dirender.
  */
-export default async function IsiMateri({ anak, kode, dari }: { anak?: string; kode: string; dari?: Dari }) {
+export default async function IsiMateri({ anak, kode }: { anak?: string; kode: string }) {
   await belajarContext(anak)
 
   const materi = materiInteraktif(kode)
@@ -23,8 +22,8 @@ export default async function IsiMateri({ anak, kode, dari }: { anak?: string; k
     <PenampilMateri
       html={materi.html}
       judul={`${materi.judul} — ${materi.kode}`}
-      hrefLatihan={alamatMisi(anak, materi.kode, dari)}
-      hrefKembali={alamatMisi(anak, materi.kode, dari)}
+      hrefLatihan={alamatMisi(anak, materi.kode)}
+      hrefKembali={alamatMisi(anak, materi.kode)}
     />
   )
 }

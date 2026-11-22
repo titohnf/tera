@@ -5,5 +5,5 @@ import IsiMateri from '@/components/belajar/IsiMateri'
 export default async function MateriSiswaKodePage({ params }: { params: Promise<{ studentId: string; kode: string }> }) {
   const { studentId, kode } = await params
   await anakOrRedirect(studentId)
-  return <IsiMateri anak={studentId} kode={kode} dari="siswa" />
+  return <IsiMateri anak={studentId} kode={kode} />
 }

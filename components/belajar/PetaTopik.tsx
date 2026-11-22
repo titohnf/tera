@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { Dari } from '@/lib/belajar/permukaan'
 import { ChevronDown, Search } from 'lucide-react'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
@@ -52,7 +51,6 @@ import SheetTopik from '@/components/belajar/misi/SheetTopik'
  */
 export default function PetaTopik({
   anak,
-  dari,
   kelas,
   topik,
   langkah,
@@ -60,8 +58,6 @@ export default function PetaTopik({
   hariIni,
 }: {
   anak: string | undefined
-  /** 'siswa' = tampilan siswa (masuk dengan kode): tautan tetap di `/siswa/...`. */
-  dari?: Dari
   /**
    * Kelas anak (1–12), atau null kalau belum diisi. Null berarti tidak ada
    * pemisahan jenjang sama sekali — lihat `diAtasKelas` di `fringe.ts`.
@@ -287,7 +283,6 @@ export default function PetaTopik({
           langkah={perTopik.get(sekarang.id)}
           paket={paketTopik.get(sekarang.id) ?? []}
           anak={anak}
-          dari={dari}
           hariIni={hariIni}
         />
       )}
@@ -454,7 +449,6 @@ export default function PetaTopik({
         namaTopik={namaTopik}
         kelas={kelas}
         anak={anak}
-        dari={dari}
         hariIni={hariIni}
         onTutup={() => setDibuka(null)}
       />

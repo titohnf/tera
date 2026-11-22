@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
-import type { Dari } from '@/lib/belajar/permukaan'
 import { alamatMateri } from '@/lib/belajar/alamat-materi'
 import { materiInteraktif } from '@/lib/materi-interaktif'
 import { keadaanPaketTopik, petaTopik } from '@/lib/belajar/topik-peta'
@@ -50,11 +49,9 @@ import TombolUjianLangsung from '@/components/belajar/TombolUjianLangsung'
 export default async function IsiTopikMisi({
   anak: studentId,
   topikId,
-  dari,
 }: {
   anak?: string
   topikId: string
-  dari?: Dari
 }) {
   const { learnerId } = await belajarContext(studentId)
 
@@ -73,7 +70,7 @@ export default async function IsiTopikMisi({
           Topik ini tidak ada di peta kompetensimu, atau belum dibuka.
         </p>
         <Link
-          href={alamatMisi(studentId, undefined, dari)}
+          href={alamatMisi(studentId)}
           className="block w-full rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-kartu transition hover:bg-slate-100"
         >
           Kembali ke Misi
@@ -176,7 +173,7 @@ export default async function IsiTopikMisi({
               : 'Buka lagi materinya kalau ada yang masih bingung.'}
           </p>
           <Link
-            href={alamatMateri(studentId, topikId, dari)}
+            href={alamatMateri(studentId, topikId)}
             className={`mt-3 block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
               belumMulai
                 ? 'bg-blue-600 text-white hover:bg-blue-700'

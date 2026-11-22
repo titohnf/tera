@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
-import { dariSaatIni } from '@/lib/belajar/permukaan'
 import { redirect } from 'next/navigation'
 import {
   labelPenguasaan,
@@ -270,7 +269,6 @@ export default async function HasilSesi({
   //
   // Pelajar berkode akses tidak punya halaman keluarga, jadi untuk mereka
   // `/belajar` tetap yang paling masuk akal.
-  const dari = await dariSaatIni()
   const pulangKe =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
@@ -282,7 +280,7 @@ export default async function HasilSesi({
           // permukaan lain yang menyebut retest. Memulangkannya ke pemilih
           // mapel berarti mendaratkan anak sejauh mungkin dari satu-satunya
           // layar yang tahu apa yang barusan ia kerjakan.
-          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, undefined, dari)
+          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId)
           : kembali
 
   // Langkah berikutnya topik ini, kalau sesi tadi memang paket peta.
@@ -322,7 +320,7 @@ export default async function HasilSesi({
           // tambahan untuk sesuatu yang tidak bisa dibatalkan.
           alamatTopik:
             langkah.jenis === 'ujian' && pemilik.profileId
-              ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId, dari)
+              ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId)
               : null,
         }
       : null
@@ -332,7 +330,7 @@ export default async function HasilSesi({
   // sebagai pilihan kedua, lewat halaman topik.
   const ujianLangsung =
     langkah?.pengayaan && langkah.ujianPaketId && petaPaket && pemilik.profileId
-      ? { alamatTopik: alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId, dari) }
+      ? { alamatTopik: alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, langkah.topikId) }
       : null
 
   // JALAN PULANG DIPASANG DI HEADER, bukan sebagai tombol di badan halaman.

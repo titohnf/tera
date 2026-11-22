@@ -1,10 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { mapelLatihan } from '@/lib/belajar/sesi'
-import { keluargaContext } from '@/lib/keluarga'
 import PemilihLatihan from '@/components/belajar/PemilihLatihan'
 import PulangKe from '@/components/belajar/PulangKe'
-import { dariSaatIni } from '@/lib/belajar/permukaan'
 import TugasKelas from '@/components/belajar/TugasKelas'
 import { asesmenAnak } from '@/lib/belajar/asesmen'
 
@@ -40,10 +38,10 @@ export default async function BelajarBeranda({
   // dijalankan bersamaan. Dulu dua yang terakhir menunggu mapel selesai dulu, sehingga
   // layar ini membayar dua putaran database beruntun padahal tak saling bergantung.
   const mapelP = mapelLatihan(learnerId, jenjang)
-  const keluargaP = studentId ? Promise.all([keluargaContext(), asesmenAnak(studentId)]) : null
+  const tugasP = studentId ? asesmenAnak(studentId) : null
   // Penanda 'sudah ditangani': kalau mapel gagal lebih dulu, penolakan yang menyusul tidak boleh
   // jadi unhandled rejection (proses Node 24 mati karenanya).
-  keluargaP?.catch(() => {})
+  tugasP?.catch(() => {})
   const mapel = await mapelP
 
   // `?topik=<group_id>` membuka langsung topik itu, dilewatkan rincian sesi di
@@ -87,23 +85,14 @@ export default async function BelajarBeranda({
     awal = { subjectId: mapelDiminta, kelas: lewatKelas }
   }
 
-  // Perabot portal keluarga ikut dirender di layar ini — lihat `PulangKe`.
-  // `studentId` terisi hanya untuk jalur keluarga, jadi pelanggan langganan
-  // melewati kueri ini sama sekali; `keluargaContext()` bahkan akan
-  // memulangkan mereka ke /unauthorized kalau ikut dipanggil.
-  const [keluarga, tugas] = keluargaP ? await keluargaP : [null, []]
-  // Siswa (masuk dengan kode) pulang ke beranda siswa, tanpa pemilih anak keluarga.
-  const dari = await dariSaatIni()
+  // `studentId` terisi hanya untuk siswa bimbel (yang masuk dengan kode), jadi pelanggan langganan
+  // melewati kueri ini sama sekali. Tombol kembali siswa menuju berandanya sendiri, `/siswa/<anak>`;
+  // tampilan keluarga tidak lagi punya pintu ke layar ini.
+  const tugas = tugasP ? await tugasP : []
 
   return (
     <div className="space-y-4">
-      {studentId && keluarga && (
-        <PulangKe
-          href={dari === 'siswa' ? `/siswa/${studentId}` : `/keluarga/${studentId}`}
-          anak={dari === 'siswa' ? undefined : keluarga.anak}
-          aktif={studentId}
-        />
-      )}
+      {studentId && <PulangKe href={`/siswa/${studentId}`} />}
 
       {studentId && (
         <TugasKelas tugas={tugas} anak={studentId} baruSelesai={asesmen === 'selesai'} />

@@ -11,7 +11,7 @@ export default async function MisiSiswaPage({ params }: { params: Promise<{ stud
   return (
     <div className="space-y-4">
       <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Misi' }]} />
-      <IsiMisi anak={studentId} dari="siswa" />
+      <IsiMisi anak={studentId} />
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { alamatMisi } from '@/lib/belajar/alamat-misi'
-import { dariSaatIni } from '@/lib/belajar/permukaan'
 import { batasWaktuSesi, keadaanSesi, paketSesi, pemilikSesi } from '@/lib/belajar/sesi'
 import { paketTopikSesi } from '@/lib/belajar/topik-peta'
 import { probeSesi } from '@/lib/belajar/retest'
@@ -64,14 +63,13 @@ export default async function SesiLatihan({
   // untuk layar yang tidak menyebutkan tujuannya. Beranda portal bukan halaman
   // sebelumnya bagi siapa pun: anak jalur Misi mengetuk barisnya di peta lalu
   // langsung mendarat di soal, jadi yang ia tinggalkan peta itu, bukan beranda.
-  const dari = await dariSaatIni()
   const pulangKe =
     paket && pemilik.profileId
       ? `/belajar?anak=${pemilik.profileId}&topik=${paket.groupId}`
       : paket
         ? `/belajar?topik=${paket.groupId}`
         : petaPaket || probe
-          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId, undefined, dari)
+          ? alamatMisi(pemilik.milikSendiri ? undefined : pemilik.profileId)
           : kembali
 
   return (
