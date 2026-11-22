@@ -10,8 +10,8 @@ const EPS = 1e-6
 const fmt = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 /** Gambar dibatasi ukurannya (masih bisa diperbesar bila diketuk): soal bergambar tidak boleh memenuhi layar. */
-const GAMBAR_SOAL = '[&_button]:max-w-sm [&_img]:max-h-64 [&_img]:object-contain'
-const GAMBAR_PILIHAN = '[&_button]:max-w-[12rem] [&_img]:max-h-40 [&_img]:object-contain'
+const GAMBAR_SOAL = '[&_button]:max-w-xl [&_img]:max-h-96 [&_img]:object-contain'
+const GAMBAR_PILIHAN = '[&_button]:max-w-[20rem] [&_img]:max-h-64 [&_img]:object-contain'
 
 const teksSama = (a: unknown, b: unknown) => typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim()
 
