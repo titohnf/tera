@@ -15,6 +15,7 @@ export interface ItemBerjadwal {
   kelas: string | null
   mapel: string
   menit: number | null
+  jumlahSoal: number | null
   bukaPada: string | null
   tutupPada: string | null
   /** 'belum' = belum dikerjakan; 'menunggu' = sudah dikirim, hasil belum dibuka; 'selesai' = hasil dibuka. */
@@ -146,9 +147,13 @@ export default function DaftarBerjadwal({
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
                     <p className="mt-1.5 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <Kapsul>{p.jenjang}{p.kelas ? ` · Kelas ${p.kelas}` : ''}</Kapsul>
-                      <Kapsul>TA {tahunAjaran(p.bukaPada ?? sekarangServer)}</Kapsul>
-                      {p.menit ? <Kapsul>{p.menit} menit</Kapsul> : null}
+                      <Kapsul>
+                        {p.jenjang}
+                        {p.kelas ? ` · Kelas ${p.kelas}` : ''} · TA {tahunAjaran(p.bukaPada ?? sekarangServer)}
+                      </Kapsul>
+                      {(p.menit || p.jumlahSoal) && (
+                        <Kapsul>{[p.menit ? `${p.menit} menit` : null, p.jumlahSoal ? `${p.jumlahSoal} soal` : null].filter(Boolean).join(' · ')}</Kapsul>
+                      )}
                     </div>
                     <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-sm text-gray-700">
                       <IkonKalender />

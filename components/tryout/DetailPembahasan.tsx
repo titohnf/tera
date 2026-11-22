@@ -231,9 +231,11 @@ export default function DetailPembahasan({
             <p className="mt-2 flex flex-wrap gap-1.5">
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                 {data.info.jenjang}
-                {data.info.kelas ? ` · Kelas ${data.info.kelas}` : ''}
+                {data.info.kelas ? ` · Kelas ${data.info.kelas}` : ''} · TA {tahunAjaran(data.info.bukaPada ?? dikirim ?? Date.now())}
               </span>
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">TA {tahunAjaran(data.info.bukaPada ?? dikirim ?? Date.now())}</span>
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                {[data.info.menit ? `${data.info.menit} menit` : null, data.soal.length ? `${data.soal.length} soal` : null].filter(Boolean).join(' · ')}
+              </span>
             </p>
             {dikirim && (
               <p className="mt-2.5 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">

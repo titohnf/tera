@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { TRYOUT_PATH } from '@/lib/tryout/alamat'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
 import DaftarBerjadwal, { type ItemBerjadwal } from '@/components/tryout/DaftarBerjadwal'
@@ -8,6 +9,8 @@ export interface PaketTersedia extends InfoPaket {
   id: string
   judul: string
   kode: string
+  /** Jumlah soal; null bila tidak terbaca. */
+  jumlahSoal: number | null
 }
 
 /** Try out yang sudah terbit. Dibaca dengan klien biasa; kebijakan "Public reads published quizzes" yang berlaku. */
@@ -18,9 +21,19 @@ export async function paketTryOutTerbit(supabase: { from: (t: string) => any }):
     .eq('kind', 'tryout')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
-  return ((data ?? []) as { id: string; title: string; share_code: string | null; settings: Record<string, unknown> | null }[])
-    .filter((q) => q.share_code)
-    .map((q) => ({ id: q.id, judul: q.title, kode: q.share_code as string, ...infoPaket(q.title, q.settings) }))
+  const terbit = ((data ?? []) as { id: string; title: string; share_code: string | null; settings: Record<string, unknown> | null }[]).filter((q) => q.share_code)
+
+  // Jumlah soal tiap try out: hanya hitungannya yang dibaca (klien admin), bukan isi soalnya.
+  const admin = createAdminClient()
+  const jumlah = new Map<string, number | null>()
+  await Promise.all(
+    terbit.map(async (q) => {
+      const { count } = await admin.from('questions').select('id', { count: 'exact', head: true }).eq('quiz_id', q.id)
+      jumlah.set(q.id, typeof count === 'number' ? count : null)
+    }),
+  )
+
+  return terbit.map((q) => ({ id: q.id, judul: q.title, kode: q.share_code as string, jumlahSoal: jumlah.get(q.id) ?? null, ...infoPaket(q.title, q.settings) }))
 }
 
 /**
@@ -66,6 +79,7 @@ export default function DaftarTryOut({
     kelas: p.kelas,
     mapel: p.mapel,
     menit: p.menit,
+    jumlahSoal: p.jumlahSoal,
     bukaPada: p.bukaPada,
     tutupPada: p.tutupPada,
     keadaan: selesaiBuka.has(p.id) ? 'selesai' : selesaiTunggu.has(p.id) || judulTunggu.has(p.judul) ? 'menunggu' : 'belum',
