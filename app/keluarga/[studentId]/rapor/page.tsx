@@ -12,6 +12,7 @@ import { tanggalPanjang } from '@/lib/waktu-relatif'
 import { BilahRapor, GrafikNilaiBulanan, MAKS_SERI } from '@/components/keluarga/BilahRapor'
 import { learnerAnak } from '@/lib/belajar/sesi'
 import { tryOutSiswa } from '@/lib/reports/tryout-data'
+import { tanggalWib } from '@/lib/tryout/paket'
 
 /**
  * Rapor: pintu masuk ketiga laporan seorang anak.
@@ -123,7 +124,7 @@ export default async function RaporPage({
           <Kosong>Belum ada hasil try out untuk anak ini.</Kosong>
         ) : (
           <p className="text-sm text-gray-700">
-            {riwayatTryOut.length} try out sudah dikerjakan, terakhir {tanggalPanjang(riwayatTryOut[0].dikirim)}
+            {riwayatTryOut.length} try out sudah dikerjakan, terakhir {tanggalPanjang(tanggalWib(riwayatTryOut[0].dikirim))}
           </p>
         )}
       </KartuLaporan>
