@@ -47,7 +47,7 @@ export default async function RekapTryOutPage({
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Rekap Skor Try Out</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Nilai (0–100) seluruh peserta yang sudah mengirim jawaban. Admin selalu bisa melihatnya, terlepas dari apakah hasilnya sudah dibuka untuk peserta.
+            Nilai (0–100) seluruh peserta, langsung terlihat sejak mereka mulai mengerjakan (nilai sementara) sampai dikirim (final). Admin selalu bisa melihatnya, terlepas dari apakah hasilnya sudah dibuka untuk peserta.
           </p>
         </div>
         <a
@@ -72,8 +72,8 @@ export default async function RekapTryOutPage({
                 {p.jenjang} · {p.mapel}
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">{fmt(p.rata)}</p>
-              <p className="text-xs text-gray-500">rata-rata nilai · {p.peserta} sudah kirim</p>
-              {p.sedang > 0 && <p className="mt-0.5 text-xs font-medium text-amber-700">{p.sedang} sedang mengerjakan</p>}
+              <p className="text-xs text-gray-500">rata-rata nilai · {p.peserta} peserta</p>
+              {p.sedang > 0 && <p className="mt-0.5 text-xs font-medium text-amber-700">{p.sedang} masih mengerjakan (nilai sementara)</p>}
             </div>
           ))}
       </div>
@@ -90,7 +90,7 @@ export default async function RekapTryOutPage({
             {j ?? 'Semua'}
           </Link>
         ))}
-        <span className="ml-auto text-xs text-gray-500">{baris.length} peserta sudah mengirim</span>
+        <span className="ml-auto text-xs text-gray-500">{baris.length} peserta</span>
       </div>
 
       {baris.length === 0 ? (
@@ -129,10 +129,11 @@ export default async function RekapTryOutPage({
                       <td key={m} className="px-4 py-2 text-right tabular-nums">
                         {n ? (
                           <>
-                            <span className="font-semibold text-gray-900">{fmt(n.nilai)}</span>
+                            <span className={`font-semibold ${n.sementara ? 'italic text-amber-700' : 'text-gray-900'}`}>{fmt(n.nilai)}</span>
                             <span className="block text-xs text-gray-400">
-                              {n.skor !== null ? `${fmt(n.skor)} / ${fmt(n.bobot, 0)}` : 'menunggu nilai'}
-                              {n.durasiMenit !== null ? ` · ${Math.round(n.durasiMenit)} mnt` : ''}
+                              {n.sementara
+                                ? `sementara · ${n.terjawab}/${n.soalTotal} dijawab`
+                                : `${n.skor !== null ? `${fmt(n.skor)} / ${fmt(n.bobot, 0)}` : 'menunggu nilai'}${n.durasiMenit !== null ? ` · ${Math.round(n.durasiMenit)} mnt` : ''}`}
                             </span>
                           </>
                         ) : (
@@ -149,7 +150,7 @@ export default async function RekapTryOutPage({
         </div>
       )}
       <p className="text-xs text-gray-400">
-        Di bawah tiap nilai: skor mentah dari total, dan lama mengerjakan. Peserta yang belum mengerjakan satu mapel tampil dengan strip. Rincian per kompetensi ada di{' '}
+        <b className="font-medium text-amber-700">Nilai miring berwarna kuning = sementara</b>: peserta masih mengerjakan, dihitung dari jawaban yang sudah tersimpan dan terus naik seiring jawaban masuk. Nilai biasa = sudah dikirim (final); di bawahnya skor mentah dan lama mengerjakan. Peserta yang belum mulai satu mapel tampil dengan strip. Rincian per kompetensi ada di{' '}
         <Link href="/admin/hasil-tryout" className="underline">Hasil Try Out</Link>.
       </p>
     </div>

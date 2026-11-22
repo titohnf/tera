@@ -12,8 +12,13 @@ export interface NilaiMapel {
   skor: number | null
   bobot: number
   mulai: string
-  selesai: string
+  /** Jam kirim; null bila percobaan masih berjalan. */
+  selesai: string | null
   durasiMenit: number | null
+  /** Percobaan belum dikirim: nilainya dihitung dari jawaban yang sudah tersimpan, dan masih bisa berubah. */
+  sementara: boolean
+  terjawab: number
+  soalTotal: number
 }
 
 export interface BarisRekap {
@@ -61,7 +66,11 @@ export async function muatRekap(): Promise<Rekap> {
   const soal = await semua<{ quiz_id: string; weight: number }>((a, b) =>
     admin.from('questions').select('quiz_id, weight').in('quiz_id', idPaket).order('id').range(a, b),
   )
-  for (const s of soal) bobot.set(s.quiz_id, (bobot.get(s.quiz_id) ?? 0) + Number(s.weight ?? 0))
+  const soalHitung = new Map<string, number>()
+  for (const s of soal) {
+    bobot.set(s.quiz_id, (bobot.get(s.quiz_id) ?? 0) + Number(s.weight ?? 0))
+    soalHitung.set(s.quiz_id, (soalHitung.get(s.quiz_id) ?? 0) + 1)
+  }
 
   const percobaan = await semua<{
     id: string
@@ -81,14 +90,76 @@ export async function muatRekap(): Promise<Rekap> {
       .range(a, b),
   )
 
-  // Yang sedang mengerjakan: percobaan sudah dimulai tetapi belum dikirim.
-  const berjalan = await semua<{ quiz_id: string }>((a, b) =>
-    admin.from('attempts').select('quiz_id').in('quiz_id', idPaket).is('submitted_at', null).order('id').range(a, b),
+  // Percobaan yang SEDANG berjalan (belum dikirim) ikut ditampilkan dengan nilai sementara: jawaban yang
+  // sudah tersimpan dinilai dengan fungsi database yang sama dengan saat kirim (`nilai_jawaban_banyak`),
+  // jadi angkanya persis yang akan didapat bila anak berhenti sekarang. Soal yang belum dijawab bernilai 0.
+  const berjalan = await semua<{
+    id: string
+    quiz_id: string
+    learner_id: string | null
+    guest_name: string | null
+    started_at: string
+  }>((a, b) =>
+    admin
+      .from('attempts')
+      .select('id, quiz_id, learner_id, guest_name, started_at')
+      .in('quiz_id', idPaket)
+      .is('submitted_at', null)
+      .order('id')
+      .range(a, b),
   )
   const sedangPerKuis = new Map<string, number>()
   for (const x of berjalan) sedangPerKuis.set(x.quiz_id, (sedangPerKuis.get(x.quiz_id) ?? 0) + 1)
 
-  const idLearner = [...new Set(percobaan.map((p) => p.learner_id).filter((x): x is string => !!x))]
+  const skorSementara = new Map<string, { skor: number | null; terjawab: number; soalTotal: number }>()
+  if (berjalan.length > 0) {
+    const kuisBerjalan = [...new Set(berjalan.map((x) => x.quiz_id))]
+    const soalLengkap = await semua<{ id: string; quiz_id: string; type: string; options: unknown; correct_answer: unknown; weight: number; order_index: number }>(
+      (a, b) =>
+        admin
+          .from('questions')
+          .select('id, quiz_id, type, options, correct_answer, weight, order_index')
+          .in('quiz_id', kuisBerjalan)
+          .order('order_index')
+          .order('id')
+          .range(a, b),
+    )
+    const soalPerKuis = new Map<string, typeof soalLengkap>()
+    for (const q of soalLengkap) soalPerKuis.set(q.quiz_id, [...(soalPerKuis.get(q.quiz_id) ?? []), q])
+
+    const jawaban = new Map<string, unknown>() // `${attempt}|${question}` -> response
+    for (let i = 0; i < berjalan.length; i += 100) {
+      const ids = berjalan.slice(i, i + 100).map((x) => x.id)
+      const dat = await semua<{ attempt_id: string; question_id: string; response: unknown }>((a, b) =>
+        admin.from('answers').select('attempt_id, question_id, response').in('attempt_id', ids).order('question_id').range(a, b),
+      )
+      for (const j of dat) jawaban.set(`${j.attempt_id}|${j.question_id}`, j.response)
+    }
+
+    // Satu panggilan untuk semua percobaan: daftar disambung, lalu hasilnya dipotong per percobaan.
+    const daftar: unknown[] = []
+    const potong: { id: string; dari: number; jumlah: number; terjawab: number }[] = []
+    for (const x of berjalan) {
+      const soal = soalPerKuis.get(x.quiz_id) ?? []
+      let terjawab = 0
+      potong.push({ id: x.id, dari: daftar.length, jumlah: soal.length, terjawab: 0 })
+      for (const q of soal) {
+        const r = jawaban.get(`${x.id}|${q.id}`)
+        if (r !== undefined && r !== null) terjawab++
+        daftar.push({ tipe: q.type, opsi: q.options, kunci: q.correct_answer, jawaban: r ?? null, bobot: q.weight })
+      }
+      potong[potong.length - 1].terjawab = terjawab
+    }
+    const { data: nilai } = await admin.rpc('nilai_jawaban_banyak', { p_daftar: daftar })
+    const larik = Array.isArray(nilai) ? (nilai as (number | string | null)[]) : null
+    for (const t of potong) {
+      let jumlah: number | null = larik ? 0 : null
+      if (larik) for (let k = t.dari; k < t.dari + t.jumlah; k++) jumlah = (jumlah ?? 0) + (Number(larik[k]) || 0)
+      skorSementara.set(t.id, { skor: jumlah, terjawab: t.terjawab, soalTotal: t.jumlah })
+    }
+  }
+
+  const idLearner = [...new Set([...percobaan, ...berjalan].map((p) => p.learner_id).filter((x): x is string => !!x))]
   const learner = new Map<string, { name: string; sekolah: string | null; profile_id: string | null }>()
   for (let i = 0; i < idLearner.length; i += 200) {
     const { data } = await admin.from('learners').select('id, name, sekolah, profile_id').in('id', idLearner.slice(i, i + 200))
@@ -103,9 +174,12 @@ export async function muatRekap(): Promise<Rekap> {
 
   const infoKuis = new Map(paket.map((p) => [p.id, p]))
   const peta = new Map<string, BarisRekap>()
-  for (const p of percobaan) {
+  const tambah = (
+    p: { quiz_id: string; learner_id: string | null; guest_name: string | null; started_at: string },
+    isi: { skor: number | null; selesai: string | null; sementara: boolean; terjawab: number; soalTotal: number },
+  ) => {
     const q = infoKuis.get(p.quiz_id)
-    if (!q) continue
+    if (!q) return
     const l = p.learner_id ? learner.get(p.learner_id) : undefined
     const pr = l?.profile_id ? profil.get(l.profile_id) : undefined
     const nama = (l?.name ?? p.guest_name ?? '(tanpa nama)').trim()
@@ -121,17 +195,29 @@ export async function muatRekap(): Promise<Rekap> {
       peta.set(kunci, b)
     }
     const total = bobot.get(p.quiz_id) ?? 0
-    const skor = p.total_score === null || p.total_score === undefined ? null : Number(p.total_score)
-    const dur = (new Date(p.submitted_at).getTime() - new Date(p.started_at).getTime()) / 60000
-    // Bila ada lebih dari satu percobaan terkirim pada paket yang sama, yang terbaru dipakai.
+    const akhir = isi.selesai ?? new Date().toISOString()
+    const dur = (new Date(akhir).getTime() - new Date(p.started_at).getTime()) / 60000
+    // Percobaan yang sudah dikirim selalu menimpa yang masih berjalan pada paket yang sama.
+    if (isi.sementara && b.nilai[q.mapel] && !b.nilai[q.mapel].sementara) return
     b.nilai[q.mapel] = {
-      nilai: skor !== null && total > 0 ? (skor / total) * 100 : null,
-      skor,
+      nilai: isi.skor !== null && total > 0 ? (isi.skor / total) * 100 : null,
+      skor: isi.skor,
       bobot: total,
       mulai: p.started_at,
-      selesai: p.submitted_at,
+      selesai: isi.selesai,
       durasiMenit: Number.isFinite(dur) ? dur : null,
+      sementara: isi.sementara,
+      terjawab: isi.terjawab,
+      soalTotal: isi.soalTotal,
     }
+  }
+  for (const p of berjalan) {
+    const x = skorSementara.get(p.id)
+    tambah(p, { skor: x?.skor ?? null, selesai: null, sementara: true, terjawab: x?.terjawab ?? 0, soalTotal: x?.soalTotal ?? 0 })
+  }
+  for (const p of percobaan) {
+    const skor = p.total_score === null || p.total_score === undefined ? null : Number(p.total_score)
+    tambah(p, { skor, selesai: p.submitted_at, sementara: false, terjawab: bobot.has(p.quiz_id) ? (soalHitung.get(p.quiz_id) ?? 0) : 0, soalTotal: soalHitung.get(p.quiz_id) ?? 0 })
   }
   const baris = [...peta.values()]
   for (const b of baris) {

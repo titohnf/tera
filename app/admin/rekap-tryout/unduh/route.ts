@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
   const bulat = (n: number | null) => (n === null ? null : Math.round(n * 10) / 10)
   const rekapBaris: (string | number | null)[][] = [
-    ['No', 'Nama', 'Asal', 'Jenjang', ...kolomMapel.flatMap((m) => [`${m} (nilai)`, `${m} (skor)`, `${m} (total)`, `${m} (menit)`]), 'Rata-rata'],
+    ['No', 'Nama', 'Asal', 'Jenjang', ...kolomMapel.flatMap((m) => [`${m} (nilai)`, `${m} (skor)`, `${m} (total)`, `${m} (menit)`, `${m} (status)`]), 'Rata-rata'],
     ...baris.map((b, i) => [
       i + 1,
       b.nama,
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       b.jenjang,
       ...kolomMapel.flatMap((m) => {
         const n = b.nilai[m]
-        return n ? [bulat(n.nilai), bulat(n.skor), bulat(n.bobot), n.durasiMenit === null ? null : Math.round(n.durasiMenit)] : [null, null, null, null]
+        return n ? [bulat(n.nilai), bulat(n.skor), bulat(n.bobot), n.durasiMenit === null ? null : Math.round(n.durasiMenit), n.sementara ? `sementara (${n.terjawab}/${n.soalTotal} dijawab)` : 'final'] : [null, null, null, null, null]
       }),
       bulat(b.rata),
     ]),
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     ['Jenjang', 'Mata pelajaran', 'Paket', 'Peserta', 'Rata-rata nilai'],
     ...rekap.paket.filter((p) => !j || p.jenjang === j).map((p) => [p.jenjang, p.mapel, p.judul, p.peserta, bulat(p.rata)]),
   ]
-  const lebar = [5, 32, 26, 9, ...kolomMapel.flatMap(() => [14, 12, 12, 12]), 12]
+  const lebar = [5, 32, 26, 9, ...kolomMapel.flatMap(() => [14, 12, 12, 12, 24]), 12]
   const xlsx = buatXlsx([
     { nama: 'Rekap Skor', baris: rekapBaris, lebar },
     { nama: 'Ringkasan Paket', baris: ringkas, lebar: [9, 20, 44, 10, 16] },
