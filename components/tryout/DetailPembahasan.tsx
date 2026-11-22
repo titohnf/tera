@@ -161,9 +161,9 @@ export default function DetailPembahasan({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Detail dan Pembahasan</p>
-            <h1 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
+            <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
             {dikirim && (
-              <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-500">
+              <p className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
                 <span>Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</span>
                 {mulai && new Date(dikirim) > new Date(mulai) && (
                   <span>
