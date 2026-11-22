@@ -85,14 +85,14 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
             <h1 className="text-2xl font-bold text-gray-900">Bimbel Tera</h1>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {tab === 'email' ? 'Masuk dengan email dan password' : 'Masuk dengan kode peserta'}
+            {tab === 'email' ? 'Masuk dengan email dan password' : 'Masuk dengan kode siswa'}
           </p>
         </div>
 
         {tab === 'kode' ? (
           <form action={masukDenganKode} className="space-y-4">
             <div>
-              <label htmlFor="kode" className="block text-sm font-medium text-gray-700 mb-1">Kode peserta</label>
+              <label htmlFor="kode" className="block text-sm font-medium text-gray-700 mb-1">Kode siswa</label>
               <input
                 id="kode"
                 name="kode"
@@ -102,7 +102,6 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
                 placeholder="6 huruf dan angka"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/50 focus:bg-white text-sm tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="mt-1 text-xs text-gray-500">Kode dikirim tutor lewat WhatsApp. Berlaku untuk siswa bimbel maupun peserta dari luar bimbel.</p>
             </div>
             {terlaluSering && (
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Terlalu banyak percobaan. Tunggu beberapa menit, lalu coba lagi.</p>
@@ -111,6 +110,17 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">Kode tidak dikenal. Periksa lagi kodenya, atau tanya tutor.</p>
             )}
             <TombolMasukKode />
+            <p className="text-center text-sm text-gray-500">
+              Lupa kode?{' '}
+              <a
+                href={tautanWaAdmin('Halo admin Bimbel Tera, saya lupa kode siswa saya.')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Hubungi admin
+              </a>
+            </p>
           </form>
         ) : (
         <>
@@ -181,7 +191,7 @@ function FormLogin({ tampilan, hrefLawan }: { tampilan: Tampilan; hrefLawan: str
         )}
         {hrefLawan && (
           <p className="mt-6 border-t border-gray-100 pt-4 text-center text-sm text-gray-500">
-            {tampilan === 'sora' ? 'Orang tua atau wali? ' : 'Siswa atau peserta try out? '}
+            {tampilan === 'sora' ? 'Orang tua atau wali? ' : 'Siswa? '}
             <a href={hrefLawan} className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
               {tampilan === 'sora' ? 'Masuk dengan email' : 'Masuk dengan kode'}
             </a>
