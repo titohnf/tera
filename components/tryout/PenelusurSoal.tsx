@@ -70,15 +70,6 @@ export default function PenelusurSoal({ items }: { items: ItemSoal[] }) {
           <h2 className="text-sm font-semibold text-gray-900">Nomor Soal</h2>
           <p className="text-xs text-gray-500">Ketuk nomor untuk membuka soalnya</p>
         </div>
-        <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-600">
-          {(['benar', 'sebagian', 'salah', 'belum'] as HasilButir[]).map((h) => (
-            <li key={h} className="inline-flex items-center gap-1.5">
-              <span className={`h-3 w-3 rounded ring-1 ${PETAK[h].split(' ').filter((c) => !c.startsWith('hover:')).join(' ')}`} aria-hidden />
-              {LABEL_HASIL[h]}
-              <span className="font-semibold tabular-nums text-gray-900">{items.filter((x) => x.hasil === h).length}</span>
-            </li>
-          ))}
-        </ul>
         <div className="grid grid-cols-6 gap-2 sm:grid-cols-10">
           {items.map((it, i) => (
             <button
