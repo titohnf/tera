@@ -19,7 +19,7 @@ export default async function TryOutMandiri() {
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}
-        petunjukMasuk='Di layar masuk, pilih "Akun Tera" lalu masuk dengan email dan password akunmu.'
+        petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/mandiri/tryout/${id}`}
         lewatiJadwal={penguji === true}
       />
