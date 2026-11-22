@@ -85,7 +85,7 @@ export default function DetailPembahasan({
                       {daftar.map((p, i) => (
                         <li key={i} className="flex gap-2">
                           <span className="w-5 shrink-0 font-medium text-gray-500">{String.fromCharCode(65 + i)}.</span>
-                          <span className="min-w-0 flex-1">{p}</span>
+                          <span className="min-w-0 flex-1"><IsiSoal text={p} /></span>
                         </li>
                       ))}
                     </ol>

@@ -170,6 +170,14 @@ export function RincianJawaban({
 }
 
 /**
+ * Nilai sebuah jawaban atau kunci. Pilihan bergambar disimpan sebagai `[gambar: url]`, jadi harus
+ * lewat `IsiSoal` (seperti saat dikerjakan); `RumusTeks` akan mencetak URL-nya mentah-mentah.
+ */
+function Nilai({ text }: { text: string }) {
+  return /\[gambar:/i.test(text) ? <IsiSoal text={text} /> : <RumusTeks text={text} />
+}
+
+/**
  * Warna tiap keadaan. Sekeluarga dengan umpan balik yang dilihat anaknya saat
  * mengerjakan (`PelariSesi`) — layar ini menceritakan ulang momen itu, jadi
  * warnanya tidak boleh jadi bahasa kedua.
@@ -235,7 +243,7 @@ function Perbandingan({
               <span className={cocok ? 'text-emerald-700' : 'text-rose-700'}>
                 <span className="text-xs text-gray-400">Dijawab </span>
                 <span className="font-semibold">
-                  <RumusTeks text={b.teks} />
+                  <Nilai text={b.teks} />
                 </span>
               </span>
               {!cocok && (
@@ -245,7 +253,7 @@ function Perbandingan({
                       adalah label yang menelan nilainya sendiri. */}
                   <span className="text-xs text-gray-400">Kunci </span>
                   <span className="font-semibold">
-                    <RumusTeks text={kunci[i].teks} />
+                    <Nilai text={kunci[i].teks} />
                   </span>
                 </span>
               )}
@@ -284,7 +292,7 @@ function Jawaban({
               </span>
             )}
             <span className={b.label ? 'min-w-0 flex-1 font-medium' : 'min-w-0 font-medium'}>
-              <RumusTeks text={b.teks} />
+              <Nilai text={b.teks} />
             </span>
           </li>
         ))}
