@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { umumContext } from '@/lib/umum'
+import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
@@ -9,7 +9,8 @@ import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@
  * yang bisa didapat.
  */
 export default async function BerandaUmum() {
-  const { namaPendek, punyaAkun } = await umumContext()
+  const { namaPendek, punyaAkun, studentId } = await umumContext()
+  await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}`)
   return (
     <div className="space-y-4">
       <div>

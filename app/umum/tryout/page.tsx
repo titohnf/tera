@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { umumContext } from '@/lib/umum'
+import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { createClient } from '@/lib/supabase/server'
 import DaftarTryOut, { paketTryOutTerbit } from '@/components/tryout/DaftarTryOut'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
@@ -8,7 +8,8 @@ export const metadata = { title: 'Try Out' }
 export const dynamic = 'force-dynamic'
 
 export default async function TryOutUmum() {
-  const { kode } = await umumContext()
+  const { kode, studentId } = await umumContext()
+  await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}/tryout`)
   const supabase = await createClient()
   const [paket, { data }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_peserta_tryout', { p_kode: kode })])
   return (

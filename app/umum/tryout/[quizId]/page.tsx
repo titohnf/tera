@@ -1,4 +1,4 @@
-import { umumContext } from '@/lib/umum'
+import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { createClient } from '@/lib/supabase/server'
 import HalamanHasil from '@/components/tryout/HalamanHasil'
 import type { HasilTryOut } from '@/components/tryout/HasilPeserta'
@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function HasilTryOutUmum({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId } = await params
-  const { kode, nama } = await umumContext()
+  const { kode, nama, studentId } = await umumContext()
+  await alihkanKeTampilanSiswa(studentId, (id) => `/keluarga/${id}/tryout#hasil-${quizId}`)
   const supabase = await createClient()
   const { data } = await supabase.rpc('hasil_peserta_tryout', { p_kode: kode })
   return (
