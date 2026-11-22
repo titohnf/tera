@@ -164,10 +164,10 @@ export default function DetailPembahasan({
             <h1 className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-gray-900">{data.judul}</h1>
             {dikirim && (
               <p className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
-                <span>Dikerjakan {tanggalPanjang(tanggalWib(dikirim))}</span>
+                <span>Dikerjakan <b className="font-semibold text-gray-900">{tanggalPanjang(tanggalWib(dikirim))}</b></span>
                 {mulai && new Date(dikirim) > new Date(mulai) && (
                   <span>
-                    Waktu pengerjaan {lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())} ({jamWib(mulai)}–{jamWib(dikirim)} WIB)
+                    Waktu pengerjaan <b className="font-semibold text-gray-900">{lamaTeks(new Date(dikirim).getTime() - new Date(mulai).getTime())}</b> ({jamWib(mulai)}–{jamWib(dikirim)} WIB)
                   </span>
                 )}
               </p>
