@@ -30,7 +30,7 @@ async function masukSebagaiAkun(kode: string): Promise<string | null> {
   if (peran === 'student') {
     const { data: keluarga } = await admin.from('family_students').select('family_id').eq('student_id', profilId).order('created_at').limit(1)
     akunId = (keluarga as { family_id: string }[] | null)?.[0]?.family_id ?? null
-    tujuan = `/keluarga/${profilId}`
+    tujuan = `/siswa/${profilId}`
   } else if (peran === 'mandiri') {
     akunId = profilId
     tujuan = '/mandiri'
