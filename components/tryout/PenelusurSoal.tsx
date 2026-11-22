@@ -12,19 +12,19 @@ export interface ItemSoal {
 }
 
 /** Petak nomor: warna menurut hasil. */
-const PETAK: Record<HasilButir, string> = {
+export const PETAK: Record<HasilButir, string> = {
   benar: 'bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100',
   sebagian: 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100',
   salah: 'bg-rose-50 text-rose-700 ring-rose-200 hover:bg-rose-100',
   belum: 'bg-gray-50 text-gray-500 ring-gray-200 hover:bg-gray-100',
 }
-const NOMOR: Record<HasilButir, string> = {
+export const NOMOR: Record<HasilButir, string> = {
   benar: 'bg-emerald-100 text-emerald-800',
   sebagian: 'bg-amber-100 text-amber-800',
   salah: 'bg-rose-100 text-rose-700',
   belum: 'bg-gray-100 text-gray-600',
 }
-const PILL: Record<HasilButir, string> = {
+export const PILL: Record<HasilButir, string> = {
   benar: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   sebagian: 'bg-amber-50 text-amber-700 ring-amber-200',
   salah: 'bg-rose-50 text-rose-700 ring-rose-200',

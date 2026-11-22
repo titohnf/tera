@@ -1,6 +1,8 @@
+import { redirect } from 'next/navigation'
 import { anakOrRedirect } from '@/lib/keluarga'
-import { IsiHasil } from '@/components/tryout/RiwayatKemampuan'
-import { muatMasukanAnak } from '@/lib/tryout/hasil-anak'
+import { TabelHasil } from '@/components/tryout/RiwayatKemampuan'
+import { muatMasukanAnak, muatTeksMasukan } from '@/lib/tryout/hasil-anak'
+import { soalPerSel } from '@/components/tryout/SoalPerSel'
 import { susunRiwayat } from '@/lib/tryout/riwayat-kemampuan'
 
 export const metadata = { title: 'Try Out' }
@@ -12,8 +14,15 @@ export const dynamic = 'force-dynamic'
  * Tanpa pembanding nasional atau rata-rata peserta dan tanpa rincian indikator (itu untuk admin).
  * Hasil muncul di sini setelah admin membuka hasilnya.
  */
-export default async function TryOutKeluargaPage({ params }: { params: Promise<{ studentId: string }> }) {
+export default async function TryOutKeluargaPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ studentId: string }>
+  searchParams: Promise<{ mapel?: string }>
+}) {
   const { studentId } = await params
+  const { mapel: kunciMapel } = await searchParams
   await anakOrRedirect(studentId)
   const masukan = (await muatMasukanAnak(studentId)).sort((a, b) => b.dikirim.localeCompare(a.dikirim))
 
@@ -28,18 +37,20 @@ export default async function TryOutKeluargaPage({ params }: { params: Promise<{
     )
   }
 
+  // Hanya ada rincian per mapel. Tanpa `?mapel=` (atau dengan kunci yang tidak dikenal) arahkan ke mapel pertama.
+  const semua = susunRiwayat(masukan)
+  const dipilih = semua.find((x) => x.kunci === kunciMapel)
+  if (!dipilih) redirect(`/keluarga/${studentId}/tryout?mapel=${encodeURIComponent(semua[0].kunci)}`)
+
+  // Soal dimuat hanya untuk try out mapel ini, supaya halaman tetap ringan.
+  const kuis = new Set(dipilih.tryOut.map((t) => t.quizId))
+  const denganTeks = await muatTeksMasukan(masukan.filter((x) => kuis.has(x.quizId)))
+  const mapel = susunRiwayat(denganTeks).find((x) => x.kunci === dipilih.kunci) ?? dipilih
+
   return (
-    <div className="space-y-4">
-      {masukan.map((m) => {
-        const [mapel] = susunRiwayat([m])
-        if (!mapel) return null
-        return (
-          <section key={m.quizId} className="space-y-3 rounded-xl bg-white p-4 shadow-kartu">
-            <h2 className="font-semibold tracking-tight text-gray-900">{m.judul}</h2>
-            <IsiHasil m={mapel} />
-          </section>
-        )
-      })}
-    </div>
+    <section className="space-y-3 rounded-xl bg-white p-4 shadow-kartu">
+      <h2 className="text-base font-semibold tracking-tight text-gray-900">{mapel.judul}</h2>
+      <TabelHasil m={mapel} soal={soalPerSel(mapel)} />
+    </section>
   )
 }

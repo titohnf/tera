@@ -4,6 +4,7 @@ import { coversSession } from '@/lib/enrollment'
 import { monthRange } from '@/lib/reports/laporan-bulanan'
 import { learnerAnak, kemajuanTopik, type KemajuanTopik } from '@/lib/belajar/sesi'
 import { kemajuanTopikPeta, type KemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
+import { MAPEL_AWAL, mapelTopik, namaMapelPerId, urutMapel } from '@/lib/belajar/mapel-peta'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { kesetaraanLengkap, type AnakTangga, type Kesetaraan } from '@/lib/reports/kesetaraan-kelas'
 
@@ -130,7 +131,13 @@ export interface RangkumanLaporan {
    */
   semesterLabel: string
   mandiri: RangkumanMandiri[] | null
+  /** Ketuntasan peta untuk SELURUH peta, dinamai Matematika. Tetap ada untuk pemanggil lama (panel admin). */
   ketuntasan: RangkumanKetuntasan | null
+  /**
+   * Ketuntasan per mapel, Matematika dulu lalu menurut abjad. Satu mapel satu rangkuman: topik mapel
+   * lain tidak boleh ikut menjadi penyebut atau menahan klaim mapel lainnya. Null bila gagal dibaca.
+   */
+  ketuntasanPerMapel: RangkumanKetuntasan[] | null
 }
 
 export async function rangkumanLaporan(
@@ -404,17 +411,19 @@ async function rangkumanKelas(
 async function rangkumanLatihan(studentId: string): Promise<{
   mandiri: RangkumanMandiri[] | null
   ketuntasan: RangkumanKetuntasan | null
+  ketuntasanPerMapel: RangkumanKetuntasan[] | null
 }> {
   // `learnerAnak()` cuma MEMBACA. Memakai `belajarContext()` di sini akan
   // melahirkan baris `learners` untuk anak yang kebetulan rapornya dibuka
   // orang tuanya — laporan tidak berhak melahirkan apa pun.
   const learnerId = await learnerAnak(studentId)
-  if (!learnerId) return { mandiri: [], ketuntasan: null }
+  if (!learnerId) return { mandiri: [], ketuntasan: null, ketuntasanPerMapel: [] }
 
-  const [mandiri, peta, { ks, tangga }] = await Promise.all([
+  const [mandiri, peta, { ks, tangga }, namaMapel] = await Promise.all([
     kemajuanTopik(learnerId),
     kemajuanTopikPeta(learnerId),
     kesetaraanLengkap(learnerId),
+    namaMapelPerId(),
   ])
 
   return {
@@ -424,7 +433,37 @@ async function rangkumanLatihan(studentId: string): Promise<{
       const k = ketuntasanPeta(peta)
       return k === null ? null : terapkanKesetaraan(k, ks, tangga)
     })(),
+    ketuntasanPerMapel: peta === null ? null : ketuntasanPerMapel(peta, namaMapel, ks, tangga),
   }
+}
+
+/**
+ * Satu rangkuman ketuntasan per mapel. Peta dikelompokkan menurut mapel topiknya; topik tanpa mapel
+ * (peta lama, sebelum mapel lain ada) dianggap Matematika, supaya hasil Matematika tidak berubah.
+ *
+ * Aturan "resmi" (kelas X, setara kelas Y; migrasi 181/212) baru dipasang untuk Matematika: fungsi
+ * databasenya belum membedakan mapel, jadi memasangnya ke mapel lain akan mencampur topik antar mapel.
+ * Mapel lain memakai hitungan `ketuntasanPeta()` (`aturan: 'lama'`) sampai fungsi itu diberi parameter
+ * mapel.
+ */
+export function ketuntasanPerMapel(
+  peta: KemajuanTopikPeta[],
+  namaMapel: Map<string, string>,
+  ks: Kesetaraan | null,
+  tangga: AnakTangga[] | null,
+): RangkumanKetuntasan[] {
+  const per = new Map<string, KemajuanTopikPeta[]>()
+  for (const t of peta) {
+    const nama = mapelTopik(t, namaMapel)
+    per.set(nama, [...(per.get(nama) ?? []), t])
+  }
+  const hasil: RangkumanKetuntasan[] = []
+  for (const [nama, topik] of per) {
+    const k = ketuntasanPeta(topik, nama)
+    if (!k) continue
+    hasil.push(nama === MAPEL_AWAL ? terapkanKesetaraan(k, ks, tangga) : k)
+  }
+  return hasil.sort((a, b) => urutMapel(a.mapel, b.mapel))
 }
 
 /**
@@ -521,6 +560,7 @@ export async function mandiriPerMapel(
 
 export function ketuntasanPeta(
   peta: KemajuanTopikPeta[],
+  mapel: string = MAPEL_AWAL,
 ): RangkumanKetuntasan | null {
   if (peta.length === 0) return null
 
@@ -568,9 +608,9 @@ export function ketuntasanPeta(
     .sort((a, b) => b[0] - a[0])
 
   return {
-    // Peta kompetensi hari ini cuma Matematika; namanya dipinjam dari kurikulum
-    // lewat `subjectId`, dan kalau tidak ada pemetaannya kita tidak mengarang.
-    mapel: 'Matematika',
+    // Nama mapel diberikan pemanggil (dari `subjects` lewat `subjectId`); bawaannya Matematika,
+    // mapel satu-satunya peta ini sebelum mapel lain ada.
+    mapel,
     aturan: 'lama',
     kelasTerdaftar: null,
     levelKelas: penuh[0] ? String(penuh[0][0]) : null,

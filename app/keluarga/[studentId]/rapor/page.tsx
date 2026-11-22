@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CircleCheckBig, ClipboardCheck, NotebookPen, TrendingUp, type LucideIcon } from 'lucide-react'
 import { anakOrRedirect } from '@/lib/keluarga'
 import {
   rangkumanLaporan,
@@ -7,12 +8,10 @@ import {
   type RangkumanKetuntasan,
 } from '@/lib/reports/ringkasan-laporan'
 import { bulanIni } from '@/lib/waktu'
-import { todayWib } from '@/lib/daily-message'
-import { tanggalPanjang } from '@/lib/waktu-relatif'
 import { BilahRapor, GrafikNilaiBulanan, MAKS_SERI } from '@/components/keluarga/BilahRapor'
-import { learnerAnak } from '@/lib/belajar/sesi'
-import { tryOutSiswa } from '@/lib/reports/tryout-data'
-import { tanggalWib } from '@/lib/tryout/paket'
+import { muatMasukanAnak } from '@/lib/tryout/hasil-anak'
+import { kategoriNilai, WARNA_KATEGORI } from '@/lib/tryout/kategori-nilai'
+import { susunRiwayat, type RiwayatMapel } from '@/lib/tryout/riwayat-kemampuan'
 
 /**
  * Rapor: pintu masuk ketiga laporan seorang anak.
@@ -42,8 +41,8 @@ export default async function RaporPage({
 
   const sekarang = await bulanIni()
   const r = await rangkumanLaporan(studentId, sekarang)
-  const learnerTryOut = await learnerAnak(studentId)
-  const riwayatTryOut = learnerTryOut ? await tryOutSiswa(learnerTryOut) : []
+  // Sama dengan halaman Hasil Try Out: hanya try out yang hasilnya sudah dibuka admin.
+  const riwayatTryOut = susunRiwayat(await muatMasukanAnak(studentId))
 
   return (
     // Tanpa kalimat pembuka. Ketiga kartunya berjudul, berketerangan, dan
@@ -60,6 +59,7 @@ export default async function RaporPage({
           yang dibaca sebelum angkanya, bukan sesudah. */}
       <KartuLaporan
         judul="Progres Kelas"
+        ikon={TrendingUp}
         keterangan={`Rata-rata nilai asesmen ${r.semesterLabel}`}
         href={`/keluarga/${studentId}/laporan`}
       >
@@ -77,6 +77,7 @@ export default async function RaporPage({
 
       <KartuLaporan
         judul="Latihan Mandiri"
+        ikon={NotebookPen}
         keterangan="Rata-rata nilai latihan per mapel yang dikerjakan secara mandiri dari menu Belajar"
         href={`/keluarga/${studentId}/penguasaan`}
       >
@@ -98,34 +99,61 @@ export default async function RaporPage({
 
       <KartuLaporan
         judul="Ketuntasan Materi"
-        keterangan="Pengukuran penguasaan mapel Matematika sesuai standar ketuntasan di setiap kelas, dari menu Misi"
+        ikon={CircleCheckBig}
+        keterangan="Penguasaan materi tiap mapel sesuai standar ketuntasan di setiap kelas, dari menu Misi"
         href={`/keluarga/${studentId}/ketuntasan`}
+        isiDiLuarTautan
       >
-        {/* Tiga keadaan, tiga kalimat berbeda — dan bedanya penting. Tidak
-            punya peta bukan salah anaknya, gagal dibaca bukan salah siapa pun,
-            dan belum dikerjakan adalah satu-satunya dari ketiganya yang
-            memang menunggu anaknya. Menyamakan ketiganya jadi "belum ada
-            data" menuduh yang tidak perlu dituduh. */}
-        {r.ketuntasan === null ? (
+        {/* Tiga keadaan, tiga kalimat berbeda: tidak punya peta bukan salah anaknya, gagal dibaca
+            bukan salah siapa pun, dan belum dikerjakan adalah satu-satunya yang menunggu anaknya.
+            Semua mapel tampil: yang belum disentuh berlencana "Belum dimulai", bukan hilang. */}
+        {r.ketuntasanPerMapel === null || r.ketuntasanPerMapel.length === 0 ? (
           <Kosong>Belum ada peta kompetensi untuk anak ini.</Kosong>
-        ) : r.ketuntasan.dikerjakan === 0 ? (
-          <Kosong>Belum ada topik peta kompetensi yang dikerjakan.</Kosong>
         ) : (
-          <BarisKetuntasan k={r.ketuntasan} tanggal={tanggalPanjang(todayWib())} />
+          <ul className="-my-2 divide-y divide-slate-100">
+            {r.ketuntasanPerMapel
+              .map(k => (
+                <li key={k.mapel}>
+                  <Link
+                    href={`/keluarga/${studentId}/ketuntasan?mapel=${encodeURIComponent(k.mapel)}`}
+                    className="block rounded-md py-3 hover:bg-slate-50 active:bg-slate-100"
+                  >
+                    <span className="flex items-start gap-3">
+                      <span className="min-w-0 flex-1 text-sm font-semibold leading-snug text-gray-900">{k.mapel}</span>
+                      {/* Status sejajar dengan nama mapel, rata kanan; bilah di bawah sebagai pelengkap. */}
+                      <span className="flex max-w-[62%] flex-col items-end gap-1 text-right">
+                        {statusMapel(k).map(st => (
+                          <span key={st.teks} className="flex items-start justify-end gap-2 text-sm leading-snug text-gray-700">
+                            {st.teks}
+                            <span className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${st.titik}`} aria-hidden />
+                          </span>
+                        ))}
+                      </span>
+                      <svg viewBox="0 0 24 24" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </span>
+                    <span className="mt-3 flex">
+                      <LangkahKelas k={k} />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+          </ul>
         )}
       </KartuLaporan>
 
       <KartuLaporan
         judul="Hasil Try Out"
+        ikon={ClipboardCheck}
         keterangan="Skor try out dan kemampuan anak per bidang dan topik"
         href={`/keluarga/${studentId}/tryout`}
+        isiDiLuarTautan
       >
         {riwayatTryOut.length === 0 ? (
           <Kosong>Belum ada hasil try out untuk anak ini.</Kosong>
         ) : (
-          <p className="text-sm text-gray-700">
-            {riwayatTryOut.length} try out sudah dikerjakan, terakhir {tanggalPanjang(tanggalWib(riwayatTryOut[0].dikirim))}
-          </p>
+          <NilaiTryOut daftar={riwayatTryOut} dasar={`/keluarga/${studentId}/tryout`} />
         )}
       </KartuLaporan>
     </div>
@@ -141,24 +169,29 @@ export default async function RaporPage({
  */
 function KartuLaporan({
   judul,
+  ikon: Ikon,
   keterangan,
   href,
+  isiDiLuarTautan = false,
   children,
 }: {
   judul: string
+  /** Ikon sederhana di depan judul. */
+  ikon: LucideIcon
   keterangan: string
   href: string
+  /** Kartu tanpa tautan sendiri: tujuannya ada di tiap baris isinya. */
+  isiDiLuarTautan?: boolean
   children: React.ReactNode
 }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100"
-    >
+  const kepala = (
       <div className="flex items-start gap-3">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600" aria-hidden>
+          <Ikon size={18} strokeWidth={2} />
+        </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold tracking-tight text-gray-900">{judul}</p>
-          <p className="mt-0.5 text-xs text-gray-400">{keterangan}</p>
+          <p className="text-base font-semibold tracking-tight text-gray-900">{judul}</p>
+          <p className="mt-1 text-sm leading-snug text-gray-500">{keterangan}</p>
         </div>
         {/* Chevron gambar, bukan karakter "›". Karakternya digambar setipis
             tanda kutip pada ukuran teks biasa dan berwarna gray-300 nyaris
@@ -166,26 +199,142 @@ function KartuLaporan({
             yang bisa diketuk. Goresan 2px pada 18px terbaca dari jarak baca
             ponsel, dan gray-400 cukup gelap untuk terlihat tanpa bersaing
             dengan judulnya. */}
-        <svg
-          viewBox="0 0 24 24"
-          className="mt-0.5 h-[18px] w-[18px] shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <path d="m9 18 6-6-6-6" />
-        </svg>
+        {!isiDiLuarTautan && (
+          <svg
+            viewBox="0 0 24 24"
+            className="mt-0.5 h-[18px] w-[18px] shrink-0 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        )}
       </div>
-      <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">{children}</div>
+  )
+  const isi = <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">{children}</div>
+
+  if (isiDiLuarTautan) {
+    return (
+      // Kepalanya bukan tautan dan tanpa panah: tujuannya ada di tiap baris isinya, per mapel.
+      <div className="rounded-xl bg-white p-4 shadow-kartu sm:p-5">
+        {kepala}
+        {isi}
+      </div>
+    )
+  }
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl bg-white p-4 shadow-kartu transition hover:shadow-kartu-naik active:bg-slate-100 sm:p-5"
+    >
+      {kepala}
+      {isi}
     </Link>
   )
 }
 
+/**
+ * Hasil try out terakhir tiap mapel sebagai daftar ringkas: satu baris per mapel berisi nama mapel,
+ * nilai try out terakhirnya, kategorinya, dan panah ke rincian mapel itu (`?mapel=`). Seluruh baris
+ * adalah tautan; riwayat TO dan rincian topik ada di halaman rinciannya.
+ */
+function NilaiTryOut({ daftar, dasar }: { daftar: RiwayatMapel[]; dasar: string }) {
+  return (
+    <ul className="-my-2 divide-y divide-slate-100">
+      {daftar.map(m => {
+        const urutan = m.tryOut.length
+        const nilai = m.tryOut[urutan - 1]?.nilai ?? null
+        const kategori = kategoriNilai(nilai)
+        return (
+          <li key={m.kunci}>
+            <Link
+              href={`${dasar}?mapel=${encodeURIComponent(m.kunci)}`}
+              className="flex items-center gap-3 rounded-md py-3 hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold leading-snug text-gray-900">{m.judul}</span>
+                <span className="mt-0.5 block text-sm text-gray-500">Try Out ke-{urutan}</span>
+              </span>
+              <span className="shrink-0 text-xl font-semibold tabular-nums text-gray-900">
+                {nilai === null ? '–' : nilai.toLocaleString('id-ID', { maximumFractionDigits: 1 })}
+              </span>
+              {kategori && (
+                <span className={`w-[5.25rem] shrink-0 rounded-full px-2 py-1 text-center text-xs font-semibold ring-1 ${WARNA_KATEGORI[kategori]}`}>{kategori}</span>
+              )}
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
+ * Status satu mapel sebagai baris teks dengan titik berwarna. Dua kabar yang bisa muncul bersamaan:
+ * - biru: kelas yang SEDANG dikerjakan ("Sedang mengerjakan materi kelas L"), yaitu kelas pertama yang
+ *   belum penuh;
+ * - hijau: kelas-kelas yang SELURUH materinya sudah tuntas ("Seluruh materi kelas 1, 2, 5 tuntas"),
+ *   disebut satu per satu karena bisa tidak berurutan. Semua kelas tuntas jadi "Semua materi tuntas".
+ * Belum ada yang dikerjakan: satu lencana abu-abu "Belum dimulai". Sengaja bukan "setara kelas N": ini
+ * ukuran internal Tera, bukan perbandingan dengan anak lain, dan kata "materi" selalu ada supaya tidak
+ * terbaca sebagai kelas sekolah anak. Mapel tanpa aturan kumulatif hanya memakai "N topik tuntas".
+ */
+function statusMapel(k: RangkumanKetuntasan): { teks: string; titik: string }[] {
+  const HIJAU = 'bg-emerald-500'
+  const BIRU = 'bg-blue-600'
+  const ABU = 'bg-gray-300'
+  if (k.dikerjakan === 0) return [{ teks: 'Belum dimulai', titik: ABU }]
+  const penuh = k.jenjang.filter(j => j.topik > 0 && j.tuntas === j.topik).map(j => j.label)
+  if (k.jenjang.length > 0 && penuh.length === k.jenjang.length) return [{ teks: 'Semua materi tuntas', titik: HIJAU }]
+  const sedang = k.aturan === 'resmi' ? k.jenjang.find(j => j.tuntas < j.topik) : undefined
+  const hasil: { teks: string; titik: string }[] = []
+  if (sedang) hasil.push({ teks: `Sedang mengerjakan materi kelas ${sedang.label}`, titik: BIRU })
+  if (penuh.length > 0) hasil.push({ teks: `Seluruh materi kelas ${penuh.join(', ')} tuntas`, titik: HIJAU })
+  if (hasil.length === 0) hasil.push({ teks: `${k.tuntas} topik tuntas`, titik: ABU })
+  return hasil
+}
+
+/**
+ * Seluruh kelas sebagai satu bilah bersekat: tiap kelas satu kelompok yang lebarnya mengikuti jumlah
+ * materinya, dan tiap materi satu petak. Petak yang tuntas terisi (hijau bila seluruh kelas itu tuntas,
+ * biru bila belum), sisanya abu-abu. Nomor kelas di bawah kelompoknya; kelas yang sedang dikerjakan
+ * dicetak tebal. Petak mengikuti urutan penyelesaian, bukan topik tertentu: yang tersedia hanya
+ * jumlah topik tuntas per kelas, bukan topik mana.
+ */
+function LangkahKelas({ k }: { k: RangkumanKetuntasan }) {
+  const sedang = k.aturan === 'resmi' ? k.jenjang.find(j => j.tuntas < j.topik)?.label : undefined
+  return (
+    <span
+      className="flex min-w-0 flex-1 items-start gap-1.5"
+      role="img"
+      aria-label={`Materi per kelas: ${k.jenjang.map(j => `kelas ${j.label} ${j.tuntas} dari ${j.topik} tuntas`).join(', ')}`}
+    >
+      {k.jenjang.map(j => {
+        const penuh = j.topik > 0 && j.tuntas === j.topik
+        return (
+          <span key={j.label} aria-hidden className="flex min-w-[1.25rem] basis-0 flex-col gap-1" style={{ flexGrow: Math.max(j.topik, 1) }}>
+            <span className="flex h-4 gap-px">
+              {Array.from({ length: j.topik }, (_, i) => (
+                <span key={i} className={`min-w-0 flex-1 rounded-[2px] ${i < j.tuntas ? (penuh ? 'bg-emerald-500' : 'bg-blue-600') : 'bg-slate-200'}`} />
+              ))}
+            </span>
+            <span className={`text-center text-[11px] leading-none tabular-nums ${j.label === sedang ? 'font-bold text-gray-900' : 'text-gray-500'}`}>{j.label}</span>
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
 function Kosong({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-gray-400">{children}</p>
+  return <p className="text-sm text-gray-500">{children}</p>
 }
 
 /**
@@ -210,8 +359,8 @@ function TabelMapel({ kelas }: { kelas: RangkumanKelas[] }) {
     <div className="flex divide-x divide-slate-100">
       {kelas.map(m => (
         <div key={m.mapel} className="min-w-0 flex-1 px-3 first:pl-0 last:pr-0">
-          <p className="truncate text-xs text-gray-400">{m.mapel}</p>
-          <p className="mt-0.5 text-lg font-semibold tabular-nums text-gray-900">
+          <p className="truncate text-sm text-gray-500">{m.mapel}</p>
+          <p className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">
             {/* Em dash, bukan nol: mapel yang belum pernah diasesmen tidak
                 bernilai nol, ia belum punya nilai sama sekali. */}
             {m.rataRata ?? '—'}
@@ -253,7 +402,7 @@ function GrafikKelas({ kelas, bulan }: { kelas: RangkumanKelas[]; bulan: string[
         bulan={bulan}
       />
       {sisa > 0 && (
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-2 text-xs leading-relaxed text-gray-500">
           Grafik menampilkan {MAKS_SERI} mapel dengan sesi terbanyak; {sisa} mapel lain
           tidak digambar.
         </p>
@@ -272,9 +421,9 @@ function GrafikKelas({ kelas, bulan }: { kelas: RangkumanKelas[]; bulan: string[
  */
 function BarisMandiri({ m }: { m: RangkumanMandiri }) {
   return (
-    <div className="space-y-1 pt-1">
+    <div className="space-y-1.5">
       <p className="text-sm font-semibold tracking-tight text-gray-900">{m.mapel}</p>
-      <p className="text-xs text-gray-400">
+      <p className="text-sm text-gray-500">
         Topik selesai {m.topik > 0 ? Math.round((m.selesai / m.topik) * 100) : 0}% · {m.selesai}/
         {m.topik} Topik
       </p>
@@ -282,92 +431,5 @@ function BarisMandiri({ m }: { m: RangkumanMandiri }) {
         <BilahRapor nama="Skor" nilai={m.rataRata} teks={String(m.rataRata)} />
       )}
     </div>
-  )
-}
-
-function BarisKetuntasan({ k, tanggal }: { k: RangkumanKetuntasan; tanggal: string }) {
-  // Anak tangga pertama yang belum penuh: ke sanalah anaknya sedang menuju.
-  // Klaim "setingkat kelas Y" adalah KELENGKAPAN (tidak ada lubang sejak
-  // kelas 1); ini POSISINYA. Dua kabar yang berbeda, jadi dua kalimat — satu
-  // angka yang dipaksa membawa keduanya adalah yang membuat klaim lama terbaca
-  // kosong untuk anak yang sebenarnya sudah berjalan jauh.
-  const menuju = k.aturan === 'resmi' ? k.jenjang.find(j => j.tuntas < j.topik) : undefined
-
-  return (
-    <>
-      <p className="text-sm leading-relaxed text-gray-600">
-        {k.aturan === 'resmi' ? (
-          // Kalimat ini yang akan DIKUTIP orang tua, sehingga ia harus aman
-          // dikutip utuh: tanggalnya, sumbernya ("Matematika Tera"), dan kata
-          // "setingkat" — bukan "setara", yang terbaca sebagai perbandingan
-          // dengan anak kelas itu pada umumnya, padahal tidak ada data pembanding.
-          k.levelKelas ? (
-            <>
-              Per {tanggal}, siswa sudah menuntaskan seluruh materi {k.mapel} Tera{' '}
-              <span className="font-semibold text-gray-900">setingkat kelas {k.levelKelas}</span>
-              {k.kelasTerdaftar !== null && <> (siswa di kelas {k.kelasTerdaftar})</>}.
-            </>
-          ) : (
-            <>
-              Per {tanggal}, belum ada tingkat kelas yang seluruh materi {k.mapel} Tera-nya, mulai
-              dari kelas 1, sudah tuntas.
-            </>
-          )
-        ) : k.levelKelas ? (
-          <>
-            Kemampuan {k.mapel} siswa saat ini berada di{' '}
-            <span className="font-semibold text-gray-900">level kelas {k.levelKelas}</span>.
-          </>
-        ) : (
-          // Belum ada satu jenjang pun yang penuh. Dikatakan begitu, bukan
-          // dibulatkan ke bawah jadi "level kelas 7" yang belum dimiliki
-          // anaknya — kalimat inilah yang akan dikutip orang tua.
-          <>Belum ada jenjang yang seluruh topiknya tuntas.</>
-        )}
-      </p>
-      {menuju && (
-        <p className="pt-1 text-sm leading-relaxed text-gray-600">
-          Sedang menuju materi kelas {menuju.label}:{' '}
-          <span className="font-semibold text-gray-900">
-            {menuju.tuntas} dari {menuju.topik} topik
-          </span>{' '}
-          sudah tuntas.
-        </p>
-      )}
-      {/* Tangga jenjang, dari kelas terendah ke atas. Ia yang membuat kalimat
-          di atasnya bisa DIPERIKSA alih-alih dipercaya: pembacanya melihat
-          sendiri jenjang mana yang penuh dan mana yang baru separuh, dan
-          "berada di level kelas 7" berhenti jadi klaim yang datang entah dari
-          mana.
-
-          Satu warna saja — biru, arti yang sama dengan kedua kartu di atas:
-          seberapa banyak yang selesai. Tidak ada legenda, karena satu seri
-          tidak perlu diterangkan warnanya. */}
-      <div className="space-y-0.5 pt-1">
-        {k.jenjang.map(j => (
-          <BilahRapor
-            key={j.label}
-            nama={`Kelas ${j.label}`}
-            nilai={j.topik > 0 ? (j.tuntas / j.topik) * 100 : 0}
-            teks={`${j.tuntas}/${j.topik}`}
-          />
-        ))}
-      </div>
-      {/* Penyebut baris-baris di atas berjumlah persis sebanyak topiknya, jadi
-          tidak ada selisih yang perlu dibela. Yang tetap disebut cuma aturan
-          penempatannya: tanpa itu, orang tua yang tahu anaknya mengerjakan
-          topik yang membentang beberapa kelas akan mencarinya di baris yang
-          salah dan tidak menemukannya.
-
-          Dua aturan, dua kalimat: `resmi` (kumulatif dari kelas 1, migrasi
-          181/212, sama dengan panel admin) dan `lama` (cadangan bila data
-          resminya tidak terbaca). Lihat `terapkanKesetaraan`. */}
-      <p className="pt-1 text-xs text-gray-400">
-        {k.tuntas} dari {k.topik} topik tuntas.{' '}
-        {k.aturan === 'resmi'
-          ? 'Ini ukuran internal Tera: seluruh topik dari kelas 1 sampai kelas itu tuntas. Bukan perbandingan dengan nilai sekolah atau anak lain. Tiap topik dihitung di kelas tempat ia seharusnya dikuasai.'
-          : 'Topik yang membentang dua kelas dihitung di kelas atasnya.'}
-      </p>
-    </>
   )
 }

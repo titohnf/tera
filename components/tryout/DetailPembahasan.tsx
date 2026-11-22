@@ -70,7 +70,7 @@ function Pembahasan({ teks }: { teks: string | null }) {
 }
 
 /** Isi satu kartu soal: soal, pilihan (dengan penanda jawaban anak dan kunci), dan pembahasan. */
-function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButir; id: string; bobot: number }) {
+export function IsiKartu({ teks, hasil, id, bobot }: { teks: TeksSoal; hasil: HasilButir; id: string; bobot: number }) {
   const pilihan = (teks.opsi as { choices?: unknown } | null)?.choices
   const daftar = Array.isArray(pilihan) ? pilihan.filter((v): v is string => typeof v === 'string') : []
   const bisaDitandai = (teks.tipe === 'mcq_single' || teks.tipe === 'mcq_multi') && daftar.length > 0 && daftar.some((p) => termasuk(teks.kunci, p))

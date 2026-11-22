@@ -17,6 +17,9 @@ export type StatusButir = 'benar' | 'sebagian' | 'salah'
 
 export interface ButirRiwayat {
   nomor: number
+  /** Id soal dan bobotnya, untuk menampilkan soal itu lagi di pop up. */
+  id: string
+  bobot: number
   status: StatusButir
   /** Soalnya, bila dimuat. */
   teks: TeksSoal | null
@@ -110,7 +113,7 @@ export function susunRiwayat(masukan: MasukanTryOut[]): RiwayatMapel[] {
         const sel =
           t.perTryOut[i] ?? (t.perTryOut[i] = { butir: [], benar: 0, total: 0, persen: null })
         const status = statusDari(skor, s.bobot)
-        sel.butir.push({ nomor: s.nomor, status, teks: to.teks[s.id] ?? null })
+        sel.butir.push({ nomor: s.nomor, id: s.id, bobot: s.bobot, status, teks: to.teks[s.id] ?? null })
         sel.total += 1
         if (status === 'benar') sel.benar += 1
         // Persen sementara disimpan sebagai jumlah skor; dibagi bobot di bawah.

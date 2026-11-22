@@ -2,6 +2,8 @@ import { belajarContext } from '@/lib/belajar/konteks'
 import { petaTopik } from '@/lib/belajar/topik-peta'
 import { langkahSeluruhTopik, paketRingkasSeluruhTopik } from '@/lib/belajar/langkah'
 import PetaTopik from '@/components/belajar/PetaTopik'
+import PemilihMapel from '@/components/belajar/PemilihMapel'
+import { MAPEL_AWAL, mapelPerTopik, urutMapel } from '@/lib/belajar/mapel-peta'
 import KartuRetest from '@/components/belajar/KartuRetest'
 import SapaanKunjungan from '@/components/belajar/SapaanKunjungan'
 import { retestJatuhTempo } from '@/lib/belajar/retest'
@@ -44,7 +46,18 @@ import { todayWib } from '@/lib/daily-message'
  * dipakai permukaan belajar, dan `belajarContext` yang memeriksa anak ini
  * benar milik keluarga yang sedang masuk.
  */
-export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
+export default async function IsiMisi({
+  anak: studentId,
+  pilihMapel,
+}: {
+  anak?: string
+  /**
+   * Peta satu mapel per tampilan, dengan pemilih mapel bila ada lebih dari satu. Semua mapel terbuka:
+   * anak bebas memilih. `dipilih` yang tidak dikenal jatuh ke mapel pertama (Matematika dulu). Tanpa
+   * ini seluruh peta tampil sekaligus seperti semula.
+   */
+  pilihMapel?: { dipilih?: string; alamat: (mapel: string) => string }
+}) {
   const { learnerId, kelas } = await belajarContext(studentId)
 
   // `catatKunjungan` MENULIS, jadi ia berdiri sendiri dan hanya di sini:
@@ -55,7 +68,7 @@ export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
   const hariSejakKunjungan = await catatKunjungan(learnerId)
   const sapaan = sapaanKunjungan(hariSejakKunjungan)
 
-  const [peta, retest, langkah, paket] = await Promise.all([
+  const [peta, retest, langkah, paket, mapelTopikPeta] = await Promise.all([
     petaTopik(learnerId),
     retestJatuhTempo(learnerId),
     langkahSeluruhTopik(learnerId),
@@ -64,7 +77,17 @@ export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
     // tidak saling bergantung, dan menjalankannya berurutan menambah tiga
     // perjalanan jaringan pada layar yang paling sering dibuka anak.
     paketRingkasSeluruhTopik(learnerId),
+    pilihMapel ? mapelPerTopik() : Promise.resolve(new Map<string, string>()),
   ])
+
+  const mapelDari = (id: string) => mapelTopikPeta.get(id) ?? MAPEL_AWAL
+  const daftarMapel = pilihMapel ? [...new Set(peta.map(t => mapelDari(t.id)))].sort(urutMapel) : []
+  const mapelAktif = pilihMapel
+    ? pilihMapel.dipilih && daftarMapel.includes(pilihMapel.dipilih)
+      ? pilihMapel.dipilih
+      : (daftarMapel[0] ?? MAPEL_AWAL)
+    : undefined
+  const petaTampil = mapelAktif ? peta.filter(t => mapelDari(t.id) === mapelAktif) : peta
 
   return (
     <div className="space-y-4">
@@ -81,10 +104,13 @@ export default async function IsiMisi({ anak: studentId }: { anak?: string }) {
           di server lalu dihidrasi di browser, dan tanggal yang dibaca dua kali
           pada dua mesin yang jamnya berbeda melahirkan HTML yang tidak cocok —
           alasan yang sama dengan `sekarangIso` di `lib/waktu.ts`. */}
+      {pilihMapel && (
+        <PemilihMapel pilihan={daftarMapel.map(m => ({ nama: m, href: pilihMapel.alamat(m), aktif: m === mapelAktif }))} />
+      )}
       <PetaTopik
         anak={studentId}
         kelas={kelas}
-        topik={peta}
+        topik={petaTampil}
         langkah={langkah}
         paket={paket}
         hariIni={todayWib()}

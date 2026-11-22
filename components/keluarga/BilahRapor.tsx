@@ -84,9 +84,9 @@ export function BilahRapor({
   const lebar = Math.min(100, Math.max(0, nilai))
   return (
     <div className="flex items-center gap-2.5">
-      <span className="w-14 shrink-0 truncate text-xs text-gray-500">{nama}</span>
+      <span className="w-16 shrink-0 truncate text-sm text-gray-600">{nama}</span>
       <span
-        className="h-2 min-w-0 flex-1 overflow-hidden bg-gray-100"
+        className="h-2.5 min-w-0 flex-1 overflow-hidden bg-gray-100"
         role="img"
         aria-label={`${nama}: ${teks}`}
       >
@@ -98,7 +98,7 @@ export function BilahRapor({
           style={{ width: `${lebar}%`, borderRadius: '0 4px 4px 0' }}
         />
       </span>
-      <span className="w-10 shrink-0 text-right text-xs font-semibold tabular-nums text-gray-900">
+      <span className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums text-gray-900">
         {teks}
       </span>
     </div>
@@ -187,9 +187,9 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
           teks, bukan berwarna serinya: hue kategorikal seterang ini tidak
           terbaca sebagai tulisan. */}
       {dibaca.length > 1 && (
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5">
           {dibaca.map(s => (
-            <span key={s.mapel} className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span key={s.mapel} className="flex items-center gap-1.5 text-sm text-gray-600">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: s.warna }}
@@ -201,7 +201,7 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
         </div>
       )}
 
-      <div className="mt-1.5 flex h-24">
+      <div className="mt-2 flex h-32">
         {/* Gutter sumbu-y. Angkanya HTML dan berdiri di luar bidang gambarnya,
             bukan `<text>` di dalam SVG: SVG-nya diregangkan mendatar supaya
             sumbu waktunya sejajar dengan label bulan, dan teks di dalam gambar
@@ -214,7 +214,7 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
           {TANDA_SUMBU.map(v => (
             <span
               key={v}
-              className="absolute right-1.5 -translate-y-1/2 text-xs tabular-nums text-gray-400"
+              className="absolute right-1.5 -translate-y-1/2 text-xs tabular-nums text-gray-500"
               style={{ top: `${y(v)}%` }}
             >
               {v}
@@ -296,7 +296,7 @@ export function GrafikNilaiBulanan({ seri, bulan }: { seri: SeriBulanan[]; bulan
           {bulan.map((b, i) => (
             <span
               key={b + i}
-              className="absolute -translate-x-1/2 text-xs tabular-nums text-gray-400"
+              className="absolute -translate-x-1/2 text-xs tabular-nums text-gray-500"
               style={{ left: `${x(i)}%` }}
             >
               {b}

@@ -55,6 +55,19 @@ export async function muatMasukanAnak(studentId: string): Promise<MasukanTryOut[
   return masukan
 }
 
+/**
+ * Menambahkan teks soal, jawaban anak, dan kunci ke masukan yang diberikan. Dipanggil hanya untuk try out
+ * satu mapel yang sedang dibuka, dan satu per satu, karena memuat soal jauh lebih berat daripada skornya.
+ */
+export async function muatTeksMasukan(masukan: MasukanTryOut[]): Promise<MasukanTryOut[]> {
+  const hasil: MasukanTryOut[] = []
+  for (const m of masukan) {
+    const data = await muatTryOut(m.quizId, { denganTeks: true, attemptId: m.attemptId })
+    hasil.push(data ? { ...m, teks: data.teks } : m)
+  }
+  return hasil
+}
+
 /** Judul tampilan "Try Out I TKA Matematika" tiap try out terbit (id → judul), menurut urutan seri sejenjang dan semapel. */
 async function judulTampilan(admin: ReturnType<typeof createAdminClient>): Promise<Map<string, string>> {
   const { data: semua } = await admin.from('quizzes').select('id, title, settings').eq('kind', 'tryout').eq('status', 'published').order('created_at')

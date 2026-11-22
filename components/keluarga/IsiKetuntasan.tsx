@@ -1,4 +1,9 @@
+import PemilihMapel from '@/components/belajar/PemilihMapel'
 import { kemajuanTopikPeta } from '@/lib/belajar/topik-rapor'
+import { daftarMapelPeta, MAPEL_AWAL, mapelTopik, namaMapelPerId } from '@/lib/belajar/mapel-peta'
+import { kesetaraanLengkap } from '@/lib/reports/kesetaraan-kelas'
+import { ketuntasanPerMapel, type RangkumanKetuntasan } from '@/lib/reports/ringkasan-laporan'
+import TanggaKetuntasan from '@/components/keluarga/TanggaKetuntasan'
 import { namaTema } from '@/lib/belajar/tema-topik'
 import KartuPenguasaan, { type TujuanRincian } from '@/components/keluarga/KartuPenguasaan'
 
@@ -48,14 +53,37 @@ export default async function IsiKetuntasan({
   studentId,
   learnerId,
   rincian = true,
+  pilihMapel,
 }: {
   studentId: string
   /** Null kalau siswa belum pernah punya baris `learners`. */
   learnerId: string | null
   rincian?: boolean | TujuanRincian
+  /**
+   * Menampilkan satu mapel saja, dengan pemilih mapel bila ada lebih dari satu. Tanpa ini seluruh peta
+   * tampil seperti semula (dipakai panel admin). Mapel berbagi peta yang sama tetapi tidak boleh
+   * tercampur di satu daftar. `dipilih` yang tidak dikenal jatuh ke mapel pertama (Matematika dulu).
+   */
+  pilihMapel?: { dipilih?: string; alamat: (mapel: string) => string }
 }) {
   const misi = learnerId ? await kemajuanTopikPeta(learnerId) : []
-  const misiDikerjakan = (misi ?? []).filter(k => k.answered > 0)
+  const namaMapel = await namaMapelPerId()
+  const daftarMapel = daftarMapelPeta(misi ?? [], namaMapel)
+  const mapel = pilihMapel
+    ? pilihMapel.dipilih && daftarMapel.includes(pilihMapel.dipilih)
+      ? pilihMapel.dipilih
+      : (daftarMapel[0] ?? MAPEL_AWAL)
+    : undefined
+  const misiMapel = mapel ? (misi ?? []).filter(k => mapelTopik(k, namaMapel) === mapel) : (misi ?? [])
+  const misiDikerjakan = misiMapel.filter(k => k.answered > 0)
+
+  // Tangga kelas hanya untuk halaman satu mapel. Aturan resmi (kumulatif dari kelas 1) baru
+  // berlaku untuk Matematika, jadi pembacaan kesetaraannya yang berat hanya dilakukan untuk itu.
+  let rangkuman: RangkumanKetuntasan | null = null
+  if (mapel && misi) {
+    const { ks, tangga } = mapel === MAPEL_AWAL && learnerId ? await kesetaraanLengkap(learnerId) : { ks: null, tangga: null }
+    rangkuman = ketuntasanPerMapel(misi, namaMapel, ks, tangga).find(k => k.mapel === mapel) ?? null
+  }
 
   const baris: BarisMisi[] = misiDikerjakan
     .map(k => ({
@@ -90,6 +118,9 @@ export default async function IsiKetuntasan({
       gagal={misi === null}
       studentId={studentId}
       rincian={rincian}
+      mapel={mapel ?? MAPEL_AWAL}
+      pilihan={pilihMapel && daftarMapel.length > 1 ? daftarMapel.map(m => ({ nama: m, href: pilihMapel.alamat(m), aktif: m === mapel })) : null}
+      rangkuman={rangkuman && rangkuman.dikerjakan > 0 ? rangkuman : null}
     />
   )
 }
@@ -112,16 +143,35 @@ export function TampilanKetuntasan({
   gagal,
   studentId,
   rincian,
+  mapel,
+  pilihan,
+  rangkuman,
 }: {
   baris: BarisMisi[]
   /** Kueri ketuntasannya gagal — beda dengan "belum ada yang dikerjakan". */
   gagal: boolean
   studentId: string
   rincian: boolean | TujuanRincian
+  /** Mapel yang sedang tampil. */
+  mapel: string
+  /** Pemilih mapel; null bila tidak perlu (satu mapel, atau halaman tidak memilih). */
+  pilihan: { nama: string; href: string; aktif: boolean }[] | null
+  /** Posisi dan tangga kelas mapel ini; null bila belum ada yang dikerjakan. */
+  rangkuman: RangkumanKetuntasan | null
 }) {
 
   return (
     <div className="space-y-6">
+      <div className="-mt-2">
+        <PemilihMapel pilihan={pilihan} />
+      </div>
+
+      {rangkuman && (
+        <section className="rounded-xl bg-white p-4 shadow-kartu sm:p-5">
+          <p className="mb-3 text-base font-semibold tracking-tight text-gray-900">Posisi di {mapel}</p>
+          <TanggaKetuntasan k={rangkuman} />
+        </section>
+      )}
 
       {/* Judul dan panah kembalinya ada di bilah atas (`HeaderKeluarga`). */}
       <p className="text-sm leading-relaxed text-gray-500">
@@ -150,7 +200,7 @@ export function TampilanKetuntasan({
               baris. Yang tersisa cuma cacahnya. */}
           <p className="px-1 text-right text-xs text-gray-400">{baris.length} Topik</p>
           <p className="px-1 text-xs leading-relaxed text-gray-400">
-            Peta kompetensi Matematika: paket latihan bertingkat yang mengukur
+            Peta kompetensi {mapel}: paket latihan bertingkat yang mengukur
             penguasaan per topik, sebatas yang diminta dari tiap topik. Paket
             ujian dan paket pengayaannya dilaporkan terpisah di dalam tiap topik.
           </p>
