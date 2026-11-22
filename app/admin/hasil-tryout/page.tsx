@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { TRYOUT_PATH } from '@/lib/tryout/alamat'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import PohonKompetensi from '@/components/laporan/PohonKompetensi'
 import { daftarTryOut, muatTryOut } from '@/lib/reports/tryout-data'
@@ -137,6 +138,12 @@ export default async function HasilTryOutAdminPage({
           {rataNilai !== null && <> · rata-rata nilai <b>{fmt(rataNilai)}</b> dari 100</>}
         </p>
       </div>
+
+      <p className="text-sm">
+        <a href={`${TRYOUT_PATH}/dashboard/quizzes/${data.id}/live`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
+          Pantau langsung (Live Monitoring) ↗
+        </a>
+      </p>
 
       <form action={aturHasilDibuka} className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <input type="hidden" name="quiz_id" value={data.id} />

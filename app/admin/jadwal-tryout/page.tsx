@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { aturJadwalTryOut } from '@/lib/actions/admin/peserta-tryout'
+import { TRYOUT_PATH } from '@/lib/tryout/alamat'
 import { hariWib, infoPaket, jamWib, keInputWib, urutJenjang, urutMapel } from '@/lib/tryout/paket'
 
 export const metadata = { title: 'Jadwal Try Out' }
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
  * Jadwal try out: kapan tombol Mulai bisa diklik, per paket. Try out dikerjakan bersama-sama,
  * jadi misalnya Matematika dibuka pukul 10.00 dan Bahasa Indonesia pukul 11.00. Jam diisi
  * dalam WIB. Sebelum jamnya tombol Mulai di halaman Try Out mati dengan hitung mundur, dan
- * database menolak percobaan yang dimulai lebih awal.
+ * database menolak percobaan yang dimulai lebih awal. "Pantau langsung" membuka Live Monitoring Sora.
  */
 export default async function JadwalTryOutPage() {
   const admin = createAdminClient()
@@ -50,6 +51,10 @@ export default async function JadwalTryOutPage() {
                     {p.tutupPada ? ` · ditutup ${hariWib(p.tutupPada)} pukul ${jamWib(p.tutupPada)} WIB` : ''}
                   </p>
                 </div>
+                {/* Live Monitoring ada di Sora (di bawah /tryout, sesi login admin ikut terbawa). `<a>`, bukan Link: itu bukan rute Tera. */}
+                <a href={`${TRYOUT_PATH}/dashboard/quizzes/${p.id}/live`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-slate-50">
+                  Pantau langsung ↗
+                </a>
               </div>
               <div className="mt-3 flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1 text-xs text-gray-600">
