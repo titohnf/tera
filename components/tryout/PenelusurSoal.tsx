@@ -2,8 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-
-export type HasilButir = 'benar' | 'sebagian' | 'salah' | 'belum'
+import { LABEL_HASIL, type HasilButir } from '@/components/tryout/hasil-butir'
 
 export interface ItemSoal {
   nomor: number
@@ -11,8 +10,6 @@ export interface ItemSoal {
   /** Isi kartu soal ini, sudah dirender di server. */
   isi: ReactNode
 }
-
-export const LABEL_HASIL: Record<HasilButir, string> = { benar: 'Benar', sebagian: 'Benar sebagian', salah: 'Belum tepat', belum: 'Dilewati' }
 
 /** Petak nomor: warna menurut hasil. */
 const PETAK: Record<HasilButir, string> = {
