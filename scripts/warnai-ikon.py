@@ -106,7 +106,7 @@ def merah_ke_biru(src, dst):
                 # Semburat merah muda tipis di bodi putih -> biru muda tipis (bayangan bodi tetap terbaca).
                 # Transisi halus (bukan ambang tajam) supaya tidak berbercak: dasar tipis + naik mengikuti kejenuhan.
                 u = max(0.0, min(1.0, (s - 0.02) / 0.18))
-                w = 0.22 + 0.63 * (u * u * (3 - 2 * u))
+                w = 0.05 + 0.3 * (u * u * (3 - 2 * u))  # biru TIPIS: kebanyakan terlihat norak
                 muda = tangga(BIRU, 0.9)
                 dasar = tuple(255 + (muda[i] - 255) * w for i in range(3))
                 px[x, y] = tuple(round(c * min(1.0, v + 0.05)) for c in dasar) + (a,)
