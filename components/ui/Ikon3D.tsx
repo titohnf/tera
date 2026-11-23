@@ -11,27 +11,11 @@ import type { GolonganMapel } from '@/lib/belajar/ikon-mapel'
  */
 export type NamaIkon3D =
   | 'memo'
-  | 'bullseye'
-  | 'books'
   | 'memo-bk'
-  | 'video-game-bk'
   | 'trophy-bk'
   | 'rocket'
   | 'rocket-biru'
-  | 'video-game'
-  | 'play'
   | 'layar-360'
-  | 'layar-360-datar'
-  | 'layar'
-  | 'kartu-video'
-  | 'play-biru'
-  | 'play-kuning'
-  | 'clapper'
-  | 'clapper-bk'
-  | 'proyektor'
-  | 'proyektor-bk'
-  | 'tv'
-  | 'tv-bk'
   | 'trophy'
   | 'abacus'
   | 'open-book'
@@ -50,8 +34,6 @@ export type NamaIkon3D =
   | 'laptop'
   | 'graduation-cap'
   | 'star'
-  | 'house'
-  | 'bust'
 
 /** Ikon sebuah golongan mapel. */
 export const IKON_GOLONGAN: Record<GolonganMapel, NamaIkon3D> = {
@@ -74,7 +56,7 @@ export const IKON_GOLONGAN: Record<GolonganMapel, NamaIkon3D> = {
 }
 
 /** Ikon yang digambar sendiri (SVG), bukan dari Fluent Emoji (PNG). */
-const IKON_SVG = new Set<NamaIkon3D>(['play', 'layar-360', 'layar-360-datar', 'layar', 'kartu-video', 'play-biru', 'play-kuning'])
+const IKON_SVG = new Set<NamaIkon3D>(['layar-360'])
 
 export default function Ikon3D({
   nama,

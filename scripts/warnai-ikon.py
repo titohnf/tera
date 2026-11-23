@@ -121,6 +121,6 @@ def merah_ke_biru(src, dst):
 if __name__ == "__main__":
     merah_ke_biru("public/ikon/rocket.png", "public/ikon/rocket-biru.png")
     print("ok rocket-biru")
-    for nama in ["memo", "video-game", "trophy"]:
+    for nama in ["memo", "trophy"]:
         warnai(f"public/ikon/{nama}.png", f"public/ikon/{nama}-bk.png")
         print("ok", nama)

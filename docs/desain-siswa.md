@@ -47,9 +47,11 @@ sumber ikon 3D lain. Ikon 3D berdiri sendiri, TANPA wadah (lingkaran/kotak) di
 belakangnya. Tanpa maskot untuk saat ini. Pengecualian: bilah bawah memakai ikon
 dua nada Phosphor Icons (MIT; bukan 3D, bukan garis).
 
-**Palet ikon menu: biru + emas** (+ putih). Menu beranda memakai Memo (Latihan
-Soal), Rocket (Misi, warna asli; hanya bagian merahnya diganti biru), Play (Materi — ikon digambar sendiri, piringan putih + segitiga biru), Trophy (Try Out). Controller game dicadangkan untuk fitur Game (kartu "Segera hadir") — jangan menambah ikon
-menu berwarna lain. Ikon mapel boleh berwarna menurut mapelnya. Ikon garis (lucide) hanya untuk panah
+**Ikon menu beranda** (empat ikon, satu keluarga warna): Memo (Latihan Soal, biru-kuning),
+Rocket (Misi, warna asli; hanya bagian merahnya diganti biru), **Layar 360°** (Materi: silinder dengan
+dinding depan terbuka, digambar sendiri di `public/ikon/layar-360.svg`, langit satu bidang dan gunung
+satu nada), Trophy (Try Out, biru-kuning). Jangan menambah ikon menu berwarna lain. Controller game
+dicadangkan untuk fitur Game (jika nanti ada). Ikon mapel boleh berwarna menurut mapelnya. Ikon garis (lucide) hanya untuk panah
 dan kendali kecil.
 
 ## Isi
