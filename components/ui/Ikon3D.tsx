@@ -18,6 +18,7 @@ export type NamaIkon3D =
   | 'trophy-bk'
   | 'rocket'
   | 'rocket-biru'
+  | 'video-game'
   | 'trophy'
   | 'abacus'
   | 'open-book'
