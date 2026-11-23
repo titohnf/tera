@@ -58,6 +58,6 @@ def warnai(src, dst, tukar=False):
     im.save(dst, optimize=True)
 
 if __name__ == "__main__":
-    for nama in ["memo", "rocket", "joystick", "trophy"]:
+    for nama in ["memo", "puzzle", "trophy"]:
         warnai(f"public/ikon/{nama}.png", f"public/ikon/{nama}-bk.png")
         print("ok", nama)
