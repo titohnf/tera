@@ -27,17 +27,19 @@ export default async function SiswaLayout({
         dasar={`/siswa/${studentId}`}
         akar={{ profil: 'Profil' }}
         beranda={
-          <header className="flex h-14 items-center border-b border-gray-100 bg-white px-4 shadow-sm sm:px-6">
+          <header className="h-14 border-b border-gray-100 bg-white px-4 shadow-sm sm:px-6">
+            <div className="mx-auto flex h-full w-full max-w-xl items-center">
             <Link href={`/siswa/${studentId}`} className="flex items-center gap-2" aria-label="Beranda Bimbel Tera">
               <Image src="/logo-icon.png" alt="" width={1103} height={1086} priority className="h-7 w-auto" />
               <span className="text-base text-gray-900">
                 Bimbel <span className="font-semibold">Tera</span>
               </span>
             </Link>
+            </div>
           </header>
         }
       />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-28">{children}</main>
+      <main className="max-w-xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-28">{children}</main>
       <BilahBawah dasar={`/siswa/${studentId}`} profil={`/siswa/${studentId}/profil`} />
     </div>
   )

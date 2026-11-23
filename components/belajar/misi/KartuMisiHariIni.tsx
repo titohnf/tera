@@ -47,35 +47,24 @@ export default function KartuMisiHariIni({
   const { galat, sibuk, mulai } = useMulaiLangkah(anak)
   const langsung = langkah != null && langkah.paketId != null && !langkah.terkunci
   const alamat = alamatMisi(anak, t.id)
-  const kabar = ringkasKartu(t, langkah, paket, hariIni)
+  const kabarMentah = ringkasKartu(t, langkah, paket, hariIni)
+  // Keterangan datang sebagai potongan kalimat ("semua paket selesai"); di kartu ia berdiri sendiri, jadi diawali huruf besar.
+  const kabar = kabarMentah ? kabarMentah.charAt(0).toUpperCase() + kabarMentah.slice(1) : kabarMentah
 
   return (
     <div
-      className="relative overflow-hidden rounded-3xl p-5 text-white"
-      style={{
-        background: `linear-gradient(135deg, ${g.dasar} 0%, ${g.tua} 100%)`,
-        boxShadow: `0 6px 0 ${g.tua}, 0 14px 24px rgba(15,23,42,0.18)`,
-      }}
+      className="relative overflow-hidden rounded-2xl p-5 text-white"
+      style={{ background: g.dasar, boxShadow: `0 4px 0 ${g.tua}` }}
     >
-      {/* Lingkaran hiasan, di belakang teks: memberi kedalaman tanpa gambar berat. */}
-      <span
-        className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10"
-        aria-hidden
-      />
-      <span
-        className="pointer-events-none absolute -bottom-16 -left-8 h-40 w-40 rounded-full bg-white/10"
-        aria-hidden
-      />
-
       <Maskot ukuran={84} kelas="misi-melayang pointer-events-none absolute right-3 top-3" />
 
       <div className="relative">
-        <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-extrabold uppercase tracking-wider">
+        <span className="inline-block rounded-full bg-black/20 px-3 py-1 text-xs font-extrabold">
           Misi hari ini
         </span>
 
         <h2 className="mt-3 max-w-[72%] text-2xl font-extrabold leading-tight">{t.nama}</h2>
-        {kabar && <p className="mt-1 text-sm font-semibold text-white/80">{kabar}</p>}
+        {kabar && <p className="mt-1 text-sm font-semibold text-white/90">{kabar}</p>}
 
         {progres && progres.total > 0 && (
           <div className="mt-4">
@@ -100,7 +89,7 @@ export default function KartuMisiHariIni({
           {adaMateri && (
             <Link
               href={alamatMateri(anak, t.id)}
-              className="block w-full rounded-2xl bg-white/20 px-5 py-3 text-center text-base font-extrabold text-white transition active:bg-white/30"
+              className="block w-full rounded-2xl bg-black/20 px-5 py-3 text-center text-base font-extrabold text-white transition active:bg-black/30"
             >
               Lihat materi
             </Link>

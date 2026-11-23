@@ -13,7 +13,8 @@ import { temaTopik, type TemaTopik } from '@/lib/belajar/tema-topik'
  * merah dipegang keping yang gagal; keduanya tidak dipakai tema, supaya warna
  * yang sama tidak berarti dua hal.
  *
- * `dasar` untuk isi, `tua` untuk "tebing" bawah tombol berdimensi, `muda` untuk
+ * KONTRAS: `dasar` dipilih paling terang yang masih memberi rasio ≥ 4,5 terhadap teks putih (WCAG AA); kartu
+ * berwarna tema memakai teks putih. `dasar` untuk isi, `tua` untuk "tebing" bawah tombol berdimensi, `muda` untuk
  * latar lembut, `teks` untuk huruf di atas `muda`.
  */
 export interface GayaTema {
@@ -24,11 +25,11 @@ export interface GayaTema {
 }
 
 const GAYA: Record<TemaTopik, GayaTema> = {
-  bilangan: { dasar: '#3B82F6', tua: '#1D4ED8', muda: '#DBEAFE', teks: '#1E3A8A' },
-  aljabar: { dasar: '#8B5CF6', tua: '#6D28D9', muda: '#EDE9FE', teks: '#4C1D95' },
-  geometri_pengukuran: { dasar: '#F97316', tua: '#C2410C', muda: '#FFEDD5', teks: '#7C2D12' },
-  data_peluang: { dasar: '#EC4899', tua: '#BE185D', muda: '#FCE7F3', teks: '#831843' },
-  lainnya: { dasar: '#14B8A6', tua: '#0F766E', muda: '#CCFBF1', teks: '#134E4A' },
+  bilangan: { dasar: '#2F6FEA', tua: '#1E40AF', muda: '#DBEAFE', teks: '#1E3A8A' },
+  aljabar: { dasar: '#7C3AED', tua: '#5B21B6', muda: '#EDE9FE', teks: '#4C1D95' },
+  geometri_pengukuran: { dasar: '#C94A0A', tua: '#9A3412', muda: '#FFEDD5', teks: '#7C2D12' },
+  data_peluang: { dasar: '#DB2777', tua: '#9D174D', muda: '#FCE7F3', teks: '#831843' },
+  lainnya: { dasar: '#0E8074', tua: '#115E59', muda: '#CCFBF1', teks: '#134E4A' },
 }
 
 export const EMAS = '#FBBF24'

@@ -21,34 +21,52 @@ function Pembungkus({ children, label = 'Memuat…' }: { children: React.ReactNo
 
 const KARTU = 'rounded-xl bg-white shadow ring-1 ring-gray-900/5'
 
+/** Hero beranda: kartu berwarna berisi judul, kemajuan, dan dua tombol. */
+export function RangkaHero() {
+  return (
+    <div className="space-y-3 rounded-2xl bg-slate-200/70 p-5" aria-busy>
+      <span className="sr-only">Memuat…</span>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-2">
+          <Blok kelas="h-7 w-52 !bg-white/70" />
+          <Blok kelas="h-4 w-24 !bg-white/60" />
+        </div>
+        <div className="h-14 w-14 shimmer rounded-full" />
+      </div>
+      <Blok kelas="h-12 w-40 !bg-white/70" />
+      <Blok kelas="h-2.5 w-full rounded-full !bg-white/70" />
+      <Blok kelas="h-12 w-full rounded-xl !bg-white" />
+    </div>
+  )
+}
+
+/** Satu baris menu berikon (ikon + nama + keterangan satu baris). */
+export function RangkaBarisMenu() {
+  return (
+    <div className={`flex items-center gap-3.5 p-4 ${KARTU}`}>
+      <div className="h-14 w-14 shrink-0 shimmer rounded-xl" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <Blok kelas="h-5 w-28" />
+        <Blok kelas="h-4 w-3/5" />
+      </div>
+    </div>
+  )
+}
+
 /** Beranda: baris sapaan (avatar + nama), hero biru berisi angka kemajuan dan tombol, lalu empat baris menu berikon. */
 export function RangkaBeranda() {
   return (
     <Pembungkus>
       <div className="flex items-center gap-3">
         <div className="h-11 w-11 shimmer rounded-full" />
-        <Blok kelas="h-7 w-44" />
-      </div>
-      <div className="space-y-3 rounded-2xl bg-slate-200/70 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2">
-            <Blok kelas="h-7 w-52 !bg-white/70" />
-            <Blok kelas="h-4 w-24 !bg-white/60" />
-          </div>
-          <div className="h-14 w-14 shimmer rounded-full" />
+        <div className="space-y-1.5">
+          <Blok kelas="h-6 w-44" />
+          <Blok kelas="h-3.5 w-20" />
         </div>
-        <Blok kelas="h-12 w-40 !bg-white/70" />
-        <Blok kelas="h-2.5 w-full rounded-full !bg-white/70" />
-        <Blok kelas="h-12 w-full rounded-xl !bg-white" />
       </div>
+      <RangkaHero />
       {[0, 1, 2, 3].map(i => (
-        <div key={i} className={`flex items-center gap-3.5 p-4 ${KARTU}`}>
-          <div className="h-14 w-14 shrink-0 shimmer rounded-xl" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <Blok kelas="h-5 w-28" />
-            <Blok kelas="h-4 w-3/5" />
-          </div>
-        </div>
+        <RangkaBarisMenu key={i} />
       ))}
     </Pembungkus>
   )

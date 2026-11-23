@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { GAYA_KEMBALI, JudulBilah, KELAS_BILAH, PanahKiri } from './BilahJudul'
+import { GAYA_KEMBALI, ISI_BILAH, JudulBilah, KELAS_BILAH, PanahKiri } from './BilahJudul'
 
 /** Judul layar dari segmen rute di bawah beranda rangka. */
 function judulLayar(segmen: string[]): string {
@@ -50,7 +50,9 @@ export default function BilahAtas({
   if (sisa.length === 1 && akar[sisa[0]]) {
     return (
       <header className={KELAS_BILAH}>
-        <JudulBilah>{akar[sisa[0]]}</JudulBilah>
+        <div className={ISI_BILAH}>
+          <JudulBilah>{akar[sisa[0]]}</JudulBilah>
+        </div>
       </header>
     )
   }
@@ -59,10 +61,12 @@ export default function BilahAtas({
     sisa.length === 1 && params.get('mapel') ? pathname : `${dasar}${sisa.length > 1 ? '/' + sisa.slice(0, -1).join('/') : ''}`
   return (
     <header className={KELAS_BILAH}>
-      <Link href={induk} aria-label="Kembali" className={GAYA_KEMBALI}>
-        <PanahKiri />
-      </Link>
-      <JudulBilah>{judulLayar(sisa)}</JudulBilah>
+      <div className={ISI_BILAH}>
+        <Link href={induk} aria-label="Kembali" className={GAYA_KEMBALI}>
+          <PanahKiri />
+        </Link>
+        <JudulBilah>{judulLayar(sisa)}</JudulBilah>
+      </div>
     </header>
   )
 }

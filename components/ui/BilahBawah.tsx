@@ -53,7 +53,7 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
       aria-label="Navigasi utama"
       className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="mx-auto flex h-16 max-w-5xl">
+      <ul className="mx-auto flex h-16 max-w-xl">
         {tab.map(t => (
           <li key={t.kunci} className="flex-1">
             <Link

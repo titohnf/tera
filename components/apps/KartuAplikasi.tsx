@@ -32,6 +32,7 @@ export default function KartuAplikasi({
   ikon,
   terkunci = false,
   satuBaris = false,
+  lencana,
 }: {
   nama: string
   /** Catatan kecil di samping nama, mis. "Segera hadir". */
@@ -43,6 +44,8 @@ export default function KartuAplikasi({
   terkunci?: boolean
   /** Teks dipotong jadi satu baris (…): untuk teks pendek yang dikendalikan, bukan pesan penting. */
   satuBaris?: boolean
+  /** Penanda kecil di ujung kanan, mis. "2 tugas": ada yang menunggu di dalam. */
+  lencana?: string
 }) {
   const isi = (
     <>
@@ -58,6 +61,9 @@ export default function KartuAplikasi({
         </span>
         <span className={`mt-0.5 block text-sm leading-snug text-slate-500 ${satuBaris ? 'truncate' : ''}`}>{teks}</span>
       </span>
+      {lencana && (
+        <span className="shrink-0 rounded-full bg-amber-300 px-2.5 py-1 text-xs font-extrabold text-amber-950">{lencana}</span>
+      )}
       {href && (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-300" aria-hidden>
           <path d="m9 5 7 7-7 7" />

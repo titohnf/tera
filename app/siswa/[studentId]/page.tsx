@@ -1,36 +1,44 @@
+import { Suspense } from 'react'
 import { anakOrRedirect } from '@/lib/keluarga'
-import HeroBeranda, { type IsiHero } from '@/components/siswa/HeroBeranda'
-import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
-import { misiAktif } from '@/lib/siswa/misi-aktif'
-import KartuMisiHariIni from '@/components/belajar/misi/KartuMisiHariIni'
+import { learnerAnak } from '@/lib/belajar/sesi'
+import { asesmenAnak } from '@/lib/belajar/asesmen'
+import { retestJatuhTempo } from '@/lib/belajar/retest'
 import { tryOutTerdekat } from '@/lib/tryout/terdekat'
-import KartuAplikasi from '@/components/apps/KartuAplikasi'
+import { kelasAnak, sapaanWaktu } from '@/lib/siswa/sapaan'
+import { RangkaHero } from '@/components/ui/Rangka'
+import {
+  BarisLatihan,
+  BarisLatihanData,
+  BarisMateri,
+  BarisMisi,
+  BarisMisiData,
+  BarisTryOut,
+  BarisTryOutData,
+  HeroSiswa,
+} from '@/components/siswa/BerandaData'
 
 /**
- * Beranda siswa bimbel yang masuk dengan kode. Satu elemen berani — hero "apa yang
- * dikerjakan sekarang" — lalu empat pintu yang tenang (sama dengan beranda siswa
- * langganan, `app/mandiri/page.tsx`), semuanya terbuka. Murid bimbel sudah berhak
- * atas seluruh bank soal, jadi tidak ada pintu yang terkunci.
+ * Beranda siswa bimbel yang masuk dengan kode. Sapaan dan empat pintu menu tampil SEKETIKA;
+ * hero ("apa yang dikerjakan sekarang") dan penanda di baris menu menyusul lewat `Suspense`,
+ * karena datanya berat (peta Misi, langkah, paket, sesi). Semua kueri dimulai di sini, serentak,
+ * lalu dibagikan sebagai promise — tidak ada yang menunggu giliran.
+ *
+ * Murid bimbel sudah berhak atas seluruh bank soal, jadi tidak ada pintu yang terkunci.
  */
 export default async function BerandaSiswa({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params
   const { anak } = await anakOrRedirect(studentId)
-  const q = `?anak=${studentId}`
-  // Pelengkap beranda: gagal apa pun jadi "tidak ada", bukan beranda yang rusak.
-  // `learnerAnak` hanya MEMBACA (tidak membuat baris pelajar), jadi aman dipanggil di sini.
-  const learnerId = await learnerAnak(studentId).catch(() => null)
-  const [sesi, misi, tryOut] = await Promise.all([
-    learnerId ? sesiTertunda(learnerId).catch(() => null) : null,
-    learnerId ? misiAktif(studentId, learnerId) : null,
-    tryOutTerdekat(studentId),
-  ])
 
-  const hrefTryOut = `/siswa/${studentId}/tryout`
-  const hero: IsiHero = sesi
-    ? { jenis: 'lanjut', sesi }
-    : tryOut?.terbuka
-      ? { jenis: 'tryout', label: tryOut.label, teks: tryOut.teks, href: hrefTryOut }
-      : { jenis: 'misi', href: `/siswa/${studentId}/misi?mapel=Matematika&buka=sekarang`, kemajuan: misi?.kemajuan ?? null }
+  // Dimulai sekarang, tidak ditunggu di sini. `.catch` supaya yang tak terpakai tidak menjadi
+  // unhandled rejection; `learnerAnak` hanya MEMBACA (tidak membuat baris pelajar).
+  const learnerIdP = learnerAnak(studentId).catch(() => null)
+  const tryOutP = tryOutTerdekat(studentId)
+  const tugasP = asesmenAnak(studentId)
+    .then((t) => t.filter((x) => !x.selesai && x.bisaDikerjakan).length)
+    .catch(() => 0)
+  const retestP = learnerIdP.then((id) => (id ? retestJatuhTempo(id).then((r) => r.length) : 0)).catch(() => 0)
+
+  const kelas = await kelasAnak(studentId)
 
   return (
     <div className="space-y-5">
@@ -38,28 +46,29 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tera text-lg font-extrabold text-white">
           {anak.nama_pendek.charAt(0).toUpperCase()}
         </span>
-        <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-900">Halo, {anak.nama_pendek}</h1>
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-extrabold leading-tight tracking-tight text-slate-900">
+            {sapaanWaktu()}, {anak.nama_pendek}
+          </h1>
+          {kelas && <p className="text-sm font-semibold text-slate-500">{kelas}</p>}
+        </div>
       </div>
 
-      {hero.jenis === 'misi' && misi ? (
-        <KartuMisiHariIni
-          topik={misi.sekarang}
-          langkah={misi.langkah}
-          paket={misi.paket}
-          anak={studentId}
-          hariIni={misi.hariIni}
-          adaMateri={misi.adaMateri}
-          progres={misi.kemajuan}
-        />
-      ) : (
-        <HeroBeranda isi={hero} />
-      )}
+      <Suspense fallback={<RangkaHero />}>
+        <HeroSiswa studentId={studentId} learnerIdP={learnerIdP} tryOutP={tryOutP} />
+      </Suspense>
 
       <div className="space-y-3">
-        <KartuAplikasi nama="Latihan Soal" teks="Soal per topik dengan pembahasan." href={`/belajar${q}`} satuBaris ikon="memo-bk" />
-        <KartuAplikasi nama="Misi" teks="Naik level, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} satuBaris ikon="rocket-biru" />
-        <KartuAplikasi nama="Materi" teks="Belajar konsep secara interaktif." href={`/siswa/${studentId}/materi`} satuBaris ikon="layar-360" />
-        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA.'} satuBaris href={hrefTryOut} ikon="trophy-bk" />
+        <Suspense fallback={<BarisLatihan studentId={studentId} />}>
+          <BarisLatihanData studentId={studentId} tugasP={tugasP} />
+        </Suspense>
+        <Suspense fallback={<BarisMisi studentId={studentId} />}>
+          <BarisMisiData studentId={studentId} retestP={retestP} />
+        </Suspense>
+        <BarisMateri studentId={studentId} />
+        <Suspense fallback={<BarisTryOut studentId={studentId} />}>
+          <BarisTryOutData studentId={studentId} tryOutP={tryOutP} />
+        </Suspense>
       </div>
     </div>
   )

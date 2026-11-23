@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { GAYA_KEMBALI, JudulBilah, KELAS_BILAH, PanahKiri } from '@/components/ui/BilahJudul'
+import { GAYA_KEMBALI, ISI_BILAH, JudulBilah, KELAS_BILAH, PanahKiri } from '@/components/ui/BilahJudul'
 import PemilihAnak from '@/components/keluarga/PemilihAnak'
 import type { Anak } from '@/lib/keluarga'
 
@@ -180,30 +180,32 @@ export function KepalaBelajar() {
   const pathname = usePathname()
   return (
     <header className={KELAS_BILAH}>
-      {kembali ? (
-        <button type="button" onClick={kembali} aria-label="Kembali" className={GAYA_KEMBALI}>
-          <PanahKiri />
-        </button>
-      ) : pulang ? (
-        <Link href={typeof pulang === 'string' ? pulang : '/'} aria-label="Kembali ke beranda" className={GAYA_KEMBALI}>
-          <PanahKiri />
-        </Link>
-      ) : null}
-      <JudulBilah>{judul ?? judulBawaan(pathname)}</JudulBilah>
+      <div className={ISI_BILAH}>
+        {kembali ? (
+          <button type="button" onClick={kembali} aria-label="Kembali" className={GAYA_KEMBALI}>
+            <PanahKiri />
+          </button>
+        ) : pulang ? (
+          <Link href={typeof pulang === 'string' ? pulang : '/'} aria-label="Kembali ke beranda" className={GAYA_KEMBALI}>
+            <PanahKiri />
+          </Link>
+        ) : null}
+        <JudulBilah>{judul ?? judulBawaan(pathname)}</JudulBilah>
 
-      {pemilih && pemilih.anak.length > 1 && (
-        <div className="ml-auto pl-2">
-          {/* Berpindah anak TETAP di permukaan belajar — `?anak=` yang
-              berganti, bukan alamatnya. Yang ditinggalkan cuma pilihan mapel
-              dan topik yang sedang disusun, dan memang harus: keduanya milik
-              anak yang tadi. */}
-          <PemilihAnak
-            anak={pemilih.anak}
-            aktif={pemilih.aktif}
-            tautan={(id) => `/belajar?anak=${id}`}
-          />
-        </div>
-      )}
+        {pemilih && pemilih.anak.length > 1 && (
+          <div className="ml-auto pl-2">
+            {/* Berpindah anak TETAP di permukaan belajar — `?anak=` yang
+                berganti, bukan alamatnya. Yang ditinggalkan cuma pilihan mapel
+                dan topik yang sedang disusun, dan memang harus: keduanya milik
+                anak yang tadi. */}
+            <PemilihAnak
+              anak={pemilih.anak}
+              aktif={pemilih.aktif}
+              tautan={(id) => `/belajar?anak=${id}`}
+            />
+          </div>
+        )}
+      </div>
     </header>
   )
 }
