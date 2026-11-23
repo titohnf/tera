@@ -54,23 +54,23 @@ export default function KartuMisiHariIni({
   return (
     <div
       className="relative overflow-hidden rounded-2xl p-5 text-white"
-      style={{ background: `linear-gradient(225deg, ${g.terang} 0%, ${g.dasar} 62%, ${g.tua} 100%)`, boxShadow: `0 4px 0 ${g.tua}` }}
+      style={{ background: `linear-gradient(225deg, ${g.terang} 0%, ${g.dasar} 100%)`, boxShadow: `0 4px 0 ${g.tua}` }}
     >
       <Maskot ukuran={84} kelas="misi-melayang pointer-events-none absolute right-3 top-3" />
 
       <div className="relative">
-        <span className="inline-block rounded-full bg-black/20 px-3 py-1 text-xs font-extrabold">
+        <span className="inline-block rounded-full bg-black/20 px-3 py-1 text-xs font-extrabold [text-shadow:0_1px_2px_rgba(0,0,0,0.28)]">
           Misi hari ini
         </span>
 
-        <h2 className="mt-3 max-w-[72%] text-2xl font-extrabold leading-tight">{t.nama}</h2>
-        {kabar && <p className="mt-1 text-sm font-semibold text-white/90">{kabar}</p>}
+        <h2 className="mt-3 max-w-[72%] text-2xl font-extrabold leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.28)]">{t.nama}</h2>
+        {kabar && <p className={`mt-1 text-sm font-semibold text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.28)]`}>{kabar}</p>}
 
         {progres && progres.total > 0 && (
           <div className="mt-4">
-            <p className="flex items-baseline gap-1.5">
+            <p className="flex items-baseline gap-1.5 [text-shadow:0_1px_2px_rgba(0,0,0,0.28)]">
               <span className="text-3xl font-extrabold tabular-nums leading-none">{progres.tuntas}</span>
-              <span className="text-base font-bold tabular-nums text-white/70">/ {progres.total}</span>
+              <span className="text-base font-bold tabular-nums text-white/85">/ {progres.total}</span>
               <span className="ml-1 text-sm font-semibold text-white/85">topik tuntas</span>
             </p>
             <div className="mt-2">
