@@ -15,7 +15,7 @@
     <linearGradient id="gunungDepan" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="0" y2="178">
       <stop offset="0" stop-color="#5A9AFF"/><stop offset="1" stop-color="#3F85F4"/>
     </linearGradient>
-    <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.65" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4F0FF"/></radialGradient>
+    <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
     <clipPath id="dinding"><path d="M32 60 A96 18 0 0 0 224 60 L224 178 A96 18 0 0 0 32 178 Z"/></clipPath>
   </defs>
 
@@ -27,12 +27,14 @@
   <path d="M32 60 A96 18 0 0 1 224 60 L224 178 A96 18 0 0 0 32 178 Z" fill="url(#langit)"/>
 
   <g clip-path="url(#dinding)">
-    <circle cx="116" cy="102" r="19" fill="url(#matahari)"/>
     <path d="M36 174 L88 126 L114 150 L148 102 L222 174 Z" fill="url(#gunungBelakang)"/>
     <path d="M148 102 L134 117 L143 114 L150 119 L157 113 L164 117 Z" fill="#FFFFFF" opacity="0.85"/>
     <path d="M56 178 L108 140 L142 162 L182 132 L226 178 Z" fill="url(#gunungDepan)"/>
     <path d="M182 132 L170 144 L178 142 L184 147 L191 141 L195 144 Z" fill="#FFFFFF" opacity="0.8"/>
   </g>
+
+  <!-- matahari: di luar klip dinding supaya bisa lebih tinggi di langit -->
+  <circle cx="116" cy="86" r="19" fill="url(#matahari)"/>
 
   <!-- panel depan -->
   <path d="M32 60 A96 18 0 0 0 68 74.1 L68 192.1 A96 18 0 0 1 32 178 Z" fill="url(#panel)"/>
