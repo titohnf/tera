@@ -44,7 +44,7 @@ export default async function BerandaMandiri() {
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
         terkunci={!produk.sora}
-        ikon="bullseye-bk"
+        ikon="rocket-bk"
       />
 
       {/* Materi: belajar konsep lewat halaman interaktif (hari ini AC-01).
@@ -59,7 +59,7 @@ export default async function BerandaMandiri() {
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
         terkunci={!produk.sora}
-        ikon="books-bk"
+        ikon="joystick-bk"
       />
 
       {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi

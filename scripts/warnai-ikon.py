@@ -25,7 +25,7 @@ def tangga(stops, t):
             return tuple(ra[i] + (rb[i] - ra[i]) * f for i in range(3))
     return hex_ke_rgb(stops[-1][1])
 
-def warnai(src, dst):
+def warnai(src, dst, tukar=False):
     im = Image.open(src).convert("RGBA")
     px = im.load()
     for y in range(im.height):
@@ -45,6 +45,8 @@ def warnai(src, dst):
                     px[x, y] = tuple(round(r * 0 + (v * 255) * 0.3 + bi[i] * 0.7) for i, r in enumerate((r, g, b))) + (a,)
                 continue
             hangat = h < 75 / 360 or h > 295 / 360
+            if tukar:
+                hangat = not hangat
             # Kecerahan asli (0.35..1.0) dibentangkan ke seluruh tangga.
             t = (v - 0.35) / 0.65
             warna = tangga(KUNING if hangat else BIRU, t)
@@ -55,6 +57,7 @@ def warnai(src, dst):
             px[x, y] = (round(mix[0]), round(mix[1]), round(mix[2]), a)
     im.save(dst, optimize=True)
 
-for nama in ["memo", "bullseye", "books", "trophy"]:
-    warnai(f"public/ikon/{nama}.png", f"public/ikon/{nama}-bk.png")
-    print("ok", nama)
+if __name__ == "__main__":
+    for nama in ["memo", "rocket", "joystick", "trophy"]:
+        warnai(f"public/ikon/{nama}.png", f"public/ikon/{nama}-bk.png")
+        print("ok", nama)

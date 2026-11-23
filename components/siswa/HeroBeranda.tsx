@@ -22,7 +22,7 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
   let baris: string
   let href: string
   let tombol: string
-  let ikon: NamaIkon3D = 'bullseye-bk'
+  let ikon: NamaIkon3D = 'rocket-bk'
   let angka: { besar: number; total: number; label: string } | null = null
 
   if (isi.jenis === 'lanjut') {
