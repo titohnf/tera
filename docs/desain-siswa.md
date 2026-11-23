@@ -39,6 +39,12 @@ soal) memakai `tabular-nums` dan ukuran besar — angkalah yang jadi bintangnya.
   (`bg-blue-600`), supaya seluruh layar mengikutinya tanpa menyentuh tiap
   komponen. Komponen baru memakai `KARTU` dan `TombolTebing`.
 
+## Ikon
+Ikon 3D dari Microsoft Fluent Emoji (MIT), disalin ke `public/ikon/` dan dipakai
+lewat `components/ui/Ikon3D.tsx`. Satu keluarga gambar saja — jangan mencampur
+sumber ikon 3D lain. Tanpa maskot untuk saat ini. Ikon garis (lucide) hanya
+untuk panah dan kendali kecil.
+
 ## Isi
 Dekorasi diganti informasi: persen, skor, tanggal, nama topik. Satu elemen
 berani per layar (hero beranda atau kartu mapel Misi), sisanya tenang.

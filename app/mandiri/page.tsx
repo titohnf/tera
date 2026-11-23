@@ -1,5 +1,5 @@
 import { mandiriContext } from '@/lib/mandiri'
-import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda pelanggan langganan: kartu produk yang sadar hak pakai.
@@ -43,8 +43,8 @@ export default async function BerandaMandiri() {
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
-        warna={produk.sora ? 'bg-tosca text-white' : 'bg-slate-100 text-slate-400'}
-        ikon={IKON_MISI}
+        warna={produk.sora ? 'bg-teal-100' : 'bg-slate-100 text-slate-400'}
+        ikon="bullseye"
       />
 
       {/* Materi: belajar konsep lewat halaman interaktif (hari ini AC-01).
@@ -58,8 +58,8 @@ export default async function BerandaMandiri() {
             : 'Aktifkan langganan untuk membuka Materi.'
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
-        warna={produk.sora ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-400'}
-        ikon={IKON_MATERI}
+        warna={produk.sora ? 'bg-orange-100' : 'bg-slate-100 text-slate-400'}
+        ikon="books"
       />
 
       {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi
@@ -68,8 +68,8 @@ export default async function BerandaMandiri() {
         nama="Try Out"
         teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya."
         href="/mandiri/tryout"
-        warna="bg-violet-600 text-white"
-        ikon={IKON_TRYOUT}
+        warna="bg-violet-100"
+        ikon="trophy"
       />
     </div>
   )

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PitaKemajuan, TombolTebing } from '@/components/ui/desain'
+import Ikon3D, { type NamaIkon3D } from '@/components/ui/Ikon3D'
 import type { SesiTertunda } from '@/lib/belajar/sesi'
 
 /**
@@ -19,6 +20,7 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
   let href: string
   let tombol: string
   let persen: number | null = null
+  let ikon: NamaIkon3D = 'bullseye'
 
   if (isi.jenis === 'lanjut') {
     const s = isi.sesi
@@ -27,12 +29,14 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
     judul = s.tinggalHasil ? 'Lihat hasil latihanmu' : 'Lanjutkan latihanmu'
     baris = [keterangan, s.tinggalHasil ? `${s.jumlahSoal} soal terjawab` : `${s.sudahDijawab} dari ${s.jumlahSoal} soal terjawab`].filter(Boolean).join(' · ')
     href = `/belajar/${s.sesiId}`
+    ikon = 'memo'
     tombol = s.tinggalHasil ? 'Lihat hasil' : 'Lanjutkan'
   } else if (isi.jenis === 'tryout') {
     judul = 'Try Out sedang dibuka'
     baris = isi.teks
     href = isi.href
     tombol = 'Kerjakan sekarang'
+    ikon = 'trophy'
   } else {
     const k = isi.kemajuan
     judul = k && k.tuntas > 0 ? 'Lanjutkan Misimu' : 'Mulai Misi pertamamu'
@@ -44,8 +48,13 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
 
   return (
     <Link href={href} className="tebing block rounded-2xl bg-tera p-5 text-white">
-      <h2 className="text-2xl font-extrabold leading-tight tracking-tight">{judul}</h2>
-      <p className="mt-1 text-sm font-medium leading-snug text-white/85">{baris}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-extrabold leading-tight tracking-tight">{judul}</h2>
+          <p className="mt-1 text-sm font-medium leading-snug text-white/85">{baris}</p>
+        </div>
+        <Ikon3D nama={ikon} ukuran={64} />
+      </div>
       {persen !== null && (
         <div className="mt-4">
           <PitaKemajuan persen={persen} pada="warna" />

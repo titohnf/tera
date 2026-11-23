@@ -1,62 +1,11 @@
-import {
-  Atom,
-  BookOpen,
-  Coins,
-  Dna,
-  FlaskConical,
-  Globe,
-  GraduationCap,
-  Landmark,
-  Leaf,
-  Microscope,
-  Monitor,
-  MoonStar,
-  Palette,
-  Pi,
-  Trophy,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
 import { golonganMapel, type GolonganMapel } from '@/lib/belajar/ikon-mapel'
+import Ikon3D, { IKON_GOLONGAN } from '@/components/ui/Ikon3D'
 
 /**
- * Ikon bulat untuk sebuah mapel: garis tipis di atas lingkaran berwarna lembut.
- *
- * Bukan emoji. Emoji dirender oleh sistem operasi, jadi tebal-tipisnya,
- * warnanya, dan gayanya berbeda-beda di tiap perangkat dan tidak satu pun
- * mengikuti halaman ini — deretannya terbaca sebagai tempelan, bukan sebagai
- * satu keluarga.
- *
- * Bukan pula gambar tangan. `lucide-react` sudah jadi dependensi (dipakai
- * `components/ui/dialog.tsx`), bentuknya digarap konsisten satu sama lain, dan
- * mapel baru nanti cuma butuh satu baris di peta ini — bukan satu set `path`
- * baru yang harus dicocokkan sendiri tebal dan pusatnya dengan yang sudah ada.
- *
- * Warna jadi penanda cepat: mapel yang sama selalu berwarna sama di seluruh
- * layar.
+ * Ikon bulat untuk sebuah mapel: gambar 3D (`components/ui/Ikon3D`) di atas
+ * lingkaran berwarna lembut, dengan cincin kemajuan bila angkanya diketahui.
+ * Warna jadi penanda cepat: mapel yang sama selalu berwarna sama di seluruh layar.
  */
-
-export const IKON: Record<GolonganMapel, LucideIcon> = {
-  bahasa: BookOpen,
-  matematika: Pi,
-  sains: Microscope,
-  kimia: FlaskConical,
-  fisika: Atom,
-  biologi: Dna,
-  // Geografi tetap bola dunia; IPAS dapat daunnya sendiri — ia mapel SD/SMP
-  // tentang alam sekitar, dan bola dunia yang sama untuk keduanya membuat dua
-  // mapel berbeda terlihat sebagai satu.
-  bumi: Globe,
-  ipas: Leaf,
-  ekonomi: Coins,
-  sejarah: Landmark,
-  sosial: Users,
-  agama: MoonStar,
-  seni: Palette,
-  olahraga: Trophy,
-  komputer: Monitor,
-  umum: GraduationCap,
-}
 
 export const WARNA: Record<GolonganMapel, string> = {
   bahasa: 'bg-sky-100 text-sky-700',
@@ -94,7 +43,6 @@ export default function IkonMapel({
   persen?: number | null
 }) {
   const golongan = golonganMapel(nama)
-  const Ikon = IKON[golongan]
 
   // Ukuran luarnya SELALU `size`, ada cincin atau tidak, dan lingkaran dalamnya
   // selalu menyisakan ruang cincin yang sama. Kalau ruang itu cuma disediakan
@@ -148,7 +96,7 @@ export default function IkonMapel({
         className={`flex items-center justify-center rounded-full ${WARNA[golongan]}`}
         style={{ width: dalam, height: dalam }}
       >
-        <Ikon size={Math.round(dalam * 0.55)} strokeWidth={2.25} />
+        <Ikon3D nama={IKON_GOLONGAN[golongan]} ukuran={Math.round(dalam * 0.68)} />
       </span>
     </span>
   )

@@ -3,7 +3,7 @@ import HeroBeranda, { type IsiHero } from '@/components/siswa/HeroBeranda'
 import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
 import { kemajuanMisi } from '@/lib/belajar/kemajuan-misi'
 import { tryOutTerdekat } from '@/lib/tryout/terdekat'
-import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
+import KartuAplikasi from '@/components/apps/KartuAplikasi'
 
 /**
  * Beranda siswa bimbel yang masuk dengan kode. Satu elemen berani — hero "apa yang
@@ -43,10 +43,10 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
       <HeroBeranda isi={hero} />
 
       <div className="space-y-3">
-        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} warna="bg-tera text-white" ikon={IKON_SORA} />
-        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-tosca text-white" ikon={IKON_MISI} />
-        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-orange-500 text-white" ikon={IKON_MATERI} />
-        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} warna="bg-violet-600 text-white" ikon={IKON_TRYOUT} />
+        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} warna="bg-blue-100" ikon="memo" />
+        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-teal-100" ikon="bullseye" />
+        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-orange-100" ikon="books" />
+        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} warna="bg-violet-100" ikon="trophy" />
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Pi } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import Ikon3D from '@/components/ui/Ikon3D'
 import { belajarContext } from '@/lib/belajar/konteks'
 import { kemajuanMisi } from '@/lib/belajar/kemajuan-misi'
 import { warnaMapel } from '@/lib/belajar/warna-mapel'
@@ -33,8 +34,8 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
         style={{ background: warna.dasar, ['--tebing' as string]: warna.tua } as React.CSSProperties}
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
-            <Pi className="h-7 w-7" strokeWidth={2.25} aria-hidden />
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+            <Ikon3D nama="abacus" ukuran={40} />
           </span>
           <div className="min-w-0">
             <h2 className="text-xl font-extrabold leading-tight">Misi Matematika</h2>
@@ -65,8 +66,8 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
 
       {/* BAHASA INDONESIA — segera hadir */}
       <div aria-disabled className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-slate-300 bg-slate-200/60 p-5 text-slate-600">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70">
-          <BookOpen className="h-7 w-7" strokeWidth={2.25} aria-hidden />
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/70">
+          <Ikon3D nama="open-book" ukuran={40} kelas="opacity-60 grayscale" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-extrabold leading-tight text-slate-700">Misi Bahasa Indonesia</h2>

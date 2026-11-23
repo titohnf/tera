@@ -2,18 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const IKON = {
-  beranda: (
-    <path d="M3 10.5 12 3l9 7.5M5.5 9v10.5a.5.5 0 0 0 .5.5h3.5v-5.5h5V20H18a.5.5 0 0 0 .5-.5V9" />
-  ),
-  profil: (
-    <>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c.6-3.6 3.3-5.5 7-5.5s6.4 1.9 7 5.5" />
-    </>
-  ),
-}
+import Ikon3D from './Ikon3D'
 
 /**
  * Bilah navigasi bawah ala aplikasi ponsel, di dalam jangkauan ibu jari.
@@ -44,18 +33,7 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
                 t.aktif ? 'border-tera/30 bg-blue-50 text-tera' : 'border-transparent text-slate-500 hover:text-slate-900'
               }`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={t.aktif ? 2 : 1.7}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-                aria-hidden
-              >
-                {IKON[t.kunci]}
-              </svg>
+              <Ikon3D nama={t.kunci === 'beranda' ? 'house' : 'bust'} ukuran={28} kelas={t.aktif ? '' : 'opacity-60 grayscale'} />
               {t.label}
             </Link>
           </li>

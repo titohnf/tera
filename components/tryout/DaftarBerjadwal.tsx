@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import TombolMulai from '@/components/tryout/TombolMulai'
-import { IKON, WARNA } from '@/components/belajar/IkonMapel'
+import { WARNA } from '@/components/belajar/IkonMapel'
+import Ikon3D, { IKON_GOLONGAN } from '@/components/ui/Ikon3D'
 import { tahunAjaran } from '@/lib/tryout/judul'
 import { golonganMapel } from '@/lib/belajar/ikon-mapel'
 import { hariWib, jamWib, tanggalWib, urutJenjang, urutMapel } from '@/lib/tryout/paket'
@@ -145,12 +146,11 @@ export default function DaftarBerjadwal({
         <div className="space-y-2.5">
           {isi.map((p) => {
             const st = status(p)
-            const Ikon = IKON[golonganMapel(p.mapel)]
             return (
               <div key={p.id} id={`hasil-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                 <div className="flex flex-wrap items-stretch">
                   <div className={`flex w-28 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:w-36 ${WARNA[golonganMapel(p.mapel)]}`} aria-hidden>
-                    <Ikon size={36} strokeWidth={1.75} />
+                    <Ikon3D nama={IKON_GOLONGAN[golonganMapel(p.mapel)]} ukuran={48} />
                     <span className="mt-1 text-xs font-semibold tracking-widest opacity-70">TO TKA</span>
                     <span className="break-words text-base font-bold leading-tight">{p.mapel}</span>
                   </div>
