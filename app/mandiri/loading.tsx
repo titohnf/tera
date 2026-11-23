@@ -1,5 +1,5 @@
-import RangkaMemuat from '@/components/ui/RangkaMemuat'
+import { RangkaBeranda } from '@/components/ui/Rangka'
 
 export default function Memuat() {
-  return <RangkaMemuat />
+  return <RangkaBeranda />
 }
