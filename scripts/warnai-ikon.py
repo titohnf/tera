@@ -12,9 +12,10 @@ def hex_ke_rgb(h):
     h = h.lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
-# (posisi 0..1 menurut kecerahan, warna). Biru tengah = biru logo Tera (#0060F0).
-BIRU = [(0.0, "#07276F"), (0.45, "#0050D8"), (0.7, "#1F7AFF"), (1.0, "#7DB4FF")]
-KUNING = [(0.0, "#A85A00"), (0.45, "#F2A100"), (0.7, "#FFC926"), (1.0, "#FFE680")]
+# (posisi 0..1 menurut kecerahan, warna). Biru tengah = biru logo Tera (#0060F0). Tangga SEMPIT di sisi
+# putih (tanpa pucat) dan LEBAR di sisi gelap, supaya kesannya jenuh, tebal, dan kontras seperti ikon "play".
+BIRU = [(0.0, "#0A2A8C"), (0.3, "#0A4FD6"), (0.6, "#0A5CF0"), (0.85, "#3A8BFF"), (1.0, "#8EC0FF")]
+KUNING = [(0.0, "#D26A00"), (0.3, "#F59A00"), (0.6, "#FFB400"), (0.85, "#FFD233"), (1.0, "#FFEB85")]
 
 def tangga(stops, t):
     t = max(0.0, min(1.0, t))
@@ -25,9 +26,39 @@ def tangga(stops, t):
             return tuple(ra[i] + (rb[i] - ra[i]) * f for i in range(3))
     return hex_ke_rgb(stops[-1][1])
 
+def rentang(im):
+    """Persentil 8 dan 98 kecerahan piksel berwarna: ikon aslinya pastel (hampir semuanya terang),
+    jadi tanpa dibentangkan semua piksel jatuh di ujung terang tangga dan hasilnya pucat."""
+    px = im.load()
+    semua = []
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a < 200:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if s >= 0.12:
+                semua.append(v)
+    semua.sort()
+    if not semua:
+        return 0.3, 1.0
+    return semua[int(len(semua) * 0.08)], semua[int(len(semua) * 0.98) - 1]
+
+
+# Titik tertinggi pada tangga yang dipakai badan ikon (1.0 = ujung putih kebiruan/kekuningan).
+PUNCAK = 0.8
+
+
+def bentang(v, lo, hi):
+    u = max(0.0, min(1.0, (v - lo) / max(hi - lo, 1e-6)))
+    u = u * u * (3 - 2 * u) * 0.65 + u * 0.35  # lengkung S: gelap lebih gelap, terang lebih terang
+    return u * PUNCAK
+
+
 def warnai(src, dst, tukar=False):
     im = Image.open(src).convert("RGBA")
     px = im.load()
+    lo, hi = rentang(im)
     for y in range(im.height):
         for x in range(im.width):
             r, g, b, a = px[x, y]
@@ -48,10 +79,9 @@ def warnai(src, dst, tukar=False):
             if tukar:
                 hangat = not hangat
             # Kecerahan asli (0.35..1.0) dibentangkan ke seluruh tangga.
-            t = (v - 0.35) / 0.65
-            warna = tangga(KUNING if hangat else BIRU, t)
+            warna = tangga(KUNING if hangat else BIRU, bentang(v, lo, hi))
             # Kilap (jenuh rendah) tetap memutih; badan (jenuh tinggi) memakai warna tangga penuh.
-            sn = min(1.0, s / 0.5) ** 0.8
+            sn = min(1.0, s / 0.3) ** 0.7
             putih = (255, 255, 255)
             mix = tuple(putih[i] + (warna[i] - putih[i]) * sn for i in range(3))
             px[x, y] = (round(mix[0]), round(mix[1]), round(mix[2]), a)
@@ -61,6 +91,7 @@ def merah_ke_biru(src, dst):
     """Hanya warna merah/merah muda yang diganti biru (tangga BIRU); warna lain tetap ASLI."""
     im = Image.open(src).convert("RGBA")
     px = im.load()
+    lo, hi = rentang(im)
     for y in range(im.height):
         for x in range(im.width):
             r, g, b, a = px[x, y]
@@ -69,8 +100,8 @@ def merah_ke_biru(src, dst):
             h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
             if s < 0.24 or not (h < 25 / 360 or h > 296 / 360):
                 continue
-            warna = tangga(BIRU, (v - 0.35) / 0.65)
-            sn = min(1.0, s / 0.5) ** 0.8
+            warna = tangga(BIRU, bentang(v, lo, hi))
+            sn = min(1.0, s / 0.35) ** 0.7
             mix = tuple(255 + (warna[i] - 255) * sn for i in range(3))
             px[x, y] = (round(mix[0]), round(mix[1]), round(mix[2]), a)
     im.save(dst, optimize=True)
