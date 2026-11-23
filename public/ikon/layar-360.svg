@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <!-- Layar 360° (silinder) bergaya 3D Fluent, digambar sendiri. Langit di bibir atas dan di dinding belakang SATU bidang
-       (tanpa tepi terpisah, supaya tidak seperti topi); gunung satu nada dengan langit; dinding depan terbuka di tengah. -->
+       (tanpa tepi terpisah); gunung satu nada dengan langit; dinding depan terbuka di tengah. Tanpa awan dan kilau. -->
   <defs>
     <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#0A4FD6"/><stop offset="0.5" stop-color="#2E7BFF"/><stop offset="1" stop-color="#0A5CF0"/>
@@ -16,36 +16,23 @@
       <stop offset="0" stop-color="#78B0FF"/><stop offset="1" stop-color="#5A9CFF"/>
     </linearGradient>
     <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
-    <clipPath id="dinding"><path d="M20 66 A108 22 0 0 0 236 66 L236 190 A108 22 0 0 0 20 190 Z"/></clipPath>
+    <clipPath id="dinding"><path d="M10 66 A118 22 0 0 0 246 66 L246 190 A118 22 0 0 0 10 190 Z"/></clipPath>
   </defs>
 
   <!-- tebing panel depan (sisi bawah) -->
-  <path d="M20 66 A108 22 0 0 0 72 88.8 L72 204.8 A108 22 0 0 1 20 190 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
-  <path d="M236 66 A108 22 0 0 1 184 88.8 L184 204.8 A108 22 0 0 0 236 190 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M10 66 A118 22 0 0 0 67 84.8 L67 208.8 A118 22 0 0 1 10 190 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M246 66 A118 22 0 0 1 189 84.8 L189 208.8 A118 22 0 0 0 246 190 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
 
   <!-- langit: bibir atas + dinding belakang, satu bidang -->
-  <path d="M20 66 A108 22 0 0 1 236 66 L236 190 A108 22 0 0 0 20 190 Z" fill="url(#langit)"/>
-  <!-- awan putih di bibir atas (dipipihkan mengikuti perspektif) -->
-  <g fill="#FFFFFF" transform="translate(84 58) scale(1 0.5)">
-    <circle cx="-14" cy="3" r="9"/><circle cx="0" cy="-4" r="12"/><circle cx="15" cy="2" r="9"/>
-    <rect x="-23" y="3" width="46" height="9" rx="4.5"/>
-  </g>
-  <g fill="#FFFFFF" transform="translate(172 53) scale(0.8 0.4)">
-    <circle cx="-14" cy="3" r="9"/><circle cx="0" cy="-4" r="12"/><circle cx="15" cy="2" r="9"/>
-    <rect x="-23" y="3" width="46" height="9" rx="4.5"/>
-  </g>
+  <path d="M10 66 A118 22 0 0 1 246 66 L246 190 A118 22 0 0 0 10 190 Z" fill="url(#langit)"/>
 
   <g clip-path="url(#dinding)">
     <circle cx="104" cy="112" r="12" fill="url(#matahari)"/>
-    <path d="M30 184 L88 128 L116 156 L150 106 L226 184 Z" fill="url(#gunungBelakang)"/>
-    <path d="M60 190 L112 146 L146 172 L184 138 L232 190 Z" fill="url(#gunungDepan)"/>
+    <path d="M18 184 L84 128 L114 156 L150 106 L238 184 Z" fill="url(#gunungBelakang)"/>
+    <path d="M50 190 L110 146 L146 172 L190 138 L242 190 Z" fill="url(#gunungDepan)"/>
   </g>
 
   <!-- panel depan -->
-  <path d="M20 66 A108 22 0 0 0 72 88.8 L72 204.8 A108 22 0 0 1 20 190 Z" fill="url(#panel)"/>
-  <path d="M236 66 A108 22 0 0 1 184 88.8 L184 204.8 A108 22 0 0 0 236 190 Z" fill="url(#panel)"/>
-
-  <!-- kilau kuning -->
-  <path d="M232 22 l5 11 11 5 -11 5 -5 11 -5 -11 -11 -5 11 -5z" fill="#FFC926"/>
-  <path d="M24 24 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5z" fill="#FFC926"/>
+  <path d="M10 66 A118 22 0 0 0 67 84.8 L67 208.8 A118 22 0 0 1 10 190 Z" fill="url(#panel)"/>
+  <path d="M246 66 A118 22 0 0 1 189 84.8 L189 208.8 A118 22 0 0 0 246 190 Z" fill="url(#panel)"/>
 </svg>
