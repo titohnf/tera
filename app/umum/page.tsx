@@ -31,16 +31,16 @@ export default async function BerandaUmum() {
         // Siswa bimbel yang masuk dengan kode: kartunya sama, tetapi mereka sudah berlangganan, jadi
         // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
         <>
-          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} warna="bg-slate-100 text-slate-400" ikon="bullseye" />
-          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} warna="bg-slate-100 text-slate-400" ikon="books" />
+          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="bullseye" />
+          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="books" />
         </>
       ) : (
         <>
-          <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon="bullseye" />
-          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" warna="bg-slate-100 text-slate-400" ikon="books" />
+          <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" terkunci ikon="bullseye" />
+          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" terkunci ikon="books" />
         </>
       )}
-      <KartuAplikasi nama="Try Out" teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya." href="/umum/tryout" warna="bg-violet-100" ikon="trophy" />
+      <KartuAplikasi nama="Try Out" teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya." href="/umum/tryout" ikon="trophy" />
 
       {punyaAkun ? (
         <p className="pt-2 text-center text-sm text-gray-500">

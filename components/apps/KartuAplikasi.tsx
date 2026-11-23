@@ -29,23 +29,21 @@ export default function KartuAplikasi({
   keterangan,
   teks,
   href,
-  warna,
   ikon,
+  terkunci = false,
 }: {
   nama: string
   /** Catatan kecil di samping nama, mis. "Segera hadir". */
   keterangan?: string
   teks: string
   href: string | null
-  /** Warna latar blok ikon (tint lembut; `slate` berarti terkunci). */
-  warna: string
   ikon: NamaIkon3D
+  /** Ikon diredupkan dan abu-abu: fiturnya belum terbuka untuk akun ini. */
+  terkunci?: boolean
 }) {
   const isi = (
     <>
-      <span className={`h-14 w-14 rounded-2xl ${warna} flex items-center justify-center shrink-0`}>
-        <Ikon3D nama={ikon} ukuran={38} kelas={warna.includes('slate') ? 'opacity-50 grayscale' : ''} />
-      </span>
+      <Ikon3D nama={ikon} ukuran={56} kelas={terkunci ? 'opacity-50 grayscale' : ''} />
       <span className="min-w-0 flex-1">
         <span className="block text-base font-extrabold tracking-tight text-slate-900">
           {nama}

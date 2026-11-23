@@ -92,12 +92,7 @@ export default function IkonMapel({
           )}
         </svg>
       )}
-      <span
-        className={`flex items-center justify-center rounded-full ${WARNA[golongan]}`}
-        style={{ width: dalam, height: dalam }}
-      >
-        <Ikon3D nama={IKON_GOLONGAN[golongan]} ukuran={Math.round(dalam * 0.68)} />
-      </span>
+      <Ikon3D nama={IKON_GOLONGAN[golongan]} ukuran={Math.round(dalam * 0.95)} />
     </span>
   )
 }

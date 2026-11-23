@@ -42,8 +42,10 @@ soal) memakai `tabular-nums` dan ukuran besar — angkalah yang jadi bintangnya.
 ## Ikon
 Ikon 3D dari Microsoft Fluent Emoji (MIT), disalin ke `public/ikon/` dan dipakai
 lewat `components/ui/Ikon3D.tsx`. Satu keluarga gambar saja — jangan mencampur
-sumber ikon 3D lain. Tanpa maskot untuk saat ini. Ikon garis (lucide) hanya
-untuk panah dan kendali kecil.
+sumber ikon 3D lain. Ikon 3D berdiri sendiri, TANPA wadah (lingkaran/kotak) di
+belakangnya. Tanpa maskot untuk saat ini. Pengecualian: bilah bawah memakai ikon
+solid Heroicons (bukan 3D, bukan garis). Ikon garis (lucide) hanya untuk panah
+dan kendali kecil.
 
 ## Isi
 Dekorasi diganti informasi: persen, skor, tanggal, nama topik. Satu elemen

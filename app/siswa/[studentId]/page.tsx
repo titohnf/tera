@@ -43,10 +43,10 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
       <HeroBeranda isi={hero} />
 
       <div className="space-y-3">
-        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} warna="bg-blue-100" ikon="memo" />
-        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-teal-100" ikon="bullseye" />
-        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-orange-100" ikon="books" />
-        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} warna="bg-violet-100" ikon="trophy" />
+        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} ikon="memo" />
+        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} ikon="bullseye" />
+        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} ikon="books" />
+        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} ikon="trophy" />
       </div>
     </div>
   )

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Ikon3D from './Ikon3D'
+import { HomeIcon, UserIcon } from '@heroicons/react/24/solid'
 
 /**
  * Bilah navigasi bawah ala aplikasi ponsel, di dalam jangkauan ibu jari.
@@ -30,10 +30,10 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
               href={t.href}
               aria-current={t.aktif ? 'page' : undefined}
               className={`mx-3 my-1.5 flex h-[calc(100%-0.75rem)] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 text-xs font-extrabold transition ${
-                t.aktif ? 'border-tera/30 bg-blue-50 text-tera' : 'border-transparent text-slate-500 hover:text-slate-900'
+                t.aktif ? 'border-tera/30 bg-blue-50 text-tera' : 'border-transparent text-slate-400 hover:text-slate-700'
               }`}
             >
-              <Ikon3D nama={t.kunci === 'beranda' ? 'house' : 'bust'} ukuran={28} kelas={t.aktif ? '' : 'opacity-60 grayscale'} />
+              {t.kunci === 'beranda' ? <HomeIcon className="h-7 w-7" aria-hidden /> : <UserIcon className="h-7 w-7" aria-hidden />}
               {t.label}
             </Link>
           </li>
