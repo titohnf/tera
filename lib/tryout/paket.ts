@@ -16,17 +16,26 @@ export interface InfoPaket {
 
 type Settings = Record<string, unknown> | null | undefined
 
+/**
+ * Jam tutup bawaan: 23.59 WIB pada hari yang sama dengan jam buka. Try out dikerjakan bersama dalam
+ * satu hari, jadi paket yang jam tutupnya tidak diisi tutup di akhir hari itu.
+ */
+export function akhirHariWib(iso: string): string {
+  return new Date(`${tanggalWib(iso)}T23:59:00+07:00`).toISOString()
+}
+
 export function infoPaket(judul: string, settings: Settings): InfoPaket {
   const s = settings ?? {}
   const m = judul.match(/^(?:Try ?Out\s+)?(?:TKA\s+)?(.+?)\s+(SD|SMP|SMA)(?:\s+Kelas\s+(\d+))?\s*$/i)
   const teks = (k: string) => (typeof s[k] === 'string' && (s[k] as string).trim() ? (s[k] as string).trim() : null)
+  const buka = teks('opens_at')
   return {
     jenjang: (teks('jenjang') ?? m?.[2] ?? 'Lainnya').toUpperCase(),
     kelas: teks('kelas') ?? m?.[3] ?? null,
     mapel: teks('mapel') ?? m?.[1] ?? judul,
     menit: typeof s.time_limit_minutes === 'number' ? s.time_limit_minutes : null,
-    bukaPada: teks('opens_at'),
-    tutupPada: teks('closes_at'),
+    bukaPada: buka,
+    tutupPada: teks('closes_at') ?? (buka ? akhirHariWib(buka) : null),
   }
 }
 

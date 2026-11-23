@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { getUser } from '@/lib/supabase/get-user'
 import { revalidatePath } from 'next/cache'
+import { akhirHariWib } from '@/lib/tryout/paket'
 
 /**
  * Peserta try out dari luar bimbel: dibuatkan kode, dan ditautkan ke akun
@@ -91,7 +92,7 @@ export async function aturHasilDibuka(formData: FormData): Promise<void> {
 
 /**
  * Jadwal sebuah try out: kapan tombol Mulai bisa dipakai (`opens_at`) dan, bila perlu,
- * kapan ditutup (`closes_at`, wajib bila ada jam buka). Jam diisi dalam WIB. Setelah jam tutup peserta tidak bisa mulai dan kartu pindah ke "Sudah lewat". Hanya dua
+ * kapan ditutup (`closes_at`, kosong = 23.59 WIB di hari jam buka). Jam diisi dalam WIB. Setelah jam tutup peserta tidak bisa mulai dan kartu pindah ke "Sudah lewat". Hanya dua
  * kunci itu yang diubah; database yang menahan peserta sebelum jamnya
  * (`mulai_percobaan_peserta` memeriksa `opens_at`).
  */
@@ -107,9 +108,10 @@ export async function aturJadwalTryOut(formData: FormData): Promise<void> {
     return Number.isNaN(d.getTime()) ? undefined : d.toISOString()
   }
   const buka = keIso(formData.get('opens_at'))
-  const tutup = keIso(formData.get('closes_at'))
-  if (buka === undefined || tutup === undefined) return
-  if (buka && !tutup) return // jam tutup wajib bila ada jam buka: peserta terlambat tidak boleh mulai
+  const tutupIsi = keIso(formData.get('closes_at'))
+  if (buka === undefined || tutupIsi === undefined) return
+  // Jam tutup kosong: tutup 23.59 WIB di hari yang sama dengan jam buka (peserta terlambat tidak boleh mulai).
+  const tutup = tutupIsi ?? (buka ? akhirHariWib(buka) : null)
   if (buka && tutup && new Date(tutup) <= new Date(buka)) return
   const { data: kuis } = await ctx.admin.from('quizzes').select('settings, kind').eq('id', quizId).maybeSingle()
   if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return
