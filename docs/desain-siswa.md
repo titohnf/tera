@@ -49,7 +49,7 @@ dua nada Phosphor Icons (MIT; bukan 3D, bukan garis).
 
 **Ikon menu beranda** (empat ikon, satu keluarga warna): Memo (Latihan Soal, biru-kuning),
 Rocket (Misi, warna asli; hanya bagian merahnya diganti biru), **Layar 360°** (Materi: silinder dengan dinding depan terbuka dan dua panel samping biru, digambar sendiri di
-`public/ikon/layar-360.svg`; langit satu bidang, gunung satu nada, dan ikon play di tengah layar), Trophy (Try Out, biru-kuning). Jangan menambah ikon menu berwarna lain. Controller game
+`public/ikon/layar-360.svg`; langit satu bidang, gunung satu nada, matahari kuning), Trophy (Try Out, biru-kuning). Jangan menambah ikon menu berwarna lain. Controller game
 dicadangkan untuk fitur Game (jika nanti ada). Ikon mapel boleh berwarna menurut mapelnya. Ikon garis (lucide) hanya untuk panah
 dan kendali kecil.
 

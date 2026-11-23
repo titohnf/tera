@@ -16,7 +16,6 @@ export type NamaIkon3D =
   | 'rocket'
   | 'rocket-biru'
   | 'layar-360'
-  | 'tap'
   | 'trophy'
   | 'abacus'
   | 'open-book'
@@ -57,7 +56,7 @@ export const IKON_GOLONGAN: Record<GolonganMapel, NamaIkon3D> = {
 }
 
 /** Ikon yang digambar sendiri (SVG), bukan dari Fluent Emoji (PNG). */
-const IKON_SVG = new Set<NamaIkon3D>(['layar-360', 'tap'])
+const IKON_SVG = new Set<NamaIkon3D>(['layar-360'])
 
 export default function Ikon3D({
   nama,
