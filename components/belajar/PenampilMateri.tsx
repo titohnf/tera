@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 /**
@@ -22,7 +21,9 @@ import { useRouter } from 'next/navigation'
  * `hrefLatihan`. Pesan hanya dipercaya bila datang dari iframe ini sendiri
  * (`event.source`), bukan dari jendela mana pun.
  *
- * `hrefKembali` kosong: tombol kembali memakai riwayat peramban.
+ * Tombol kembali selalu memakai riwayat peramban, supaya siswa kembali ke halaman TEMPAT ia datang
+ * (peta Misi, halaman topik, atau daftar Materi). `hrefKembali` hanya cadangan bila tidak ada riwayat
+ * (tautan dibuka langsung di tab baru); kosong berarti `router.back()` saja.
  */
 export default function PenampilMateri({
   html,
@@ -53,6 +54,11 @@ export default function PenampilMateri({
     }
   }, [router, hrefLatihan])
 
+  function kembali() {
+    if (hrefKembali && window.history.length <= 1) router.push(hrefKembali)
+    else router.back()
+  }
+
   const kelasTombol = 'flex h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-stone-200 hover:bg-white/10'
 
   return (
@@ -61,15 +67,9 @@ export default function PenampilMateri({
       style={{ height: '100dvh' }}
     >
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-white/10 px-2">
-        {hrefKembali ? (
-          <Link href={hrefKembali} className={kelasTombol}>
-            <span aria-hidden>←</span> Kembali
-          </Link>
-        ) : (
-          <button type="button" onClick={() => router.back()} className={kelasTombol}>
-            <span aria-hidden>←</span> Kembali
-          </button>
-        )}
+        <button type="button" onClick={kembali} className={kelasTombol}>
+          <span aria-hidden>←</span> Kembali
+        </button>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-stone-100">{judul}</span>
       </div>
       <iframe
