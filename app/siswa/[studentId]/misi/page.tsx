@@ -10,10 +10,10 @@ export default async function MisiSiswaPage({
   searchParams,
 }: {
   params: Promise<{ studentId: string }>
-  searchParams: Promise<{ mapel?: string }>
+  searchParams: Promise<{ mapel?: string; buka?: string }>
 }) {
   const { studentId } = await params
-  const { mapel } = await searchParams
+  const { mapel, buka } = await searchParams
   await anakOrRedirect(studentId)
   const alamat = (m: string) => `/siswa/${studentId}/misi?mapel=${encodeURIComponent(m)}`
   // Tanpa ?mapel= : pintu masuk berisi kartu per mapel; petanya baru terbuka sesudah mapel dipilih.
@@ -26,7 +26,7 @@ export default async function MisiSiswaPage({
   }
   return (
     <div className="space-y-4">
-      <IsiMisi anak={studentId} pilihMapel={{ dipilih: mapel, alamat }} />
+      <IsiMisi anak={studentId} pilihMapel={{ dipilih: mapel, alamat }} bukaSekarang={buka === 'sekarang'} />
     </div>
   )
 }

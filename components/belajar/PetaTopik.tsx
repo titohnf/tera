@@ -57,6 +57,7 @@ export default function PetaTopik({
   paket,
   hariIni,
   topikBerMateri = [],
+  bukaSekarang = false,
 }: {
   anak: string | undefined
   /**
@@ -85,6 +86,8 @@ export default function PetaTopik({
   hariIni: string
   /** Kode topik yang punya materi interaktif (dihitung server; lihat `IsiMisi`). */
   topikBerMateri?: string[]
+  /** Lembar rincian topik giliran sekarang langsung terbuka (pilih level), mis. dari hero beranda. */
+  bukaSekarang?: boolean
 }) {
   const { siap, diAtas, belum, tuntas } = useMemo(
     () => kelompokkanPeta(topik, kelas),
@@ -171,7 +174,7 @@ export default function PetaTopik({
   // Checkpoint yang sengaja dibuka anak; yang aktif selalu terbuka sendiri.
   const [cpTerbuka, setCpTerbuka] = useState<Set<string>>(new Set())
   const [cari, setCari] = useState('')
-  const [dibuka, setDibuka] = useState<TopikPeta | null>(null)
+  const [dibuka, setDibuka] = useState<TopikPeta | null>(bukaSekarang ? sekarang : null)
   const [lihatDiAtas, setLihatDiAtas] = useState(false)
   const [lihatBelum, setLihatBelum] = useState(false)
   const [lihatTuntas, setLihatTuntas] = useState(false)
@@ -455,7 +458,15 @@ export default function PetaTopik({
         kelas={kelas}
         anak={anak}
         hariIni={hariIni}
-        onTutup={() => setDibuka(null)}
+        onTutup={() => {
+          setDibuka(null)
+          // `?buka=sekarang` cukup sekali: tanpa dibuang, muat ulang akan membuka lembarnya lagi.
+          if (bukaSekarang && typeof window !== 'undefined') {
+            const u = new URL(window.location.href)
+            u.searchParams.delete('buka')
+            window.history.replaceState(window.history.state, '', u)
+          }
+        }}
       />
     </section>
   )

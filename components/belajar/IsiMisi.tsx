@@ -50,6 +50,7 @@ import { materiInteraktif } from '@/lib/materi-interaktif'
 export default async function IsiMisi({
   anak: studentId,
   pilihMapel,
+  bukaSekarang = false,
 }: {
   anak?: string
   /**
@@ -58,6 +59,8 @@ export default async function IsiMisi({
    * ini seluruh peta tampil sekaligus seperti semula.
    */
   pilihMapel?: { dipilih?: string; alamat: (mapel: string) => string }
+  /** Buka lembar rincian topik giliran sekarang begitu halaman tampil (`?buka=sekarang`). */
+  bukaSekarang?: boolean
 }) {
   const { learnerId, kelas } = await belajarContext(studentId)
 
@@ -120,6 +123,7 @@ export default async function IsiMisi({
         paket={paket}
         hariIni={todayWib()}
         topikBerMateri={topikBerMateri}
+        bukaSekarang={bukaSekarang}
       />
     </div>
   )

@@ -31,6 +31,7 @@ export default function KartuAplikasi({
   href,
   ikon,
   terkunci = false,
+  satuBaris = false,
 }: {
   nama: string
   /** Catatan kecil di samping nama, mis. "Segera hadir". */
@@ -40,6 +41,8 @@ export default function KartuAplikasi({
   ikon: NamaIkon3D
   /** Ikon diredupkan dan abu-abu: fiturnya belum terbuka untuk akun ini. */
   terkunci?: boolean
+  /** Teks dipotong jadi satu baris (…): untuk teks pendek yang dikendalikan, bukan pesan penting. */
+  satuBaris?: boolean
 }) {
   const isi = (
     <>
@@ -53,7 +56,7 @@ export default function KartuAplikasi({
             </span>
           )}
         </span>
-        <span className="mt-0.5 block text-sm leading-snug text-slate-500">{teks}</span>
+        <span className={`mt-0.5 block text-sm leading-snug text-slate-500 ${satuBaris ? 'truncate' : ''}`}>{teks}</span>
       </span>
       {href && (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-300" aria-hidden>

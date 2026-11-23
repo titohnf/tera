@@ -5,6 +5,7 @@ import type { GolonganMapel } from '@/lib/belajar/ikon-mapel'
  * Ikon 3D Tera Siswa: Microsoft Fluent Emoji (MIT), disalin ke `public/ikon/`
  * (lihat `LISENSI.txt` di sana). Satu keluarga gambar untuk seluruh aplikasi —
  * jangan mencampur sumber ikon 3D lain, gayanya akan bertabrakan.
+ * Berakhiran `-bk`: versi biru + kuning (`scripts/warnai-ikon.py`) untuk ikon MENU.
  * `unoptimized`: berkasnya sudah kecil (256px, ±35 KB), dan pengoptimalan
  * gambar Vercel berkuota.
  */
@@ -12,8 +13,10 @@ export type NamaIkon3D =
   | 'memo'
   | 'bullseye'
   | 'books'
-  | 'blue-book'
-  | 'light-bulb'
+  | 'memo-bk'
+  | 'bullseye-bk'
+  | 'books-bk'
+  | 'trophy-bk'
   | 'trophy'
   | 'abacus'
   | 'open-book'

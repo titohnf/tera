@@ -29,7 +29,7 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
     ? { jenis: 'lanjut', sesi }
     : tryOut?.terbuka
       ? { jenis: 'tryout', label: tryOut.label, teks: tryOut.teks, href: hrefTryOut }
-      : { jenis: 'misi', href: `/siswa/${studentId}/misi`, kemajuan }
+      : { jenis: 'misi', href: `/siswa/${studentId}/misi?mapel=Matematika&buka=sekarang`, kemajuan }
 
   return (
     <div className="space-y-5">
@@ -43,10 +43,10 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
       <HeroBeranda isi={hero} />
 
       <div className="space-y-3">
-        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} ikon="blue-book" />
-        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} ikon="star" />
-        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} ikon="light-bulb" />
-        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} ikon="trophy" />
+        <KartuAplikasi nama="Latihan Soal" teks="Soal per topik dengan pembahasan." href={`/belajar${q}`} satuBaris ikon="memo-bk" />
+        <KartuAplikasi nama="Misi" teks="Naik level, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} satuBaris ikon="bullseye-bk" />
+        <KartuAplikasi nama="Materi" teks="Belajar konsep secara interaktif." href={`/siswa/${studentId}/materi`} satuBaris ikon="books-bk" />
+        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA.'} satuBaris href={hrefTryOut} ikon="trophy-bk" />
       </div>
     </div>
   )

@@ -39,12 +39,12 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Naik level topik demi topik, kumpulkan bintangnya.'
+            ? 'Naik level, kumpulkan bintangnya.'
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
         terkunci={!produk.sora}
-        ikon="star"
+        ikon="bullseye-bk"
       />
 
       {/* Materi: belajar konsep lewat halaman interaktif (hari ini AC-01).
@@ -54,21 +54,21 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Pelajari konsep lewat halaman interaktif yang seru.'
+            ? 'Belajar konsep secara interaktif.'
             : 'Aktifkan langganan untuk membuka Materi.'
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
         terkunci={!produk.sora}
-        ikon="light-bulb"
+        ikon="books-bk"
       />
 
       {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi
           yang baru mencoba; dua kartu lain tetap mengikuti hak pakai. */}
       <KartuAplikasi
         nama="Try Out"
-        teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya."
+        teks="Uji kemampuanmu lewat try out TKA."
         href="/mandiri/tryout"
-        ikon="trophy"
+        ikon="trophy-bk"
       />
     </div>
   )
