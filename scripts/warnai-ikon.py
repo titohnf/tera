@@ -57,7 +57,28 @@ def warnai(src, dst, tukar=False):
             px[x, y] = (round(mix[0]), round(mix[1]), round(mix[2]), a)
     im.save(dst, optimize=True)
 
+def merah_ke_biru(src, dst):
+    """Hanya warna merah/merah muda yang diganti biru (tangga BIRU); warna lain tetap ASLI."""
+    im = Image.open(src).convert("RGBA")
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if s < 0.24 or not (h < 25 / 360 or h > 296 / 360):
+                continue
+            warna = tangga(BIRU, (v - 0.35) / 0.65)
+            sn = min(1.0, s / 0.5) ** 0.8
+            mix = tuple(255 + (warna[i] - 255) * sn for i in range(3))
+            px[x, y] = (round(mix[0]), round(mix[1]), round(mix[2]), a)
+    im.save(dst, optimize=True)
+
+
 if __name__ == "__main__":
-    for nama in ["memo", "puzzle", "trophy"]:
+    merah_ke_biru("public/ikon/rocket.png", "public/ikon/rocket-biru.png")
+    print("ok rocket-biru")
+    for nama in ["memo", "video-game", "trophy"]:
         warnai(f"public/ikon/{nama}.png", f"public/ikon/{nama}-bk.png")
         print("ok", nama)
