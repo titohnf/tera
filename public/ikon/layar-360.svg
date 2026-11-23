@@ -20,8 +20,8 @@
   </defs>
 
   <!-- tebing panel depan (sisi bawah) -->
-  <path d="M32 60 A96 18 0 0 0 60 72.7 L60 208.7 A96 18 0 0 1 32 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
-  <path d="M224 60 A96 18 0 0 1 196 72.7 L196 208.7 A96 18 0 0 0 224 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 210.1 A96 18 0 0 1 32 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 210.1 A96 18 0 0 0 224 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
 
   <!-- langit: bibir atas + dinding belakang, satu bidang -->
   <path d="M32 60 A96 18 0 0 1 224 60 L224 196 A96 18 0 0 0 32 196 Z" fill="url(#langit)"/>
@@ -33,6 +33,6 @@
   </g>
 
   <!-- panel depan (sempit) -->
-  <path d="M32 60 A96 18 0 0 0 60 72.7 L60 208.7 A96 18 0 0 1 32 196 Z" fill="url(#panel)"/>
-  <path d="M224 60 A96 18 0 0 1 196 72.7 L196 208.7 A96 18 0 0 0 224 196 Z" fill="url(#panel)"/>
+  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 210.1 A96 18 0 0 1 32 196 Z" fill="url(#panel)"/>
+  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 210.1 A96 18 0 0 0 224 196 Z" fill="url(#panel)"/>
 </svg>
