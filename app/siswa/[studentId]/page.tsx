@@ -1,37 +1,53 @@
 import { anakOrRedirect } from '@/lib/keluarga'
-import KartuLanjutkan from '@/components/siswa/KartuLanjutkan'
+import HeroBeranda, { type IsiHero } from '@/components/siswa/HeroBeranda'
 import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
+import { kemajuanMisi } from '@/lib/belajar/kemajuan-misi'
 import { tryOutTerdekat } from '@/lib/tryout/terdekat'
 import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_SORA, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
 
 /**
- * Beranda siswa bimbel yang masuk dengan kode: empat kartu yang sama dengan beranda siswa langganan
- * (`app/mandiri/page.tsx`), semuanya terbuka. Murid bimbel sudah berhak atas seluruh bank soal,
- * jadi tidak ada kartu yang terkunci.
+ * Beranda siswa bimbel yang masuk dengan kode. Satu elemen berani — hero "apa yang
+ * dikerjakan sekarang" — lalu empat pintu yang tenang (sama dengan beranda siswa
+ * langganan, `app/mandiri/page.tsx`), semuanya terbuka. Murid bimbel sudah berhak
+ * atas seluruh bank soal, jadi tidak ada pintu yang terkunci.
  */
 export default async function BerandaSiswa({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params
   const { anak } = await anakOrRedirect(studentId)
   const q = `?anak=${studentId}`
   // Pelengkap beranda: gagal apa pun jadi "tidak ada", bukan beranda yang rusak.
-  const [sesi, tryOut] = await Promise.all([
-    learnerAnak(studentId)
-      .then((id) => (id ? sesiTertunda(id) : null))
-      .catch(() => null),
+  // `learnerAnak` hanya MEMBACA (tidak membuat baris pelajar), jadi aman dipanggil di sini.
+  const learnerId = await learnerAnak(studentId).catch(() => null)
+  const [sesi, kemajuan, tryOut] = await Promise.all([
+    learnerId ? sesiTertunda(learnerId).catch(() => null) : null,
+    learnerId ? kemajuanMisi(learnerId) : null,
     tryOutTerdekat(studentId),
   ])
 
+  const hrefTryOut = `/siswa/${studentId}/tryout`
+  const hero: IsiHero = sesi
+    ? { jenis: 'lanjut', sesi }
+    : tryOut?.terbuka
+      ? { jenis: 'tryout', label: tryOut.label, teks: tryOut.teks, href: hrefTryOut }
+      : { jenis: 'misi', href: `/siswa/${studentId}/misi`, kemajuan }
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Halo, {anak.nama_pendek}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Mau belajar apa hari ini?</p>
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tera text-lg font-extrabold text-white">
+          {anak.nama_pendek.charAt(0).toUpperCase()}
+        </span>
+        <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-900">Halo, {anak.nama_pendek}</h1>
       </div>
-      {sesi && <KartuLanjutkan sesi={sesi} />}
-      <KartuAplikasi nama="Latihan Soal" teks="Berlatih soal per topik, lengkap dengan pembahasannya." href={`/belajar${q}`} warna="bg-blue-50 text-blue-600" ikon={IKON_SORA} />
-      <KartuAplikasi nama="Misi" teks="Naik level topik demi topik dan kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-emerald-50 text-emerald-600" ikon={IKON_MISI} />
-      <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-amber-50 text-amber-600" ikon={IKON_MATERI} />
-      <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? "Uji kemampuanmu dengan try out TKA dan lihat hasilnya."} href={`/siswa/${studentId}/tryout`} warna={tryOut?.terbuka ? "bg-violet-600 text-white" : "bg-violet-50 text-violet-600"} ikon={IKON_TRYOUT} />
+
+      <HeroBeranda isi={hero} />
+
+      <div className="space-y-3">
+        <KartuAplikasi nama="Latihan Soal" teks="Berlatih soal per topik, lengkap dengan pembahasannya." href={`/belajar${q}`} warna="bg-tera text-white" ikon={IKON_SORA} />
+        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik dan kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-tosca text-white" ikon={IKON_MISI} />
+        <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-orange-500 text-white" ikon={IKON_MATERI} />
+        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu dengan try out TKA dan lihat hasilnya.'} href={hrefTryOut} warna="bg-violet-600 text-white" ikon={IKON_TRYOUT} />
+      </div>
     </div>
   )
 }

@@ -8,7 +8,7 @@ import { umumContext } from '@/lib/umum'
 export default async function UmumLayout({ children }: { children: React.ReactNode }) {
   await umumContext()
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="tampilan-siswa min-h-screen bg-slate-100">
       <BilahAtas
         dasar={'/umum'}
         akar={{ profil: 'Profil' }}

@@ -22,7 +22,7 @@ export default async function SiswaLayout({
   await anakOrRedirect(studentId)
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="tampilan-siswa min-h-screen bg-slate-100">
       <BilahAtas
         dasar={`/siswa/${studentId}`}
         akar={{ profil: 'Profil' }}

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { KARTU } from '@/components/ui/desain'
 
 /**
  * Kartu satu aplikasi di beranda — hari ini cuma SORA, di beranda pelanggan
@@ -40,13 +41,13 @@ export default function KartuAplikasi({
 }) {
   const isi = (
     <>
-      <span className={`w-11 h-11 rounded-xl ${warna} flex items-center justify-center shrink-0`}>
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <span className={`h-12 w-12 rounded-xl ${warna} flex items-center justify-center shrink-0`}>
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           {ikon}
         </svg>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-bold tracking-tight text-gray-900">
+        <span className="block text-base font-extrabold tracking-tight text-slate-900">
           {nama}
           {keterangan && (
             <span className="ml-1.5 text-xs font-medium text-gray-400 align-middle">
@@ -54,18 +55,23 @@ export default function KartuAplikasi({
             </span>
           )}
         </span>
-        <span className="block text-sm text-gray-500 mt-0.5 leading-relaxed">{teks}</span>
+        <span className="mt-0.5 block text-sm leading-snug text-slate-500">{teks}</span>
       </span>
+      {href && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-300" aria-hidden>
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      )}
     </>
   )
 
-  const dasar = 'flex items-start gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-gray-900/5'
+  const dasar = `flex items-center gap-3.5 ${KARTU} p-4`
 
   if (!href) {
     return <div className={`${dasar} opacity-60`}>{isi}</div>
   }
 
-  const kelas = `${dasar} active:bg-slate-50 hover:ring-blue-300 transition`
+  const kelas = `${dasar} transition active:translate-y-px active:bg-slate-50`
 
   if (href.startsWith('/')) {
     return (

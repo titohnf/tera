@@ -43,7 +43,7 @@ export default async function BerandaMandiri() {
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
-        warna={produk.sora ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}
+        warna={produk.sora ? 'bg-tosca text-white' : 'bg-slate-100 text-slate-400'}
         ikon={IKON_MISI}
       />
 
@@ -58,7 +58,7 @@ export default async function BerandaMandiri() {
             : 'Aktifkan langganan untuk membuka Materi.'
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
-        warna={produk.sora ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}
+        warna={produk.sora ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-400'}
         ikon={IKON_MATERI}
       />
 
@@ -68,7 +68,7 @@ export default async function BerandaMandiri() {
         nama="Try Out"
         teks="Uji kemampuanmu dengan try out TKA dan lihat hasilnya."
         href="/mandiri/tryout"
-        warna="bg-violet-50 text-violet-600"
+        warna="bg-violet-600 text-white"
         ikon={IKON_TRYOUT}
       />
     </div>

@@ -25,7 +25,7 @@ export default async function MandiriLayout({ children }: { children: React.Reac
   await mandiriContext()
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="tampilan-siswa min-h-screen bg-slate-100">
       <BilahAtas
         dasar={'/mandiri'}
         akar={{ akun: 'Profil' }}
