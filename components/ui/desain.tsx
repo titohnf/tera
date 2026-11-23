@@ -8,8 +8,8 @@ import Link from 'next/link'
 /** Kartu: garis 2px dengan tepi bawah 4px. Tanpa bayangan lembut, gradien, atau hiasan. */
 export const KARTU = 'rounded-2xl border-2 border-b-4 border-slate-200 border-b-slate-300 bg-white'
 
-/** Kartu yang bisa diketuk: turun 2px dan tebingnya menipis saat ditekan. */
-export const KARTU_TEKAN = `${KARTU} transition active:translate-y-0.5 active:border-b-2`
+/** Kartu yang bisa diketuk: tidak bergerak, hanya sedikit menggelap saat disentuh. Efek "dipencet" milik `TombolTebing`. */
+export const KARTU_TEKAN = `${KARTU} transition active:bg-slate-100`
 
 const VARIAN = {
   /** Aksi utama di latar terang. */

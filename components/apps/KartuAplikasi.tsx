@@ -69,7 +69,7 @@ export default function KartuAplikasi({
     return <div className={`${dasar} opacity-60`}>{isi}</div>
   }
 
-  const kelas = `${dasar} transition active:translate-y-0.5 active:border-b-2`
+  const kelas = `${dasar} transition active:bg-slate-100`
 
   if (href.startsWith('/')) {
     return (

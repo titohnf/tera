@@ -254,19 +254,16 @@ button:active > .relative > .misi-simpul, button:active .misi-simpul { transform
 }
 
 /* Bermain di semua layar (docs/desain-siswa.md): pola kartu lama dari seluruh permukaan siswa
-   diberi garis 2px dan tepi bawah 4px, sekali di sini. Yang bisa diketuk turun saat ditekan. */
+   diberi garis 2px dan tepi bawah 4px, sekali di sini. Kartu TIDAK bergerak saat disentuh;
+   efek "dipencet" milik tombol saja. Kartu yang bisa diketuk hanya sedikit menggelap. */
 .tampilan-siswa :is(.shadow-kartu, [class*="ring-gray-900/5"]) {
   box-shadow: none;
   border: 2px solid #e2e8f0;
   border-bottom: 4px solid #cbd5e1;
   border-radius: 1rem;
 }
-.tampilan-siswa :is(a, button):is(.shadow-kartu, [class*="ring-gray-900/5"]) {
-  transition: transform 80ms ease, border-bottom-width 80ms ease;
-}
 .tampilan-siswa :is(a, button):is(.shadow-kartu, [class*="ring-gray-900/5"]):active {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
+  background-color: #f1f5f9;
 }
 
 /* Tombol biru: bertebing. */

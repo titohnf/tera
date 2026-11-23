@@ -31,13 +31,13 @@ export default async function BerandaUmum() {
         // Siswa bimbel yang masuk dengan kode: kartunya sama, tetapi mereka sudah berlangganan, jadi
         // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
         <>
-          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="bullseye" />
-          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="books" />
+          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="star" />
+          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="light-bulb" />
         </>
       ) : (
         <>
-          <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" terkunci ikon="bullseye" />
-          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" terkunci ikon="books" />
+          <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" terkunci ikon="star" />
+          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" terkunci ikon="light-bulb" />
         </>
       )}
       <KartuAplikasi nama="Try Out" teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya." href="/umum/tryout" ikon="trophy" />

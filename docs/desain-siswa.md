@@ -28,10 +28,11 @@ Plus Jakarta Sans (bobot 500–800), satu keluarga. Angka (persen, skor, jumlah
 soal) memakai `tabular-nums` dan ukuran besar — angkalah yang jadi bintangnya.
 
 ## Bentuk dan rasa tekan
-- **Semua yang bisa diketuk bertebing**: kartu bergaris 2px dengan tepi bawah
-  4px (`border-b-4`), tombol utama berwarna dengan tebing lebih tua. Ditekan:
-  turun 2–3px dan tebingnya menipis. Kartu yang hanya memuat info (tidak bisa
-  diketuk) tetap datar.
+- **Efek "dipencet" HANYA milik tombol** (`TombolTebing`, tombol biru): tombol
+  bertebing 4px yang turun 3px saat ditekan. **Kartu tidak bergerak** saat
+  disentuh — kartu bergaris 2px dengan tepi bawah 4px (`border-b-4`) sebagai
+  gaya diam, dan yang bisa diketuk hanya sedikit menggelap. Tombol di dalam
+  kartu (mis. "Mulai Misi") yang memencet, bukan kartunya.
 - Satu skala sudut: kartu `2xl`, blok ikon `xl`, pil `full`.
 - Huruf judul bobot 800. Angka besar.
 - Aturan ini diterapkan SEKALI di `.tampilan-siswa` (`app/globals.css`) untuk
@@ -44,7 +45,11 @@ Ikon 3D dari Microsoft Fluent Emoji (MIT), disalin ke `public/ikon/` dan dipakai
 lewat `components/ui/Ikon3D.tsx`. Satu keluarga gambar saja — jangan mencampur
 sumber ikon 3D lain. Ikon 3D berdiri sendiri, TANPA wadah (lingkaran/kotak) di
 belakangnya. Tanpa maskot untuk saat ini. Pengecualian: bilah bawah memakai ikon
-solid Heroicons (bukan 3D, bukan garis). Ikon garis (lucide) hanya untuk panah
+dua nada Phosphor Icons (MIT; bukan 3D, bukan garis).
+
+**Palet ikon menu: biru + emas** (+ putih). Menu beranda memakai Blue book (Latihan
+Soal), Star (Misi), Light bulb (Materi), Trophy (Try Out) — jangan menambah ikon
+menu berwarna lain. Ikon mapel boleh berwarna menurut mapelnya. Ikon garis (lucide) hanya untuk panah
 dan kendali kecil.
 
 ## Isi

@@ -12,6 +12,8 @@ export type NamaIkon3D =
   | 'memo'
   | 'bullseye'
   | 'books'
+  | 'blue-book'
+  | 'light-bulb'
   | 'trophy'
   | 'abacus'
   | 'open-book'

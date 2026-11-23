@@ -30,8 +30,8 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
       {/* MATEMATIKA — terbuka */}
       <Link
         href={alamat('Matematika')}
-        className="tebing block rounded-2xl p-5 text-white"
-        style={{ background: warna.dasar, ['--tebing' as string]: warna.tua } as React.CSSProperties}
+        className="block rounded-2xl p-5 text-white"
+        style={{ background: warna.dasar }}
       >
         <div className="flex items-center gap-3">
           <Ikon3D nama="abacus" ukuran={56} />
