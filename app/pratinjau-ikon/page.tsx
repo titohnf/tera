@@ -2,75 +2,53 @@ import KartuAplikasi from '@/components/apps/KartuAplikasi'
 import Ikon3D, { type NamaIkon3D } from '@/components/ui/Ikon3D'
 
 /**
- * SEMENTARA — pratinjau perbandingan ikon menu beranda siswa: opsi 1 warna asli,
- * opsi 2 warna custom (biru + kuning). Hapus halaman ini setelah pilihan diputuskan.
+ * SEMENTARA — pratinjau pilihan bentuk ikon MATERI di menu beranda siswa. Hapus
+ * halaman ini (dan ikon yang kalah) setelah pilihan diputuskan.
  */
-export const metadata = { title: 'Pratinjau ikon menu' }
+export const metadata = { title: 'Pratinjau ikon Materi' }
 
-const OPSI: { judul: string; catatan: string; ikon: [NamaIkon3D, NamaIkon3D, NamaIkon3D, NamaIkon3D] }[] = [
-  {
-    judul: 'Opsi 1 — Warna asli',
-    catatan: 'Ikon Fluent Emoji apa adanya: memo oranye, roket merah muda, controller ungu, piala emas.',
-    ikon: ['memo', 'rocket', 'play', 'trophy'],
-  },
-  {
-    judul: 'Opsi 2 — Custom biru + kuning',
-    catatan: 'Memo, controller, dan piala diwarnai ke satu tangga biru dan kuning. Roket tetap asli, hanya merahnya jadi biru.',
-    ikon: ['memo-bk', 'rocket-biru', 'play', 'trophy-bk'],
-  },
-]
-
-const MENU = [
-  { nama: 'Latihan Soal', teks: 'Soal per topik dengan pembahasan.' },
-  { nama: 'Misi', teks: 'Naik level, kumpulkan bintangnya.' },
-  { nama: 'Materi', teks: 'Belajar konsep secara interaktif.' },
-  { nama: 'Try Out', teks: 'Uji kemampuanmu lewat try out TKA.' },
+const KANDIDAT: { no: number; nama: string; catatan: string; ikon: NamaIkon3D }[] = [
+  { no: 1, nama: 'Play (sekarang)', catatan: 'Piringan putih, segitiga biru.', ikon: 'play' },
+  { no: 2, nama: 'Layar interaktif', catatan: 'Monitor putih dengan layar biru dan play putih.', ikon: 'layar' },
+  { no: 3, nama: 'Kartu video', catatan: 'Kartu pelajaran: thumbnail play dan bilah kemajuan kuning.', ikon: 'kartu-video' },
+  { no: 4, nama: 'Play biru', catatan: 'Piringan biru pekat, segitiga putih.', ikon: 'play-biru' },
+  { no: 5, nama: 'Play kuning', catatan: 'Piringan kuning, segitiga putih.', ikon: 'play-kuning' },
+  { no: 6, nama: 'Papan klaker (biru + kuning)', catatan: 'Fluent Emoji, diwarnai.', ikon: 'clapper-bk' },
+  { no: 7, nama: 'Papan klaker (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'clapper' },
+  { no: 8, nama: 'Proyektor film (biru + kuning)', catatan: 'Fluent Emoji, diwarnai.', ikon: 'proyektor-bk' },
+  { no: 9, nama: 'Proyektor film (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'proyektor' },
+  { no: 10, nama: 'Televisi (biru + kuning)', catatan: 'Fluent Emoji, diwarnai.', ikon: 'tv-bk' },
+  { no: 11, nama: 'Televisi (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'tv' },
 ]
 
 export default function PratinjauIkon() {
   return (
     <div className="tampilan-siswa min-h-screen bg-slate-100">
-      <main className="mx-auto max-w-md space-y-8 px-4 py-6">
+      <main className="mx-auto max-w-md space-y-6 px-4 py-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Pratinjau ikon menu</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">Bandingkan dua opsi, lalu pilih satu.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Pilih ikon Materi</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Sebutkan nomornya.</p>
         </div>
 
-        {OPSI.map((o) => (
-          <section key={o.judul} className="space-y-3">
-            <div>
-              <h2 className="text-xl font-extrabold text-slate-900">{o.judul}</h2>
-              <p className="text-sm font-medium text-slate-500">{o.catatan}</p>
+        <div className="grid grid-cols-4 gap-2 rounded-2xl border-2 border-b-4 border-slate-200 border-b-slate-300 bg-white p-3">
+          {KANDIDAT.map((k) => (
+            <div key={k.no} className="flex flex-col items-center gap-1">
+              <Ikon3D nama={k.ikon} ukuran={56} />
+              <span className="text-[11px] font-extrabold text-slate-500">{k.no}</span>
             </div>
+          ))}
+        </div>
 
-            {/* Berdampingan, besar: untuk menilai warna. */}
-            <div className="grid grid-cols-4 gap-2 rounded-2xl border-2 border-b-4 border-slate-200 border-b-slate-300 bg-white p-3">
-              {o.ikon.map((n, i) => (
-                <div key={n} className="flex flex-col items-center gap-1">
-                  <Ikon3D nama={n} ukuran={64} />
-                  <span className="text-[11px] font-bold text-slate-500">{MENU[i].nama}</span>
-                </div>
-              ))}
+        <div className="space-y-3">
+          {KANDIDAT.map((k) => (
+            <div key={k.no}>
+              <p className="mb-1 text-xs font-bold text-slate-500">
+                {k.no}. {k.nama} — {k.catatan}
+              </p>
+              <KartuAplikasi nama="Materi" teks="Belajar konsep secara interaktif." href="#" satuBaris ikon={k.ikon} />
             </div>
-
-            {/* Di latar hero (biru Tera). */}
-            <div className="flex items-center justify-between rounded-2xl bg-tera p-4 text-white">
-              <span className="text-lg font-extrabold">Di latar hero</span>
-              <span className="flex gap-3">
-                {o.ikon.map((n) => (
-                  <Ikon3D key={n} nama={n} ukuran={44} />
-                ))}
-              </span>
-            </div>
-
-            {/* Seperti di beranda. */}
-            <div className="space-y-3">
-              {MENU.map((m, i) => (
-                <KartuAplikasi key={m.nama} nama={m.nama} teks={m.teks} href="#" satuBaris ikon={o.ikon[i]} />
-              ))}
-            </div>
-          </section>
-        ))}
+          ))}
+        </div>
       </main>
     </div>
   )

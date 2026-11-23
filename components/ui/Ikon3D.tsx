@@ -20,6 +20,16 @@ export type NamaIkon3D =
   | 'rocket-biru'
   | 'video-game'
   | 'play'
+  | 'layar'
+  | 'kartu-video'
+  | 'play-biru'
+  | 'play-kuning'
+  | 'clapper'
+  | 'clapper-bk'
+  | 'proyektor'
+  | 'proyektor-bk'
+  | 'tv'
+  | 'tv-bk'
   | 'trophy'
   | 'abacus'
   | 'open-book'
@@ -61,6 +71,9 @@ export const IKON_GOLONGAN: Record<GolonganMapel, NamaIkon3D> = {
   umum: 'graduation-cap',
 }
 
+/** Ikon yang digambar sendiri (SVG), bukan dari Fluent Emoji (PNG). */
+const IKON_SVG = new Set<NamaIkon3D>(['play', 'layar', 'kartu-video', 'play-biru', 'play-kuning'])
+
 export default function Ikon3D({
   nama,
   ukuran = 40,
@@ -72,7 +85,7 @@ export default function Ikon3D({
 }) {
   return (
     <Image
-      src={`/ikon/${nama}.${nama === 'play' ? 'svg' : 'png'}`}
+      src={`/ikon/${nama}.${IKON_SVG.has(nama) ? 'svg' : 'png'}`}
       alt=""
       width={ukuran}
       height={ukuran}
