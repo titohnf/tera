@@ -54,7 +54,7 @@ export default function KartuMisiHariIni({
   return (
     <div
       className="relative overflow-hidden rounded-2xl p-5 text-white"
-      style={{ background: g.dasar, boxShadow: `0 4px 0 ${g.tua}` }}
+      style={{ background: `linear-gradient(135deg, ${g.dasar} 0%, ${g.tua} 100%)`, boxShadow: `0 4px 0 ${g.tua}` }}
     >
       <Maskot ukuran={84} kelas="misi-melayang pointer-events-none absolute right-3 top-3" />
 
