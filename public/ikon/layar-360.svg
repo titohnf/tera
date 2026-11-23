@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <!-- Layar 360° (silinder) bergaya 3D Fluent, digambar sendiri. Langit di bibir atas dan di dinding belakang SATU bidang
-       (tanpa tepi terpisah); gunung satu nada dengan langit; dinding depan terbuka di tengah. Lebar dibuat setara ikon lain. -->
+       (tanpa tepi terpisah); gunung satu nada dengan langit; panel depan sempit supaya tidak menutupi isi layar. -->
   <defs>
     <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#0A4FD6"/><stop offset="0.5" stop-color="#2E7BFF"/><stop offset="1" stop-color="#0A5CF0"/>
     </linearGradient>
     <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A4FD6"/><stop offset="1" stop-color="#0A3FB5"/></linearGradient>
-    <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="196">
+    <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="42" x2="0" y2="196">
       <stop offset="0" stop-color="#EAF4FF"/><stop offset="0.5" stop-color="#BFDDFF"/><stop offset="1" stop-color="#8CC0FF"/>
     </linearGradient>
     <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="196">
@@ -16,23 +16,23 @@
       <stop offset="0" stop-color="#78B0FF"/><stop offset="1" stop-color="#5A9CFF"/>
     </linearGradient>
     <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
-    <clipPath id="dinding"><path d="M32 60 A96 20 0 0 0 224 60 L224 196 A96 20 0 0 0 32 196 Z"/></clipPath>
+    <clipPath id="dinding"><path d="M32 60 A96 18 0 0 0 224 60 L224 196 A96 18 0 0 0 32 196 Z"/></clipPath>
   </defs>
 
   <!-- tebing panel depan (sisi bawah) -->
-  <path d="M32 60 A96 20 0 0 0 76 76.8 L76 212.8 A96 20 0 0 1 32 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
-  <path d="M224 60 A96 20 0 0 1 180 76.8 L180 212.8 A96 20 0 0 0 224 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M32 60 A96 18 0 0 0 60 72.7 L60 208.7 A96 18 0 0 1 32 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M224 60 A96 18 0 0 1 196 72.7 L196 208.7 A96 18 0 0 0 224 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
 
   <!-- langit: bibir atas + dinding belakang, satu bidang -->
-  <path d="M32 60 A96 20 0 0 1 224 60 L224 196 A96 20 0 0 0 32 196 Z" fill="url(#langit)"/>
+  <path d="M32 60 A96 18 0 0 1 224 60 L224 196 A96 18 0 0 0 32 196 Z" fill="url(#langit)"/>
 
   <g clip-path="url(#dinding)">
-    <circle cx="110" cy="102" r="19" fill="url(#matahari)"/>
+    <circle cx="116" cy="102" r="19" fill="url(#matahari)"/>
     <path d="M36 192 L88 134 L114 160 L148 108 L222 192 Z" fill="url(#gunungBelakang)"/>
     <path d="M56 196 L108 152 L142 178 L182 144 L226 196 Z" fill="url(#gunungDepan)"/>
   </g>
 
-  <!-- panel depan -->
-  <path d="M32 60 A96 20 0 0 0 76 76.8 L76 212.8 A96 20 0 0 1 32 196 Z" fill="url(#panel)"/>
-  <path d="M224 60 A96 20 0 0 1 180 76.8 L180 212.8 A96 20 0 0 0 224 196 Z" fill="url(#panel)"/>
+  <!-- panel depan (sempit) -->
+  <path d="M32 60 A96 18 0 0 0 60 72.7 L60 208.7 A96 18 0 0 1 32 196 Z" fill="url(#panel)"/>
+  <path d="M224 60 A96 18 0 0 1 196 72.7 L196 208.7 A96 18 0 0 0 224 196 Z" fill="url(#panel)"/>
 </svg>
