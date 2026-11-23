@@ -39,7 +39,7 @@ export default async function BerandaMandiri() {
         keterangan={produk.sora ? undefined : 'Belum aktif'}
         teks={
           produk.sora
-            ? 'Naik level topik demi topik dan kumpulkan bintangnya.'
+            ? 'Naik level topik demi topik, kumpulkan bintangnya.'
             : 'Aktifkan langganan untuk membuka Misi.'
         }
         href={produk.sora ? '/belajar/misi' : '/mandiri/langganan'}
@@ -66,7 +66,7 @@ export default async function BerandaMandiri() {
           yang baru mencoba; dua kartu lain tetap mengikuti hak pakai. */}
       <KartuAplikasi
         nama="Try Out"
-        teks="Uji kemampuanmu dengan try out TKA dan lihat hasilnya."
+        teks="Uji kemampuanmu lewat try out TKA, lalu lihat skornya."
         href="/mandiri/tryout"
         warna="bg-violet-600 text-white"
         ikon={IKON_TRYOUT}

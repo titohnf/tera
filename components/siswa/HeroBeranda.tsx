@@ -36,7 +36,7 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
   } else {
     const k = isi.kemajuan
     judul = k && k.tuntas > 0 ? 'Lanjutkan Misimu' : 'Mulai Misi pertamamu'
-    baris = k ? `${k.tuntas} dari ${k.total} topik Matematika tuntas` : 'Naik level topik demi topik dan kumpulkan bintangnya.'
+    baris = k ? `${k.tuntas} dari ${k.total} topik Matematika tuntas` : 'Naik level topik demi topik, kumpulkan bintangnya.'
     persen = k && k.total > 0 ? Math.round((k.tuntas / k.total) * 100) : null
     href = isi.href
     tombol = k && k.tuntas > 0 ? 'Lanjut Misi' : 'Mulai Misi'

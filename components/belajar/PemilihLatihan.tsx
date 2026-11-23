@@ -616,12 +616,13 @@ export default function PemilihLatihan({
     const sedang = memuat === m.subject_id
 
     const ikon = sedang ? (
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-        <Pemutar className="h-6 w-6 text-blue-600" />
+      <span className={`flex shrink-0 items-center justify-center ${tegak ? 'h-16 w-16' : 'h-14 w-14'}`}>
+        <Pemutar className="h-7 w-7 text-blue-600" />
       </span>
     ) : (
       <IkonMapel
         nama={m.subject_name}
+        size={tegak ? 64 : 56}
         persen={dikerjakan == null ? null : (dikerjakan / angka.question_count) * 100}
       />
     )
@@ -714,7 +715,7 @@ export default function PemilihLatihan({
         <Pencarian
           nilai={cariMapel}
           ubah={setCariMapel}
-          petunjuk="Cari mapel"
+          petunjuk="Mau latihan apa? Cari mapelnya"
         />
 
         {/* Selagi ada yang dicari, kedua segmen menyingkir. Katalog yang tetap
@@ -723,7 +724,7 @@ export default function PemilihLatihan({
         {kata ? (
           cocok.length === 0 ? (
             <p className="rounded-xl bg-white p-4 text-sm text-gray-500 shadow-kartu">
-              Tidak ada mapel bernama “{cariMapel.trim()}”.
+              Belum ada mapel “{cariMapel.trim()}”. Coba kata lain.
             </p>
           ) : (
             <div className="space-y-2 pt-1">
@@ -741,7 +742,7 @@ export default function PemilihLatihan({
                     yang di atas; kalimatnya mengatakannya langsung, dan nomornya
                     jadi keterangan di ujung barisnya. */}
                 <div className="flex items-baseline justify-between gap-3 pt-4 pb-1">
-                  <p className="font-semibold tracking-tight text-gray-900">Tersedia di Kelasmu</p>
+                  <p className="font-semibold tracking-tight text-gray-900">Mapel kelasmu</p>
                   <p className="shrink-0 text-xs text-gray-500">{labelKelas}</p>
                 </div>
                 {diKelas.map(m => kartuMapel(m, m.kelas!, 'kelas'))}
@@ -754,7 +755,7 @@ export default function PemilihLatihan({
                   sedang dibedakan dari apa pun. */}
               {diKelas.length > 0 && (
                 <p className="pt-4 pb-2 font-semibold tracking-tight text-gray-900">
-                  Dari Seluruh Kelas
+                  Mapel kelas lain
                 </p>
               )}
               {/* Dua kolom: katalog utuh yang berbaris satu-satu jadi gulungan

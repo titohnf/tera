@@ -89,7 +89,7 @@ export default function DaftarTryOut({
   }))
 
   return paket.length === 0 ? (
-    <p className="rounded-xl bg-white p-5 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">Belum ada try out yang dibuka.</p>
+    <p className="rounded-xl bg-white p-5 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">Belum ada try out. Nanti muncul di sini begitu dibuka.</p>
   ) : (
     <DaftarBerjadwal paket={item} petunjukMasuk={petunjukMasuk} sekarangServer={sekarang} lewatiJadwal={lewatiJadwal} />
   )

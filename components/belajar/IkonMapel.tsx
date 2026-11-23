@@ -148,7 +148,7 @@ export default function IkonMapel({
         className={`flex items-center justify-center rounded-full ${WARNA[golongan]}`}
         style={{ width: dalam, height: dalam }}
       >
-        <Ikon size={Math.round(dalam * 0.55)} strokeWidth={1.75} />
+        <Ikon size={Math.round(dalam * 0.55)} strokeWidth={2.25} />
       </span>
     </span>
   )

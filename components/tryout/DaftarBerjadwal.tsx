@@ -137,9 +137,9 @@ export default function DaftarBerjadwal({
 
       {isi.length === 0 ? (
         <p className="rounded-xl bg-white p-5 text-sm text-gray-500 shadow ring-1 ring-gray-900/5">
-          {aktif === 'hari-ini' && 'Tidak ada try out hari ini.'}
-          {aktif === 'lewat' && 'Belum ada try out yang sudah lewat.'}
-          {aktif === 'akan-datang' && 'Belum ada try out yang akan datang.'}
+          {aktif === 'hari-ini' && 'Hari ini belum ada try out. Cek tab lain ya.'}
+          {aktif === 'lewat' && 'Belum ada try out yang lewat.'}
+          {aktif === 'akan-datang' && 'Belum ada jadwal try out berikutnya.'}
         </p>
       ) : (
         <div className="space-y-2.5">

@@ -43,10 +43,10 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
       <HeroBeranda isi={hero} />
 
       <div className="space-y-3">
-        <KartuAplikasi nama="Latihan Soal" teks="Berlatih soal per topik, lengkap dengan pembahasannya." href={`/belajar${q}`} warna="bg-tera text-white" ikon={IKON_SORA} />
-        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik dan kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-tosca text-white" ikon={IKON_MISI} />
+        <KartuAplikasi nama="Latihan Soal" teks="Pilih mapel, kerjakan soal, langsung lihat pembahasannya." href={`/belajar${q}`} warna="bg-tera text-white" ikon={IKON_SORA} />
+        <KartuAplikasi nama="Misi" teks="Naik level topik demi topik, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} warna="bg-tosca text-white" ikon={IKON_MISI} />
         <KartuAplikasi nama="Materi" teks="Pelajari konsep lewat halaman interaktif yang seru." href={`/siswa/${studentId}/materi`} warna="bg-orange-500 text-white" ikon={IKON_MATERI} />
-        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu dengan try out TKA dan lihat hasilnya.'} href={hrefTryOut} warna="bg-violet-600 text-white" ikon={IKON_TRYOUT} />
+        <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA, lalu lihat skornya.'} href={hrefTryOut} warna="bg-violet-600 text-white" ikon={IKON_TRYOUT} />
       </div>
     </div>
   )
