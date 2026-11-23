@@ -4,6 +4,7 @@ import { langkahSeluruhTopik, paketRingkasSeluruhTopik, type LangkahTopik, type 
 import { MAPEL_AWAL, mapelPerTopik } from '@/lib/belajar/mapel-peta'
 import { pilihTopikSekarang } from '@/lib/belajar/topik-sekarang'
 import { todayWib } from '@/lib/daily-message'
+import { materiInteraktif } from '@/lib/materi-interaktif'
 
 export interface MisiAktif {
   /** Topik giliran sekarang (aturan yang sama dengan peta Misi). */
@@ -15,6 +16,8 @@ export interface MisiAktif {
   kelas: number | null
   hariIni: string
   kemajuan: { tuntas: number; total: number }
+  /** Topik ini punya materi interaktif: kartu menampilkan tombol "Lihat materi". */
+  adaMateri: boolean
 }
 
 /**
@@ -50,6 +53,7 @@ export async function misiAktif(studentId: string, learnerId: string): Promise<M
       kelas,
       hariIni: todayWib(),
       kemajuan: { tuntas: topik.filter((t) => t.status === 'tuntas').length, total: topik.length },
+      adaMateri: materiInteraktif(sekarang.id) != null,
     }
   } catch {
     return null
