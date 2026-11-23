@@ -9,6 +9,7 @@ import { Maskot } from './Gambar'
 import { gayaTema } from './gaya'
 import { teksLangkah, ringkasKartu } from './bahan'
 import { useMulaiLangkah } from './useMulaiLangkah'
+import { PitaKemajuan } from '@/components/ui/desain'
 
 /**
  * Kartu besar di puncak: satu misi, satu tombol.
@@ -30,6 +31,7 @@ export default function KartuMisiHariIni({
   anak,
   hariIni,
   adaMateri = false,
+  progres,
 }: {
   topik: TopikPeta
   langkah?: LangkahTopik
@@ -38,6 +40,8 @@ export default function KartuMisiHariIni({
   hariIni: string
   /** Topik ini punya materi interaktif: tombol "Lihat materi" tampil di atas tombol mulai. */
   adaMateri?: boolean
+  /** Kemajuan Misi (topik tuntas dari seluruhnya), hanya dipakai beranda siswa; halaman Misi tidak mengirimnya. */
+  progres?: { tuntas: number; total: number }
 }) {
   const g = gayaTema(t.elemen)
   const { galat, sibuk, mulai } = useMulaiLangkah(anak)
@@ -72,6 +76,19 @@ export default function KartuMisiHariIni({
 
         <h2 className="mt-3 max-w-[72%] text-2xl font-extrabold leading-tight">{t.nama}</h2>
         {kabar && <p className="mt-1 text-sm font-semibold text-white/80">{kabar}</p>}
+
+        {progres && progres.total > 0 && (
+          <div className="mt-4">
+            <p className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-extrabold tabular-nums leading-none">{progres.tuntas}</span>
+              <span className="text-base font-bold tabular-nums text-white/70">/ {progres.total}</span>
+              <span className="ml-1 text-sm font-semibold text-white/85">topik tuntas</span>
+            </p>
+            <div className="mt-2">
+              <PitaKemajuan persen={Math.max(Math.round((progres.tuntas / progres.total) * 100), progres.tuntas > 0 ? 5 : 0)} pada="warna" />
+            </div>
+          </div>
+        )}
 
         {galat && (
           <p className="mt-3 rounded-xl bg-white/95 p-3 text-sm font-semibold text-amber-800">

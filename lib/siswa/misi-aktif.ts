@@ -11,9 +11,6 @@ export interface MisiAktif {
   sekarang: TopikPeta
   langkah: LangkahTopik | undefined
   paket: PaketRingkas[]
-  /** Kode dan nama seluruh topik Matematika, untuk keterangan prasyarat di lembar topik. */
-  namaTopik: [string, string][]
-  kelas: number | null
   hariIni: string
   kemajuan: { tuntas: number; total: number }
   /** Topik ini punya materi interaktif: kartu menampilkan tombol "Lihat materi". */
@@ -49,8 +46,6 @@ export async function misiAktif(studentId: string, learnerId: string): Promise<M
       sekarang,
       langkah: langkahSekarang,
       paket: paket.filter((p) => p.topikId === sekarang.id),
-      namaTopik: topik.map((t) => [t.id, t.nama]),
-      kelas,
       hariIni: todayWib(),
       kemajuan: { tuntas: topik.filter((t) => t.status === 'tuntas').length, total: topik.length },
       adaMateri: materiInteraktif(sekarang.id) != null,

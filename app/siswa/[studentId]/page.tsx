@@ -2,7 +2,7 @@ import { anakOrRedirect } from '@/lib/keluarga'
 import HeroBeranda, { type IsiHero } from '@/components/siswa/HeroBeranda'
 import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
 import { misiAktif } from '@/lib/siswa/misi-aktif'
-import HeroMisiAktif from '@/components/siswa/HeroMisiAktif'
+import KartuMisiHariIni from '@/components/belajar/misi/KartuMisiHariIni'
 import { tryOutTerdekat } from '@/lib/tryout/terdekat'
 import KartuAplikasi from '@/components/apps/KartuAplikasi'
 
@@ -41,7 +41,19 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
         <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-900">Halo, {anak.nama_pendek}</h1>
       </div>
 
-      {hero.jenis === 'misi' && misi ? <HeroMisiAktif data={misi} anak={studentId} /> : <HeroBeranda isi={hero} />}
+      {hero.jenis === 'misi' && misi ? (
+        <KartuMisiHariIni
+          topik={misi.sekarang}
+          langkah={misi.langkah}
+          paket={misi.paket}
+          anak={studentId}
+          hariIni={misi.hariIni}
+          adaMateri={misi.adaMateri}
+          progres={misi.kemajuan}
+        />
+      ) : (
+        <HeroBeranda isi={hero} />
+      )}
 
       <div className="space-y-3">
         <KartuAplikasi nama="Latihan Soal" teks="Soal per topik dengan pembahasan." href={`/belajar${q}`} satuBaris ikon="memo-bk" />
