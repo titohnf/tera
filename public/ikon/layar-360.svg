@@ -1,38 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 26 208 208" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 16 208 208" fill="none">
   <!-- Layar 360° (silinder) bergaya 3D Fluent, digambar sendiri. Langit di bibir atas dan di dinding belakang SATU bidang
-       (tanpa tepi terpisah); gunung satu nada dengan langit; panel depan sempit supaya tidak menutupi isi layar. -->
+       (tanpa tepi terpisah, dan tidak memudar ke putih supaya tetap terlihat di kartu putih); gunung satu nada dengan langit. -->
   <defs>
     <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#0A4FD6"/><stop offset="0.5" stop-color="#2E7BFF"/><stop offset="1" stop-color="#0A5CF0"/>
     </linearGradient>
     <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A4FD6"/><stop offset="1" stop-color="#0A3FB5"/></linearGradient>
-    <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="42" x2="0" y2="196">
-      <stop offset="0" stop-color="#EAF4FF"/><stop offset="0.5" stop-color="#BFDDFF"/><stop offset="1" stop-color="#8CC0FF"/>
+    <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="42" x2="0" y2="178">
+      <stop offset="0" stop-color="#A9D0FF"/><stop offset="0.5" stop-color="#8CBFFF"/><stop offset="1" stop-color="#6FAEFF"/>
     </linearGradient>
-    <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="196">
-      <stop offset="0" stop-color="#9CC9FF"/><stop offset="1" stop-color="#78B0FF"/>
+    <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="178">
+      <stop offset="0" stop-color="#6EACFF"/><stop offset="1" stop-color="#5399FF"/>
     </linearGradient>
-    <linearGradient id="gunungDepan" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="0" y2="196">
-      <stop offset="0" stop-color="#78B0FF"/><stop offset="1" stop-color="#5A9CFF"/>
+    <linearGradient id="gunungDepan" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="0" y2="178">
+      <stop offset="0" stop-color="#5399FF"/><stop offset="1" stop-color="#3F86F2"/>
     </linearGradient>
     <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
-    <clipPath id="dinding"><path d="M32 60 A96 18 0 0 0 224 60 L224 196 A96 18 0 0 0 32 196 Z"/></clipPath>
+    <clipPath id="dinding"><path d="M32 60 A96 18 0 0 0 224 60 L224 178 A96 18 0 0 0 32 178 Z"/></clipPath>
   </defs>
 
   <!-- tebing panel depan (sisi bawah) -->
-  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 210.1 A96 18 0 0 1 32 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
-  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 210.1 A96 18 0 0 0 224 196 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 192.1 A96 18 0 0 1 32 178 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
+  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 192.1 A96 18 0 0 0 224 178 Z" fill="url(#panelTebing)" transform="translate(0 5)"/>
 
   <!-- langit: bibir atas + dinding belakang, satu bidang -->
-  <path d="M32 60 A96 18 0 0 1 224 60 L224 196 A96 18 0 0 0 32 196 Z" fill="url(#langit)"/>
+  <path d="M32 60 A96 18 0 0 1 224 60 L224 178 A96 18 0 0 0 32 178 Z" fill="url(#langit)"/>
 
   <g clip-path="url(#dinding)">
     <circle cx="116" cy="102" r="19" fill="url(#matahari)"/>
-    <path d="M36 192 L88 134 L114 160 L148 108 L222 192 Z" fill="url(#gunungBelakang)"/>
-    <path d="M56 196 L108 152 L142 178 L182 144 L226 196 Z" fill="url(#gunungDepan)"/>
+    <path d="M36 174 L88 126 L114 150 L148 102 L222 174 Z" fill="url(#gunungBelakang)"/>
+    <path d="M56 178 L108 140 L142 162 L182 132 L226 178 Z" fill="url(#gunungDepan)"/>
   </g>
 
-  <!-- panel depan (sempit) -->
-  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 210.1 A96 18 0 0 1 32 196 Z" fill="url(#panel)"/>
-  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 210.1 A96 18 0 0 0 224 196 Z" fill="url(#panel)"/>
+  <!-- panel depan -->
+  <path d="M32 60 A96 18 0 0 0 68 74.1 L68 192.1 A96 18 0 0 1 32 178 Z" fill="url(#panel)"/>
+  <path d="M224 60 A96 18 0 0 1 188 74.1 L188 192.1 A96 18 0 0 0 224 178 Z" fill="url(#panel)"/>
 </svg>
