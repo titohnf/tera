@@ -27,7 +27,7 @@
   <path d="M10 66 A118 22 0 0 1 246 66 L246 190 A118 22 0 0 0 10 190 Z" fill="url(#langit)"/>
 
   <g clip-path="url(#dinding)">
-    <circle cx="104" cy="112" r="12" fill="url(#matahari)"/>
+    <circle cx="106" cy="116" r="19" fill="url(#matahari)"/>
     <path d="M18 184 L84 128 L114 156 L150 106 L238 184 Z" fill="url(#gunungBelakang)"/>
     <path d="M50 190 L110 146 L146 172 L190 138 L242 190 Z" fill="url(#gunungDepan)"/>
   </g>
