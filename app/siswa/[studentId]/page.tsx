@@ -45,8 +45,9 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
       <div className="space-y-3">
         <KartuAplikasi nama="Latihan Soal" teks="Soal per topik dengan pembahasan." href={`/belajar${q}`} satuBaris ikon="memo-bk" />
         <KartuAplikasi nama="Misi" teks="Naik level, kumpulkan bintangnya." href={`/siswa/${studentId}/misi`} satuBaris ikon="rocket-biru" />
-        <KartuAplikasi nama="Materi" teks="Belajar konsep secara interaktif." href={`/siswa/${studentId}/materi`} satuBaris ikon="video-game-bk" />
+        <KartuAplikasi nama="Materi" teks="Belajar konsep secara interaktif." href={`/siswa/${studentId}/materi`} satuBaris ikon="play" />
         <KartuAplikasi nama="Try Out" keterangan={tryOut?.label} teks={tryOut?.teks ?? 'Uji kemampuanmu lewat try out TKA.'} satuBaris href={hrefTryOut} ikon="trophy-bk" />
+        <KartuAplikasi nama="Game" keterangan="Segera hadir" teks="Belajar sambil bermain." href={null} terkunci satuBaris ikon="video-game-bk" />
       </div>
     </div>
   )

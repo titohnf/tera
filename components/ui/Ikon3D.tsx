@@ -19,6 +19,7 @@ export type NamaIkon3D =
   | 'rocket'
   | 'rocket-biru'
   | 'video-game'
+  | 'play'
   | 'trophy'
   | 'abacus'
   | 'open-book'
@@ -71,7 +72,7 @@ export default function Ikon3D({
 }) {
   return (
     <Image
-      src={`/ikon/${nama}.png`}
+      src={`/ikon/${nama}.${nama === 'play' ? 'svg' : 'png'}`}
       alt=""
       width={ukuran}
       height={ukuran}

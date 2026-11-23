@@ -32,12 +32,12 @@ export default async function BerandaUmum() {
         // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
         <>
           <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="rocket-biru" />
-          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="video-game-bk" />
+          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} terkunci ikon="play" />
         </>
       ) : (
         <>
           <KartuAplikasi nama="Misi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Misi." href="/umum/langganan" terkunci ikon="rocket-biru" />
-          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" terkunci ikon="video-game-bk" />
+          <KartuAplikasi nama="Materi" keterangan="Belum aktif" teks="Aktifkan langganan untuk membuka Materi." href="/umum/langganan" terkunci ikon="play" />
         </>
       )}
       <KartuAplikasi nama="Try Out" teks="Uji kemampuanmu lewat try out TKA." href="/umum/tryout" ikon="trophy-bk" />

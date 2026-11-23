@@ -11,12 +11,12 @@ const OPSI: { judul: string; catatan: string; ikon: [NamaIkon3D, NamaIkon3D, Nam
   {
     judul: 'Opsi 1 — Warna asli',
     catatan: 'Ikon Fluent Emoji apa adanya: memo oranye, roket merah muda, controller ungu, piala emas.',
-    ikon: ['memo', 'rocket', 'video-game', 'trophy'],
+    ikon: ['memo', 'rocket', 'play', 'trophy'],
   },
   {
     judul: 'Opsi 2 — Custom biru + kuning',
     catatan: 'Memo, controller, dan piala diwarnai ke satu tangga biru dan kuning. Roket tetap asli, hanya merahnya jadi biru.',
-    ikon: ['memo-bk', 'rocket-biru', 'video-game-bk', 'trophy-bk'],
+    ikon: ['memo-bk', 'rocket-biru', 'play', 'trophy-bk'],
   },
 ]
 

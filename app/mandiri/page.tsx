@@ -59,7 +59,7 @@ export default async function BerandaMandiri() {
         }
         href={produk.sora ? '/mandiri/materi' : '/mandiri/langganan'}
         terkunci={!produk.sora}
-        ikon="video-game-bk"
+        ikon="play"
       />
 
       {/* Try Out: terbuka untuk semua akun, berlangganan atau tidak. Pintu bagi

@@ -98,7 +98,18 @@ def merah_ke_biru(src, dst):
             if a == 0:
                 continue
             h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
-            if s < 0.24 or not (h < 25 / 360 or h > 296 / 360):
+            rosa = h < 25 / 360 or h > 296 / 360
+            ungu_pucat = h > 240 / 360 and s < 0.24
+            if not (rosa or ungu_pucat):
+                continue
+            if s < 0.24:
+                # Semburat merah muda tipis di bodi putih -> biru muda tipis (bayangan bodi tetap terbaca).
+                # Transisi halus (bukan ambang tajam) supaya tidak berbercak: dasar tipis + naik mengikuti kejenuhan.
+                u = max(0.0, min(1.0, (s - 0.02) / 0.18))
+                w = 0.22 + 0.63 * (u * u * (3 - 2 * u))
+                muda = tangga(BIRU, 0.9)
+                dasar = tuple(255 + (muda[i] - 255) * w for i in range(3))
+                px[x, y] = tuple(round(c * min(1.0, v + 0.05)) for c in dasar) + (a,)
                 continue
             warna = tangga(BIRU, bentang(v, lo, hi))
             sn = min(1.0, s / 0.35) ** 0.7
