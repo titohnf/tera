@@ -18,6 +18,8 @@ import { temaTopik, type TemaTopik } from '@/lib/belajar/tema-topik'
  * latar lembut, `teks` untuk huruf di atas `muda`.
  */
 export interface GayaTema {
+  /** Warna tema yang hidup (belum dituakan untuk kontras): hanya untuk pojok gradasi yang tidak memuat teks. */
+  terang: string
   dasar: string
   tua: string
   muda: string
@@ -25,11 +27,11 @@ export interface GayaTema {
 }
 
 const GAYA: Record<TemaTopik, GayaTema> = {
-  bilangan: { dasar: '#2F6FEA', tua: '#1E40AF', muda: '#DBEAFE', teks: '#1E3A8A' },
-  aljabar: { dasar: '#7C3AED', tua: '#5B21B6', muda: '#EDE9FE', teks: '#4C1D95' },
-  geometri_pengukuran: { dasar: '#C94A0A', tua: '#9A3412', muda: '#FFEDD5', teks: '#7C2D12' },
-  data_peluang: { dasar: '#DB2777', tua: '#9D174D', muda: '#FCE7F3', teks: '#831843' },
-  lainnya: { dasar: '#0E8074', tua: '#115E59', muda: '#CCFBF1', teks: '#134E4A' },
+  bilangan: { terang: '#4F8FFF', dasar: '#2F6FEA', tua: '#1E40AF', muda: '#DBEAFE', teks: '#1E3A8A' },
+  aljabar: { terang: '#9B6FFF', dasar: '#7C3AED', tua: '#5B21B6', muda: '#EDE9FE', teks: '#4C1D95' },
+  geometri_pengukuran: { terang: '#FF8A2B', dasar: '#C94A0A', tua: '#9A3412', muda: '#FFEDD5', teks: '#7C2D12' },
+  data_peluang: { terang: '#FF5AA6', dasar: '#DB2777', tua: '#9D174D', muda: '#FCE7F3', teks: '#831843' },
+  lainnya: { terang: '#22CDB8', dasar: '#0E8074', tua: '#115E59', muda: '#CCFBF1', teks: '#134E4A' },
 }
 
 export const EMAS = '#FBBF24'
