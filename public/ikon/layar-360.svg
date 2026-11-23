@@ -7,13 +7,13 @@
     </linearGradient>
     <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A4FD6"/><stop offset="1" stop-color="#0A3FB5"/></linearGradient>
     <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="42" x2="0" y2="178">
-      <stop offset="0" stop-color="#A9D0FF"/><stop offset="0.5" stop-color="#8CBFFF"/><stop offset="1" stop-color="#6FAEFF"/>
+      <stop offset="0" stop-color="#C6E0FF"/><stop offset="0.5" stop-color="#AED3FF"/><stop offset="1" stop-color="#95C5FF"/>
     </linearGradient>
     <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="178">
-      <stop offset="0" stop-color="#6EACFF"/><stop offset="1" stop-color="#5399FF"/>
+      <stop offset="0" stop-color="#90C2FF"/><stop offset="1" stop-color="#7AB3FF"/>
     </linearGradient>
     <linearGradient id="gunungDepan" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="0" y2="178">
-      <stop offset="0" stop-color="#5399FF"/><stop offset="1" stop-color="#3F86F2"/>
+      <stop offset="0" stop-color="#7AB3FF"/><stop offset="1" stop-color="#62A2FF"/>
     </linearGradient>
     <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
     <clipPath id="dinding"><path d="M32 60 A96 18 0 0 0 224 60 L224 178 A96 18 0 0 0 32 178 Z"/></clipPath>
