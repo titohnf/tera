@@ -1,3 +1,5 @@
+import { headers } from 'next/headers'
+import { hostUntuk } from '@/lib/tampilan'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { tautanWaAdmin } from '@/lib/kontak'
 import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_TRYOUT } from '@/components/apps/KartuAplikasi'
@@ -11,6 +13,13 @@ import KartuAplikasi, { IKON_MATERI, IKON_MISI, IKON_TRYOUT } from '@/components
 export default async function BerandaUmum() {
   const { namaPendek, punyaAkun, studentId, kode, nama } = await umumContext()
   await alihkanKeTampilanSiswa(studentId, (id) => `/siswa/${id}`)
+  // Misi dan Materi dibuka dengan email di alamat app (login kode hanya di alamat sora), jadi tautannya
+  // dihitung dari hostname: sora. -> app., sora-bimbeltera.vercel.app -> bimbeltera.vercel.app.
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host')
+  const hostApp = hostUntuk(host, 'app')
+  const protokol = h.get('x-forwarded-proto') ?? (host?.includes('localhost') ? 'http' : 'https')
+  const hrefApp = hostApp ? `${protokol}://${hostApp}/login` : '/login'
   return (
     <div className="space-y-4">
       <div>
@@ -22,8 +31,8 @@ export default async function BerandaUmum() {
         // Siswa bimbel yang masuk dengan kode: kartunya sama, tetapi mereka sudah berlangganan, jadi
         // yang tertutup bukan soal langganan. Kodenya hanya membuka Try Out; sisanya lewat email.
         <>
-          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
-          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka dengan email dan passwordmu." href="/login" warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
+          <KartuAplikasi nama="Misi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} warna="bg-slate-100 text-slate-400" ikon={IKON_MISI} />
+          <KartuAplikasi nama="Materi" keterangan="Masuk dengan email" teks="Buka di alamat app dengan email dan passwordmu." href={hrefApp} warna="bg-slate-100 text-slate-400" ikon={IKON_MATERI} />
         </>
       ) : (
         <>
