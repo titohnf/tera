@@ -114,7 +114,7 @@ export default function DaftarBerjadwal({
             role="tab"
             aria-selected={aktif === t.kunci}
             onClick={() => setAktif(t.kunci)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${aktif === t.kunci ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'}`}
+            className={`rounded-full px-4 py-1.5 text-sm font-extrabold ${aktif === t.kunci ? 'bg-blue-600 text-white' : 'border-2 border-slate-200 bg-white text-slate-700'}`}
           >
             {t.label}
             <span className={`ml-1.5 text-xs ${aktif === t.kunci ? 'text-blue-100' : 'text-gray-400'}`}>{bagi[t.kunci].length}</span>
@@ -156,7 +156,7 @@ export default function DaftarBerjadwal({
                   </div>
                   <div className="min-w-[12rem] flex-1 px-4 py-3">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.kelas}`}>{st.teks}</span>
-                    <p className="mt-1.5 text-[15px] font-semibold leading-snug tracking-tight text-gray-900">{p.judul}</p>
+                    <p className="mt-1.5 text-base font-extrabold leading-snug tracking-tight text-slate-900">{p.judul}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Kapsul>
                         {p.jenjang}
@@ -177,15 +177,15 @@ export default function DaftarBerjadwal({
                     <div className="flex w-full items-stretch border-t border-gray-100 sm:w-auto sm:border-l sm:border-t-0">
                       {p.keadaan === 'selesai' && p.nilai != null && (
                         <div className="flex flex-1 flex-col items-center justify-center px-5 py-3 text-center sm:flex-none">
-                          <p className="text-xs text-gray-500">Skor akhir</p>
-                          <p className="text-2xl font-semibold tabular-nums leading-tight text-gray-900">{fmtNilai(p.nilai as number)}</p>
+                          <p className="text-xs font-bold text-slate-500">Skor akhir</p>
+                          <p className="text-4xl font-extrabold tabular-nums leading-tight text-slate-900">{fmtNilai(p.nilai as number)}</p>
                         </div>
                       )}
                       <div className={`flex flex-1 items-center justify-center px-5 py-3 sm:flex-none ${p.keadaan === 'selesai' && p.nilai != null ? 'border-l border-gray-100' : ''}`}>
                         {p.keadaan === 'belum' ? (
                           <TombolMulai href={p.hrefMulai} bukaPada={p.bukaPada} tutupPada={p.tutupPada} sekarangServer={sekarangServer} lewati={lewatiJadwal} />
                         ) : (
-                          <Link href={p.hrefHasil} className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+                          <Link href={p.hrefHasil} className="whitespace-nowrap rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white">
                             Cek Pembahasan
                           </Link>
                         )}

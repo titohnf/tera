@@ -32,7 +32,7 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
   return (
     <nav
       aria-label="Navigasi utama"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex h-16 max-w-5xl">
         {tab.map(t => (
@@ -40,8 +40,8 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
             <Link
               href={t.href}
               aria-current={t.aktif ? 'page' : undefined}
-              className={`flex h-full flex-col items-center justify-center gap-0.5 text-xs font-medium transition ${
-                t.aktif ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'
+              className={`mx-3 my-1.5 flex h-[calc(100%-0.75rem)] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 text-xs font-extrabold transition ${
+                t.aktif ? 'border-tera/30 bg-blue-50 text-tera' : 'border-transparent text-slate-500 hover:text-slate-900'
               }`}
             >
               <svg

@@ -252,3 +252,36 @@ button:active > .relative > .misi-simpul, button:active .misi-simpul { transform
   transform: translateY(3px);
   box-shadow: 0 1px 0 var(--tebing, #0048b8);
 }
+
+/* Bermain di semua layar (docs/desain-siswa.md): pola kartu lama dari seluruh permukaan siswa
+   diberi garis 2px dan tepi bawah 4px, sekali di sini. Yang bisa diketuk turun saat ditekan. */
+.tampilan-siswa :is(.shadow-kartu, [class*="ring-gray-900/5"]) {
+  box-shadow: none;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #cbd5e1;
+  border-radius: 1rem;
+}
+.tampilan-siswa :is(a, button):is(.shadow-kartu, [class*="ring-gray-900/5"]) {
+  transition: transform 80ms ease, border-bottom-width 80ms ease;
+}
+.tampilan-siswa :is(a, button):is(.shadow-kartu, [class*="ring-gray-900/5"]):active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+/* Tombol biru: bertebing. */
+.tampilan-siswa :is(a, button).bg-blue-600 {
+  box-shadow: 0 4px 0 #1d4ed8;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.tampilan-siswa :is(a, button).bg-blue-600:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1d4ed8;
+}
+.tampilan-siswa :is(h1, h2) {
+  font-weight: 800;
+}
+/* Huruf satu anak tangga lebih tebal di permukaan siswa. */
+.tampilan-siswa .font-medium { font-weight: 600; }
+.tampilan-siswa .font-semibold { font-weight: 700; }
+.tampilan-siswa .font-bold { font-weight: 800; }

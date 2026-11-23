@@ -29,8 +29,8 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
       {/* MATEMATIKA — terbuka */}
       <Link
         href={alamat('Matematika')}
-        className="block rounded-2xl p-5 text-white"
-        style={{ background: warna.dasar }}
+        className="tebing block rounded-2xl p-5 text-white"
+        style={{ background: warna.dasar, ['--tebing' as string]: warna.tua } as React.CSSProperties}
       >
         <div className="flex items-center gap-3">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -64,7 +64,7 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
       </Link>
 
       {/* BAHASA INDONESIA — segera hadir */}
-      <div aria-disabled className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-200/60 p-5 text-slate-600">
+      <div aria-disabled className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-slate-300 bg-slate-200/60 p-5 text-slate-600">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70">
           <BookOpen className="h-7 w-7" strokeWidth={2.25} aria-hidden />
         </span>

@@ -4,10 +4,11 @@ Berlaku untuk seluruh permukaan siswa: `/siswa`, `/mandiri`, `/umum`, `/belajar`
 Tujuannya satu: layar-layarnya tampak satu aplikasi, dan setiap pilihan visual
 membawa arti — bukan hiasan.
 
-## Pilihan arah: berlapis
-- **Bermain** (tombol bertebing, perayaan kecil, bintang): Misi dan Materi.
-- **Tenang tapi tegas** (datar, angka besar): Latihan Soal, Try Out, Profil.
-- Keduanya memakai komponen dasar, warna, dan huruf yang sama.
+## Arah: bermain di semua layar
+Seluruh permukaan siswa terasa seperti permainan, bukan dasbor: benda yang bisa
+diketuk terlihat bisa ditekan (bertebing), huruf tebal dan besar, warna jenuh
+dan bermakna. Tidak ada layar "serius yang datar" — Try Out, Latihan Soal, dan
+Profil memakai bahasa yang sama dengan Misi.
 
 ## Warna — setiap warna berarti satu hal
 | Peran | Nilai | Dipakai untuk |
@@ -27,11 +28,16 @@ Plus Jakarta Sans (bobot 500–800), satu keluarga. Angka (persen, skor, jumlah
 soal) memakai `tabular-nums` dan ukuran besar — angkalah yang jadi bintangnya.
 
 ## Bentuk dan rasa tekan
-- Kartu: `rounded-2xl`, putih, garis `slate-200`, tanpa bayangan tebal, tanpa
-  gradien, tanpa lingkaran hiasan. Ditekan: turun 1px dan sedikit abu.
-- **Tebing bawah hanya untuk aksi utama** (`.tebing`): tombol seperti benda
-  yang bisa ditekan. Kartu biasa tidak bertebing.
+- **Semua yang bisa diketuk bertebing**: kartu bergaris 2px dengan tepi bawah
+  4px (`border-b-4`), tombol utama berwarna dengan tebing lebih tua. Ditekan:
+  turun 2–3px dan tebingnya menipis. Kartu yang hanya memuat info (tidak bisa
+  diketuk) tetap datar.
 - Satu skala sudut: kartu `2xl`, blok ikon `xl`, pil `full`.
+- Huruf judul bobot 800. Angka besar.
+- Aturan ini diterapkan SEKALI di `.tampilan-siswa` (`app/globals.css`) untuk
+  pola kartu lama (`shadow-kartu`, `ring-gray-900/5`) dan tombol biru
+  (`bg-blue-600`), supaya seluruh layar mengikutinya tanpa menyentuh tiap
+  komponen. Komponen baru memakai `KARTU` dan `TombolTebing`.
 
 ## Isi
 Dekorasi diganti informasi: persen, skor, tanggal, nama topik. Satu elemen

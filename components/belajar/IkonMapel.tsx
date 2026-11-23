@@ -59,22 +59,22 @@ export const IKON: Record<GolonganMapel, LucideIcon> = {
 }
 
 export const WARNA: Record<GolonganMapel, string> = {
-  bahasa: 'bg-sky-50 text-sky-600',
-  matematika: 'bg-indigo-50 text-indigo-600',
-  sains: 'bg-teal-50 text-teal-600',
-  kimia: 'bg-violet-50 text-violet-600',
-  fisika: 'bg-cyan-50 text-cyan-600',
-  biologi: 'bg-emerald-50 text-emerald-600',
-  bumi: 'bg-green-50 text-green-600',
-  ipas: 'bg-lime-50 text-lime-600',
-  ekonomi: 'bg-amber-50 text-amber-600',
-  sejarah: 'bg-orange-50 text-orange-600',
-  sosial: 'bg-rose-50 text-rose-600',
-  agama: 'bg-stone-100 text-stone-600',
-  seni: 'bg-fuchsia-50 text-fuchsia-600',
-  olahraga: 'bg-red-50 text-red-600',
-  komputer: 'bg-slate-100 text-slate-600',
-  umum: 'bg-slate-100 text-slate-500',
+  bahasa: 'bg-sky-100 text-sky-700',
+  matematika: 'bg-indigo-100 text-indigo-700',
+  sains: 'bg-teal-100 text-teal-700',
+  kimia: 'bg-violet-100 text-violet-700',
+  fisika: 'bg-cyan-100 text-cyan-700',
+  biologi: 'bg-emerald-100 text-emerald-700',
+  bumi: 'bg-green-100 text-green-700',
+  ipas: 'bg-lime-100 text-lime-700',
+  ekonomi: 'bg-amber-100 text-amber-700',
+  sejarah: 'bg-orange-100 text-orange-700',
+  sosial: 'bg-rose-100 text-rose-700',
+  agama: 'bg-stone-100 text-stone-700',
+  seni: 'bg-fuchsia-100 text-fuchsia-700',
+  olahraga: 'bg-red-100 text-red-700',
+  komputer: 'bg-slate-100 text-slate-700',
+  umum: 'bg-slate-100 text-slate-700',
 }
 
 export default function IkonMapel({

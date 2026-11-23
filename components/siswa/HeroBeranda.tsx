@@ -43,7 +43,7 @@ export default function HeroBeranda({ isi }: { isi: IsiHero }) {
   }
 
   return (
-    <Link href={href} className="block rounded-2xl bg-tera p-5 text-white">
+    <Link href={href} className="tebing block rounded-2xl bg-tera p-5 text-white">
       <h2 className="text-2xl font-extrabold leading-tight tracking-tight">{judul}</h2>
       <p className="mt-1 text-sm font-medium leading-snug text-white/85">{baris}</p>
       {persen !== null && (
