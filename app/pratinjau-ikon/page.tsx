@@ -19,7 +19,7 @@ const KANDIDAT: { no: number; nama: string; catatan: string; ikon: NamaIkon3D }[
   { no: 9, nama: 'Proyektor film (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'proyektor' },
   { no: 10, nama: 'Televisi (biru + kuning)', catatan: 'Fluent Emoji, diwarnai.', ikon: 'tv-bk' },
   { no: 11, nama: 'Televisi (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'tv' },
-  { no: 12, nama: 'Layar melengkung', catatan: 'Layar lebar yang melengkung dengan play putih, bodi putih bertebing.', ikon: 'layar-lengkung' },
+  { no: 12, nama: 'Layar bioskop', catatan: 'Layar cekung: ujung kiri-kanan lebih tinggi, play putih, kursi bioskop di depan.', ikon: 'layar-bioskop' },
 ]
 
 export default function PratinjauIkon() {
