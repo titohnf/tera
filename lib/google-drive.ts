@@ -1,4 +1,5 @@
-import { google } from 'googleapis'
+import { auth as authDrive, drive } from '@googleapis/drive'
+import { forms } from '@googleapis/forms'
 
 /**
  * Kunci privat service account, dirapikan dari bentuk apa pun yang tersimpan.
@@ -71,11 +72,11 @@ function buatAuth(scopes: string[]) {
       'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY tidak berbentuk PEM — periksa tanda kutip pembungkus atau baris yang terpotong',
     )
   }
-  return new google.auth.JWT({ email, key, scopes })
+  return new authDrive.JWT({ email, key, scopes })
 }
 
 export function getDriveClient() {
-  return google.drive({ version: 'v3', auth: buatAuth(['https://www.googleapis.com/auth/drive']) })
+  return drive({ version: 'v3', auth: buatAuth(['https://www.googleapis.com/auth/drive']) })
 }
 
 /**
@@ -84,7 +85,7 @@ export function getDriveClient() {
  * aktif di project Google Cloud dan form yang dibagikan ke service account.
  */
 export function getFormsClient() {
-  return google.forms({
+  return forms({
     version: 'v1',
     auth: buatAuth([
       'https://www.googleapis.com/auth/drive.readonly',

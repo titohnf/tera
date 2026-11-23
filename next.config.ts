@@ -66,6 +66,9 @@ const nextConfig: NextConfig = {
     ]
   },
   experimental: {
+    // Cache disk Turbopack untuk dev dimatikan: di laptop 8 GB ia membengkak sampai 17 GB
+    // (sejak Juli, tak pernah dibersihkan), memenuhi disk, dan memperlambat semuanya.
+    turbopackFileSystemCacheForDev: false,
     staleTimes: {
       dynamic: 0,
       static: 30,

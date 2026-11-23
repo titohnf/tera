@@ -1,4 +1,5 @@
-import type { drive_v3, forms_v1 } from 'googleapis'
+import type { drive_v3 } from '@googleapis/drive'
+import type { forms_v1 } from '@googleapis/forms'
 import { bacaKode, bangunIndeks, normalisasi, type GrupTopik } from '@/lib/materi-pemetaan'
 
 /**

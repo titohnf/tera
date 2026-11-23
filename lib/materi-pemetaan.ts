@@ -196,7 +196,7 @@ export function kemiripan(a: string, b: string): number {
 // Tidak ada yang menulis ke Drive, dan tidak ada yang dihapus dari katalog.
 // ════════════════════════════════════════════════════════════════════════════
 
-import type { drive_v3 } from 'googleapis'
+import type { drive_v3 } from '@googleapis/drive'
 
 /** Sengaja longgar: dua klien Supabase dengan generic berbeda (lihat lib/materi-sesi.ts). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
