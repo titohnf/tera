@@ -5,6 +5,7 @@ import { ChevronDown, Search } from 'lucide-react'
 import type { TopikPeta } from '@/lib/belajar/topik-peta'
 import type { LangkahTopik, PaketRingkas } from '@/lib/belajar/langkah'
 import { kelompokkanPeta } from '@/lib/belajar/fringe'
+import { pilihTopikSekarang } from '@/lib/belajar/topik-sekarang'
 import {
   Bintang,
   Centang,
@@ -116,13 +117,7 @@ export default function PetaTopik({
   // kebetulan sudah dimulai: kalau ia memang yang pertama, ia terpilih sendiri.
   // Dipilih dari `siap` saja — tawaran utama tidak pernah topik yang
   // prasyaratnya belum lengkap atau yang di atas jenjang anak.
-  const sekarang = useMemo(() => {
-    const bisa = (t: TopikPeta) => {
-      const l = perTopik.get(t.id)
-      return l != null && l.paketId != null && !l.terkunci
-    }
-    return siap.find(bisa) ?? siap[0] ?? null
-  }, [siap, perTopik])
+  const sekarang = useMemo(() => pilihTopikSekarang(topik, kelas, langkah), [topik, kelas, langkah])
 
   // Rute "Ikuti urutan" membentangkan SEMUA topik menurut urutan server, tanpa pembagian
   // siap / belum siap: yang bukan giliran sekarang cuma terkunci. Yang sudah tuntas TETAP di

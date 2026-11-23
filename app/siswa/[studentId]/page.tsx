@@ -1,7 +1,8 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import HeroBeranda, { type IsiHero } from '@/components/siswa/HeroBeranda'
 import { learnerAnak, sesiTertunda } from '@/lib/belajar/sesi'
-import { kemajuanMisi } from '@/lib/belajar/kemajuan-misi'
+import { misiAktif } from '@/lib/siswa/misi-aktif'
+import HeroMisiAktif from '@/components/siswa/HeroMisiAktif'
 import { tryOutTerdekat } from '@/lib/tryout/terdekat'
 import KartuAplikasi from '@/components/apps/KartuAplikasi'
 
@@ -18,9 +19,9 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
   // Pelengkap beranda: gagal apa pun jadi "tidak ada", bukan beranda yang rusak.
   // `learnerAnak` hanya MEMBACA (tidak membuat baris pelajar), jadi aman dipanggil di sini.
   const learnerId = await learnerAnak(studentId).catch(() => null)
-  const [sesi, kemajuan, tryOut] = await Promise.all([
+  const [sesi, misi, tryOut] = await Promise.all([
     learnerId ? sesiTertunda(learnerId).catch(() => null) : null,
-    learnerId ? kemajuanMisi(learnerId) : null,
+    learnerId ? misiAktif(studentId, learnerId) : null,
     tryOutTerdekat(studentId),
   ])
 
@@ -29,7 +30,7 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
     ? { jenis: 'lanjut', sesi }
     : tryOut?.terbuka
       ? { jenis: 'tryout', label: tryOut.label, teks: tryOut.teks, href: hrefTryOut }
-      : { jenis: 'misi', href: `/siswa/${studentId}/misi?mapel=Matematika&buka=sekarang`, kemajuan }
+      : { jenis: 'misi', href: `/siswa/${studentId}/misi?mapel=Matematika&buka=sekarang`, kemajuan: misi?.kemajuan ?? null }
 
   return (
     <div className="space-y-5">
@@ -40,7 +41,7 @@ export default async function BerandaSiswa({ params }: { params: Promise<{ stude
         <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-900">Halo, {anak.nama_pendek}</h1>
       </div>
 
-      <HeroBeranda isi={hero} />
+      {hero.jenis === 'misi' && misi ? <HeroMisiAktif data={misi} anak={studentId} /> : <HeroBeranda isi={hero} />}
 
       <div className="space-y-3">
         <KartuAplikasi nama="Latihan Soal" teks="Soal per topik dengan pembahasan." href={`/belajar${q}`} satuBaris ikon="memo-bk" />
