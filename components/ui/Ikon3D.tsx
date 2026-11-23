@@ -21,6 +21,7 @@ export type NamaIkon3D =
   | 'video-game'
   | 'play'
   | 'layar-360'
+  | 'layar-360-datar'
   | 'layar'
   | 'kartu-video'
   | 'play-biru'
@@ -73,7 +74,7 @@ export const IKON_GOLONGAN: Record<GolonganMapel, NamaIkon3D> = {
 }
 
 /** Ikon yang digambar sendiri (SVG), bukan dari Fluent Emoji (PNG). */
-const IKON_SVG = new Set<NamaIkon3D>(['play', 'layar-360', 'layar', 'kartu-video', 'play-biru', 'play-kuning'])
+const IKON_SVG = new Set<NamaIkon3D>(['play', 'layar-360', 'layar-360-datar', 'layar', 'kartu-video', 'play-biru', 'play-kuning'])
 
 export default function Ikon3D({
   nama,

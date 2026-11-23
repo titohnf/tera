@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Varian TANPA lengkung: bingkai datar dengan dua panel samping dan bukaan di tengah. Langit satu bidang, gunung satu nada. -->
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0A4FD6"/><stop offset="0.5" stop-color="#2E7BFF"/><stop offset="1" stop-color="#0A5CF0"/>
+    </linearGradient>
+    <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A4FD6"/><stop offset="1" stop-color="#0A3FB5"/></linearGradient>
+    <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="44" x2="0" y2="212">
+      <stop offset="0" stop-color="#EAF4FF"/><stop offset="0.5" stop-color="#BFDDFF"/><stop offset="1" stop-color="#8CC0FF"/>
+    </linearGradient>
+    <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="110" x2="0" y2="212">
+      <stop offset="0" stop-color="#9CC9FF"/><stop offset="1" stop-color="#78B0FF"/>
+    </linearGradient>
+    <linearGradient id="gunungDepan" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="212">
+      <stop offset="0" stop-color="#78B0FF"/><stop offset="1" stop-color="#5A9CFF"/>
+    </linearGradient>
+    <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
+    <clipPath id="bingkai"><rect x="32" y="44" width="192" height="168" rx="22"/></clipPath>
+  </defs>
+
+  <!-- tebing -->
+  <rect x="32" y="49" width="192" height="168" rx="22" fill="url(#panelTebing)"/>
+  <!-- langit + pemandangan -->
+  <rect x="32" y="44" width="192" height="168" rx="22" fill="url(#langit)"/>
+  <g clip-path="url(#bingkai)">
+    <circle cx="112" cy="90" r="19" fill="url(#matahari)"/>
+    <path d="M36 212 L90 148 L116 176 L150 120 L226 212 Z" fill="url(#gunungBelakang)"/>
+    <path d="M56 212 L108 168 L142 192 L182 158 L226 212 Z" fill="url(#gunungDepan)"/>
+  </g>
+  <!-- dua panel samping -->
+  <path d="M32 66 a22 22 0 0 1 22 -22 h22 v168 h-22 a22 22 0 0 1 -22 -22 Z" fill="url(#panel)"/>
+  <path d="M224 66 a22 22 0 0 0 -22 -22 h-22 v168 h22 a22 22 0 0 0 22 -22 Z" fill="url(#panel)"/>
+</svg>

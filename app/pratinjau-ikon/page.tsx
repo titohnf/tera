@@ -20,6 +20,7 @@ const KANDIDAT: { no: number; nama: string; catatan: string; ikon: NamaIkon3D }[
   { no: 10, nama: 'Televisi (biru + kuning)', catatan: 'Fluent Emoji, diwarnai.', ikon: 'tv-bk' },
   { no: 11, nama: 'Televisi (warna asli)', catatan: 'Fluent Emoji apa adanya.', ikon: 'tv' },
   { no: 12, nama: 'Layar 360°', catatan: 'Silinder dengan dinding depan terbuka: pemandangan di dinding belakang (sesuai gambar acuan).', ikon: 'layar-360' },
+  { no: 13, nama: 'Tanpa lengkung', catatan: 'Bingkai datar dengan dua panel samping dan bukaan di tengah.', ikon: 'layar-360-datar' },
 ]
 
 export default function PratinjauIkon() {
@@ -32,7 +33,8 @@ export default function PratinjauIkon() {
         </div>
 
         <div className="flex justify-center rounded-2xl border-2 border-b-4 border-slate-200 border-b-slate-300 bg-white p-3">
-          <Ikon3D nama="layar-360" ukuran={240} />
+          <Ikon3D nama="layar-360" ukuran={200} />
+          <Ikon3D nama="layar-360-datar" ukuran={200} />
         </div>
 
         <div className="grid grid-cols-4 gap-2 rounded-2xl border-2 border-b-4 border-slate-200 border-b-slate-300 bg-white p-3">
