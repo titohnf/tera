@@ -19,6 +19,8 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
   // Hanya try out yang ditujukan untuk jenjang anak ini; kelas yang belum diisi menampilkan semuanya.
   const paket = (await paketTryOutTerbit(await createClient())).filter((p) => !jenjang || p.jenjang === jenjang || p.jenjang === 'Lainnya')
   const kode = await kodeAnak(studentId)
+  // Akun penguji: tombol Mulai tidak menunggu jadwal (kartu tetap dikelompokkan menurut jadwal).
+  const penguji = kode ? ((await (await createClient()).rpc('peserta_penguji', { p_kode: kode.kode })).data === true) : false
 
   // Yang sudah dikirim ditandai "sudah mengerjakan"; hasilnya dibuka admin kemudian.
   const selesai = new Map<string, boolean>()
@@ -49,6 +51,7 @@ export default async function TryOutSiswaPage({ params }: { params: Promise<{ st
         petunjukMasuk="Tekan Mulai, periksa datamu, lalu kerjakan."
         hrefHasil={(id) => `/siswa/${studentId}/tryout/${id}`}
         kode={kode?.kode}
+        lewatiJadwal={penguji}
         nilai={await muatNilaiAnak(studentId)}
       />
     </div>

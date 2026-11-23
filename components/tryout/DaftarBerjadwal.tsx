@@ -122,6 +122,17 @@ export default function DaftarBerjadwal({
         ))}
       </div>
 
+      {lewatiJadwal && (
+        <div role="note" className="flex gap-2.5 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+          <span aria-hidden className="mt-0.5">🧪</span>
+          <p>
+            <strong className="font-semibold">Ini akun penguji.</strong> Tombol Kerjakan Sekarang selalu aktif, tanpa menunggu jam buka atau jam tutup, supaya kamu bisa melihat soal dan menguji
+            kunci jawaban. Kartu tetap dikelompokkan menurut jadwal seperti yang dilihat siswa. Jawaban akun penguji hanya untuk menguji dan tidak perlu disimpan:
+            jangan dihitung sebagai nilai atau pengerjaan siswa.
+          </p>
+        </div>
+      )}
+
       {paket.some((p) => p.keadaan === 'belum') && <p className="text-xs text-gray-500">{petunjukMasuk}</p>}
 
       {isi.length === 0 ? (
