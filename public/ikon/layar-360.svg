@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Layar 360° (silinder) bergaya 3D Fluent, digambar sendiri: dinding depan terbuka di tengah, pemandangan di dinding belakang. -->
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#071F66"/><stop offset="0.5" stop-color="#0A3FB5"/><stop offset="1" stop-color="#082B8C"/>
+    </linearGradient>
+    <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#051650"/><stop offset="1" stop-color="#040F38"/></linearGradient>
+    <linearGradient id="langit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8DBFF"/><stop offset="1" stop-color="#6FB0FF"/></linearGradient>
+    <linearGradient id="atas" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D2E8FF"/><stop offset="1" stop-color="#8CC1FF"/></linearGradient>
+    <linearGradient id="gunung" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AA8FF"/><stop offset="1" stop-color="#2E7BFF"/></linearGradient>
+    <linearGradient id="gunung2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#CFE2FF"/></linearGradient>
+    <radialGradient id="matahari" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3A6"/><stop offset="0.6" stop-color="#FFC926"/><stop offset="1" stop-color="#F59A00"/></radialGradient>
+    <clipPath id="dinding"><path d="M20 66 A108 22 0 0 0 236 66 L236 190 A108 22 0 0 0 20 190 Z"/></clipPath>
+  </defs>
+
+  <!-- tebing panel depan (sisi bawah) -->
+  <path d="M20 66 A108 22 0 0 0 72 88.8 L72 204.8 A108 22 0 0 1 20 190 Z" fill="url(#panelTebing)" transform="translate(0 10)"/>
+  <path d="M236 66 A108 22 0 0 1 184 88.8 L184 204.8 A108 22 0 0 0 236 190 Z" fill="url(#panelTebing)" transform="translate(0 10)"/>
+
+  <!-- dinding belakang (layar) -->
+  <path d="M20 66 A108 22 0 0 0 236 66 L236 190 A108 22 0 0 0 20 190 Z" fill="url(#langit)"/>
+  <g clip-path="url(#dinding)">
+    <circle cx="106" cy="112" r="12" fill="url(#matahari)"/>
+    <path d="M40 180 L94 124 L120 150 L154 100 L216 180 Z" fill="url(#gunung)"/>
+    <path d="M136 126 L154 100 L172 126 L154 118 Z" fill="url(#gunung2)"/>
+  </g>
+
+  <!-- bibir atas (elips) dengan awan -->
+  <ellipse cx="128" cy="66" rx="108" ry="22" fill="url(#atas)" stroke="#FFFFFF" stroke-width="3"/>
+  <ellipse cx="86" cy="62" rx="28" ry="6" fill="#FFFFFF" opacity="0.7"/>
+  <ellipse cx="176" cy="58" rx="22" ry="5" fill="#FFFFFF" opacity="0.55"/>
+
+  <!-- panel depan -->
+  <path d="M20 66 A108 22 0 0 0 72 88.8 L72 204.8 A108 22 0 0 1 20 190 Z" fill="url(#panel)"/>
+  <path d="M236 66 A108 22 0 0 1 184 88.8 L184 204.8 A108 22 0 0 0 236 190 Z" fill="url(#panel)"/>
+
+  <!-- kilau kuning -->
+  <path d="M232 22 l5 11 11 5 -11 5 -5 11 -5 -11 -11 -5 11 -5z" fill="#FFC926"/>
+  <path d="M24 24 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5z" fill="#FFC926"/>
+</svg>
