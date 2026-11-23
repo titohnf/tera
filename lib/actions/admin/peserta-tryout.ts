@@ -91,7 +91,7 @@ export async function aturHasilDibuka(formData: FormData): Promise<void> {
 
 /**
  * Jadwal sebuah try out: kapan tombol Mulai bisa dipakai (`opens_at`) dan, bila perlu,
- * kapan ditutup (`closes_at`). Jam diisi dalam WIB. Kosong berarti tanpa batas. Hanya dua
+ * kapan ditutup (`closes_at`, wajib bila ada jam buka). Jam diisi dalam WIB. Setelah jam tutup peserta tidak bisa mulai dan kartu pindah ke "Sudah lewat". Hanya dua
  * kunci itu yang diubah; database yang menahan peserta sebelum jamnya
  * (`mulai_percobaan_peserta` memeriksa `opens_at`).
  */
@@ -109,6 +109,7 @@ export async function aturJadwalTryOut(formData: FormData): Promise<void> {
   const buka = keIso(formData.get('opens_at'))
   const tutup = keIso(formData.get('closes_at'))
   if (buka === undefined || tutup === undefined) return
+  if (buka && !tutup) return // jam tutup wajib bila ada jam buka: peserta terlambat tidak boleh mulai
   if (buka && tutup && new Date(tutup) <= new Date(buka)) return
   const { data: kuis } = await ctx.admin.from('quizzes').select('settings, kind').eq('id', quizId).maybeSingle()
   if (!kuis || (kuis as { kind: string }).kind !== 'tryout') return

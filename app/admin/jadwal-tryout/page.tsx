@@ -62,8 +62,8 @@ export default async function JadwalTryOutPage() {
                   <input type="datetime-local" name="opens_at" defaultValue={keInputWib(p.bukaPada)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-gray-900" />
                 </label>
                 <label className="flex flex-col gap-1 text-xs text-gray-600">
-                  Ditutup (opsional)
-                  <input type="datetime-local" name="closes_at" defaultValue={keInputWib(p.tutupPada)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-gray-900" />
+                  Ditutup (terlambat tidak bisa mulai)
+                  <input type="datetime-local" name="closes_at" required defaultValue={keInputWib(p.tutupPada)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-gray-900" />
                 </label>
                 <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                   Simpan
