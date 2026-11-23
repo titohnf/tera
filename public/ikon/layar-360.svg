@@ -7,7 +7,7 @@
     </linearGradient>
     <linearGradient id="panelTebing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A4FD6"/><stop offset="1" stop-color="#0A3FB5"/></linearGradient>
     <linearGradient id="langit" gradientUnits="userSpaceOnUse" x1="0" y1="42" x2="0" y2="178">
-      <stop offset="0" stop-color="#C6E0FF"/><stop offset="0.5" stop-color="#AED3FF"/><stop offset="1" stop-color="#95C5FF"/>
+      <stop offset="0" stop-color="#E2F0FF"/><stop offset="0.3" stop-color="#C6E0FF"/><stop offset="0.65" stop-color="#AED3FF"/><stop offset="1" stop-color="#95C5FF"/>
     </linearGradient>
     <linearGradient id="gunungBelakang" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="178">
       <stop offset="0" stop-color="#78AFFF"/><stop offset="1" stop-color="#5F9FFF"/>
