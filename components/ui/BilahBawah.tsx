@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 /**
- * Ikon solid sederhana (bentuk dari Heroicons, MIT) berisi GRADASI: biru bergradasi saat aktif,
+ * Ikon solid sederhana (rumah digambar sendiri, orang dari Heroicons, MIT) berisi GRADASI: biru bergradasi saat aktif,
  * abu-abu bergradasi saat tidak. Penanda aktif hanya warna — tanpa wadah, garis, atau latar.
  * Gradasinya didefinisikan di tiap ikon (id unik per tab dan keadaan) supaya tidak bergantung
  * pada definisi di tempat lain di halaman.
@@ -21,10 +21,12 @@ function Ikon({ kunci, aktif }: { kunci: 'beranda' | 'profil'; aktif: boolean })
         </linearGradient>
       </defs>
       {kunci === 'beranda' ? (
-        <>
-          <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
-          <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
-        </>
+        <path
+          d="M12 2.9 2.7 11.1a1.2 1.2 0 0 0 .8 2.1h1.1v6.2a2.4 2.4 0 0 0 2.4 2.4h2.4v-6.2a1.6 1.6 0 0 1 1.6-1.6h2a1.6 1.6 0 0 1 1.6 1.6v6.2H17a2.4 2.4 0 0 0 2.4-2.4v-6.2h1.1a1.2 1.2 0 0 0 .8-2.1Z"
+          stroke={`url(#${id})`}
+          strokeWidth={1.2}
+          strokeLinejoin="round"
+        />
       ) : (
         <path d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" />
       )}
