@@ -4,27 +4,32 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 /**
- * Ikon dua nada (Phosphor Icons "duotone", MIT, Copyright (c) 2023 Phosphor Icons): garis
- * tegas + isian lembut. Aktif: garis Biru Tera dengan isian Tosca Tera; tidak aktif: abu-abu.
+ * Ikon solid sederhana (bentuk dari Heroicons, MIT) berisi GRADASI: biru bergradasi saat aktif,
+ * abu-abu bergradasi saat tidak. Penanda aktif hanya warna — tanpa wadah, garis, atau latar.
+ * Gradasinya didefinisikan di tiap ikon (id unik per tab dan keadaan) supaya tidak bergantung
+ * pada definisi di tempat lain di halaman.
  */
-function Duotone({ aktif, isian, garis }: { aktif: boolean; isian: string; garis: string }) {
+function Ikon({ kunci, aktif }: { kunci: 'beranda' | 'profil'; aktif: boolean }) {
+  const id = `bb-${kunci}-${aktif ? 'a' : 'n'}`
+  const [atas, bawah] = aktif ? ['#58A3FF', '#0A4FD6'] : ['#CBD5E1', '#94A3B8']
   return (
-    <svg viewBox="0 0 256 256" className="h-7 w-7" fill="currentColor" aria-hidden>
-      <path d={isian} fill={aktif ? '#20c0b0' : 'currentColor'} opacity={aktif ? 0.55 : 0.2} />
-      <path d={garis} />
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill={`url(#${id})`} aria-hidden>
+      <defs>
+        <linearGradient id={id} x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor={atas} />
+          <stop offset="1" stopColor={bawah} />
+        </linearGradient>
+      </defs>
+      {kunci === 'beranda' ? (
+        <>
+          <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+          <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
+        </>
+      ) : (
+        <path d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" />
+      )}
     </svg>
   )
-}
-
-const RUMAH = {
-  isian: 'M216,120v96H152V152H104v64H40V120a8,8,0,0,1,2.34-5.66l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,216,120Z',
-  garis:
-    'M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z',
-}
-const ORANG = {
-  isian: 'M192,96a64,64,0,1,1-64-64A64,64,0,0,1,192,96Z',
-  garis:
-    'M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z',
 }
 
 /**
@@ -32,7 +37,7 @@ const ORANG = {
  * Baru dua tab — Beranda dan Profil; pintu ke Latihan, Misi, Materi, dan Try Out
  * tetap kartu di Beranda. `dasar` adalah alamat beranda rangka, `profil` alamat
  * tab Profil. Tab aktif dihitung dari alamat: Profil bila alamat berada di
- * bawahnya, selain itu Beranda.
+ * bawahnya, selain itu Beranda. Aktif = ikon dan teks berwarna biru; tidak aktif = abu-abu.
  */
 export default function BilahBawah({ dasar, profil }: { dasar: string; profil: string }) {
   const pathname = usePathname()
@@ -52,11 +57,11 @@ export default function BilahBawah({ dasar, profil }: { dasar: string; profil: s
             <Link
               href={t.href}
               aria-current={t.aktif ? 'page' : undefined}
-              className={`mx-3 my-1.5 flex h-[calc(100%-0.75rem)] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 text-xs font-extrabold transition ${
-                t.aktif ? 'border-tera/30 bg-blue-50 text-tera' : 'border-transparent text-slate-400 hover:text-slate-700'
+              className={`flex h-full flex-col items-center justify-center gap-0.5 text-xs font-extrabold transition-colors ${
+                t.aktif ? 'text-tera' : 'text-slate-400'
               }`}
             >
-              <Duotone aktif={t.aktif} {...(t.kunci === 'beranda' ? RUMAH : ORANG)} />
+              <Ikon kunci={t.kunci} aktif={t.aktif} />
               {t.label}
             </Link>
           </li>
