@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { mandiriContext } from '@/lib/mandiri'
 import KartuAkun from '@/components/apps/KartuAkun'
 
@@ -16,8 +15,6 @@ export default async function AkunMandiri() {
 
   return (
     <div className="space-y-4">
-      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Akun' }]} />
-      <h1 className="text-xl font-bold tracking-tight text-gray-900">Akun</h1>
 
       <Link
         href="/mandiri/langganan"

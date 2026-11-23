@@ -8,7 +8,6 @@ import BilahJawaban, { KeteranganJawaban } from './BilahJawaban'
 import { persenDari } from '@/lib/belajar/penilaian'
 import { muatTopik } from '@/app/belajar/actions'
 import { ALL_GRADES } from '@/lib/curriculum-config'
-import Avatar from '@/components/admin/availability/Avatar'
 import IkonMapel from './IkonMapel'
 import { useJudulKepala, useTombolKembali } from './Kepala'
 import Materi from './Materi'
@@ -330,18 +329,12 @@ function Pemutar({ className = '' }: { className?: string }) {
 export default function PemilihLatihan({
   mapel,
   anak,
-  nama,
-  avatar,
   labelKelas,
   awal,
 }: {
   mapel: MapelLatihan[]
   /** Diteruskan apa adanya ke aksi; yang memeriksa haknya tetap database. */
   anak?: string
-  /** Nama panggilan pelajarnya, untuk sapaan di layar pertama. */
-  nama: string
-  /** Foto profilnya; null berarti inisial. */
-  avatar: string | null
   /** Kelas si anak sebagai teks ('Kelas 7'), atau null kalau belum diisi. */
   labelKelas: string | null
   /**
@@ -718,18 +711,6 @@ export default function PemilihLatihan({
 
     return (
       <div className="space-y-2">
-        {/* Sapaan, bukan cuma pertanyaan: layar ini dibuka atas nama seorang
-            anak tertentu, dan sejak kartu "Berlatih sebagai" dihapus namanya
-            tidak muncul di mana pun lagi. Di sini ia mengerjakan dua hal
-            sekaligus — menyapa, dan memberi tahu sedang jadi siapa. */}
-        <div className="flex items-center gap-3 pb-1">
-          <Avatar name={nama} avatarUrl={avatar} size={44} />
-          <div className="min-w-0">
-            <p className="text-lg font-semibold tracking-tight text-gray-900">Halo, {nama}</p>
-            <p className="mt-0.5 text-sm text-gray-500">Mau berlatih apa?</p>
-          </div>
-        </div>
-
         <Pencarian
           nilai={cariMapel}
           ubah={setCariMapel}

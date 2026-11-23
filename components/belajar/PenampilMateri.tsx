@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { PanahKiri } from '@/components/ui/BilahJudul'
 
 /**
  * Menampilkan satu materi interaktif (halaman HTML mandiri) di dalam iframe.
@@ -59,7 +60,7 @@ export default function PenampilMateri({
     else router.back()
   }
 
-  const kelasTombol = 'flex h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-stone-200 hover:bg-white/10'
+  const kelasTombol = 'flex h-9 w-9 items-center justify-center rounded-lg text-stone-200 hover:bg-white/10'
 
   return (
     <div
@@ -67,8 +68,8 @@ export default function PenampilMateri({
       style={{ height: '100dvh' }}
     >
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-white/10 px-2">
-        <button type="button" onClick={kembali} className={kelasTombol}>
-          <span aria-hidden>←</span> Kembali
+        <button type="button" onClick={kembali} aria-label="Kembali" className={kelasTombol}>
+          <PanahKiri />
         </button>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-stone-100">{judul}</span>
       </div>

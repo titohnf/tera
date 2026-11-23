@@ -34,7 +34,7 @@ import 'katex/dist/katex.min.css'
 export default function BelajarLayout({ children }: { children: React.ReactNode }) {
   return (
     <PenyediaKepala>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-100">
         <KepalaBelajar />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">{children}</main>
       </div>

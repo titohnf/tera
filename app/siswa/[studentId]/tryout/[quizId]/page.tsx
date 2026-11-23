@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { anakOrRedirect } from '@/lib/keluarga'
 import DetailPembahasan from '@/components/tryout/DetailPembahasan'
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { muatDetailAnak } from '@/lib/tryout/hasil-anak'
 
 export const metadata = { title: 'Detail dan Pembahasan Try Out' }
@@ -15,7 +14,6 @@ export default async function DetailTryOutSiswa({ params }: { params: Promise<{ 
   if (!d) notFound()
   return (
     <div className="space-y-4">
-      <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Try Out', href: `/siswa/${studentId}/tryout` }, { label: 'Pembahasan' }]} />
       <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} mulai={d.mulai} />
     </div>
   )

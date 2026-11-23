@@ -1,4 +1,3 @@
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { createClient } from '@/lib/supabase/server'
 import { mandiriContext } from '@/lib/mandiri'
 
@@ -53,9 +52,7 @@ export default async function LanggananMandiri() {
 
   return (
     <div className="space-y-4">
-      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Akun', href: '/mandiri/akun' }, { label: 'Langganan' }]} />
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Langganan</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           {produk.sora ? 'Misi dan Materi sudah aktif untuk akunmu.' : 'Misi dan Materi belum aktif untuk akunmu.'}
         </p>

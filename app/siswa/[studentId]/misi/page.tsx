@@ -1,7 +1,6 @@
 import { anakOrRedirect } from '@/lib/keluarga'
 import IsiMisi from '@/components/belajar/IsiMisi'
 import PilihMisiMapel from '@/components/belajar/PilihMisiMapel'
-import RemahRoti from '@/components/siswa/RemahRoti'
 
 export const metadata = { title: 'Misi' }
 
@@ -21,14 +20,12 @@ export default async function MisiSiswaPage({
   if (!mapel) {
     return (
       <div className="space-y-4">
-        <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Misi' }]} />
         <PilihMisiMapel anak={studentId} alamat={alamat} />
       </div>
     )
   }
   return (
     <div className="space-y-4">
-      <RemahRoti item={[{ label: 'Beranda', href: `/siswa/${studentId}` }, { label: 'Misi', href: `/siswa/${studentId}/misi` }, { label: mapel }]} />
       <IsiMisi anak={studentId} pilihMapel={{ dipilih: mapel, alamat }} />
     </div>
   )

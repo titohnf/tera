@@ -1,4 +1,3 @@
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { jenjangPeserta } from '@/lib/tryout/jenjang-anak'
 import { alihkanKeTampilanSiswa, umumContext } from '@/lib/umum'
 import { createClient } from '@/lib/supabase/server'
@@ -18,8 +17,6 @@ export default async function TryOutUmum() {
   const paket = semuaPaket.filter((p) => !jenjang || p.jenjang === jenjang || p.jenjang === 'Lainnya')
   return (
     <div className="space-y-5">
-      <RemahRoti item={[{ label: 'Beranda', href: '/umum' }, { label: 'Try Out' }]} />
-      <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}

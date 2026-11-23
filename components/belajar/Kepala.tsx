@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { GAYA_KEMBALI, JudulBilah, KELAS_BILAH, PanahKiri } from '@/components/ui/BilahJudul'
 import PemilihAnak from '@/components/keluarga/PemilihAnak'
 import type { Anak } from '@/lib/keluarga'
 
@@ -141,32 +143,6 @@ export function usePemilihKepala(anak: Anak[], aktif: string) {
   }, [pasangPemilih, anak, aktif])
 }
 
-// 44px: ukuran sasaran sentuh terkecil yang masih nyaman di ponsel, dan ini
-// satu-satunya jalan mundur di seluruh permukaan. Sebelumnya 36px — cukup
-// besar untuk kursor, tidak untuk ibu jari anak yang sedang memegang HP-nya
-// dengan satu tangan.
-const GAYA_KEMBALI =
-  '-ml-2.5 flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition hover:bg-slate-100 hover:text-gray-900'
-
-/** Panah kiri. SVG, bukan '‹': glyph kurung tunggal tebalnya ikut fon
-    perangkat, dan di sebagian ponsel Android ia tampil setipis garis rambut. */
-function PanahKiri() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path d="m15 6-6 6 6 6" />
-    </svg>
-  )
-}
-
 /**
  * Mengganti judul header selama komponen terpasang.
  *
@@ -183,10 +159,27 @@ export function useJudulKepala(judul: string | null) {
   }, [pasangJudul, judul])
 }
 
+/**
+ * Judul bawaan menurut layar, dipakai selama layar tidak memasang judulnya
+ * sendiri (`useJudulKepala`). Ia dihitung dari alamat supaya judul header
+ * selalu sama dengan nama kartu yang baru saja disentuh — dulu semuanya
+ * "Belajar Mandiri", termasuk layar yang kartunya bernama "Latihan Soal".
+ */
+function judulBawaan(pathname: string): string {
+  const [, , kedua, ketiga] = pathname.split('/')
+  if (!kedua) return 'Latihan Soal'
+  if (kedua === 'misi') return 'Misi'
+  if (kedua === 'materi') return 'Materi'
+  if (kedua === 'asesmen') return 'Asesmen'
+  if (ketiga === 'hasil') return 'Hasil Latihan'
+  return 'Latihan'
+}
+
 export function KepalaBelajar() {
   const { kembali, judul, pulang, pemilih } = useContext(KonteksKepala)
+  const pathname = usePathname()
   return (
-    <header className="flex h-14 items-center gap-1 border-b border-gray-200 bg-white px-4 sm:px-6">
+    <header className={KELAS_BILAH}>
       {kembali ? (
         <button type="button" onClick={kembali} aria-label="Kembali" className={GAYA_KEMBALI}>
           <PanahKiri />
@@ -196,9 +189,7 @@ export function KepalaBelajar() {
           <PanahKiri />
         </Link>
       ) : null}
-      <h1 className="truncate text-base font-semibold text-gray-900">
-        {judul ?? 'Belajar Mandiri'}
-      </h1>
+      <JudulBilah>{judul ?? judulBawaan(pathname)}</JudulBilah>
 
       {pemilih && pemilih.anak.length > 1 && (
         <div className="ml-auto pl-2">

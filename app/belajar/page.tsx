@@ -27,7 +27,7 @@ export default async function BelajarBeranda({
   searchParams: Promise<{ anak?: string; topik?: string; mapel?: string; lingkup?: string; asesmen?: string }>
 }) {
   const { anak, topik, mapel: mapelDiminta, lingkup, asesmen } = await searchParams
-  const { learnerId, namaPelajar, avatar, kelas, studentId } = await belajarContext(anak)
+  const { learnerId, kelas, studentId } = await belajarContext(anak)
   // Pengecualian jenjang per mapel (migrasi 105) TIDAK ikut di sini: ia
   // bergantung pada mapel mana yang dibuka, dan yang sedang disusun justru
   // daftar mapelnya. Yang dipakai kelas aslinya saja; pengecualiannya
@@ -92,7 +92,7 @@ export default async function BelajarBeranda({
 
   return (
     <div className="space-y-4">
-      {studentId && <PulangKe href={`/siswa/${studentId}`} />}
+      <PulangKe href={studentId ? `/siswa/${studentId}` : '/mandiri'} />
 
       {studentId && (
         <TugasKelas tugas={tugas} anak={studentId} baruSelesai={asesmen === 'selesai'} />
@@ -102,8 +102,6 @@ export default async function BelajarBeranda({
         mapel={mapel}
         anak={anak}
         awal={awal}
-        nama={namaPelajar}
-        avatar={avatar}
         labelKelas={jenjang[0] ?? null}
       />
     </div>

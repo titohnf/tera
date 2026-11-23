@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { mandiriContext } from '@/lib/mandiri'
 import DetailPembahasan from '@/components/tryout/DetailPembahasan'
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { muatDetailAkun } from '@/lib/tryout/hasil-anak'
 
 export const metadata = { title: 'Detail dan Pembahasan Try Out' }
@@ -15,7 +14,6 @@ export default async function PembahasanTryOutMandiri({ params }: { params: Prom
   if (!d) notFound()
   return (
     <div className="space-y-4">
-      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Try Out', href: '/mandiri/tryout' }, { label: 'Pembahasan' }]} />
       <DetailPembahasan data={d.data} attemptId={d.attemptId} nilai={d.nilai} dikirim={d.dikirim} mulai={d.mulai} />
     </div>
   )

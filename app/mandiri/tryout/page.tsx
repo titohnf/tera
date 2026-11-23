@@ -1,4 +1,3 @@
-import RemahRoti from '@/components/siswa/RemahRoti'
 import { mandiriContext } from '@/lib/mandiri'
 import { createClient } from '@/lib/supabase/server'
 import { nilaiDariHasil } from '@/lib/tryout/nilai-hasil'
@@ -15,8 +14,6 @@ export default async function TryOutMandiri() {
   const [paket, { data }, { data: penguji }] = await Promise.all([paketTryOutTerbit(supabase), supabase.rpc('hasil_tryout_saya'), supabase.rpc('akun_penguji')])
   return (
     <div className="space-y-5">
-      <RemahRoti item={[{ label: 'Beranda', href: '/mandiri' }, { label: 'Try Out' }]} />
-      <h1 className="text-xl font-bold tracking-tight text-gray-900">Try Out</h1>
       <DaftarTryOut
         paket={paket}
         hasil={(data as HasilTryOut | null) ?? null}

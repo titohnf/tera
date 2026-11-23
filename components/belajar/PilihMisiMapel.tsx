@@ -35,8 +35,7 @@ export default async function PilihMisiMapel({ anak, alamat }: { anak?: string; 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Pilih Misimu</h1>
-        <p className="mt-1 text-sm font-medium text-slate-500">Mau berpetualang di mata pelajaran apa hari ini?</p>
+        <p className="text-sm font-medium text-slate-500">Mau berpetualang di mata pelajaran apa hari ini?</p>
       </div>
 
       {/* MATEMATIKA — terbuka */}

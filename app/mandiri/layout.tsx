@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import BilahAtas from '@/components/ui/BilahAtas'
+import BilahBawah from '@/components/ui/BilahBawah'
 import Image from 'next/image'
 import { mandiriContext } from '@/lib/mandiri'
 
@@ -16,35 +18,30 @@ import { mandiriContext } from '@/lib/mandiri'
  * berat di sini karena yang membuka halaman ini adalah orang yang mendaftar
  * sendiri.
  *
- * Tidak ada bilah navigasi bawah seperti portal keluarga: isinya baru dua
- * halaman, dan bilah berisi dua ikon lebih banyak menghabiskan ruang daripada
- * membantu. Ia ditambahkan kalau GAMA sudah punya halamannya sendiri.
+ * Bilah navigasi bawah baru berisi Beranda dan Profil (`BilahBawah`); pintu ke
+ * Misi, Materi, dan Try Out tetap kartu di beranda.
  */
 export default async function MandiriLayout({ children }: { children: React.ReactNode }) {
-  const { namaPendek } = await mandiriContext()
+  await mandiriContext()
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="h-14 bg-white border-b border-gray-100 shadow-sm flex items-center px-4 sm:px-6">
-        <Link href="/mandiri" className="flex items-center gap-2" aria-label="Beranda Bimbel Tera">
-          <Image src="/logo-icon.png" alt="" width={1103} height={1086} priority className="h-7 w-auto" />
-          <span className="text-base text-gray-900">
-            Bimbel <span className="font-semibold">Tera</span>
-          </span>
-        </Link>
-
-        <Link
-          href="/mandiri/akun"
-          className="ml-auto flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <span className="hidden sm:inline">{namaPendek}</span>
-          <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
-            {namaPendek.charAt(0).toUpperCase()}
-          </span>
-        </Link>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">{children}</main>
+      <BilahAtas
+        dasar={'/mandiri'}
+        akar={{ akun: 'Profil' }}
+        beranda={
+          <header className="flex h-14 items-center border-b border-gray-100 bg-white px-4 shadow-sm sm:px-6">
+            <Link href={'/mandiri'} className="flex items-center gap-2" aria-label="Beranda Bimbel Tera">
+              <Image src="/logo-icon.png" alt="" width={1103} height={1086} priority className="h-7 w-auto" />
+              <span className="text-base text-gray-900">
+                Bimbel <span className="font-semibold">Tera</span>
+              </span>
+            </Link>
+          </header>
+        }
+      />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-28">{children}</main>
+      <BilahBawah dasar={'/mandiri'} profil={'/mandiri/akun'} />
     </div>
   )
 }

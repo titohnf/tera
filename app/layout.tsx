@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bimbel Tera",
   description: "Sistem manajemen Bimbel Tera",
+};
+
+// Layar penuh sampai ke tepi di HP berponi (jarak aman dipakai bilah bawah) dan bilah status satu warna dengan title bar.
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
